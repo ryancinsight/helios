@@ -29,11 +29,17 @@ target closure.
   H-013) and clinical comparison vs VoLO/TOPAS/GATE/EGSnrc (H-042). *Update:* the
   **MVCT forward projector** (`helios-solver::forward_project_ray`, H-011c) now
   produces line-integral projections (∫μ dl), analytically verified (uniform slab
-  τ=μ·L, affine-field midpoint-exact); a dose engine (H-013) is the remaining
-  reference solution. The gates are implemented; a projector reference now exists;
-  the dose distributions and clinical inputs are the remaining work.
-  *Evidence tier: analytical (metrics + projector verified) — dose engine + clinical
-  inputs pending.*
+  τ=μ·L, affine-field midpoint-exact). The dose engine's **primary-transport stage**
+  (H-013a, `primary_fluence_parallel_x`) now produces the analytical exponential
+  depth curve `Ψ₀·exp(−μx)`; the remaining stage is kernel superposition → dose
+  (H-013b). Clinical comparison vs VoLO/TOPAS/GATE/EGSnrc (H-042) still pending real
+  inputs.
+  *Evidence tier: analytical (metrics + projector + primary transport verified) —
+  full dose engine + clinical inputs pending.*
+- **G-13 (numerics, units):** ~~Projector optical depth was 10× too large.~~
+  **CLOSED (H-013a):** `forward_project_ray` mixed `μ` [cm⁻¹] with mm path length;
+  now converts mm→cm for a dimensionless `τ`. Units contract documented (μ volumes
+  in cm⁻¹, grid in mm). *Evidence tier: analytical (τ = μ·L_cm verified).*
 - **G-4 (numerics):** Reduction-order sensitivity for future GPU vs CPU differential
   tests not yet characterized; epsilon bounds must be derived per reduction depth
   when the projector/dose kernels land. → H-012.

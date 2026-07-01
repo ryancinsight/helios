@@ -6,23 +6,24 @@
 
 ## Owner: claude-helios
 
-### In-flight item: H-013 collapsed-cone / convolution-superposition dose engine — `todo`
+### In-flight item: H-013b dose kernel superposition (collapsed-cone) — `todo`
 
-Now that a μ map (H-012b) and a ray-march line integral (H-011c) exist, the dose
-engine is the next reference solution feeding the gamma/DVH gates.
+Primary transport (H-013a) produces Ψ; the remaining stage spreads energy to dose.
 
-1. [ ] TERMA from the ray-marched primary fluence attenuation through the μ volume.
-2. [ ] Point/collapsed-cone kernel superposition (CPU reference) → dose `Volume`.
-3. [ ] Validate vs an analytical case (e.g. exponential depth-dose in a homogeneous
-   slab) then feed `helios-analysis` gamma/DVH.
+1. [ ] TERMA = (μ/ρ)·Ψ from the primary fluence (needs μ/ρ split — pairs with H-011b).
+2. [ ] Dose-deposition kernel (point/collapsed-cone) superposition → dose `Volume`.
+3. [ ] Validate depth-dose buildup vs a reference; feed `helios-analysis` gamma/DVH.
 4. [ ] clippy `-D warnings`, fmt, nextest, doctests green; sync artifacts.
 
-*Also unblocked/queued:* H-011d (exact Siddon + oriented-grid + full sinogram),
-H-020b (binary-MLC sinogram), H-010 (GPU HU→μ kernel, adapter verified),
-H-004b (ritk DICOM).
+*Also queued:* H-011d (exact Siddon + oriented-grid + sinogram), H-020b (binary-MLC
+sinogram), H-010b (GPU HU→μ + throughput bench), H-004b (ritk DICOM).
 
 ### Completed
 
+- [x] **H-013a** `helios-solver::primary_fluence_parallel_x`: dose primary-transport
+  stage (Ψ=Ψ₀·exp(−∫μ dl), +x parallel beam, O(N) cumulative). 4 oracles
+  (homogeneous exponential, unattenuated entry, heterogeneous accumulation, f32).
+  Also fixed projector optical-depth units (mm→cm; G-13).
 - [x] **H-010** `helios-gpu`: real GPU kernel — `beam_transmission_into` computes
   `exp(-τ)` on the GPU (hephaestus-wgpu `NegOp`+`ExpOp`), differentially validated
   vs CPU `f32::exp` on a live adapter; `default_device`. Replicated hephaestus's
@@ -108,7 +109,7 @@ NIST μ/ρ tables, H-021 delivery simulation stepping.
 | `cargo build` | pass (local gaia/leto/eunomia via `[patch]`) |
 | `cargo clippy --all-targets --all-features -D warnings` | pass, 0 code warnings |
 | `cargo fmt --check` | pass |
-| `cargo nextest run` | 67 passed / 0 failed (incl. live GPU test) |
+| `cargo nextest run` | 71 passed / 0 failed (incl. live GPU test) |
 | `cargo test --doc` | pass |
 
 ## Decision log (Sprint 2)

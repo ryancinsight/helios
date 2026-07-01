@@ -62,6 +62,14 @@ under a Breaking subsection.
   `∫μ dl`. Axis-aligned grids (oriented-grid + exact Siddon tracked H-011d). 5
   analytical tests: homogeneous slab `τ=μ·L`, affine-field midpoint-exact,
   step-invariance, miss→`None`, f32. First consumer of the wired gaia geometry.
+- `helios-solver::primary_fluence_parallel_x` (H-013a): dose-engine primary-
+  transport stage — Beer–Lambert attenuated primary energy fluence
+  `Ψ=Ψ₀·exp(−∫μ dl)` for a +x parallel beam via O(N) cumulative optical depth.
+  Analytical oracles: homogeneous exponential depth curve, unattenuated entry,
+  heterogeneous accumulation, f32. Kernel superposition (dose) tracked H-013b.
+- **Fixed** `forward_project_ray` optical-depth units: `μ` is cm⁻¹ but the grid is
+  mm, so path length is now converted mm→cm to yield a true dimensionless `τ`
+  (previously 10× too large).
 - `helios-physics`:
   - `projection` module: geometry-free ray line-integral reduction —
     `optical_depth(τ = Σ μᵢ·Lᵢ)` and `beam_transmission(exp(−τ))` over

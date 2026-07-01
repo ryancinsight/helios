@@ -49,12 +49,19 @@ fn axis_aligned_world_aabb<T: GeometryScalar>(grid: &VoxelGrid<T>) -> Option<Aab
     Some(Aabb::new(min, max))
 }
 
+/// Millimetres per centimetre — the world grid is in mm, `μ` in cm⁻¹.
+const MM_PER_CM: f64 = 10.0;
+
 /// Ray-march the optical depth `τ = ∫ μ dl` of `ray` through the `mu` volume.
 ///
-/// `ray` is in world/patient coordinates (mm); `step_mm` is the nominal sampling
-/// step (the actual step is `L / ceil(L/step)` so it divides the traversed length
-/// exactly). Returns `None` if the ray misses the grid or the grid is not
-/// axis-aligned.
+/// The `mu` volume holds the linear attenuation coefficient in **cm⁻¹** (physics
+/// convention, matching `helios_physics::LinearAttenuation`), while the grid /
+/// `ray` are in **mm** (DICOM convention). The path length is converted mm→cm so
+/// `τ` is a true dimensionless optical depth.
+///
+/// `step_mm` is the nominal sampling step (the actual step is `L / ceil(L/step)`
+/// so it divides the traversed length exactly). Returns `None` if the ray misses
+/// the grid or the grid is not axis-aligned.
 #[must_use]
 pub fn forward_project_ray<T: GeometryScalar>(
     mu: &Volume<T>,
@@ -73,6 +80,8 @@ pub fn forward_project_ray<T: GeometryScalar>(
     let n_f = (length * step_mm.recip()).ceil();
     let n = (n_f.to_f64() as usize).max(1);
     let actual_step = length * <T as GeometryScalar>::from_f64(n as f64).recip();
+    // Segment length in cm so cm⁻¹ · cm is dimensionless.
+    let step_cm = actual_step * <T as GeometryScalar>::from_f64(MM_PER_CM).recip();
     let half = <T as GeometryScalar>::from_f64(0.5);
 
     let mut tau = T::ZERO;
@@ -81,7 +90,7 @@ pub fn forward_project_ray<T: GeometryScalar>(
         let world_pt: Point3<T> = ray.point_at(t_mid);
         let index = grid.world_to_index(world_pt);
         let mu_sample = mu.sample_trilinear(index).unwrap_or(T::ZERO);
-        tau += mu_sample * actual_step;
+        tau += mu_sample * step_cm;
     }
     Some(tau)
 }
@@ -105,20 +114,21 @@ mod tests {
 
     #[test]
     fn homogeneous_slab_gives_mu_times_length() {
-        // Uniform μ=0.06 cm⁻¹ over a 20 mm crossing → τ = 0.06·20 = 1.2 exactly.
+        // Uniform μ=0.06 cm⁻¹ over a 20 mm = 2 cm crossing → τ = 0.06·2 = 0.12.
         let mu = Volume::from_shape_fn(axis_grid(), |_| 0.06);
         let tau = forward_project_ray(&mu, &ray_along_x(-5.0), 0.5).expect("hit");
-        assert_relative_eq!(tau, 0.06 * 20.0, epsilon = 1e-12);
+        assert_relative_eq!(tau, 0.06 * 2.0, epsilon = 1e-12);
     }
 
     #[test]
     fn linear_field_is_integrated_exactly_by_midpoint() {
-        // μ(index i) = 0.01·i + 0.02 → along x, index i = x/2, so
-        // μ(x) = 0.005·x + 0.02; ∫₀²⁰ = 0.005·200 + 0.02·20 = 1.0 + 0.4 = 1.4.
-        // Midpoint integration of an affine field is exact.
+        // μ(index i) = 0.01·i + 0.02 cm⁻¹ → along x, index i = x_mm/2, so
+        // μ(x) = 0.005·x_mm + 0.02. τ = ∫₀²⁰ μ dx_cm = 0.1·∫₀²⁰(0.005x+0.02)dx_mm
+        //      = 0.1·(0.005·200 + 0.02·20) = 0.1·1.4 = 0.14. Midpoint is exact for
+        // an affine field.
         let mu = Volume::from_shape_fn(axis_grid(), |idx| 0.01 * idx[0] as f64 + 0.02);
         let tau = forward_project_ray(&mu, &ray_along_x(-5.0), 1.0).expect("hit");
-        assert_relative_eq!(tau, 1.4, epsilon = 1e-10);
+        assert_relative_eq!(tau, 0.14, epsilon = 1e-10);
     }
 
     #[test]
@@ -151,6 +161,6 @@ mod tests {
         )
         .unwrap();
         let tau = forward_project_ray(&mu, &ray, 0.5_f32).expect("hit");
-        assert_relative_eq!(tau, 0.06_f32 * 20.0, epsilon = 1e-4);
+        assert_relative_eq!(tau, 0.06_f32 * 2.0, epsilon = 1e-5);
     }
 }

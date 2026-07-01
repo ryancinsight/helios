@@ -11,7 +11,9 @@
 #![deny(missing_docs)]
 
 mod attenuation_map;
+mod dose;
 mod projector;
 
 pub use attenuation_map::attenuation_map;
+pub use dose::primary_fluence_parallel_x;
 pub use projector::forward_project_ray;
