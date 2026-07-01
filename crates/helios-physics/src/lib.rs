@@ -20,7 +20,8 @@ pub use attenuation::{
     mass_density_from_hu, relative_electron_density_from_hu, LinearAttenuation, MassAttenuation,
 };
 pub use compton::{
-    compton_mass_attenuation, electrons_per_gram, klein_nishina_cross_section,
-    thomson_cross_section,
+    compton_energy_transfer_cross_section, compton_mass_attenuation, compton_mass_energy_transfer,
+    compton_mean_energy_transfer_fraction, electrons_per_gram, klein_nishina_cross_section,
+    klein_nishina_differential, thomson_cross_section,
 };
 pub use projection::{beam_transmission, optical_depth};

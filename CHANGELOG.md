@@ -55,6 +55,13 @@ under a Breaking subsection.
   *derived from first principles* (`σ_KN · N_A·Z/A`); validated against the NIST
   water value at 1 MeV (0.0707 cm²/g, Compton-dominated) to within 2% — a computed
   coefficient, not a fabricated table entry.
+- `helios-physics::compton` energy transfer (H-011d3): `klein_nishina_differential`
+  (dσ/dΩ), `compton_energy_transfer_cross_section` (σ_tr by quadrature of the
+  differential), `compton_mean_energy_transfer_fraction`, and
+  `compton_mass_energy_transfer` — the collision-kerma coefficient (μ_tr/ρ)_C,
+  the dose-relevant Compton quantity. Self-validated (numeric total matches the
+  closed-form σ_KN to 1e-4) and validated against NIST water μ_tr/ρ at 1 MeV
+  (≈0.0310 cm²/g) to within 5%.
 - `helios-physics` crate:
   - `LinearAttenuation<T>` (cm⁻¹) and `MassAttenuation<T>` (cm²/g) validated
     newtypes; `μ = (μ/ρ)·ρ` via `MassAttenuation::to_linear`.

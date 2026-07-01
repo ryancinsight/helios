@@ -84,6 +84,79 @@ pub fn compton_mass_attenuation<T: Scalar>(
         .expect("invariant: Compton cross-section and electron density are non-negative")
 }
 
+/// Klein–Nishina differential cross-section `dσ/dΩ` (m²/sr) per electron at
+/// scattering angle `θ` (given as `cos θ`) for a photon of energy `energy_mev`.
+///
+/// `dσ/dΩ = ½ r_e² (E'/E)² (E/E' + E'/E − sin²θ)`, with the Compton scattered-to-
+/// incident energy ratio `E'/E = 1 / (1 + α(1 − cosθ))`, `α = E / m_e c²`.
+#[must_use]
+pub fn klein_nishina_differential<T: Scalar>(energy_mev: T, cos_theta: T) -> T {
+    let r_e = T::from_f64(CLASSICAL_ELECTRON_RADIUS_M);
+    let one = <T as NumericElement>::ONE;
+    let alpha = energy_mev * T::from_f64(ELECTRON_REST_ENERGY_MEV).recip();
+    let ratio = (one + alpha * (one - cos_theta)).recip();
+    let sin_sq = one - cos_theta * cos_theta;
+    T::from_f64(0.5) * r_e * r_e * ratio * ratio * (ratio.recip() + ratio - sin_sq)
+}
+
+/// Midpoint-integrate the Klein–Nishina differential over solid angle, returning
+/// `(σ_total, σ_transfer)`: the total cross-section and the energy-transfer
+/// cross-section `σ_tr = ∫ (dσ/dΩ)(1 − E'/E) dΩ`.
+fn integrate_compton<T: Scalar>(energy_mev: T, steps: usize) -> (T, T) {
+    let one = <T as NumericElement>::ONE;
+    let zero = <T as NumericElement>::ZERO;
+    let alpha = energy_mev * T::from_f64(ELECTRON_REST_ENERGY_MEV).recip();
+    let d_theta = T::PI * T::from_f64(steps as f64).recip();
+    let two_pi = T::from_f64(2.0) * T::PI;
+    let half = T::from_f64(0.5);
+
+    let mut total = zero;
+    let mut transfer = zero;
+    for i in 0..steps {
+        let theta = (T::from_f64(i as f64) + half) * d_theta;
+        let cos_t = theta.cos();
+        let sin_t = theta.sin();
+        let diff = klein_nishina_differential(energy_mev, cos_t);
+        let ratio = (one + alpha * (one - cos_t)).recip();
+        // Solid-angle element integrated over azimuth: 2π sinθ dθ.
+        let weight = two_pi * sin_t * d_theta;
+        total += diff * weight;
+        transfer += diff * (one - ratio) * weight;
+    }
+    (total, transfer)
+}
+
+/// Klein–Nishina Compton **energy-transfer** cross-section per electron (m²) for
+/// `energy_mev` — the fraction of the total cross-section weighted by the energy
+/// given to the recoil electron. Feeds collision kerma. Computed by quadrature of
+/// [`klein_nishina_differential`] (self-validated against the closed-form total).
+#[must_use]
+pub fn compton_energy_transfer_cross_section<T: Scalar>(energy_mev: T) -> T {
+    integrate_compton(energy_mev, 4096).1
+}
+
+/// Mean fraction of photon energy transferred to the recoil electron per Compton
+/// interaction, `σ_tr / σ_KN` (dimensionless, in `[0, 1)`).
+#[must_use]
+pub fn compton_mean_energy_transfer_fraction<T: Scalar>(energy_mev: T) -> T {
+    let (total, transfer) = integrate_compton(energy_mev, 4096);
+    transfer * total.recip()
+}
+
+/// Compton contribution to the mass **energy-transfer** coefficient (cm²/g),
+/// `(μ_tr/ρ)_C = σ_tr(E) · (electrons per gram)` — the collision-kerma
+/// coefficient. Under charged-particle equilibrium and negligible bremsstrahlung
+/// (water at MV), kerma ≈ dose, so this is the dose-relevant Compton coefficient.
+#[must_use]
+pub fn compton_mass_energy_transfer<T: Scalar>(
+    energy_mev: T,
+    electrons_per_gram: T,
+) -> MassAttenuation<T> {
+    let sigma_tr_cm2 = compton_energy_transfer_cross_section(energy_mev) * T::from_f64(CM2_PER_M2);
+    MassAttenuation::new(sigma_tr_cm2 * electrons_per_gram)
+        .expect("invariant: energy-transfer cross-section and electron density are non-negative")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -181,6 +254,45 @@ mod tests {
             1.0,
             max_relative = 1e-4
         );
+    }
+
+    #[test]
+    fn numeric_total_matches_closed_form_cross_section() {
+        // Quadrature of the KN differential must reproduce the closed-form total
+        // cross-section — a differential validation of both the differential form
+        // and the integrator.
+        for &e in &[0.05_f64, 0.5, 1.25, 6.0] {
+            let (numeric_total, _) = integrate_compton(e, 8192);
+            assert_relative_eq!(
+                numeric_total,
+                klein_nishina_cross_section(e),
+                max_relative = 1e-4
+            );
+        }
+    }
+
+    #[test]
+    fn energy_transfer_is_bounded_and_grows_with_energy() {
+        // σ_tr ≤ σ_total, the transfer fraction is in (0,1), and more energy is
+        // transferred (fractionally) at higher photon energy.
+        for &e in &[0.1_f64, 1.0, 6.0] {
+            let (total, transfer) = integrate_compton(e, 4096);
+            assert!(transfer > 0.0 && transfer < total, "E={e}");
+        }
+        let f_low = compton_mean_energy_transfer_fraction(0.1_f64);
+        let f_high = compton_mean_energy_transfer_fraction(6.0_f64);
+        assert!(f_low > 0.0 && f_low < 1.0);
+        assert!(f_high > f_low, "transfer fraction must grow with energy");
+    }
+
+    #[test]
+    fn derived_compton_mu_tr_matches_water_nist_at_1mev() {
+        // First-principles Compton μ_tr/ρ for water at 1 MeV vs the NIST value
+        // (≈0.0310 cm²/g, Compton-dominated). Validates the energy-transfer
+        // integral against a published coefficient — within ~5%.
+        let epg = electrons_per_gram(0.5551_f64);
+        let mu_tr = compton_mass_energy_transfer(1.0_f64, epg).get();
+        assert_relative_eq!(mu_tr, 0.0310, max_relative = 5e-2);
     }
 
     proptest::proptest! {
