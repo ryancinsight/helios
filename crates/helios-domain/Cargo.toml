@@ -1,0 +1,20 @@
+[package]
+name = "helios-domain"
+description = "Helios domain layer: patient/imaging voxel-grid geometry and dense scalar volumes (CT/MVCT) with trilinear sampling."
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+helios-core = { workspace = true }
+helios-math = { workspace = true }
+leto = { workspace = true }
+
+[dev-dependencies]
+approx = { workspace = true }

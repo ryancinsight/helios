@@ -7,30 +7,32 @@ integration.
 
 ## Owner: claude-helios
 
-### In-flight item: H-004 `helios-domain` CT/MVCT volume + voxel-grid geometry — `todo`
+### In-flight item: H-004b `helios-domain` ritk-io DICOM load path — `todo`
 
 Decomposed plan (each step has an observable completion condition):
 
-1. [ ] Add `crates/helios-domain` to workspace `members`; depends on `helios-core`,
-   `helios-math`, and (later) `ritk-io` for DICOM. — *builds empty lib.*
-2. [ ] `VoxelGrid` geometry: dimensions (const/runtime), `VoxelSpacingMm` per axis,
-   origin (`Point3`), index↔world affine mapping via `helios-math` `Isometry3`.
-   — *round-trip index→world→index tests exact; out-of-bounds rejected.*
-3. [ ] `Volume<T: Scalar>`: dense scalar field over a `VoxelGrid` (leto `Array3`),
-   trilinear sample; `CtVolume` = `Volume` of `HounsfieldUnit`-validated data.
-   — *trilinear sample matches analytical linear field; boundary clamped.*
-4. [ ] Verify `ritk-io` DICOM surface (anti-hallucination) and load path in a
-   feature-gated module; CPU-only test with a synthetic in-memory volume.
-   — *symbols confirmed via source/doc before use.*
-5. [ ] clippy `-D warnings`, fmt, nextest, doctests green; sync artifacts.
+1. [ ] Verify `ritk-io` DICOM surface against source/`cargo doc` (anti-hallucination):
+   series read, pixel data, `PixelSpacing`, `ImagePositionPatient`,
+   `ImageOrientationPatient`, `RescaleSlope/Intercept`. — *symbols confirmed before use.*
+2. [ ] Feature-gated `dicom` module: read a CT/MVCT series into a `Volume<T>` +
+   `VoxelGrid` pose from geometry tags; apply rescale to HU. — *loads a synthetic/
+   fixture series; value-semantic voxel checks.*
+3. [ ] `CtVolume`/`MvctVolume` HU-semantic newtypes over `Volume`; validate HU range
+   at the boundary via `helios-core::HounsfieldUnit`. — *out-of-range rejected.*
+4. [ ] clippy `-D warnings`, fmt, nextest, doctests green; sync artifacts.
+
+*Note:* ritk pulls burn (wgpu+autodiff) + dicom — heavy build; budget accordingly.
 
 ### Completed this sprint
 
-- [x] **H-003** `helios-math`: `Scalar = eunomia::RealField` seam re-export; leto
-  geometry (`Vector3`/`Point3`/`Isometry3`) re-export; Helios-owned `Ray`/`Aabb` +
-  slab `intersect_ray` (voxel-traversal primitive absent upstream). 6 analytical
-  tests (axis-aligned, miss-behind, parallel-miss, origin-inside, diagonal, f32
-  generic). Worked around leto→mnemosyne→themis skew (G-10) via
+- [x] **H-004** `helios-domain`: `VoxelGrid<T>` (dims, per-axis spacing, leto
+  `Isometry3` pose; `index_to_world`/`world_to_index`/`voxel_center`) + `Volume<T>`
+  backed by leto `Array3` with `sample_trilinear`/`sample_world`. 11 tests: affine-
+  field exact-reproduction oracle, C-contiguous layout lock, identity + 90°-rotated
+  pose round-trips, out-of-bounds/NaN → None, f32 genericity.
+- [x] **H-003** `helios-math`: `Scalar = eunomia::RealField` seam + leto substrate
+  re-export (geometry primitives corrected to gaia ownership; local `Ray`/`Aabb`
+  removed — see decision log). Worked around leto→mnemosyne→themis skew (G-10) via
   `default-features=false`.
 
 - [x] **H-001** Workspace skeleton (Cargo.toml edition 2021/resolver 2,
@@ -42,15 +44,15 @@ Decomposed plan (each step has an observable completion condition):
   (`EnergyMeV`, `HounsfieldUnit`, `VoxelSpacingMm`). 13 tests pass; build + clippy
   `-D warnings` + fmt + nextest green.
 
-## Gate status (last run, H-003)
+## Gate status (last run, H-004)
 
 | Gate | Result |
 |------|--------|
-| `cargo build` | pass (leto/eunomia git deps compiled) |
+| `cargo build` | pass |
 | `cargo clippy --all-targets --all-features -D warnings` | pass, 0 warnings |
 | `cargo fmt --check` | pass |
-| `cargo nextest run` | 19 passed / 0 failed (0.19 s) |
-| `cargo test --doc` | pass (0 doctests) |
+| `cargo nextest run` | 25 passed / 0 failed (0.23 s) |
+| `cargo test --doc` | pass |
 
 ## Decision log (this sprint)
 

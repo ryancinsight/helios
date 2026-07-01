@@ -26,11 +26,13 @@ target closure.
 ### Architecture / integration
 
 - **G-5 (integration):** Atlas crate *APIs* partially exercised. **eunomia**
-  (`RealField`/`FloatElement`/`NumericElement`) and **leto** (`Vector3`) now
-  verified against real usage and building in-tree (H-003). `ritk-io` (DICOM/MVCT),
-  `gaia` (MLC geometry), hephaestus, moirai, coeus, consus surfaces remain
-  unverified; symbol existence must be confirmed via `cargo doc`/source before each
-  first use (anti-hallucination). → H-004, H-005, H-010+.
+  (`RealField`/`FloatElement`/`NumericElement`) and **leto** (`Vector3`, `Point3`,
+  `Isometry3`, `Translation3`, `UnitQuaternion`/`Unit`, `Array3` C-contiguous +
+  `as_slice`) verified against real usage and building in-tree (H-003, H-004).
+  `ritk-io` (DICOM/MVCT), `gaia` (MLC geometry), hephaestus, moirai, coeus, consus
+  surfaces remain unverified; symbol existence must be confirmed via
+  `cargo doc`/source before each first use (anti-hallucination). → H-004b, H-005,
+  H-010+.
 - **G-10 (integration, upstream co-evolution):** leto's **default** features pull
   `mnemosyne` at a rev pinned to `themis ^0.8`, which conflicts with themis HEAD
   `0.9.17` — a version skew in the Atlas stack's transitive git graph. *Workaround

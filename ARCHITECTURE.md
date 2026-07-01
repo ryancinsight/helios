@@ -36,7 +36,7 @@ A lower layer never depends on a higher one. `helios-core` is the innermost crat
 |-------|----------------|--------|
 | `helios-core` | Typed errors, physical constants, validating domain newtypes, config, logging, arena hooks. | **implemented (0.0.1)** |
 | `helios-math` | Numeric seam (`Scalar` = `eunomia::RealField`), leto linear-algebra substrate re-export, numerical methods. Geometry *primitives* (`Aabb`/`Ray`/mesh) are consumed from **gaia**, not defined here. | **implemented (0.0.1)** |
-| `helios-domain` | Patient/imaging geometry (CT/MVCT), beam/source/sensor models, binary MLC + collimator geometry, helical delivery kinematics. | planned (Sprint 1/3) |
+| `helios-domain` | Patient/imaging geometry (CT/MVCT), beam/source/sensor models, binary MLC + collimator geometry, helical delivery kinematics. `VoxelGrid` + `Volume` landed (0.0.1); DICOM I/O and beam/MLC models pending. | **partial (0.0.1)** |
 | `helios-physics` | Radiation interaction physics: photon/electron transport, scatter, attenuation, projection physics. | planned (Sprint 2) |
 | `helios-solver` | GPU-accelerated deterministic dose engines (collapsed-cone / convolution-superposition) and imaging forward projectors/reconstruction. | planned (Sprint 2) |
 | `helios-analysis` | Dosimetric analysis (DVH, gamma), imaging quality metrics, visualization. | planned (Sprint 4/5) |

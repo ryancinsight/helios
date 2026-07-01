@@ -34,6 +34,14 @@ under a Breaking subsection.
   - Geometry *primitives* (`Aabb`/`Ray`/intersection) are **owned by gaia**, not
     Helios; consuming them is tracked as H-003b (blocked on gaia's leto-geometry
     migration, `gap_audit.md` G-11). Helios does not define its own.
+- `helios-domain` crate:
+  - `VoxelGrid<T: Scalar>`: anisotropic per-axis spacing + rigid leto `Isometry3`
+    patient pose; `index_to_world`/`world_to_index`/`voxel_center` affine mapping;
+    construction validates non-zero dims, non-overflowing voxel count, and
+    finite/positive spacing (`HeliosError::InvalidDomainValue`).
+  - `Volume<T: Scalar>`: dense scalar field backed by leto `Array3` (C-contiguous),
+    `from_shape_fn`/`zeros`/`from_shape_vec`, `get`, and `sample_trilinear`/
+    `sample_world`. Trilinear reproduces affine fields exactly (analytical oracle).
 - Foundation documentation: `README.md`, `ARCHITECTURE.md` (layering + Atlas
   dependency map), and PM artifacts `backlog.md`, `CHECKLIST.md`, `gap_audit.md`,
   `SPRINT_1.md`.

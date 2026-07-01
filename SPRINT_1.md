@@ -37,10 +37,10 @@ into Phase 2 (Execution) as the first crate lands.
 
 | Metric | Value |
 |--------|-------|
-| Crates implemented | 2 / 11 (`helios-core`, `helios-math`) |
-| Tests | 13 passed / 0 failed |
+| Crates implemented | 3 / 11 (`helios-core`, `helios-math`, `helios-domain`) |
+| Tests | 25 passed / 0 failed |
 | Clippy warnings (production) | 0 |
-| Test wall-clock | 0.66 s (well within 30 s budget) |
+| Test wall-clock | 0.23 s (well within 30 s budget) |
 
 ## Gaps opened
 
@@ -58,6 +58,7 @@ leto substrate; gaia geometry is consumed via H-003b once gaia's migration lands
 
 ## Next increment
 
-**H-004:** `helios-domain` — `VoxelGrid` (index↔world affine mapping via leto
-`Isometry3`) + `Volume<T: Scalar>`/`CtVolume` with trilinear sampling; then the
-verified `ritk-io` DICOM (CT/MVCT) load path. Decomposed plan in `CHECKLIST.md`.
+**H-004b:** `helios-domain` — verified `ritk-io` DICOM (CT/MVCT) load path into
+`Volume`/`VoxelGrid` (pose from `ImageOrientationPatient`, HU rescale), plus
+`CtVolume`/`MvctVolume` HU-semantic newtypes. Decomposed plan in `CHECKLIST.md`.
+(ritk pulls burn+dicom — heavy build.)

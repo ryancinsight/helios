@@ -14,7 +14,8 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-002 | `helios-core`: typed errors, physical constants, validating newtypes | [minor] | done | claude-helios | `crates/helios-core/**` |
 | H-003 | `helios-math`: `Scalar` seam (= `eunomia::RealField`) + leto linear-algebra substrate re-export | [minor] | done | claude-helios | `crates/helios-math/**` |
 | H-003b | Consume gaia `Aabb`/`Ray` in `helios-math` (re-export as Helios geometry). Blocked on gaia's leto-geometry migration landing on its default branch (G-11). | [minor] | blocked | — | `crates/helios-math/**` |
-| H-004 | `helios-domain`: CT/MVCT volume type over ritk-io; voxel grid geometry; patient frame | [minor] | todo | — | `crates/helios-domain/**` |
+| H-004 | `helios-domain`: `VoxelGrid` (index↔world via leto `Isometry3`) + `Volume<T>` trilinear sampling over leto `Array3` | [minor] | done | claude-helios | `crates/helios-domain/**` |
+| H-004b | `helios-domain`: `ritk-io` DICOM load path (CT/MVCT → `Volume`); `CtVolume`/`MvctVolume` HU-semantic newtypes; DICOM `ImageOrientationPatient` → grid pose | [minor] | todo | — | `crates/helios-domain/**` |
 | H-005 | `helios-domain`: gaia-backed binary-MLC + collimator/jaw geometry model | [minor] | todo | — | `crates/helios-domain/**` |
 | H-006 | ~~Shared `CARGO_TARGET_DIR`~~ — resolved: inherited from `repos/.cargo/config.toml` (shared `D:/atlas/target`) | [patch] | done | claude-helios | — |
 

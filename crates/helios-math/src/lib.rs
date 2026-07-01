@@ -36,4 +36,7 @@ pub use eunomia::{CastFrom, CastTo, FloatElement, NumericElement};
 
 /// Linear-algebra substrate from leto, re-exported as the Helios vocabulary.
 /// (Geometry *primitives* — `Aabb`, `Ray`, meshes — are owned by gaia.)
-pub use leto::{Isometry3, Point3, Quaternion, Translation3, UnitQuaternion, Vector2, Vector3};
+pub use leto::geometry::{UnitVector2, UnitVector3};
+pub use leto::{
+    Isometry3, Point3, Quaternion, Translation3, Unit, UnitQuaternion, Vector2, Vector3,
+};
