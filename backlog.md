@@ -12,7 +12,8 @@ Status: `todo` · `in-progress` · `review` · `done`
 |----|------|-------|--------|-------|-------|
 | H-001 | Workspace skeleton + Foundation artifacts (README, ARCHITECTURE, PM files) | [arch] | done | claude-helios | `Cargo.toml`, root `*.md`, `.config/` |
 | H-002 | `helios-core`: typed errors, physical constants, validating newtypes | [minor] | done | claude-helios | `crates/helios-core/**` |
-| H-003 | `helios-math`: `Scalar` seam (= `eunomia::RealField`) + leto geometry re-export + `Ray`/`Aabb` slab intersection | [minor] | done | claude-helios | `crates/helios-math/**` |
+| H-003 | `helios-math`: `Scalar` seam (= `eunomia::RealField`) + leto linear-algebra substrate re-export | [minor] | done | claude-helios | `crates/helios-math/**` |
+| H-003b | Consume gaia `Aabb`/`Ray` in `helios-math` (re-export as Helios geometry). Blocked on gaia's leto-geometry migration landing on its default branch (G-11). | [minor] | blocked | — | `crates/helios-math/**` |
 | H-004 | `helios-domain`: CT/MVCT volume type over ritk-io; voxel grid geometry; patient frame | [minor] | todo | — | `crates/helios-domain/**` |
 | H-005 | `helios-domain`: gaia-backed binary-MLC + collimator/jaw geometry model | [minor] | todo | — | `crates/helios-domain/**` |
 | H-006 | ~~Shared `CARGO_TARGET_DIR`~~ — resolved: inherited from `repos/.cargo/config.toml` (shared `D:/atlas/target`) | [patch] | done | claude-helios | — |

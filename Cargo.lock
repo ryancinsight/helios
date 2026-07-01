@@ -152,7 +152,6 @@ dependencies = [
 name = "helios-math"
 version = "0.0.1"
 dependencies = [
- "approx",
  "eunomia",
  "helios-core",
  "leto",

@@ -54,11 +54,16 @@ Decomposed plan (each step has an observable completion condition):
 
 ## Decision log (this sprint)
 
-- **Scalar seam = `eunomia::RealField`, geometry from `leto`** (H-003): eunomia is
+- **Scalar seam = `eunomia::RealField`; substrate from `leto`** (H-003): eunomia is
   the Atlas datatype SSOT (`RealField`/`FloatElement`/`NumericElement`) and leto
   owns `Vector3`/`Point3`/`Isometry3`. `helios-math` re-exports them rather than
-  reinventing (consolidation/subtractive bias). Only `Ray`/`Aabb` + slab
-  intersection are Helios-owned — absent upstream (leto is an array library).
+  reinventing (consolidation/subtractive bias).
+- **Geometry primitives belong to gaia, not Helios** (correction, user directive):
+  the initial `helios-math` `Ray`/`Aabb` were a downstream duplication and were
+  **removed**. gaia already owns `Aabb` (default branch) and a validated `Ray` +
+  `intersect_aabb` (leto-migration branch). Helios will re-export gaia's types once
+  that migration lands on gaia's default branch (H-003b, blocked; G-11). Do not
+  re-implement geometry in Helios.
 - **leto `default-features = false`** (G-10): leto's default `mnemosyne-memory`
   pulls an mnemosyne rev bound to `themis ^0.8`, conflicting with themis HEAD 0.9.x.
   Consuming leto with only `std` sidesteps the skew; mnemosyne placement is opted

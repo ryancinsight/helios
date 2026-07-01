@@ -13,9 +13,9 @@ target closure.
   electron transport model. *Evidence tier: none.* → H-011.
 - **G-2 (numerics):** ~~No `Scalar` seam.~~ **CLOSED (H-003).** `helios-math`
   establishes `Scalar = eunomia::RealField` (the Atlas numeric SSOT) as the Helios
-  compute seam; `Ray`/`Aabb` are generic over it and exercised at both `f64` and
-  `f32` (native precision, no widen-narrow). `helios-core` constants remain `f64`
-  literals by design and are converted by callers.
+  compute seam and re-exports the leto linear-algebra substrate. `helios-core`
+  constants remain `f64` literals by design and are converted by callers. The seam
+  is exercised natively (`f32`/`f64`) by the first compute kernels as they land.
 - **G-3 (accuracy):** No dose-engine or projector reference solutions yet. Gamma
   (3%/2mm), DVH, and MVCT image-quality oracles are unimplemented. Validation vs
   VoLO/TOPAS/GATE/EGSnrc pending. *Evidence tier: none.* → H-012, H-013, H-042.
@@ -49,6 +49,19 @@ target closure.
 - **G-7 (toolchain):** `rust-toolchain.toml` pins `channel = "stable"` (currently
   1.95) but does not pin an exact version; MSRV floor declared as 1.85 in
   `Cargo.toml` (`rust-version`) but not yet CI-verified. → revisit at first CI.
+
+- **G-11 (integration, geometry ownership):** Geometry primitives (`Aabb`, `Ray`,
+  intersection, meshes, CSG) are owned by **gaia**, not Helios. gaia already has
+  `Aabb<T: Scalar>` (over `leto::Point3`) and a validated-`UnitVector3` `Ray` with
+  `intersect_aabb` (on branch `refactor/migrate-to-leto-geometry`, not yet on the
+  default branch — the leto/eunomia migration is "not building yet" per gaia's own
+  WIP commit). *Action taken:* removed the duplicate `Ray`/`Aabb` from
+  `helios-math` (they violated upstream ownership). *Blocker:* Helios consumes gaia
+  via a git dep on its default branch, which still carries the pre-leto (nalgebra)
+  geometry; consuming gaia's leto `Aabb`/`Ray` (H-003b) is blocked until gaia's
+  migration lands on `main` and is published. Do **not** re-add geometry to Helios;
+  do **not** disturb gaia's in-progress refactor branch (concurrent owner).
+  *Evidence tier: gaia source inspected (types exist upstream).*
 
 ### Testing / tooling
 

@@ -27,13 +27,13 @@ under a Breaking subsection.
 - `helios-math` crate:
   - `Scalar` seam re-exported as `eunomia::RealField` (Atlas numeric SSOT), with
     `FloatElement`/`NumericElement`/`CastFrom`/`CastTo`.
-  - leto geometry re-exported (`Vector3`, `Point3`, `Isometry3`, `Quaternion`,
-    `UnitQuaternion`, `Translation3`, `Vector2`).
-  - Helios-owned `Ray<T>`, `Aabb<T>`, `RayHit<T>` with slab `Aabb::intersect_ray`
-    (voxel/ray traversal primitive) generic over `Scalar`; 6 analytical tests
-    (`f64` + `f32`).
+  - leto linear-algebra substrate re-exported (`Vector3`, `Point3`, `Isometry3`,
+    `Quaternion`, `UnitQuaternion`, `Translation3`, `Vector2`).
   - leto consumed with `default-features = false, features=["std"]` to avoid the
     leto→mnemosyne→themis version skew (see `gap_audit.md` G-10).
+  - Geometry *primitives* (`Aabb`/`Ray`/intersection) are **owned by gaia**, not
+    Helios; consuming them is tracked as H-003b (blocked on gaia's leto-geometry
+    migration, `gap_audit.md` G-11). Helios does not define its own.
 - Foundation documentation: `README.md`, `ARCHITECTURE.md` (layering + Atlas
   dependency map), and PM artifacts `backlog.md`, `CHECKLIST.md`, `gap_audit.md`,
   `SPRINT_1.md`.

@@ -1,9 +1,9 @@
-//! Helios numeric and geometry layer.
+//! Helios numeric and geometry-vocabulary layer.
 //!
 //! This crate is a thin, additive layer over the Atlas numeric SSOT
-//! ([`eunomia`]) and array/geometry substrate ([`leto`]). It does not reinvent
-//! scalars or vectors; it re-exports them as the Helios vocabulary and adds only
-//! the primitives Helios needs that do not exist upstream.
+//! ([`eunomia`]) and the array/linear-algebra substrate ([`leto`]). It does not
+//! reinvent scalars, vectors, or geometry primitives; it re-exports them as the
+//! Helios vocabulary so higher layers depend on one source.
 //!
 //! ## The `Scalar` seam
 //!
@@ -15,17 +15,15 @@
 //!
 //! ## Geometry
 //!
-//! Vectors, points, and rigid transforms come from [`leto`] ([`Vector3`],
-//! [`Point3`], [`Isometry3`], …). Helios adds [`Ray`] and [`Aabb`] with a robust
-//! slab intersection ([`Aabb::intersect_ray`]) — the ray/voxel-grid traversal
-//! primitive used by the imaging projectors and dose engines, which leto (an
-//! array library) does not provide.
+//! The linear-algebra substrate — vectors, points, and rigid transforms — comes
+//! from [`leto`] ([`Vector3`], [`Point3`], [`Isometry3`], …) and is re-exported
+//! here. Higher-level geometry *primitives* (axis-aligned boxes, rays and their
+//! intersection, meshes, CSG solids) are owned by the **gaia** geometry kernel,
+//! not by Helios: `gaia::Aabb`/`gaia::Ray` are the canonical types, consumed once
+//! gaia's leto-based geometry lands on its default branch (see `gap_audit.md`
+//! G-11 / `backlog.md` H-003b). Helios never re-implements them.
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
-
-mod geometry;
-
-pub use geometry::{Aabb, Ray, RayHit};
 
 /// The Helios scalar seam: the real-field trait every compute kernel is generic
 /// over. Identical to [`eunomia::RealField`]; re-exported here as the canonical
@@ -36,6 +34,6 @@ pub use eunomia::RealField as Scalar;
 // one vocabulary source.
 pub use eunomia::{CastFrom, CastTo, FloatElement, NumericElement};
 
-/// Geometry primitives from the leto substrate, re-exported as the Helios
-/// geometry vocabulary.
+/// Linear-algebra substrate from leto, re-exported as the Helios vocabulary.
+/// (Geometry *primitives* — `Aabb`, `Ray`, meshes — are owned by gaia.)
 pub use leto::{Isometry3, Point3, Quaternion, Translation3, UnitQuaternion, Vector2, Vector3};

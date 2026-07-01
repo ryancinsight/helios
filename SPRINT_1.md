@@ -37,20 +37,27 @@ into Phase 2 (Execution) as the first crate lands.
 
 | Metric | Value |
 |--------|-------|
-| Crates implemented | 1 / 11 (`helios-core`) |
+| Crates implemented | 2 / 11 (`helios-core`, `helios-math`) |
 | Tests | 13 passed / 0 failed |
 | Clippy warnings (production) | 0 |
-| Cold build | 18.1 s |
-| Test wall-clock | 0.19 s (well within 30 s budget) |
+| Test wall-clock | 0.66 s (well within 30 s budget) |
 
 ## Gaps opened
 
-See `gap_audit.md` G-1..G-9 (physics, numerics, accuracy, integration, tooling).
-Highest-risk: G-1 (no physics), G-3 (no accuracy oracles), G-5 (Atlas API surfaces
-unverified against real usage).
+See `gap_audit.md` G-1..G-11 (physics, numerics, accuracy, integration, tooling).
+Highest-risk: G-1 (no physics), G-3 (no accuracy oracles), G-5/G-11 (Atlas API
+surfaces / geometry ownership).
+
+## Correction (user directive)
+
+Geometry primitives (`Aabb`/`Ray`) belong to **gaia**, not Helios. The first
+`helios-math` cut defined them locally; they were removed as a downstream
+duplication. gaia already owns `Aabb` and a validated `Ray`+`intersect_aabb`
+(leto-migration branch). `helios-math` now exports only the `Scalar` seam and the
+leto substrate; gaia geometry is consumed via H-003b once gaia's migration lands.
 
 ## Next increment
 
-**H-003:** `helios-math` — sealed `Scalar` seam over `hermes`/`leto` + geometry
-primitives (`Vec3<T>`, affine patient/beam transforms, ray/AABB intersection) with
-analytically-derived intersection tests. Decomposed plan in `CHECKLIST.md`.
+**H-004:** `helios-domain` — `VoxelGrid` (index↔world affine mapping via leto
+`Isometry3`) + `Volume<T: Scalar>`/`CtVolume` with trilinear sampling; then the
+verified `ritk-io` DICOM (CT/MVCT) load path. Decomposed plan in `CHECKLIST.md`.
