@@ -6,7 +6,18 @@
 
 ## Owner: claude-helios
 
-### H-041b done — runnable end-to-end example with inspected PNG renders. Next in-flight: H-020g anisotropic CC kernel / H-043b GPU fusion / H-041c real-DICOM example+Python — `todo`
+### H-032b done — structure-masked (per-PTV/OAR) DVH. Next in-flight: H-020g anisotropic CC kernel / H-043b GPU fusion / H-032c local-norm gamma+RT-struct — `todo`
+
+`helios-analysis::Dvh::from_volume_masked` builds a per-structure DVH from a voxel-mask
+predicate — how clinical DVH-agreement metrics are evaluated (target vs OAR). `from_volume`
+consolidated as the unmasked case. Verified: disjoint target/OAR masks give distinct means,
+single-voxel point DVH. 180 default / 185 `--all-features` tests pass. Remaining analysis:
+RT-struct ROI rasterization (ritk) + local-normalization gamma (H-032c).
+
+### (prior) H-041b done — runnable end-to-end example with inspected PNG renders
+
+`examples/tomotherapy_workflow.rs` — full pipeline demo, renders inspected; recon μ +0.1%,
+self-gamma 100%.
 
 `helios-simulation/examples/tomotherapy_workflow.rs` runs the full pipeline and renders
 `ct/mu/recon/dose.png` (Output & visual verification — **inspected**: phantom, FBP
@@ -136,13 +147,14 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-041 — end-to-end workflow validation)
+## Gate status (last run, H-032b — structure-masked DVH)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 11 crates) |
-| `cargo nextest run` (default) | 178 passed / 0 failed (incl. live GPU + E2E) |
-| `cargo nextest run --all-features` | **183 passed / 0 failed** (+5 DICOM slice/series) |
+| `cargo build --examples` | pass (tomotherapy_workflow) |
+| `cargo nextest run` (default) | 180 passed / 0 failed (incl. live GPU + E2E) |
+| `cargo nextest run --all-features` | **185 passed / 0 failed** (+5 DICOM slice/series) |
 | `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |
 | `cargo clippy -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |

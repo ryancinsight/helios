@@ -19,12 +19,33 @@ impl<T: Scalar> Dvh<T> {
     /// Build a DVH from every voxel of a dose volume.
     #[must_use]
     pub fn from_volume(dose: &Volume<T>) -> Self {
+        Self::from_volume_masked(dose, |_| true)
+    }
+
+    /// Build a **structure-masked** DVH from the voxels of `dose` for which
+    /// `include(idx)` is true — the per-structure (PTV / OAR) DVH clinical plan
+    /// evaluation and DVH-agreement metrics operate on. [`from_volume`] is the
+    /// whole-volume case (`include ≡ true`).
+    ///
+    /// The mask predicate is the segmentation contour (an ROI binary mask, e.g.
+    /// from a `ritk` RT-struct rasterization) expressed as a voxel-index test.
+    ///
+    /// # Panics
+    /// The quantile/statistic accessors require a non-empty histogram, so `include`
+    /// must select at least one voxel.
+    #[must_use]
+    pub fn from_volume_masked<F>(dose: &Volume<T>, mut include: F) -> Self
+    where
+        F: FnMut([usize; 3]) -> bool,
+    {
         let [nx, ny, nz] = dose.grid().dims();
-        let mut sorted = Vec::with_capacity(nx * ny * nz);
+        let mut sorted = Vec::new();
         for i in 0..nx {
             for j in 0..ny {
                 for k in 0..nz {
-                    sorted.push(dose.get(i, j, k).expect("index within grid"));
+                    if include([i, j, k]) {
+                        sorted.push(dose.get(i, j, k).expect("index within grid"));
+                    }
                 }
             }
         }
@@ -126,6 +147,33 @@ mod tests {
         assert_relative_eq!(dvh.dose_at_volume_fraction(0.5), 50.0, epsilon = 1e-12);
         // Exactly half of voxels have dose ≥ 50 (values 50..99 = 50 voxels).
         assert_relative_eq!(dvh.volume_fraction_at_dose(50.0), 0.5, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn masked_dvh_restricts_to_the_structure() {
+        // 4×4×4 dose: a "target" (i<2) at 2.0 Gy, surrounding "OAR" (i≥2) at 8.0.
+        let dose = Volume::from_shape_fn(grid([4, 4, 4]), |idx| if idx[0] < 2 { 2.0 } else { 8.0 });
+
+        let target = Dvh::from_volume_masked(&dose, |idx| idx[0] < 2);
+        assert_eq!(target.count(), 32); // half of 64 voxels
+        assert_relative_eq!(target.mean(), 2.0, epsilon = 1e-15);
+        assert_relative_eq!(target.max(), 2.0, epsilon = 1e-15);
+
+        let oar = Dvh::from_volume_masked(&dose, |idx| idx[0] >= 2);
+        assert_eq!(oar.count(), 32);
+        assert_relative_eq!(oar.mean(), 8.0, epsilon = 1e-15);
+
+        // Whole-volume mean (5.0) differs from either structure — masking matters.
+        assert_relative_eq!(Dvh::from_volume(&dose).mean(), 5.0, epsilon = 1e-15);
+    }
+
+    #[test]
+    fn single_voxel_mask_is_a_point_dvh() {
+        let dose = Volume::from_shape_fn(grid([3, 3, 3]), |idx| (idx[0] + idx[1] + idx[2]) as f64);
+        let point = Dvh::from_volume_masked(&dose, |idx| idx == [2, 2, 2]);
+        assert_eq!(point.count(), 1);
+        assert_relative_eq!(point.min(), 6.0, epsilon = 1e-15);
+        assert_relative_eq!(point.dose_at_volume_fraction(1.0), 6.0, epsilon = 1e-15);
     }
 
     #[test]

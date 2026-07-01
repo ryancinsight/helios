@@ -97,6 +97,12 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-analysis::Dvh::from_volume_masked` (H-032b): structure-masked (per-PTV/OAR)
+  cumulative DVH built only from voxels a mask predicate selects — the per-structure DVH
+  clinical plan evaluation and DVH-agreement metrics operate on. `from_volume` is now the
+  `include ≡ true` case (consolidated, one code path). Verified: disjoint target/OAR masks
+  yield distinct means (2.0 vs 8.0 vs whole-volume 5.0), and a single-voxel mask is a
+  point DVH. RT-struct ROI rasterization (via ritk) + local-normalization gamma = H-032c.
 - Runnable end-to-end example (H-041b): `helios-simulation/examples/tomotherapy_workflow.rs`
   runs the full pipeline (CT→μ→Radon/FBP recon + helical MLC delivery→divergent-fan
   dose→collapsed-cone scatter→DVH/gamma) and renders inspectable PNGs (`ct/mu/recon/dose`)
