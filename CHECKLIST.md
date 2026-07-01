@@ -6,7 +6,20 @@
 
 ## Owner: claude-helios
 
-### H-004c done — multi-slice DICOM series → 3-D HU Volume. Next in-flight: H-043b GPU fusion / H-020f anisotropic dose / H-004d HU newtypes+oriented pose — `todo`
+### H-020f done — divergent point-source fan (TomoTherapy beam geometry). Next in-flight: H-020g anisotropic CC kernel / H-043b GPU fusion / H-004d HU newtypes+oriented pose — `todo`
+
+`helios-simulation::BeamGeometry` seam: `accumulate_delivered_dose` now supports a
+divergent point-source fan (`PointSource { source_axis_mm }`) alongside the parallel
+approximation — beamlets diverge from a focal spot with depth (true TomoTherapy fan).
+Verified: reduces to parallel as SAD→∞ (dose within 1e-4); off-axis beamlet sweeps ≥3
+detector rows under divergence. Existing parallel oracles intact. 169 default / 174
+`--all-features` tests pass. Remaining dose fidelity: anisotropic beam-aligned CC
+kernel + inverse-square falloff (H-020g).
+
+### (prior) H-004c done — multi-slice DICOM series → 3-D HU Volume
+
+`load_ct_series` stacks a real CT/MVCT series into a 3-D HU `Volume` (sorted by z,
+uniform Δz). Real-input path complete (slice + series).
 
 `helios-domain::load_ct_series` (feature `dicom`) stacks a real DICOM CT/MVCT series
 into a 3-D HU `Volume`: identical-in-plane-geometry validation, sort by
@@ -90,13 +103,13 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-004c — DICOM series stacking)
+## Gate status (last run, H-020f — divergent point-source fan)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 11 crates) |
-| `cargo nextest run` (default) | 167 passed / 0 failed (incl. live GPU) |
-| `cargo nextest run --all-features` | **172 passed / 0 failed** (+5 DICOM slice/series) |
+| `cargo nextest run` (default) | 169 passed / 0 failed (incl. live GPU) |
+| `cargo nextest run --all-features` | **174 passed / 0 failed** (+5 DICOM slice/series) |
 | `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |
 | `cargo clippy -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |

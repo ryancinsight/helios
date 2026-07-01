@@ -20,4 +20,4 @@ mod dose_accumulation;
 
 pub use acquisition::{simulate_helical_sinogram, HelicalProjection};
 pub use delivery::{simulate_helical_delivery, total_delivered_fluence, DeliveryFrame};
-pub use dose_accumulation::accumulate_delivered_dose;
+pub use dose_accumulation::{accumulate_delivered_dose, BeamGeometry};

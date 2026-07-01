@@ -97,6 +97,15 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-simulation::BeamGeometry` + divergent-fan dose accumulation (H-020f): the
+  `accumulate_delivered_dose` beam model is now a seam — `BeamGeometry::Parallel`
+  (small-fan approximation, unchanged) or `BeamGeometry::PointSource { source_axis_mm }`,
+  where each MLC leaf's beamlet runs from a focal spot through its isocentre-plane
+  offset point so beamlets **diverge with depth** (the true TomoTherapy fan). Verified:
+  the point-source fan reduces to parallel as `SAD → ∞` (matching total dose within
+  1e-4), and a far off-axis beamlet that stays in one detector row when parallel sweeps
+  ≥3 rows under divergence (on a 1 mm grid). Existing parallel oracles unchanged.
+  Anisotropic beam-aligned CC kernel + inverse-square falloff = H-020g.
 - `helios-domain::load_ct_series` (H-004c, feature `dicom`): multi-slice DICOM series
   → 3-D HU `Volume`. Parses/decodes each slice, validates an identical in-plane grid
   (Rows/Columns/PixelSpacing/in-plane origin within a 1 µm tolerance), sorts by

@@ -9,30 +9,52 @@
 //! frames — the input the DVH / gamma analysis consumes.
 //!
 //! # Beam geometry
-//! A first-order helical TomoTherapy fan: at gantry angle `θ` the beam travels
-//! along the axial-plane direction `d = (cosθ, sinθ, 0)`; each binary-MLC leaf is
-//! a beamlet parallel to `d`, laterally offset along the in-plane perpendicular
-//! `p = (−sinθ, cosθ, 0)` by `(leaf − centre)·leaf_width`, at the couch `z` slice.
-//! Beamlets are parallel (small-fan approximation); a divergent point-source fan
-//! and per-leaf collimation via gaia are a later increment.
+//! A helical TomoTherapy fan: at gantry angle `θ` the beam travels along the
+//! axial-plane direction `d = (cosθ, sinθ, 0)`; each binary-MLC leaf is a beamlet
+//! laterally offset along the in-plane perpendicular `p = (−sinθ, cosθ, 0)` by
+//! `(leaf − centre)·leaf_width`, at the couch `z` slice. [`BeamGeometry`] selects
+//! whether the beamlets run parallel (small-fan approximation) or diverge from a
+//! point source (true fan). Inverse-square fluence falloff and per-leaf gaia
+//! collimation are a later increment.
 
 use crate::delivery::DeliveryFrame;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
 use helios_solver::deposit_ray_terma;
 
+/// Beam geometry for delivered-dose accumulation — the seam that selects how each
+/// MLC leaf's beamlet ray is cast for a gantry angle.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum BeamGeometry<T: GeometryScalar> {
+    /// Parallel beamlets (small-fan approximation): every leaf ray runs along the
+    /// gantry direction, offset laterally; `standoff_mm` places the origin behind
+    /// isocentre. Cheap and exact for a narrow field.
+    Parallel {
+        /// Distance the beamlet origin stands off behind isocentre (mm).
+        standoff_mm: T,
+    },
+    /// Divergent fan from a point source at `source_axis_mm` from isocentre (SAD):
+    /// each beamlet runs from the focal spot through its isocentre-plane offset
+    /// point, so beamlets diverge with depth — the true TomoTherapy fan geometry.
+    /// Reduces to [`Parallel`](Self::Parallel) as `source_axis_mm → ∞`.
+    PointSource {
+        /// Source-to-axis distance / SAD (mm).
+        source_axis_mm: T,
+    },
+}
+
 /// Accumulate the delivered dose from a helical-delivery `frames` sequence into a
 /// dose [`Volume`] over the same grid as the attenuation volume `mu`.
 ///
-/// `source_distance_mm` places each beamlet origin behind isocentre; `leaf_width_mm`
-/// is the inter-leaf lateral pitch; `step_mm` is the ray-march sampling step. Dose
-/// is linear in the per-leaf fluence, so scaling all fluence scales the dose and
-/// the contributions of independent frames/leaves superpose (the test oracles).
+/// `geometry` selects the beam model (parallel vs divergent point-source fan);
+/// `leaf_width_mm` is the inter-leaf lateral pitch; `step_mm` is the ray-march
+/// sampling step. Dose is linear in the per-leaf fluence, so scaling all fluence
+/// scales the dose and independent frames/leaves superpose (the test oracles).
 #[must_use]
 pub fn accumulate_delivered_dose<T: GeometryScalar>(
     frames: &[DeliveryFrame<T>],
     mu: &Volume<T>,
-    source_distance_mm: T,
+    geometry: BeamGeometry<T>,
     leaf_width_mm: T,
     step_mm: T,
 ) -> Volume<T> {
@@ -57,14 +79,37 @@ pub fn accumulate_delivered_dose<T: GeometryScalar>(
             }
             let offset =
                 (<T as GeometryScalar>::from_f64(leaf as f64) - centre_leaf) * leaf_width_mm;
-            // Beamlet parallel to `dir`, offset laterally along `perp`, at the
-            // couch z (dir.z = perp.z = 0), origin standing off behind isocentre.
-            let origin = Point3::new(
-                centre.x + perp.x * offset - dir.x * source_distance_mm,
-                centre.y + perp.y * offset - dir.y * source_distance_mm,
-                frame.couch_mm,
-            );
-            if let Some(ray) = Ray::try_from_direction(origin, dir) {
+            // Cast the beamlet ray for this leaf per the selected geometry. Both
+            // branches lie in the couch z-slice (dir.z = perp.z = 0); the ray
+            // constructor normalizes the direction vector.
+            let (origin, direction) = match geometry {
+                BeamGeometry::Parallel { standoff_mm } => (
+                    Point3::new(
+                        centre.x + perp.x * offset - dir.x * standoff_mm,
+                        centre.y + perp.y * offset - dir.y * standoff_mm,
+                        frame.couch_mm,
+                    ),
+                    dir,
+                ),
+                BeamGeometry::PointSource { source_axis_mm } => {
+                    // Focal spot behind isocentre; ray aims through the leaf's
+                    // isocentre-plane point `centre + perp·offset`, so
+                    // direction = (perp·offset + dir·SAD). For offset 0 this is the
+                    // central axis; off-axis leaves fan out with depth.
+                    let focal = Point3::new(
+                        centre.x - dir.x * source_axis_mm,
+                        centre.y - dir.y * source_axis_mm,
+                        frame.couch_mm,
+                    );
+                    let aim = Vector3::new(
+                        perp.x * offset + dir.x * source_axis_mm,
+                        perp.y * offset + dir.y * source_axis_mm,
+                        zero,
+                    );
+                    (focal, aim)
+                }
+            };
+            if let Some(ray) = Ray::try_from_direction(origin, direction) {
                 let _deposited = deposit_ray_terma(&mut dose, mu, &ray, weight, step_mm);
             }
         }
@@ -107,14 +152,26 @@ mod tests {
         // θ=0 → +x beamlet through the centre (couch z = 8 mm). Total delivered
         // dose = w·(1 − e^{−μ·1.6}).
         let mu = uniform_cube(0.05);
-        let dose = accumulate_delivered_dose(&[frame(0.0, 8.0, 2.0)], &mu, 500.0, 2.0, 0.25);
+        let dose = accumulate_delivered_dose(
+            &[frame(0.0, 8.0, 2.0)],
+            &mu,
+            BeamGeometry::Parallel { standoff_mm: 500.0 },
+            2.0,
+            0.25,
+        );
         assert_relative_eq!(dose.sum(), expected_axial_energy(0.05, 2.0), epsilon = 1e-9);
     }
 
     #[test]
     fn zero_fluence_delivers_zero_dose() {
         let mu = uniform_cube(0.05);
-        let dose = accumulate_delivered_dose(&[frame(0.0, 8.0, 0.0)], &mu, 500.0, 2.0, 0.5);
+        let dose = accumulate_delivered_dose(
+            &[frame(0.0, 8.0, 0.0)],
+            &mu,
+            BeamGeometry::Parallel { standoff_mm: 500.0 },
+            2.0,
+            0.5,
+        );
         assert_relative_eq!(dose.sum(), 0.0, epsilon = 1e-15);
     }
 
@@ -122,8 +179,20 @@ mod tests {
     fn dose_is_linear_in_fluence() {
         // Doubling every leaf fluence doubles the dose voxelwise.
         let mu = uniform_cube(0.05);
-        let d1 = accumulate_delivered_dose(&[frame(0.0, 8.0, 1.0)], &mu, 500.0, 2.0, 0.25);
-        let d2 = accumulate_delivered_dose(&[frame(0.0, 8.0, 2.0)], &mu, 500.0, 2.0, 0.25);
+        let d1 = accumulate_delivered_dose(
+            &[frame(0.0, 8.0, 1.0)],
+            &mu,
+            BeamGeometry::Parallel { standoff_mm: 500.0 },
+            2.0,
+            0.25,
+        );
+        let d2 = accumulate_delivered_dose(
+            &[frame(0.0, 8.0, 2.0)],
+            &mu,
+            BeamGeometry::Parallel { standoff_mm: 500.0 },
+            2.0,
+            0.25,
+        );
         assert_relative_eq!(d2.sum(), 2.0 * d1.sum(), epsilon = 1e-12);
         assert_relative_eq!(
             d2.get(0, 4, 4).unwrap(),
@@ -139,9 +208,27 @@ mod tests {
         let mu = uniform_cube(0.05);
         let a = frame(0.0, 8.0, 1.0);
         let b = frame(std::f64::consts::FRAC_PI_2, 8.0, 1.0);
-        let together = accumulate_delivered_dose(&[a.clone(), b.clone()], &mu, 500.0, 2.0, 0.25);
-        let da = accumulate_delivered_dose(&[a], &mu, 500.0, 2.0, 0.25);
-        let db = accumulate_delivered_dose(&[b], &mu, 500.0, 2.0, 0.25);
+        let together = accumulate_delivered_dose(
+            &[a.clone(), b.clone()],
+            &mu,
+            BeamGeometry::Parallel { standoff_mm: 500.0 },
+            2.0,
+            0.25,
+        );
+        let da = accumulate_delivered_dose(
+            &[a],
+            &mu,
+            BeamGeometry::Parallel { standoff_mm: 500.0 },
+            2.0,
+            0.25,
+        );
+        let db = accumulate_delivered_dose(
+            &[b],
+            &mu,
+            BeamGeometry::Parallel { standoff_mm: 500.0 },
+            2.0,
+            0.25,
+        );
         assert_relative_eq!(together.sum(), da.sum() + db.sum(), epsilon = 1e-12);
     }
 
@@ -157,7 +244,13 @@ mod tests {
             couch_mm: 8.0,
             leaf_fluence: vec![1.0, 1.0, 1.0],
         };
-        let dose = accumulate_delivered_dose(&[f], &mu, 500.0, 2.0, 0.25);
+        let dose = accumulate_delivered_dose(
+            &[f],
+            &mu,
+            BeamGeometry::Parallel { standoff_mm: 500.0 },
+            2.0,
+            0.25,
+        );
         assert_relative_eq!(
             dose.sum(),
             3.0 * expected_axial_energy(0.05, 1.0),
@@ -185,9 +278,91 @@ mod tests {
             couch_mm: 8.0,
             leaf_fluence: vec![2.0_f32],
         };
-        let dose = accumulate_delivered_dose(&[f], &mu, 500.0, 2.0, 0.25);
+        let dose = accumulate_delivered_dose(
+            &[f],
+            &mu,
+            BeamGeometry::Parallel { standoff_mm: 500.0 },
+            2.0,
+            0.25,
+        );
         let expected = 2.0_f32 * (1.0 - (-0.05_f32 * 1.6).exp());
         assert_relative_eq!(dose.sum(), expected, epsilon = 1e-5);
+    }
+
+    #[test]
+    fn point_source_reduces_to_parallel_at_large_sad() {
+        // As SAD → ∞ the divergent fan degenerates to parallel: the total dose of
+        // a multi-leaf frame matches the parallel geometry.
+        let mu = uniform_cube(0.05);
+        let f = DeliveryFrame {
+            projection: 0,
+            gantry_angle_rad: 0.0,
+            couch_mm: 8.0,
+            leaf_fluence: vec![1.0, 1.0, 1.0],
+        };
+        let parallel = accumulate_delivered_dose(
+            std::slice::from_ref(&f),
+            &mu,
+            BeamGeometry::Parallel { standoff_mm: 500.0 },
+            2.0,
+            0.25,
+        );
+        let far = accumulate_delivered_dose(
+            &[f],
+            &mu,
+            BeamGeometry::PointSource {
+                source_axis_mm: 1.0e6,
+            },
+            2.0,
+            0.25,
+        );
+        assert_relative_eq!(far.sum(), parallel.sum(), max_relative = 1e-4);
+    }
+
+    #[test]
+    fn point_source_fan_diverges_across_rows() {
+        // A far off-axis beamlet stays in a single detector row when parallel, but
+        // sweeps several rows under a divergent point-source fan — the defining fan
+        // property. Fine 1 mm grid so the divergence resolves past nearest-voxel
+        // quantization.
+        let grid =
+            VoxelGrid::axis_aligned([31, 31, 1], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
+                .unwrap();
+        let mu = Volume::from_shape_fn(grid, |_| 0.05);
+        // Single lit leaf at +6 mm offset (leaf 2 of 3 at 6 mm pitch).
+        let f = DeliveryFrame {
+            projection: 0,
+            gantry_angle_rad: 0.0,
+            couch_mm: 0.0,
+            leaf_fluence: vec![0.0, 0.0, 1.0],
+        };
+        let lit_rows = |dose: &Volume<f64>| -> usize {
+            (0..31)
+                .filter(|&j| (0..31).any(|i| dose.get(i, j, 0).unwrap() > 0.0))
+                .count()
+        };
+        let par = accumulate_delivered_dose(
+            std::slice::from_ref(&f),
+            &mu,
+            BeamGeometry::Parallel { standoff_mm: 500.0 },
+            6.0,
+            0.25,
+        );
+        let pts = accumulate_delivered_dose(
+            &[f],
+            &mu,
+            BeamGeometry::PointSource {
+                source_axis_mm: 30.0,
+            },
+            6.0,
+            0.25,
+        );
+        assert_eq!(lit_rows(&par), 1, "parallel beamlet must stay in one row");
+        assert!(
+            lit_rows(&pts) >= 3,
+            "divergent fan must sweep multiple rows, got {}",
+            lit_rows(&pts)
+        );
     }
 
     #[test]
@@ -198,7 +373,13 @@ mod tests {
         // while the identity kernel leaves the terma unchanged.
         use helios_solver::{scatter_superposition, symmetric_deposition_kernel};
         let mu = uniform_cube(0.05);
-        let terma = accumulate_delivered_dose(&[frame(0.0, 8.0, 1.0)], &mu, 500.0, 2.0, 0.25);
+        let terma = accumulate_delivered_dose(
+            &[frame(0.0, 8.0, 1.0)],
+            &mu,
+            BeamGeometry::Parallel { standoff_mm: 500.0 },
+            2.0,
+            0.25,
+        );
 
         // Off-line voxel (mid-beam x=4, one voxel over in y) gets no primary terma.
         assert_relative_eq!(terma.get(4, 3, 4).unwrap(), 0.0, epsilon = 1e-15);

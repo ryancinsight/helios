@@ -233,12 +233,14 @@ target closure.
   (`deposit_ray_terma`/`accumulate_delivered_dose`) deposits primary terma along
   **parallel** beamlets; stage 2 (`scatter_superposition`, H-020e) now spreads it with
   a **separable-isotropic** deposition kernel, so lateral penumbra and depth build-up
-  are present and energy-conserving (verified). Still approximate vs a clinical
-  collapsed-cone dose: the scatter kernel is separable-isotropic (not the anisotropic,
-  forward-peaked, poly-energetic CC kernel) and the fan is parallel (no divergent
-  point source / inverse-square), tracked as H-020f. Sufficient to exercise DVH/gamma
+  are present and energy-conserving (verified). The beam geometry now supports a
+  divergent point-source fan (H-020f, `BeamGeometry::PointSource`; verified parallel
+  limit + multi-row divergence). Still approximate vs a clinical collapsed-cone dose:
+  the scatter kernel is separable-isotropic (not the anisotropic, forward-peaked,
+  beam-aligned CC kernel) and inverse-square fluence falloff along the fan is not yet
+  modelled, tracked as H-020g. Sufficient to exercise DVH/gamma
   on self-consistent phantoms; the therapy gamma/DVH clinical-agreement gate still
-  needs the H-020f kernel/fan upgrade AND real CT (H-004b) AND an external
+  needs the H-020g kernel upgrade AND a licensed real CT dataset AND an external
   Monte-Carlo/reference dose engine (VoLO/TOPAS/GATE/EGSnrc) — the last of which is
   **not runnable in this environment**, so that specific gate cannot be closed here and
   will not be fabricated. Evidence tier: analytical oracles (conservation, identity
