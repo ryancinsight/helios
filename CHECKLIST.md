@@ -7,22 +7,31 @@ integration.
 
 ## Owner: claude-helios
 
-### In-flight item: H-003 `helios-math` Scalar seam + geometry primitives — `todo`
+### In-flight item: H-004 `helios-domain` CT/MVCT volume + voxel-grid geometry — `todo`
 
 Decomposed plan (each step has an observable completion condition):
 
-1. [ ] Add `crates/helios-math` to workspace `members`; manifest depends on
-   `hermes-simd`, `leto`, `num-traits`. — *builds empty lib.*
-2. [ ] Define sealed `Scalar` trait (assoc `Accumulator`, native ops, `From`
-   bridges for `f32`/`f64`) re-exporting/adapting hermes' scalar surface. — *impls
-   for `f32`,`f64` compile; value-semantic ops test green.*
-3. [ ] `Vec3<T: Scalar>`, `AffineTransform<T>` (patient/beam frames), ray/AABB
-   intersection (Smits' slab method). — *analytical intersection tests
-   (known ray/box) green, epsilon derived.*
-4. [ ] clippy `-D warnings`, fmt, nextest, doctests green; sync artifacts. — *gate
-   clean; CHANGELOG + this file updated.*
+1. [ ] Add `crates/helios-domain` to workspace `members`; depends on `helios-core`,
+   `helios-math`, and (later) `ritk-io` for DICOM. — *builds empty lib.*
+2. [ ] `VoxelGrid` geometry: dimensions (const/runtime), `VoxelSpacingMm` per axis,
+   origin (`Point3`), index↔world affine mapping via `helios-math` `Isometry3`.
+   — *round-trip index→world→index tests exact; out-of-bounds rejected.*
+3. [ ] `Volume<T: Scalar>`: dense scalar field over a `VoxelGrid` (leto `Array3`),
+   trilinear sample; `CtVolume` = `Volume` of `HounsfieldUnit`-validated data.
+   — *trilinear sample matches analytical linear field; boundary clamped.*
+4. [ ] Verify `ritk-io` DICOM surface (anti-hallucination) and load path in a
+   feature-gated module; CPU-only test with a synthetic in-memory volume.
+   — *symbols confirmed via source/doc before use.*
+5. [ ] clippy `-D warnings`, fmt, nextest, doctests green; sync artifacts.
 
 ### Completed this sprint
+
+- [x] **H-003** `helios-math`: `Scalar = eunomia::RealField` seam re-export; leto
+  geometry (`Vector3`/`Point3`/`Isometry3`) re-export; Helios-owned `Ray`/`Aabb` +
+  slab `intersect_ray` (voxel-traversal primitive absent upstream). 6 analytical
+  tests (axis-aligned, miss-behind, parallel-miss, origin-inside, diagonal, f32
+  generic). Worked around leto→mnemosyne→themis skew (G-10) via
+  `default-features=false`.
 
 - [x] **H-001** Workspace skeleton (Cargo.toml edition 2021/resolver 2,
   rust-toolchain, `.config/nextest.toml` 30s/60s budget, `.gitignore`) + Foundation
@@ -33,16 +42,27 @@ Decomposed plan (each step has an observable completion condition):
   (`EnergyMeV`, `HounsfieldUnit`, `VoxelSpacingMm`). 13 tests pass; build + clippy
   `-D warnings` + fmt + nextest green.
 
-## Gate status (last run, H-001/H-002)
+## Gate status (last run, H-003)
 
 | Gate | Result |
 |------|--------|
-| `cargo build` | pass (18.1 s cold) |
+| `cargo build` | pass (leto/eunomia git deps compiled) |
 | `cargo clippy --all-targets --all-features -D warnings` | pass, 0 warnings |
 | `cargo fmt --check` | pass |
-| `cargo nextest run` | 13 passed / 0 failed (0.19 s) |
+| `cargo nextest run` | 19 passed / 0 failed (0.19 s) |
+| `cargo test --doc` | pass (0 doctests) |
 
 ## Decision log (this sprint)
+
+- **Scalar seam = `eunomia::RealField`, geometry from `leto`** (H-003): eunomia is
+  the Atlas datatype SSOT (`RealField`/`FloatElement`/`NumericElement`) and leto
+  owns `Vector3`/`Point3`/`Isometry3`. `helios-math` re-exports them rather than
+  reinventing (consolidation/subtractive bias). Only `Ray`/`Aabb` + slab
+  intersection are Helios-owned — absent upstream (leto is an array library).
+- **leto `default-features = false`** (G-10): leto's default `mnemosyne-memory`
+  pulls an mnemosyne rev bound to `themis ^0.8`, conflicting with themis HEAD 0.9.x.
+  Consuming leto with only `std` sidesteps the skew; mnemosyne placement is opted
+  into at the layer that needs it. Upstream fix filed as G-10.
 
 - **Edition 2021 / resolver 2** chosen over the edition-2024 default heuristic:
   explicit user directive in the goal + "exact kwavers/cfdrs process" (kwavers uses

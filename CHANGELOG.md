@@ -24,6 +24,16 @@ under a Breaking subsection.
     relation, exact SI constants).
   - Validating newtypes `EnergyMeV`, `HounsfieldUnit`, `VoxelSpacingMm`
     (`#[repr(transparent)]`, `TryFrom<f64>` boundary validation, `Display`).
+- `helios-math` crate:
+  - `Scalar` seam re-exported as `eunomia::RealField` (Atlas numeric SSOT), with
+    `FloatElement`/`NumericElement`/`CastFrom`/`CastTo`.
+  - leto geometry re-exported (`Vector3`, `Point3`, `Isometry3`, `Quaternion`,
+    `UnitQuaternion`, `Translation3`, `Vector2`).
+  - Helios-owned `Ray<T>`, `Aabb<T>`, `RayHit<T>` with slab `Aabb::intersect_ray`
+    (voxel/ray traversal primitive) generic over `Scalar`; 6 analytical tests
+    (`f64` + `f32`).
+  - leto consumed with `default-features = false, features=["std"]` to avoid the
+    leto→mnemosyne→themis version skew (see `gap_audit.md` G-10).
 - Foundation documentation: `README.md`, `ARCHITECTURE.md` (layering + Atlas
   dependency map), and PM artifacts `backlog.md`, `CHECKLIST.md`, `gap_audit.md`,
   `SPRINT_1.md`.

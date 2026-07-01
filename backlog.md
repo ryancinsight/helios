@@ -12,7 +12,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 |----|------|-------|--------|-------|-------|
 | H-001 | Workspace skeleton + Foundation artifacts (README, ARCHITECTURE, PM files) | [arch] | done | claude-helios | `Cargo.toml`, root `*.md`, `.config/` |
 | H-002 | `helios-core`: typed errors, physical constants, validating newtypes | [minor] | done | claude-helios | `crates/helios-core/**` |
-| H-003 | `helios-math`: `Scalar` seam over hermes/leto + geometry primitives (`Vec3<T>`, affine transforms, ray/AABB) | [minor] | todo | — | `crates/helios-math/**` |
+| H-003 | `helios-math`: `Scalar` seam (= `eunomia::RealField`) + leto geometry re-export + `Ray`/`Aabb` slab intersection | [minor] | done | claude-helios | `crates/helios-math/**` |
 | H-004 | `helios-domain`: CT/MVCT volume type over ritk-io; voxel grid geometry; patient frame | [minor] | todo | — | `crates/helios-domain/**` |
 | H-005 | `helios-domain`: gaia-backed binary-MLC + collimator/jaw geometry model | [minor] | todo | — | `crates/helios-domain/**` |
 | H-006 | ~~Shared `CARGO_TARGET_DIR`~~ — resolved: inherited from `repos/.cargo/config.toml` (shared `D:/atlas/target`) | [patch] | done | claude-helios | — |

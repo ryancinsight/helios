@@ -11,11 +11,11 @@ target closure.
 - **G-1 (physics):** No radiation-interaction physics yet. Need photon linear
   attenuation coefficients (μ/ρ) from a citable source (NIST XCOM / ICRU) and
   electron transport model. *Evidence tier: none.* → H-011.
-- **G-2 (numerics):** No `Scalar` seam; `helios-core` constants are `f64`. Generic
-  native-precision compute is deferred to `helios-math`. *Risk:* a later change to
-  make domain types generic could touch core newtypes (currently `f64`-wrapping).
-  Mitigation: newtypes are `#[repr(transparent)]` and construction-validated, so
-  generalizing them is additive. → H-003.
+- **G-2 (numerics):** ~~No `Scalar` seam.~~ **CLOSED (H-003).** `helios-math`
+  establishes `Scalar = eunomia::RealField` (the Atlas numeric SSOT) as the Helios
+  compute seam; `Ray`/`Aabb` are generic over it and exercised at both `f64` and
+  `f32` (native precision, no widen-narrow). `helios-core` constants remain `f64`
+  literals by design and are converted by callers.
 - **G-3 (accuracy):** No dose-engine or projector reference solutions yet. Gamma
   (3%/2mm), DVH, and MVCT image-quality oracles are unimplemented. Validation vs
   VoLO/TOPAS/GATE/EGSnrc pending. *Evidence tier: none.* → H-012, H-013, H-042.
@@ -25,11 +25,21 @@ target closure.
 
 ### Architecture / integration
 
-- **G-5 (integration):** Atlas crate *APIs* are declared in `workspace.dependencies`
-  but not yet exercised. `ritk-io` (DICOM/MVCT), `gaia` (MLC geometry), hephaestus,
-  moirai, coeus, consus surfaces are unverified against real usage; symbol existence
-  must be confirmed via `cargo doc`/source before each first use (anti-hallucination).
-  *Evidence tier: package names verified; API surface unverified.* → H-004, H-005.
+- **G-5 (integration):** Atlas crate *APIs* partially exercised. **eunomia**
+  (`RealField`/`FloatElement`/`NumericElement`) and **leto** (`Vector3`) now
+  verified against real usage and building in-tree (H-003). `ritk-io` (DICOM/MVCT),
+  `gaia` (MLC geometry), hephaestus, moirai, coeus, consus surfaces remain
+  unverified; symbol existence must be confirmed via `cargo doc`/source before each
+  first use (anti-hallucination). → H-004, H-005, H-010+.
+- **G-10 (integration, upstream co-evolution):** leto's **default** features pull
+  `mnemosyne` at a rev pinned to `themis ^0.8`, which conflicts with themis HEAD
+  `0.9.17` — a version skew in the Atlas stack's transitive git graph. *Workaround
+  applied:* Helios consumes leto with `default-features = false, features=["std"]`,
+  deferring mnemosyne placement to the layer that needs it (themis/mnemosyne
+  integration, later sprint). *Upstream item:* leto's pinned mnemosyne rev (or
+  mnemosyne's themis bound) should be advanced to themis 0.9.x so the default
+  feature set resolves. File against the leto/mnemosyne repos when that layer is
+  built. *Evidence tier: reproduced (cargo resolution error), worked around.*
 - **G-6 (build hygiene):** ~~Helios target-dir sharing.~~ **CLOSED.** Helios
   automatically routes its build through the shared `D:/atlas/target` via the
   inherited `repos/.cargo/config.toml` (`[build] target-dir`); Cargo discovers it by

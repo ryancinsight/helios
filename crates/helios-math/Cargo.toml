@@ -1,0 +1,20 @@
+[package]
+name = "helios-math"
+description = "Helios numeric seam (Scalar = eunomia::RealField) and geometry: leto primitives plus ray/AABB traversal."
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+helios-core = { workspace = true }
+eunomia = { workspace = true }
+leto = { workspace = true }
+
+[dev-dependencies]
+approx = { workspace = true }

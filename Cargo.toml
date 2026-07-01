@@ -6,7 +6,7 @@
 # inheritance against THEIR roots — no path scaffolding here). Members inherit the
 # shared version set below via `{ workspace = true }` (SSOT).
 [workspace]
-members = ["crates/helios-core"]
+members = ["crates/helios-core", "crates/helios-math"]
 resolver = "2"
 
 [workspace.package]
@@ -29,6 +29,7 @@ all = { level = "warn", priority = -1 }
 # ── Internal Helios crates (added as they are created, per architecture_scoping
 #    growth triggers — no speculative empty-crate scaffolding). ──
 helios-core = { path = "crates/helios-core", version = "0.0.1" }
+helios-math = { path = "crates/helios-math", version = "0.0.1" }
 
 # ── External foundation crates (versions verified against the installed 1.95
 #    toolchain / current registry; mirror kwavers' locked set). ──
@@ -69,8 +70,14 @@ consus-core = { git = "https://github.com/ryancinsight/consus", features = ["std
 consus-hdf5 = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
 consus-io = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
 consus-compression = { git = "https://github.com/ryancinsight/consus", features = ["std", "deflate"] }
-# Array substrate + portable SIMD.
-leto = { git = "https://github.com/ryancinsight/leto" }
+# Numeric datatype SSOT (Scalar seam: RealField/FloatElement/NumericElement).
+eunomia = { git = "https://github.com/ryancinsight/eunomia" }
+# Array substrate + geometry primitives, and portable SIMD.
+# default-features disabled: leto's default `mnemosyne-memory` feature pulls an
+# mnemosyne rev pinned to themis ^0.8 (skewed against themis HEAD 0.9.x). Helios
+# opts into mnemosyne placement explicitly at the layer that needs it (themis/
+# mnemosyne integration), not transitively through the geometry substrate.
+leto = { git = "https://github.com/ryancinsight/leto", default-features = false, features = ["std"] }
 hermes-simd = { git = "https://github.com/ryancinsight/hermes" }
 # Memory management / placement.
 mnemosyne-core = { git = "https://github.com/ryancinsight/Mnemosyne.git" }
