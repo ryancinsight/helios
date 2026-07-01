@@ -1,0 +1,17 @@
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "helios"
+version = "0.0.1"
+description = "Thin PyO3 bindings for the Helios radiation-therapy simulation/imaging stack"
+requires-python = ">=3.9"
+license = { text = "MIT OR Apache-2.0" }
+authors = [{ name = "Ryan Clanton", email = "ryanclanton@outlook.com" }]
+
+[tool.maturin]
+# The extension links the stable ABI (abi3-py39), so one wheel serves CPython
+# ≥3.9. manifest-path is relative to this file (the crate root).
+manifest-path = "Cargo.toml"
+features = []

@@ -44,7 +44,7 @@ A lower layer never depends on a higher one. `helios-core` is the innermost crat
 | `helios-planning` | Inverse planning / optimization (gradient-based, multi-criteria). Projected-gradient beam-weight optimizer (`DoseInfluence` + `optimize_beam_weights`) landed (0.0.1); coeus-autodiff backend for non-quadratic objectives pending (H-031b). | **partial (0.0.1)** |
 | `helios-imaging` | MVCT acquisition modeling, reconstruction, portal dosimetry, IGRT workflows. Parallel-beam Radon forward transform (`Sinogram`) landed (0.0.1); FBP reconstruction, portal dosimetry, IGRT pending. | **partial (0.0.1)** |
 | `helios-gpu` | GPU dispatch over `hephaestus_core::ComputeDevice` + hephaestus-wgpu. `beam_transmission_into` (GPU `exp(−τ)`) landed (0.0.1), differentially validated vs CPU; more kernels + throughput benchmarks pending. | **partial (0.0.1)** |
-| `helios-python` | High-level PyO3 API over simulation/planning/imaging. | planned (Sprint 5) |
+| `helios-python` | Thin PyO3 API (`import helios`): geometry-free physics/planning wrappers (Thomson/Klein–Nishina cross-sections, Compton μ/ρ, HU→density, projected-gradient beam-weight optimization). abi3-py39 wheel; GIL released around the planning solve. No domain logic. | **implemented (0.0.1)** |
 
 Crates are created only when their layer is built (architecture_scoping growth
 triggers — no speculative empty-crate scaffolding). The workspace `members` list

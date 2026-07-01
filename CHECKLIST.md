@@ -6,7 +6,15 @@
 
 ## Owner: claude-helios
 
-### In-flight item: H-004b `helios-domain` ritk DICOM load path — `todo`
+### H-040 done — 11/11 crate roster complete. Next in-flight: H-004b ritk DICOM / H-020d delivered-dose — `todo`
+
+`helios-python` (H-040) lands the final crate: thin PyO3 wrappers over
+physics/planning, abi3-py39 wheel, 13 pytest equivalence tests green. All 11 crates
+build; 129 Rust tests pass. The remaining work is real-data/clinical validation
+(ritk DICOM inputs, delivered-dose accumulation, coeus/moirai heavy backends) — not
+new roster crates.
+
+### (prior in-flight) H-004b `helios-domain` ritk DICOM load path — `todo`
 
 **H-021 done:** `helios-simulation::simulate_helical_sinogram` integrates
 `HelicalDelivery` + forward projector into a helical MVCT acquisition (8/11 crates,
@@ -31,19 +39,27 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-031 — inverse planning)
+## Gate status (last run, H-040 — helios-python, roster complete)
 
 | Gate | Result |
 |------|--------|
-| `cargo build` (whole workspace) | pass (all 10 crates) |
+| `cargo build` (whole workspace) | pass (**all 11 crates**) |
 | `cargo nextest run` | 129 passed / 0 failed (incl. live GPU) |
-| `cargo clippy --all-targets --all-features -D warnings` | 0 code warnings |
+| `pytest` (helios-python, maturin develop) | **13 passed / 0 failed** |
+| `cargo clippy -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |
 | `cargo fmt --check` | pass |
 
-**10/11 crates** (only `helios-python` remains). Next: H-051 `helios-python` PyO3
-bindings (thin), then real-data/Atlas integrations (ritk DICOM H-004b, coeus autodiff
-H-031b, moirai GPU orchestration H-021b) for the clinical-validation gates.
+**11/11 crates — full roster delivered.** `helios-python` is a thin abi3-py39 PyO3
+surface (`import helios`) over the physics/planning cores, GIL released around the
+solve, verified by value-semantic pytest equivalence. The deterministic pipeline
+(CT→μ→forward-projection/Radon→FBP recon; helical+MLC delivery; dose; DVH/gamma;
+inverse planning) is coherent on synthetic phantoms.
+
+Next (clinical-validation gates need real data + heavier Atlas backends): H-004b ritk
+DICOM CT/MVCT load path (real inputs), H-020d delivered-dose accumulation
+(delivery→dose loop), H-031b coeus-autodiff planning, H-021b moirai GPU orchestration,
+H-040b numpy zero-copy Volume/attenuation/recon exposure.
 
 Clinical-realism gate: helical synchronization ✓, binary-MLC leakage/tongue-and-
 groove ✓, integrated imaging-delivery workflow (H-020c) ✓. Remaining: IGRT

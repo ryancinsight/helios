@@ -9,6 +9,11 @@
 *.pyd
 __pycache__/
 .venv/
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+wheels/
 
 # Local environment / scratch
 .env

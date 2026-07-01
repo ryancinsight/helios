@@ -97,6 +97,18 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-python` crate (H-040): thin PyO3 binding surface (`import helios`) — the
+  11th and final crate, completing the workspace roster. Geometry-free `f64`
+  wrappers over the physics/planning cores: `thomson_cross_section`,
+  `klein_nishina_cross_section`, `compton_mass_attenuation`, `mass_density_from_hu`,
+  `optimize_beam_weights` (GIL released via `Python::allow_threads` around the
+  iterative solve). Untrusted-input hardening at the boundary: non-finite/non-positive
+  energies and shape mismatches map to Python `ValueError`. abi3-py39 cdylib
+  (`maturin`); no domain logic and no other Helios crate depends on `pyo3`. Verified
+  by 13 value-semantic `pytest` equivalence tests (Thomson exact, Klein–Nishina
+  Thomson-limit + monotonicity, water μ/ρ vs NIST 0.0707 cm²/g, HU→density
+  calibration, identity/non-negativity planning oracles, error paths) against the
+  `maturin develop` module.
 - `helios-planning` crate (H-031): inverse treatment planning by projected gradient
   descent — `DoseInfluence` (linear dose model `A`, `apply`/`transpose_apply`) and
   `optimize_beam_weights` minimizing `½‖A x − d‖²` over `x ≥ 0`. Convex-convergence

@@ -1,0 +1,32 @@
+# helios-python — thin PyO3 binding surface (crate 11/11).
+#
+# The ONLY Helios crate permitted to depend on pyo3. It exposes the high-level
+# Helios compute API to Python and holds no domain logic: each function converts
+# Python arguments to typed Rust values, calls the corresponding helios-* core
+# function, maps HeliosError to a Python exception, and releases the GIL around
+# compute. Domain crates never depend on pyo3 (unidirectional; ARCHITECTURE.md).
+[package]
+name = "helios-python"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lib]
+# Import name is `helios`; cdylib is the Python extension module. No rlib: an
+# extension-module cdylib leaves libpython symbols to the interpreter, so a Rust
+# test harness cannot link — the binding surface is verified from pytest.
+name = "helios"
+crate-type = ["cdylib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+# Geometry-free wrappers only: physics/planning consumed without the geometry
+# feature so the binding layer stays thin and infra-light.
+helios-physics = { path = "../helios-physics", default-features = false }
+helios-planning = { path = "../helios-planning", default-features = false }
+pyo3 = { workspace = true }

@@ -81,7 +81,8 @@ for kwavers) requiring consumer coordination.
 
 | ID | Item | Class | Status | Owner | Scope |
 |----|------|-------|--------|-------|-------|
-| H-040 | `helios-python`: PyO3 high-level API (maturin, pytest equivalence) | [minor] | todo | — | `crates/helios-python/**` |
+| H-040 | `helios-python`: thin PyO3 API (`import helios`) over physics/planning; abi3-py39 wheel (maturin); 13 value-semantic pytest equivalence tests. **Completes the 11-crate roster.** | [minor] | done | claude-helios | `crates/helios-python/**` |
+| H-040b | `helios-python`: expose Volume / attenuation_map / forward_project_ray / filtered_back_projection via numpy zero-copy (`numpy`/`PyArray`); needs the geometry feature + array-buffer protocol | [minor] | todo | — | `crates/helios-python/**` |
 | H-041 | End-to-end helical TomoTherapy workflow example (Rust + Python) | [minor] | todo | — | `examples/**` |
 | H-042 | Validation report: gamma/DVH vs reference; MVCT image metrics | [minor] | todo | — | `validation_reports/**` |
 | H-043 | Performance: GPU scaling study + criterion baselines | [minor] | todo | — | `benches/**` |
