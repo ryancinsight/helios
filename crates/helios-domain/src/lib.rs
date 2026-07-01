@@ -14,8 +14,10 @@
 
 mod grid;
 mod helical;
+mod mlc;
 mod volume;
 
 pub use grid::VoxelGrid;
 pub use helical::HelicalDelivery;
+pub use mlc::{LeafOpenTimeSinogram, MlcModel};
 pub use volume::Volume;

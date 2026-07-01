@@ -132,6 +132,13 @@ under a Breaking subsection.
 - `helios-math` (H-003b): re-exports `gaia::{Aabb, Ray}` as the Helios geometry
   vocabulary (upstream ownership); bridge test verifies a gaia `Ray` intersects a
   gaia `Aabb` through Helios. Unblocks the voxel-DDA projector (H-011c).
+- `helios-domain` binary MLC (H-020b): `LeafOpenTimeSinogram` (validated per-
+  projection/leaf open-time fractions) + `MlcModel` — effective transmitted
+  fluence = leakage-adjusted transmission (`open + (1−open)·τ`) minus a
+  tongue-and-groove edge loss where a neighbour is more closed, clamped to `[0,1]`.
+  The binary-MLC leakage/tongue-and-groove clinical-realism capability. Analytical
+  oracles: closed→leakage, open→1, uniform-row no T&G loss, isolated-open-leaf
+  underdose, neighbour-aware sinogram application, bounds, f32.
 - `helios-domain`: `HelicalDelivery<T>` — helical TomoTherapy delivery kinematics
   (gantry rotation + couch translation + pitch synchronization). Projection/time →
   gantry angle (unwrapped + wrapped) and couch position; pitch relation
