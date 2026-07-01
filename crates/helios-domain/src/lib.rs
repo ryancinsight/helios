@@ -20,7 +20,7 @@ mod mlc;
 mod volume;
 
 #[cfg(feature = "dicom")]
-pub use dicom::load_ct_slice;
+pub use dicom::{load_ct_series, load_ct_slice};
 pub use grid::VoxelGrid;
 pub use helical::HelicalDelivery;
 pub use mlc::{LeafOpenTimeSinogram, MlcModel};

@@ -97,6 +97,16 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-domain::load_ct_series` (H-004c, feature `dicom`): multi-slice DICOM series
+  → 3-D HU `Volume`. Parses/decodes each slice, validates an identical in-plane grid
+  (Rows/Columns/PixelSpacing/in-plane origin within a 1 µm tolerance), sorts by
+  `ImagePositionPatient` z, derives a uniform slice spacing (rejecting a missing/duplicate
+  slice), and stacks along `k` (origin at the lowest-z slice). Refactors the shared
+  per-slice parse+decode into `read_slice` + `scatter_slice` (used by both
+  `load_ct_slice` and the series loader — no duplication). Verified by a *shuffled*
+  3-slice synthetic round-trip (sorted stacking, Δz derived, HU per slice) plus
+  single-path==single-slice equivalence and empty/non-uniform error paths. A real CT
+  series can now drive the full pipeline.
 - `helios-domain::load_ct_slice` (H-004b, feature `dicom`): the real-input DICOM
   boundary — parses a CT/MVCT slice with `ritk-dicom` (dicom-rs backend), decodes the
   pixel frame with its `RescaleSlope`/`RescaleIntercept` calibration to Hounsfield

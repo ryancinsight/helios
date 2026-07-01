@@ -6,17 +6,21 @@
 
 ## Owner: claude-helios
 
-### H-004b done — DICOM real-input path (mandatory ritk integration consumed). Next in-flight: H-004c multi-slice series / H-043b GPU fusion / H-020f anisotropic dose — `todo`
+### H-004c done — multi-slice DICOM series → 3-D HU Volume. Next in-flight: H-043b GPU fusion / H-020f anisotropic dose / H-004d HU newtypes+oriented pose — `todo`
 
-`helios-domain::load_ct_slice` (feature `dicom`) parses a real DICOM CT/MVCT slice via
-`ritk-dicom` (dicom-rs), decodes with RescaleSlope/Intercept → HU, and maps
-Rows/Columns/PixelSpacing/ImagePositionPatient into a typed HU `Volume`. Verified by a
-synthetic-DICOM round-trip through the real parser. **The mandatory `ritk` Atlas
-component is now consumed** and the full pipeline (μ-map → projection → recon → dose →
-metrics) can ingest real clinical DICOM. 169 Rust tests pass with `--all-features`
-(167 default + 2 DICOM). ritk-dicom is skew-free (no leto/mnemosyne/themis cluster).
-Remaining real-inputs: multi-slice series stacking (H-004c) + RT-struct/registration
-(ritk-registration, needs burn).
+`helios-domain::load_ct_series` (feature `dicom`) stacks a real DICOM CT/MVCT series
+into a 3-D HU `Volume`: identical-in-plane-geometry validation, sort by
+`ImagePositionPatient` z, derived uniform Δz (rejecting missing/duplicate slices),
+`k`-stacking. Shares `read_slice`/`scatter_slice` with the single-slice loader. Verified
+by a shuffled 3-slice synthetic round-trip + error paths. **A real CT series can now
+drive the full pipeline** (μ-map → projection → recon → dose → metrics). 172 Rust tests
+pass with `--all-features` (169 + 3 series). Remaining real-inputs: HU newtypes +
+oriented pose (H-004d), RT-struct/registration (ritk-registration, needs burn).
+
+### (prior) H-004b done — DICOM single-slice path (mandatory ritk consumed)
+
+`load_ct_slice` via `ritk-dicom` (dicom-rs, skew-free). First consumption of the
+mandatory ritk Atlas component.
 
 ### (prior) H-033b done — MVCT quantum-noise model (imaging noise/CNR sub-gate)
 
@@ -86,13 +90,13 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-004b — DICOM real-input path)
+## Gate status (last run, H-004c — DICOM series stacking)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 11 crates) |
 | `cargo nextest run` (default) | 167 passed / 0 failed (incl. live GPU) |
-| `cargo nextest run --all-features` | **169 passed / 0 failed** (+2 DICOM round-trip) |
+| `cargo nextest run --all-features` | **172 passed / 0 failed** (+5 DICOM slice/series) |
 | `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |
 | `cargo clippy -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |

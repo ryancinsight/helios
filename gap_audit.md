@@ -56,11 +56,11 @@ target closure.
   (interior-ROI accuracy within 15% of μ₀, background suppression, disk/air contrast
   >0.85, CNR >1), and *quantum noise* (H-033b: `Var(τ')≈e^{τ}/N₀` validated vs
   analytical photon statistics; end-to-end noisy-recon noise scales with flux).
-  **Remaining:** iterative reconstruction (SART/OS-SEM), multi-slice series stacking
-  (H-004c), and validation vs *published TomoTherapy MVCT data*. The DICOM real-input
-  path itself now exists (H-004b: `load_ct_slice` via `ritk-dicom`, single slice), so a
-  real CT/MVCT slice can drive the pipeline — clinical *dataset* validation still needs
-  a licensed reference dataset. *Evidence tier: analytical/round-trip + synthetic-phantom
+  **Remaining:** iterative reconstruction (SART/OS-SEM) and validation vs *published
+  TomoTherapy MVCT data*. The DICOM real-input path now ingests both a single slice
+  (H-004b) and a full multi-slice **series** → 3-D HU `Volume` (H-004c:
+  `load_ct_series` via `ritk-dicom`), so a real CT/MVCT study can drive the pipeline —
+  clinical *dataset* validation still needs a licensed reference dataset. *Evidence tier: analytical/round-trip + synthetic-phantom
   metrics + real DICOM parse (synthetic round-trip through dicom-rs) — published-data
   comparison pending.*
 
