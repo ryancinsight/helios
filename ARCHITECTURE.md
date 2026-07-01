@@ -42,7 +42,7 @@ A lower layer never depends on a higher one. `helios-core` is the innermost crat
 | `helios-analysis` | Dosimetric analysis (DVH, gamma), imaging quality metrics, visualization. DVH + 3D gamma index landed (0.0.1); structure-masked DVH, local-norm gamma, imaging metrics pending. | **partial (0.0.1)** |
 | `helios-simulation` | Time-dependent helical TomoTherapy delivery with synchronized MVCT and motion. `simulate_helical_sinogram` (gantry+couch → per-projection forward projection) landed (0.0.1); moirai parallel dispatch + fan/cone detector + motion pending. | **partial (0.0.1)** |
 | `helios-planning` | Inverse planning / optimization (gradient-based, multi-criteria). | planned (Sprint 4) |
-| `helios-imaging` | MVCT acquisition modeling, reconstruction, portal dosimetry, IGRT workflows. | planned (Sprint 4) |
+| `helios-imaging` | MVCT acquisition modeling, reconstruction, portal dosimetry, IGRT workflows. Parallel-beam Radon forward transform (`Sinogram`) landed (0.0.1); FBP reconstruction, portal dosimetry, IGRT pending. | **partial (0.0.1)** |
 | `helios-gpu` | GPU dispatch over `hephaestus_core::ComputeDevice` + hephaestus-wgpu. `beam_transmission_into` (GPU `exp(−τ)`) landed (0.0.1), differentially validated vs CPU; more kernels + throughput benchmarks pending. | **partial (0.0.1)** |
 | `helios-python` | High-level PyO3 API over simulation/planning/imaging. | planned (Sprint 5) |
 

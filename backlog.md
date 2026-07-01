@@ -67,7 +67,8 @@ for kwavers) requiring consumer coordination.
 
 | ID | Item | Class | Status | Owner | Scope |
 |----|------|-------|--------|-------|-------|
-| H-030 | `helios-imaging`: MVCT reconstruction (FBP + iterative) | [major] | todo | — | `crates/helios-imaging/**` |
+| H-030a | `helios-imaging::parallel_beam_radon` + `Sinogram`: MVCT forward projection (parallel-beam Radon). Validated vs analytical disk sinogram. | [minor] | done | claude-helios | `crates/helios-imaging/**` |
+| H-030 | `helios-imaging`: MVCT reconstruction (FBP ramp-filter + back-projection, then iterative). Round-trip vs phantom. | [major] | todo | — | `crates/helios-imaging/**` |
 | H-031 | `helios-planning`: coeus-autodiff inverse planning (gradient-based) | [major] | todo | — | `crates/helios-planning/**` |
 | H-032 | `helios-analysis`: DVH (cumulative, Dx/Vx/mean) + 3D gamma index (Low, global norm) + pass rate | [minor] | done | claude-helios | `crates/helios-analysis/**` |
 | H-032b | `helios-analysis`: structure-masked DVH (RT-struct ROIs via ritk) + local-normalization gamma + low-dose threshold cutoff | [minor] | todo | — | `crates/helios-analysis/**` |

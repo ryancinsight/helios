@@ -1,0 +1,21 @@
+[package]
+name = "helios-imaging"
+description = "Helios radiation-imaging: MVCT forward projection (parallel-beam Radon) and reconstruction."
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+helios-core = { workspace = true }
+helios-math = { workspace = true }
+helios-domain = { workspace = true }
+helios-solver = { workspace = true }
+
+[dev-dependencies]
+approx = { workspace = true }

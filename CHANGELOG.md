@@ -97,6 +97,11 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-imaging` crate (H-030a): `parallel_beam_radon` + `Sinogram` — the MVCT
+  forward-projection sinogram `p(θ,s) = ∫μ dl` over projection angles and signed
+  detector offsets, built on the ray-march projector. Validated against the
+  analytical uniform-disk sinogram `μ·2√(R²−s²)` (2% at 0.5 mm voxels),
+  angle-independence, off-object zero. FBP reconstruction = H-030.
 - `helios-simulation` crate (H-021): `simulate_helical_sinogram` — time-dependent
   helical MVCT acquisition integrating `HelicalDelivery` (gantry rotation + couch
   translation, a helix) with the forward projector: each projection rotates the

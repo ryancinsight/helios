@@ -670,6 +670,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "helios-imaging"
+version = "0.0.1"
+dependencies = [
+ "approx",
+ "helios-core",
+ "helios-domain",
+ "helios-math",
+ "helios-solver",
+]
+
+[[package]]
 name = "helios-math"
 version = "0.0.1"
 dependencies = [
