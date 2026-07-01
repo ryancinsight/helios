@@ -6,13 +6,19 @@
 
 ## Owner: claude-helios
 
-### H-020g done — inverse-square fluence falloff on the divergent fan (dose fidelity). Next in-flight: H-020h anisotropic CC kernel / H-043b GPU fusion / H-032c local-norm gamma+RT-struct — `todo`
+### H-032c done — local-normalization gamma + low-dose cutoff (therapy gamma machinery). Next in-flight: H-020h anisotropic CC kernel / H-043b GPU fusion / H-032d RT-struct masks — `todo`
 
-`helios-solver::deposit_ray_terma_diverging` scales per-segment terma by `(SAD/r)²` from
-the focal spot; `BeamGeometry::PointSource` routes through it (parallel path + oracles
-unchanged; shared ray-march). Verified: reduces to no-falloff as SAD→∞; steepens the
-entry/exit dose ratio (near-source enhancement). 182 default / 187 `--all-features` tests
-pass. Remaining dose fidelity: anisotropic beam-aligned CC kernel (H-020h).
+`helios-analysis::gamma_index_3d_local` adds local normalization (`ΔD = criterion·D_r`)
++ low-dose cutoff, sharing one impl with the global variant. Verified: equals global for
+uniform dose, strictly stricter in low-dose (local γ=1.0 vs global γ=0.2), cutoff
+exclusion. The therapy gamma gate now supports both global and local 3%/2 mm evaluation.
+185 default / 190 `--all-features` tests pass. Remaining analysis: RT-struct rasterization
+→ DVH mask via ritk (H-032d).
+
+### (prior) H-020g done — inverse-square fluence falloff on the divergent fan
+
+`deposit_ray_terma_diverging` scales per-segment terma by `(SAD/r)²`; verified SAD→∞
+limit + entry/exit steepening. Remaining dose fidelity: anisotropic CC kernel (H-020h).
 
 ### (prior) H-032b done — structure-masked (per-PTV/OAR) DVH
 
@@ -157,14 +163,14 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-020g — inverse-square divergent-fan falloff)
+## Gate status (last run, H-032c — local-normalization gamma)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 11 crates) |
 | `cargo build --examples` | pass (tomotherapy_workflow) |
-| `cargo nextest run` (default) | 182 passed / 0 failed (incl. live GPU + E2E) |
-| `cargo nextest run --all-features` | **187 passed / 0 failed** (+5 DICOM slice/series) |
+| `cargo nextest run` (default) | 185 passed / 0 failed (incl. live GPU + E2E) |
+| `cargo nextest run --all-features` | **190 passed / 0 failed** (+5 DICOM slice/series) |
 | `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |
 | `cargo clippy -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |

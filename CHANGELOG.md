@@ -97,6 +97,14 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-analysis::gamma_index_3d_local` (H-032c): local-normalization gamma index —
+  the dose-difference criterion `ΔD = criterion·D_r` scales with the *local* reference
+  dose (vs a single global value), the stricter, appropriate metric where relative
+  agreement everywhere matters; reference points below `low_dose_cutoff` are excluded
+  (gamma 0), the standard low-dose threshold that also avoids a vanishing `ΔD`. Shares
+  one impl with the global `gamma_index_3d` (a `Norm` enum selects the mode). Verified:
+  equals the global gamma for uniform dose, is strictly stricter in a low-dose region
+  (local γ=1.0 vs global γ=0.2 on a two-level phantom), and excludes sub-cutoff points.
 - `helios-solver::deposit_ray_terma_diverging` + divergent-fan inverse-square (H-020g):
   the divergent point-source fan now applies inverse-square fluence falloff — each
   per-segment terma is scaled by `(SAD/r)²` from the focal spot (`r` = focal-to-segment

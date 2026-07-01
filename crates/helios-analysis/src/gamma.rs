@@ -48,6 +48,66 @@ pub fn gamma_index_3d<T: Scalar>(
     normalization_dose: T,
     search_radius_mm: T,
 ) -> Result<Volume<T>, HeliosError> {
+    gamma_impl(
+        reference,
+        evaluated,
+        dose_diff_criterion,
+        dta_mm,
+        Norm::Global(normalization_dose),
+        search_radius_mm,
+    )
+}
+
+/// **Local-normalization** gamma index: the dose-difference criterion `ΔD` is a
+/// fraction of the **local reference dose** at each point (`ΔD(r) = criterion·D_r`)
+/// rather than a single global value.
+///
+/// Local normalization is stricter in low-dose regions (where global normalization
+/// is lenient), the appropriate choice when relative agreement everywhere matters.
+/// Reference points below `low_dose_cutoff` are excluded (their gamma is set to `0`)
+/// — the standard low-dose threshold that also avoids dividing by a vanishing `ΔD`.
+///
+/// # Errors
+/// As [`gamma_index_3d`], with `low_dose_cutoff` required finite and positive.
+pub fn gamma_index_3d_local<T: Scalar>(
+    reference: &Volume<T>,
+    evaluated: &Volume<T>,
+    dose_diff_criterion: T,
+    dta_mm: T,
+    low_dose_cutoff: T,
+    search_radius_mm: T,
+) -> Result<Volume<T>, HeliosError> {
+    gamma_impl(
+        reference,
+        evaluated,
+        dose_diff_criterion,
+        dta_mm,
+        Norm::Local {
+            cutoff: low_dose_cutoff,
+        },
+        search_radius_mm,
+    )
+}
+
+/// Dose-difference normalization mode for the gamma index.
+#[derive(Debug, Clone, Copy)]
+enum Norm<T: Scalar> {
+    /// Global: `ΔD = criterion · dose` for a single normalization `dose`.
+    Global(T),
+    /// Local: `ΔD = criterion · D_r`; points below `cutoff` are excluded.
+    Local { cutoff: T },
+}
+
+/// Shared gamma computation for [`gamma_index_3d`] (global) and
+/// [`gamma_index_3d_local`] (local), selected by `norm`.
+fn gamma_impl<T: Scalar>(
+    reference: &Volume<T>,
+    evaluated: &Volume<T>,
+    dose_diff_criterion: T,
+    dta_mm: T,
+    norm: Norm<T>,
+    search_radius_mm: T,
+) -> Result<Volume<T>, HeliosError> {
     if reference.grid() != evaluated.grid() {
         return Err(HeliosError::InvalidDomainValue {
             field: "gamma_index_3d::grid",
@@ -57,16 +117,18 @@ pub fn gamma_index_3d<T: Scalar>(
     }
     require_positive_finite(dose_diff_criterion, "gamma::dose_diff_criterion")?;
     require_positive_finite(dta_mm, "gamma::dta_mm")?;
-    require_positive_finite(normalization_dose, "gamma::normalization_dose")?;
     require_positive_finite(search_radius_mm, "gamma::search_radius_mm")?;
+    match norm {
+        Norm::Global(d) => require_positive_finite(d, "gamma::normalization_dose")?,
+        Norm::Local { cutoff } => require_positive_finite(cutoff, "gamma::low_dose_cutoff")?,
+    }
 
     let grid = *reference.grid();
     let [nx, ny, nz] = grid.dims();
     let spacing = grid.spacing();
+    let zero = <T as NumericElement>::ZERO;
 
-    let delta_dose = dose_diff_criterion * normalization_dose;
     let inv_dta_sq = (dta_mm * dta_mm).recip();
-    let inv_dd_sq = (delta_dose * delta_dose).recip();
     let search_sq = search_radius_mm * search_radius_mm;
 
     // Per-axis neighborhood radius in voxels covering the search sphere.
@@ -79,6 +141,19 @@ pub fn gamma_index_3d<T: Scalar>(
         let (i, j, k) = (idx[0], idx[1], idx[2]);
         let world_r = grid.voxel_center(i, j, k);
         let dose_r = reference.get(i, j, k).expect("reference index within grid");
+
+        // Per-point dose-difference denominator (global constant or local D_r);
+        // low-dose points under local normalization are excluded (gamma 0).
+        let delta_dose = match norm {
+            Norm::Global(d) => dose_diff_criterion * d,
+            Norm::Local { cutoff } => {
+                if dose_r < cutoff {
+                    return zero;
+                }
+                dose_diff_criterion * dose_r
+            }
+        };
+        let inv_dd_sq = (delta_dose * delta_dose).recip();
 
         let mut best_sq = T::infinity();
         for ei in i.saturating_sub(rx)..=(i + rx).min(nx - 1) {
@@ -211,6 +286,45 @@ mod tests {
         assert!(gamma_index_3d(&a, &b, 0.03, 2.0, 5.0, 4.0).is_err());
         assert!(gamma_index_3d(&a, &a, 0.0, 2.0, 5.0, 4.0).is_err());
         assert!(gamma_index_3d(&a, &a, 0.03, 2.0, -5.0, 4.0).is_err());
+    }
+
+    #[test]
+    fn local_gamma_equals_global_for_uniform_dose() {
+        // Uniform reference D=10, evaluated 3% high (0.3). Local ΔD = 0.03·10 = 0.3
+        // = global ΔD with norm 10 → both give γ = 1 (co-located, no spatial term).
+        let reference = Volume::from_shape_fn(grid(), |_| 10.0);
+        let evaluated = Volume::from_shape_fn(grid(), |_| 10.3);
+        let local = gamma_index_3d_local(&reference, &evaluated, 0.03, 2.0, 1.0, 4.0).unwrap();
+        assert_relative_eq!(local.get(2, 2, 2).unwrap(), 1.0, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn local_gamma_is_stricter_in_low_dose_than_global() {
+        // Two spatial regions: i<2 → 10 Gy, i≥2 → 2 Gy; evaluated 3% high locally.
+        // At an interior low-dose voxel, local γ = 1 (ΔD = 0.03·2) but global γ =
+        // 0.2 (ΔD = 0.03·10) — local normalization is the stricter, correct metric.
+        let reference = Volume::from_shape_fn(grid(), |idx| if idx[0] < 2 { 10.0 } else { 2.0 });
+        let evaluated = Volume::from_shape_fn(grid(), |idx| {
+            let d = if idx[0] < 2 { 10.0 } else { 2.0 };
+            d * 1.03
+        });
+        let local = gamma_index_3d_local(&reference, &evaluated, 0.03, 2.0, 0.5, 4.0).unwrap();
+        let global = gamma_index_3d(&reference, &evaluated, 0.03, 2.0, 10.0, 4.0).unwrap();
+        // Interior low-dose voxel (i=3, neighbours i=2,4 also low).
+        assert_relative_eq!(local.get(3, 2, 2).unwrap(), 1.0, epsilon = 1e-12);
+        assert_relative_eq!(global.get(3, 2, 2).unwrap(), 0.2, epsilon = 1e-12);
+        assert!(local.get(3, 2, 2).unwrap() > global.get(3, 2, 2).unwrap());
+    }
+
+    #[test]
+    fn local_gamma_excludes_points_below_the_low_dose_cutoff() {
+        // Reference below the cutoff → excluded (gamma 0) even with a large error.
+        let reference = Volume::from_shape_fn(grid(), |_| 0.5);
+        let evaluated = Volume::from_shape_fn(grid(), |_| 5.0); // huge error
+        let local = gamma_index_3d_local(&reference, &evaluated, 0.03, 2.0, 1.0, 4.0).unwrap();
+        assert_relative_eq!(local.get(2, 2, 2).unwrap(), 0.0, epsilon = 1e-15);
+        // Bad cutoff is rejected.
+        assert!(gamma_index_3d_local(&reference, &evaluated, 0.03, 2.0, -1.0, 4.0).is_err());
     }
 
     #[test]
