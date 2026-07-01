@@ -15,9 +15,11 @@ mod backproject;
 mod fbp;
 mod noise;
 mod radon;
+mod registration;
 mod sirt;
 
 pub use fbp::filtered_back_projection;
 pub use noise::add_quantum_noise;
 pub use radon::{parallel_beam_radon, Sinogram};
+pub use registration::register_translation;
 pub use sirt::sirt_reconstruction;

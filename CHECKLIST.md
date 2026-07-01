@@ -6,13 +6,18 @@
 
 ## Owner: claude-helios
 
-### H-030c done — SIRT iterative reconstruction (imaging accuracy, robust to noise/sparse-angle). Next in-flight: H-020g anisotropic CC kernel / H-043b GPU fusion / H-004d HU newtypes+oriented pose — `todo`
+### H-044 done — IGRT rigid translation registration (MVCT guidance / setup correction). Next in-flight: H-044b robust NCC+rotation via ritk / H-020g anisotropic CC kernel / H-043b GPU fusion — `todo`
 
-`helios-imaging::sirt_reconstruction` (normalized SIRT, non-negativity-projected) adds
-a second MVCT reconstruction method robust where FBP streaks. Consolidated the
-back-projection geometry into a shared `back_project_rows` (FBP + SIRT). Verified:
-converges to its forward model (interior mean within 15% of μ₀), monotone error decay,
-zero→zero, f32. 173 default / 178 `--all-features` tests pass.
+`helios-imaging::register_translation` estimates the whole-voxel couch shift aligning a
+daily image to the planning reference (mean-SSD over overlap, exhaustive search) — the
+IGRT setup correction named in the goal. Verified: recovers a known applied shift
+exactly (±, zero) on a textured phantom, f32. 177 default / 182 `--all-features` tests
+pass. Follow-up: masked/NCC + sub-voxel + rotation/deformable via ritk (H-044b).
+
+### (prior) H-030c done — SIRT iterative reconstruction
+
+`sirt_reconstruction` (normalized SIRT, non-negativity-projected) — a second MVCT
+reconstruction method robust where FBP streaks; shared `back_project_rows` with FBP.
 
 ### (prior) H-020f done — divergent point-source fan (TomoTherapy beam geometry)
 
@@ -114,13 +119,13 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-030c — SIRT iterative reconstruction)
+## Gate status (last run, H-044 — IGRT translation registration)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 11 crates) |
-| `cargo nextest run` (default) | 173 passed / 0 failed (incl. live GPU) |
-| `cargo nextest run --all-features` | **178 passed / 0 failed** (+5 DICOM slice/series) |
+| `cargo nextest run` (default) | 177 passed / 0 failed (incl. live GPU) |
+| `cargo nextest run --all-features` | **182 passed / 0 failed** (+5 DICOM slice/series) |
 | `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |
 | `cargo clippy -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |

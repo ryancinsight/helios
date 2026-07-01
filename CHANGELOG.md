@@ -97,6 +97,13 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-imaging::register_translation` (H-044): IGRT rigid setup correction — the
+  whole-voxel translation `s` aligning a daily image (e.g. an MVCT reconstruction) to a
+  planning reference by minimizing the mean squared difference over their overlap
+  (exhaustive search over `±max_shift`). The couch-shift / setup-error estimate IGRT
+  applies before delivery. Verified: recovers a known applied shift exactly (positive,
+  negative, zero) on a textured phantom, f32. Assumes textured images; masked/NCC
+  metric, sub-voxel refinement, and rotation/deformable registration via `ritk` = H-044b.
 - `helios-imaging::sirt_reconstruction` (H-030c): SIRT iterative MVCT reconstruction —
   `x ← max(0, x + λ · C⁻¹ ⊙ Aᵀ(R⁻¹ ⊙ (b − A x)))` with `A` the Radon projector, `R⁻¹`
   per-ray chord normalization, `C⁻¹` per-voxel hit normalization, and a non-negativity
