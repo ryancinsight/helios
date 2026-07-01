@@ -686,6 +686,7 @@ dependencies = [
  "approx",
  "helios-core",
  "helios-math",
+ "proptest",
 ]
 
 [[package]]
@@ -722,6 +723,7 @@ dependencies = [
  "moirai",
  "moirai-gpu",
  "moirai-sync",
+ "num-complex",
  "themis 0.6.0",
  "wgpu",
 ]
@@ -901,7 +903,8 @@ dependencies = [
  "eunomia",
  "half",
  "mnemosyne",
- "serde",
+ "num-complex",
+ "num-traits",
  "thiserror 2.0.18",
 ]
 
@@ -914,6 +917,8 @@ dependencies = [
  "hermes-simd",
  "leto",
  "moirai",
+ "num-complex",
+ "num-traits",
  "themis 0.9.17",
  "thiserror 2.0.18",
 ]
@@ -1261,6 +1266,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee6cda3051665f1fb8d9e08fc35c96d5a244fb1be711a03b71118828afc9a873"
 dependencies = [
  "jni-sys 0.3.1",
+]
+
+[[package]]
+name = "num-complex"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73f88a1307638156682bada9d7604135552957b7818057dcef22705b4d509495"
+dependencies = [
+ "bytemuck",
+ "num-traits",
 ]
 
 [[package]]

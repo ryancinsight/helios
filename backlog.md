@@ -49,8 +49,9 @@ for kwavers) requiring consumer coordination.
 | H-012 | `helios-solver`: GPU MVCT forward projector (Siddon/Joseph); CPU reference | [minor] | todo | — | `crates/helios-solver/**` |
 | H-012b | `helios-solver`: HU→μ attenuation-map engine (CPU reference; differential oracle for the GPU kernel) | [minor] | done | claude-helios | `crates/helios-solver/**` |
 | H-013a | `helios-solver::primary_fluence_parallel_x`: primary-transport stage — Beer–Lambert attenuated fluence Ψ=Ψ₀·exp(−∫μ dl), +x parallel beam. Also fixed projector optical-depth units (mm→cm). | [minor] | done | claude-helios | `crates/helios-solver/**` |
-| H-013b | `helios-solver`: dose = TERMA ⊛ kernel (collapsed-cone). `dose_convolution_x` + `exponential_deposition_kernel` **written** (exact oracles) but **UNVERIFIED / uncommitted** — blocked by G-14 (foundation won't build). | [minor] | blocked (G-14) | claude-helios | `crates/helios-solver/**` |
-| H-003c | `helios-math`: re-export **all** geometry (`Vector3`/`Point3`/`Isometry3`/…) from gaia once gaia owns geometry natively (leto geometry removed). Replaces the current `leto::{Vector3,…}` re-exports. | [minor] | blocked (G-14) | — | `crates/helios-math/**` |
+| H-013b | `helios-solver`: dose = TERMA ⊛ kernel (collapsed-cone). `dose_convolution_x` + `exponential_deposition_kernel` — exact oracles (delta identity, normalized-kernel interior conservation, physical build-up). **Verified** (G-14 resolved). | [minor] | done | claude-helios | `crates/helios-solver/**` |
+| H-003c | `helios-math` re-exports adapted to the new `leto::geometry` API (Point2/Point3/Vector3/UnitVector3) + gaia Aabb/Ray; `VoxelGrid` simplified to axis-aligned. Restored full-workspace build. | [minor] | done | claude-helios | `crates/helios-math/**`, `crates/helios-domain/**` |
+| H-003d | `helios-domain`: oriented `VoxelGrid` (DICOM `ImageOrientationPatient` cosines) once a rigid-transform primitive with `transform`/`inverse` exists upstream. | [minor] | todo | — | `crates/helios-domain/**` |
 
 ## Sprint 3 — Delivery
 

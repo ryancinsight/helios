@@ -6,37 +6,32 @@
 
 ## Owner: claude-helios
 
-### BLOCKED: H-013b dose kernel superposition — code written, UNVERIFIED (G-14)
+### In-flight item: H-021 helical delivery simulation — `todo`
 
-**Blocker (G-14):** a concurrent refactor removed `leto::geometry` (geometry moving
-to gaia-native); gaia no longer compiles, so the whole Helios workspace fails to
-build — including last green commit `2ce36787`. `dose_convolution_x` +
-`exponential_deposition_kernel` are written in `dose.rs` with exact analytical
-oracles but **cannot be verified or committed** until the foundation settles. Do NOT
-fix the peer's in-flight geometry relocation or revert the shared submodule.
+**G-14 RESOLVED (H-003c):** the concurrent leto geometry rewrite settled; leto+gaia
+build against the new `leto::geometry` API. Helios adapted — `helios-math` re-exports
+the new leto types + gaia `Aabb`/`Ray`; `VoxelGrid` simplified to axis-aligned
+(origin+spacing); projector pose-check removed. **Full workspace builds; 97 tests
+pass**; dose kernel superposition (H-013b) verified. The H-055 geometry-feature split
+remains (physics still builds standalone).
 
-**Mitigation done (H-055):** `helios-math` geometry is behind a default `geometry`
-feature; `helios-physics` builds without it. So `helios-core` + `helios-math`(scalar)
-+ `helios-physics` build/test independently of the churn — that path stays productive
-(e.g. Compton H-011d2 landed there this turn).
+Next: H-021 (moirai-orchestrated helical delivery simulation combining
+`HelicalDelivery` kinematics + per-projection forward projection / dose over time),
+then end-to-end dose→gamma/DVH validation.
 
-**Unblock sequence when leto/gaia geometry stabilizes:**
-1. [ ] H-003c: point `helios-math` geometry re-exports at gaia (leto no longer exports it).
-2. [ ] Rebuild; verify H-013b (dose convolution) green; commit.
-3. [ ] Resume: TERMA=(μ/ρ)·Ψ, feed `helios-analysis` gamma/DVH end-to-end.
+*Also queued:* H-020b (binary-MLC sinogram), H-003d (oriented grids when leto
+`Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
+H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-055 / H-011d2 — geometry-independent subset)
+## Gate status (last run, H-003c — full workspace restored)
 
-| Gate (`-p helios-core -p helios-physics`) | Result |
+| Gate | Result |
 |------|--------|
-| `cargo nextest run` | 36 passed / 0 failed |
-| `cargo clippy -- -D warnings` | 0 code warnings |
+| `cargo build` (whole workspace) | pass (all 7 crates) |
+| `cargo nextest run` | 97 passed / 0 failed (incl. live GPU) |
+| `cargo clippy --all-targets --all-features -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |
 | `cargo fmt --check` | pass |
-| full-workspace `cargo build` | BLOCKED (G-14, geometry stack) |
-
-*Also queued:* H-011d (exact Siddon + oriented-grid + sinogram), H-020b (binary-MLC
-sinogram), H-010b (GPU HU→μ + throughput bench), H-004b (ritk DICOM).
 
 ### Completed
 

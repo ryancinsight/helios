@@ -97,6 +97,17 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- Geometry-stack migration (H-003c): adapted Helios to the new `leto::geometry`
+  API after the upstream leto rewrite settled — `helios-math` re-exports
+  `Point2/Point3/Vector3/UnitVector3` (+ gaia `Aabb`/`Ray`); `VoxelGrid` simplified
+  to **axis-aligned** (origin + spacing), dropping the now-reduced leto `Isometry3`
+  pose (oriented grids tracked H-003d); projector pose-rotation check removed.
+  Restored the full-workspace build (97 tests, all crates incl. live GPU).
+- `helios-solver` dose kernel superposition (H-013b): `dose_convolution_x`
+  (dose = TERMA ⊛ forward kernel) + `exponential_deposition_kernel`. Analytical
+  oracles: delta-kernel identity (dose = TERMA), normalized-kernel interior energy
+  conservation, physical depth-dose build-up, empty-kernel. Now verified (was
+  blocked by G-14).
 - Integration wiring (H-050): `[patch]` redirecting `leto`/`eunomia`/`gaia` git
   sources to the local synchronized Atlas checkout, so Helios builds against one
   consistent source and consumes gaia's **migrated leto/eunomia geometry**.

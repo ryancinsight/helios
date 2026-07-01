@@ -36,12 +36,9 @@ pub use eunomia::{CastFrom, CastTo, FloatElement, NumericElement};
 
 /// Linear-algebra substrate from leto, re-exported as the Helios vocabulary.
 /// Gated on the `geometry` feature (numeric/physics layers do not need it).
+/// leto's geometry types live in the `leto::geometry` module.
 #[cfg(feature = "geometry")]
-pub use leto::geometry::{UnitVector2, UnitVector3};
-#[cfg(feature = "geometry")]
-pub use leto::{
-    Isometry3, Point3, Quaternion, Translation3, Unit, UnitQuaternion, Vector2, Vector3,
-};
+pub use leto::geometry::{Point2, Point3, UnitVector3, Vector3};
 
 /// Geometry *primitives* from the gaia geometry kernel, re-exported as the Helios
 /// geometry vocabulary (upstream ownership — Helios never re-implements these).

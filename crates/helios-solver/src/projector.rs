@@ -17,36 +17,16 @@
 //! silently-wrong result; general-pose clipping is a tracked follow-up.
 
 use helios_domain::{Volume, VoxelGrid};
-use helios_math::{Aabb, GeometryScalar, Point3, Ray, Vector3};
+use helios_math::{Aabb, GeometryScalar, Point3, Ray};
 
-/// Axis-aligned world bounding box of a grid's sample region (node centres),
-/// or `None` if the grid pose has a non-identity rotation.
-fn axis_aligned_world_aabb<T: GeometryScalar>(grid: &VoxelGrid<T>) -> Option<Aabb<T>> {
-    // A rotation-free pose maps the world basis onto itself; detect that so we do
-    // not build a wrong axis-aligned box for an oriented grid.
-    let pose = grid.pose();
-    let tol = <T as GeometryScalar>::from_f64(1e-9);
-    for (axis, unit) in [
-        Vector3::new(T::ONE, T::ZERO, T::ZERO),
-        Vector3::new(T::ZERO, T::ONE, T::ZERO),
-        Vector3::new(T::ZERO, T::ZERO, T::ONE),
-    ]
-    .into_iter()
-    .enumerate()
-    {
-        let mapped = pose.transform_vector(unit);
-        let expected = [T::ZERO, T::ZERO, T::ZERO];
-        for (k, &e) in expected.iter().enumerate() {
-            let want = if k == axis { T::ONE } else { e };
-            if (mapped.data[k] - want).abs() > tol {
-                return None;
-            }
-        }
-    }
+/// World bounding box of a grid's sample region (node centres). `VoxelGrid` is
+/// axis-aligned, so the min/max corners are the `(0,0,0)` and `(nx-1,ny-1,nz-1)`
+/// voxel centres.
+fn world_aabb<T: GeometryScalar>(grid: &VoxelGrid<T>) -> Aabb<T> {
     let [nx, ny, nz] = grid.dims();
     let min = grid.voxel_center(0, 0, 0);
     let max = grid.voxel_center(nx - 1, ny - 1, nz - 1);
-    Some(Aabb::new(min, max))
+    Aabb::new(min, max)
 }
 
 /// Millimetres per centimetre — the world grid is in mm, `μ` in cm⁻¹.
@@ -61,7 +41,7 @@ const MM_PER_CM: f64 = 10.0;
 ///
 /// `step_mm` is the nominal sampling step (the actual step is `L / ceil(L/step)`
 /// so it divides the traversed length exactly). Returns `None` if the ray misses
-/// the grid or the grid is not axis-aligned.
+/// the grid.
 #[must_use]
 pub fn forward_project_ray<T: GeometryScalar>(
     mu: &Volume<T>,
@@ -69,7 +49,7 @@ pub fn forward_project_ray<T: GeometryScalar>(
     step_mm: T,
 ) -> Option<T> {
     let grid = *mu.grid();
-    let aabb = axis_aligned_world_aabb(&grid)?;
+    let aabb = world_aabb(&grid);
     let (t_enter, t_exit) = ray.intersect_aabb(&aabb)?;
 
     let length = t_exit - t_enter;
@@ -99,7 +79,7 @@ pub fn forward_project_ray<T: GeometryScalar>(
 mod tests {
     use super::*;
     use approx::assert_relative_eq;
-    use helios_math::Ray;
+    use helios_math::{Ray, Vector3};
 
     fn axis_grid() -> VoxelGrid<f64> {
         // Node box: x∈[0,20], y∈[0,4], z∈[0,4]; 2 mm spacing.

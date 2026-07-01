@@ -6,7 +6,21 @@ target closure.
 
 ## Open gaps
 
-### BLOCKER (concurrent foundation refactor)
+### Recently closed
+
+- **G-14 — RESOLVED (H-003c).** The concurrent leto geometry rewrite settled: leto
+  and gaia now build against the new `leto::geometry` API (Vector3/Point3 with
+  `.x/.y/.z` fields; `Isometry3` reduced to `{rotation, translation}`). Helios was
+  adapted: `helios-math` re-exports the new leto types (`Point2/Point3/Vector3/
+  UnitVector3`) + gaia `Aabb/Ray`; `VoxelGrid` simplified to **axis-aligned**
+  (origin + spacing), dropping the now-incomplete `Isometry3` pose (oriented grids
+  are a follow-up pending a rigid-transform primitive with `transform`/`inverse`);
+  the projector's pose-rotation check was removed. **Full workspace builds; 97 tests
+  pass** (all crates incl. live GPU), clippy `-D warnings` clean, fmt clean. The
+  previously-blocked dose kernel-superposition engine (H-013b) is now built and
+  verified. *Evidence tier: verified — whole-workspace build + 97 tests green.*
+
+### (historical) BLOCKER — concurrent foundation refactor
 
 - **G-14 (integration, BLOCKED — concurrent leto geometry relocation):** Mid-session
   the shared **leto** submodule advanced (peer/concurrent work) and its `geometry`
