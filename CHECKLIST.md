@@ -6,7 +6,15 @@
 
 ## Owner: claude-helios
 
-### In-flight item: H-021 helical delivery simulation — `todo`
+### In-flight item: H-004b `helios-domain` ritk DICOM load path — `todo`
+
+**H-021 done:** `helios-simulation::simulate_helical_sinogram` integrates
+`HelicalDelivery` + forward projector into a helical MVCT acquisition (8/11 crates,
+103 tests). Next: real inputs (ritk DICOM, H-004b) and reconstruction
+(`helios-imaging`, H-042) to close the imaging/therapy validation loop; moirai
+parallel projection dispatch (H-021b); planning (`helios-planning`, coeus).
+
+### (done) H-021 helical delivery simulation
 
 **G-14 RESOLVED (H-003c):** the concurrent leto geometry rewrite settled; leto+gaia
 build against the new `leto::geometry` API. Helios adapted — `helios-math` re-exports
@@ -23,12 +31,12 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-003c — full workspace restored)
+## Gate status (last run, H-021 — helical simulation)
 
 | Gate | Result |
 |------|--------|
-| `cargo build` (whole workspace) | pass (all 7 crates) |
-| `cargo nextest run` | 97 passed / 0 failed (incl. live GPU) |
+| `cargo build` (whole workspace) | pass (all 8 crates) |
+| `cargo nextest run` | 103 passed / 0 failed (incl. live GPU) |
 | `cargo clippy --all-targets --all-features -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |
 | `cargo fmt --check` | pass |

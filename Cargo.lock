@@ -690,6 +690,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "helios-simulation"
+version = "0.0.1"
+dependencies = [
+ "approx",
+ "helios-core",
+ "helios-domain",
+ "helios-math",
+ "helios-physics",
+ "helios-solver",
+]
+
+[[package]]
 name = "helios-solver"
 version = "0.0.1"
 dependencies = [

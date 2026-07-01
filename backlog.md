@@ -59,7 +59,8 @@ for kwavers) requiring consumer coordination.
 |----|------|-------|--------|-------|-------|
 | H-020 | `helios-domain`: helical delivery kinematics (gantry rotation + couch velocity + pitch/time synchronization) — `HelicalDelivery<T>` | [minor] | done | claude-helios | `crates/helios-domain/**` |
 | H-020b | `helios-domain`: binary-MLC leaf-open-time sinogram model (per-projection leaf pattern) + leakage/transmission/tongue-and-groove factors | [minor] | todo | — | `crates/helios-domain/**` |
-| H-021 | `helios-simulation`: moirai-orchestrated time-dependent helical delivery + synchronized MVCT | [major] | todo | — | `crates/helios-simulation/**` |
+| H-021 | `helios-simulation::simulate_helical_sinogram`: time-dependent helical MVCT acquisition — gantry rotation + couch translation drive the forward projector per projection (helix). CPU reference; moirai orchestration = H-021b. | [minor] | done | claude-helios | `crates/helios-simulation/**` |
+| H-021b | `helios-simulation`: moirai-parallel projection dispatch; fan/cone-beam detector rows (full sinogram); motion modeling | [minor] | todo | — | `crates/helios-simulation/**` |
 | H-022 | Binary-MLC leakage/transmission/tongue-and-groove model | [minor] | todo | — | `crates/helios-domain/**` |
 
 ## Sprint 4 — Planning & imaging

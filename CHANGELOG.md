@@ -97,6 +97,14 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-simulation` crate (H-021): `simulate_helical_sinogram` — time-dependent
+  helical MVCT acquisition integrating `HelicalDelivery` (gantry rotation + couch
+  translation, a helix) with the forward projector: each projection rotates the
+  central beam in the axial plane at the couch `z` and forward-projects through the
+  μ volume → optical depth + transmission. Analytical oracles: projection count,
+  axial central-ray τ = μ·chord, uniform-cube rotational symmetry (0°=90°), couch
+  monotonicity, empty→full transmission, f32. CPU reference (moirai parallel
+  dispatch + fan/cone detector = H-021b).
 - Geometry-stack migration (H-003c): adapted Helios to the new `leto::geometry`
   API after the upstream leto rewrite settled — `helios-math` re-exports
   `Point2/Point3/Vector3/UnitVector3` (+ gaia `Aabb`/`Ray`); `VoxelGrid` simplified

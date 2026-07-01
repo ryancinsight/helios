@@ -1,0 +1,22 @@
+[package]
+name = "helios-simulation"
+description = "Helios time-dependent helical TomoTherapy delivery/acquisition simulation: gantry rotation + couch translation driving forward projection over time."
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+helios-core = { workspace = true }
+helios-math = { workspace = true }
+helios-domain = { workspace = true }
+helios-physics = { workspace = true }
+helios-solver = { workspace = true }
+
+[dev-dependencies]
+approx = { workspace = true }
