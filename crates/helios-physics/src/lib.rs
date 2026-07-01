@@ -19,5 +19,8 @@ pub mod projection;
 pub use attenuation::{
     mass_density_from_hu, relative_electron_density_from_hu, LinearAttenuation, MassAttenuation,
 };
-pub use compton::{klein_nishina_cross_section, thomson_cross_section};
+pub use compton::{
+    compton_mass_attenuation, electrons_per_gram, klein_nishina_cross_section,
+    thomson_cross_section,
+};
 pub use projection::{beam_transmission, optical_depth};

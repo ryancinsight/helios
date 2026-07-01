@@ -14,8 +14,14 @@
 //! `σ_T = (8/3)π r_e²` (the low-energy analytical oracle used in the tests).
 //! Result units are m² per electron.
 
-use helios_core::constants::{CLASSICAL_ELECTRON_RADIUS_M, ELECTRON_REST_ENERGY_MEV};
+use crate::attenuation::MassAttenuation;
+use helios_core::constants::{
+    AVOGADRO_PER_MOL, CLASSICAL_ELECTRON_RADIUS_M, ELECTRON_REST_ENERGY_MEV,
+};
 use helios_math::{NumericElement, Scalar};
+
+/// Square centimetres per square metre (`1 m² = 10⁴ cm²`).
+const CM2_PER_M2: f64 = 1.0e4;
 
 /// Classical Thomson total cross-section per electron, `σ_T = (8/3)π r_e²` (m²).
 ///
@@ -51,6 +57,31 @@ pub fn klein_nishina_cross_section<T: Scalar>(photon_energy_mev: T) -> T {
     let term3 = -(one + three * alpha) * (one_plus_two_alpha * one_plus_two_alpha).recip();
 
     two * T::PI * r_e * r_e * (term1 + term2 + term3)
+}
+
+/// Electrons per gram for a material with effective `z_over_a` = ⟨Z/A⟩
+/// (`N_A · Z/A`). Water is ≈0.5551 → ≈3.343×10²³ e⁻/g.
+#[must_use]
+pub fn electrons_per_gram<T: Scalar>(z_over_a: T) -> T {
+    T::from_f64(AVOGADRO_PER_MOL) * z_over_a
+}
+
+/// Compton contribution to the mass attenuation coefficient (cm²/g), derived
+/// from first principles as `(μ/ρ)_C = σ_KN(E) · (electrons per gram)`.
+///
+/// This connects [`klein_nishina_cross_section`] (m²/electron, converted to cm²)
+/// to [`MassAttenuation`]. In the MV regime Compton dominates, so for water this
+/// reproduces the tabulated total `μ/ρ` closely (the test validates against the
+/// NIST value at 1 MeV) — a derived coefficient, not a fabricated table entry.
+#[must_use]
+pub fn compton_mass_attenuation<T: Scalar>(
+    photon_energy_mev: T,
+    electrons_per_gram: T,
+) -> MassAttenuation<T> {
+    let sigma_cm2 = klein_nishina_cross_section(photon_energy_mev) * T::from_f64(CM2_PER_M2);
+    let mu_over_rho = sigma_cm2 * electrons_per_gram;
+    MassAttenuation::new(mu_over_rho)
+        .expect("invariant: Compton cross-section and electron density are non-negative")
 }
 
 #[cfg(test)]
@@ -104,6 +135,37 @@ mod tests {
         let ratio = klein_nishina_cross_section(6.0_f64) / thomson_cross_section::<f64>();
         assert!(ratio < 0.2, "σ_KN(6 MeV)/σ_T = {ratio} should be ≪ 1");
         assert!(ratio > 0.0);
+    }
+
+    #[test]
+    fn electrons_per_gram_matches_water() {
+        // Water ⟨Z/A⟩ = 0.5551 → 3.343×10²³ e⁻/g.
+        assert_relative_eq!(
+            electrons_per_gram(0.5551_f64),
+            3.343e23,
+            max_relative = 1e-3
+        );
+    }
+
+    #[test]
+    fn derived_compton_mu_over_rho_matches_water_nist_at_1mev() {
+        // First-principles Compton μ/ρ for water at 1 MeV vs the NIST total
+        // (0.0707 cm²/g), which is Compton-dominated (~99.8%) at this energy.
+        // The derived Compton-only value must match to within ~2%.
+        let epg = electrons_per_gram(0.5551_f64);
+        let mu_over_rho = compton_mass_attenuation(1.0_f64, epg).get();
+        assert_relative_eq!(mu_over_rho, 0.0707, max_relative = 2e-2);
+    }
+
+    #[test]
+    fn derived_mu_over_rho_decreases_with_energy() {
+        let epg = electrons_per_gram(0.5551_f64);
+        let low = compton_mass_attenuation(0.5_f64, epg).get();
+        let high = compton_mass_attenuation(6.0_f64, epg).get();
+        assert!(
+            high < low && high > 0.0,
+            "μ/ρ Compton must fall with energy"
+        );
     }
 
     #[test]

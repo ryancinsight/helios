@@ -51,6 +51,10 @@ under a Breaking subsection.
   Analytical oracles: Thomson matches the CODATA value, low-energy KN limit →
   Thomson from below, monotonic decrease with energy, σ(6 MeV) ≪ σ_T, f32
   differential vs f64 (near-α=0 cancellation documented as f64-conditioned).
+  Plus `electrons_per_gram` and `compton_mass_attenuation` — the Compton μ/ρ
+  *derived from first principles* (`σ_KN · N_A·Z/A`); validated against the NIST
+  water value at 1 MeV (0.0707 cm²/g, Compton-dominated) to within 2% — a computed
+  coefficient, not a fabricated table entry.
 - `helios-physics` crate:
   - `LinearAttenuation<T>` (cm⁻¹) and `MassAttenuation<T>` (cm²/g) validated
     newtypes; `μ = (μ/ρ)·ρ` via `MassAttenuation::to_linear`.
