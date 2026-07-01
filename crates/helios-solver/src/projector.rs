@@ -22,7 +22,7 @@ use helios_math::{Aabb, GeometryScalar, Point3, Ray};
 /// World bounding box of a grid's sample region (node centres). `VoxelGrid` is
 /// axis-aligned, so the min/max corners are the `(0,0,0)` and `(nx-1,ny-1,nz-1)`
 /// voxel centres.
-fn world_aabb<T: GeometryScalar>(grid: &VoxelGrid<T>) -> Aabb<T> {
+pub(crate) fn world_aabb<T: GeometryScalar>(grid: &VoxelGrid<T>) -> Aabb<T> {
     let [nx, ny, nz] = grid.dims();
     let min = grid.voxel_center(0, 0, 0);
     let max = grid.voxel_center(nx - 1, ny - 1, nz - 1);

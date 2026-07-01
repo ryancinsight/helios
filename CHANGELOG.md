@@ -97,6 +97,20 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-solver::deposit_ray_terma` + `helios-simulation::accumulate_delivered_dose`
+  (H-020d): the delivery→dose loop. `deposit_ray_terma` ray-marches a gaia `Ray`
+  through the μ volume depositing the primary-beam energy lost in each path segment,
+  `w·(e^{−τ_before} − e^{−τ_after})`, into the nearest voxel; the per-segment losses
+  telescope, so the returned total is exactly `w·(1 − e^{−τ})` (step-independent
+  conservation oracle) and equals the summed voxel dose. `accumulate_delivered_dose`
+  builds per-leaf beamlets from each `DeliveryFrame` (gantry angle → axial-plane
+  direction, couch → z-slice, leaf index → lateral offset, effective fluence →
+  weight) and sums their terma into a delivered-dose `Volume` — the input the DVH /
+  gamma gates consume. Oracles: single central beamlet vs analytic `w·(1−e^{−μ·L})`,
+  linearity in fluence, frame superposition, three-leaf offset fan, zero-fluence, f32.
+  Adds `Volume::add_at` (bounds-checked scatter accumulation) and `Volume::sum`.
+  Beamlets are parallel (small-fan approximation); divergent fan + lateral scatter =
+  H-020e.
 - `helios-python` crate (H-040): thin PyO3 binding surface (`import helios`) — the
   11th and final crate, completing the workspace roster. Geometry-free `f64`
   wrappers over the physics/planning cores: `thomson_cross_section`,

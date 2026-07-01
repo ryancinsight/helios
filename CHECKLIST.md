@@ -6,13 +6,20 @@
 
 ## Owner: claude-helios
 
-### H-040 done — 11/11 crate roster complete. Next in-flight: H-004b ritk DICOM / H-020d delivered-dose — `todo`
+### H-020d done — delivery→dose loop closed. Next in-flight: H-004b ritk DICOM / H-020e divergent fan+scatter — `todo`
 
-`helios-python` (H-040) lands the final crate: thin PyO3 wrappers over
-physics/planning, abi3-py39 wheel, 13 pytest equivalence tests green. All 11 crates
-build; 129 Rust tests pass. The remaining work is real-data/clinical validation
-(ritk DICOM inputs, delivered-dose accumulation, coeus/moirai heavy backends) — not
-new roster crates.
+`helios-solver::deposit_ray_terma` (primary-energy terma deposition, exact
+`w·(1−e^{−τ})` conservation) + `helios-simulation::accumulate_delivered_dose`
+(per-frame per-leaf beamlets → delivered-dose `Volume`) close the delivery→dose loop.
+143 Rust tests pass (was 129: +7 deposition, +6 dose-accumulation, +1 `Volume::add_at`).
+Delivered dose now feeds the DVH/gamma machinery on self-consistent synthetic
+phantoms. Remaining for physical fidelity: divergent point-source fan + lateral
+scatter kernel (H-020e); for clinical-reference validation: real DICOM (H-004b).
+
+### (prior) H-040 done — 11/11 crate roster complete
+
+`helios-python` (H-040): thin PyO3 wrappers over physics/planning, abi3-py39 wheel,
+13 pytest equivalence tests green.
 
 ### (prior in-flight) H-004b `helios-domain` ritk DICOM load path — `todo`
 
@@ -39,13 +46,13 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-040 — helios-python, roster complete)
+## Gate status (last run, H-020d — delivery→dose loop)
 
 | Gate | Result |
 |------|--------|
-| `cargo build` (whole workspace) | pass (**all 11 crates**) |
-| `cargo nextest run` | 129 passed / 0 failed (incl. live GPU) |
-| `pytest` (helios-python, maturin develop) | **13 passed / 0 failed** |
+| `cargo build` (whole workspace) | pass (all 11 crates) |
+| `cargo nextest run` | **143 passed / 0 failed** (incl. live GPU) |
+| `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |
 | `cargo clippy -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |
 | `cargo fmt --check` | pass |

@@ -11,9 +11,11 @@
 #![deny(missing_docs)]
 
 mod attenuation_map;
+mod deposition;
 mod dose;
 mod projector;
 
 pub use attenuation_map::attenuation_map;
+pub use deposition::deposit_ray_terma;
 pub use dose::{dose_convolution_x, exponential_deposition_kernel, primary_fluence_parallel_x};
 pub use projector::forward_project_ray;

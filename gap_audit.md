@@ -199,3 +199,12 @@ target closure.
   derivation tests, not by an external authoritative fetch this session; values are
   standard and cross-checked, but a future audit should confirm against the live
   NIST database.
+- **G-16 (dose model fidelity, H-020d).** `accumulate_delivered_dose` deposits only
+  *primary* terma (`w·(1−e^{−τ})`) along **parallel** beamlets — no lateral scatter
+  spread and no divergent point-source fan. It is energy-conserving and exact against
+  its analytic oracle, but it is not yet a full collapsed-cone/convolution-superposition
+  dose (build-up, penumbra, and scatter tails are absent). This is sufficient to close
+  the delivery→dose *loop* and exercise DVH/gamma on self-consistent phantoms, but the
+  therapy gamma/DVH clinical-agreement gate needs the H-020e scatter+fan upgrade (and
+  real CT via H-004b). Evidence tier: analytical oracle (primary-transport model);
+  NOT validated against a Monte-Carlo/reference dose engine.

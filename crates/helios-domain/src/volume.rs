@@ -89,6 +89,32 @@ impl<T: Scalar> Volume<T> {
         Some(self.slice()[self.flat_index(i, j, k)])
     }
 
+    /// Add `value` to voxel `(i, j, k)` in place (dose / energy accumulation).
+    ///
+    /// Out-of-bounds indices are ignored (no-op), so a deposition scatter that
+    /// rounds to a boundary voxel cannot panic or corrupt a neighbour.
+    pub fn add_at(&mut self, i: usize, j: usize, k: usize, value: T) {
+        let [nx, ny, nz] = self.grid.dims();
+        if i >= nx || j >= ny || k >= nz {
+            return;
+        }
+        let idx = (i * ny + j) * nz + k;
+        let s = self
+            .data
+            .as_slice_mut()
+            .expect("invariant: volume storage is C-contiguous");
+        s[idx] += value;
+    }
+
+    /// Sum of all voxel values (e.g. total deposited energy / monitor units).
+    #[must_use]
+    pub fn sum(&self) -> T {
+        self.slice()
+            .iter()
+            .copied()
+            .fold(<T as NumericElement>::ZERO, |a, b| a + b)
+    }
+
     /// Trilinear sample at continuous voxel-index coordinates.
     ///
     /// Returns `None` if the point is non-finite or lies outside the node range
@@ -223,6 +249,17 @@ mod tests {
             1.5_f32,
             epsilon = 1e-6
         );
+    }
+
+    #[test]
+    fn add_at_accumulates_and_ignores_out_of_bounds() {
+        let mut vol = Volume::zeros(affine_grid()); // dims [4,5,6]
+        vol.add_at(1, 2, 3, 5.0);
+        vol.add_at(1, 2, 3, 2.5);
+        assert_relative_eq!(vol.get(1, 2, 3).unwrap(), 7.5, epsilon = 1e-15);
+        // Out-of-bounds scatter is a silent no-op: total is unchanged.
+        vol.add_at(4, 0, 0, 100.0);
+        assert_relative_eq!(vol.sum(), 7.5, epsilon = 1e-15);
     }
 
     #[test]
