@@ -97,6 +97,18 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-imaging::add_quantum_noise` (H-033b): deterministic MVCT quantum
+  (photon-counting) noise model — `N = N₀·exp(−τ)`, Poisson draw (Gaussian
+  approximation `N + √N·z`, exact for large counts), `τ' = −ln(N'/N₀)` — via a
+  committed SplitMix64 PRNG (no external dep, reproducible from a seed). Adds
+  `Sinogram::from_readings` (validated constructor) and `Sinogram::map_readings`
+  (geometry-preserving combinator). Validated against analytical photon statistics:
+  `Var(τ') ≈ exp(τ)/N₀` (10% ensemble tol), noise grows with attenuation, high-flux →
+  clean line integrals, seed determinism, f32. An end-to-end `helios-imaging` test
+  injects noise into the disk sinogram, reconstructs, and confirms interior-ROI noise
+  exceeds the noiseless ripple and falls with photon flux — closing the MVCT
+  *noise/CNR* sub-gate on synthetic data (the metrics from H-033 now run on genuinely
+  noisy reconstructions).
 - `helios-gpu/benches/transmission_throughput.rs` (H-043): GPU-vs-CPU scaling study for
   the Beer–Lambert transmission kernel (criterion, elements/s across 1 k–4 M). Delivers
   the performance-gate measurement instrument + a quantitative report

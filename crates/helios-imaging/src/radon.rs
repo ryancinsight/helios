@@ -1,5 +1,6 @@
 //! Parallel-beam Radon forward transform (MVCT projection sinogram).
 
+use helios_core::HeliosError;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
 use helios_solver::forward_project_ray;
@@ -37,6 +38,45 @@ impl<T: GeometryScalar> Sinogram<T> {
     #[must_use]
     pub fn get(&self, angle_index: usize, offset_index: usize) -> T {
         self.data[angle_index * self.offsets.len() + offset_index]
+    }
+
+    /// Build a sinogram from explicit geometry and row-major `[angle][offset]`
+    /// readings (e.g. measured detector data or a noise-perturbed projection).
+    ///
+    /// # Errors
+    /// [`HeliosError::InvalidDomainValue`] if `data.len() != angles.len() *
+    /// offsets.len()`.
+    pub fn from_readings(
+        angles: Vec<T>,
+        offsets: Vec<T>,
+        data: Vec<T>,
+    ) -> Result<Self, HeliosError> {
+        let expected = angles.len() * offsets.len();
+        if data.len() != expected {
+            return Err(HeliosError::InvalidDomainValue {
+                field: "Sinogram::from_readings",
+                value: data.len() as f64,
+                reason: "reading count does not match angles × offsets",
+            });
+        }
+        Ok(Self {
+            angles,
+            offsets,
+            data,
+        })
+    }
+
+    /// Apply `f` to every line-integral reading, preserving the geometry.
+    ///
+    /// `f` is called in row-major `[angle][offset]` order, so a stateful `f`
+    /// (e.g. a seeded noise generator) is deterministic.
+    #[must_use]
+    pub fn map_readings<F: FnMut(T) -> T>(&self, mut f: F) -> Self {
+        Self {
+            angles: self.angles.clone(),
+            offsets: self.offsets.clone(),
+            data: self.data.iter().map(|&v| f(v)).collect(),
+        }
     }
 }
 
@@ -169,5 +209,22 @@ mod tests {
         assert_eq!(sino.dims(), (2, 3));
         assert_eq!(sino.angles().len(), 2);
         assert_eq!(sino.offsets().len(), 3);
+    }
+
+    #[test]
+    fn from_readings_validates_length_and_map_preserves_geometry() {
+        // Correct length constructs; wrong length errors.
+        let ok = Sinogram::from_readings(
+            vec![0.0_f64, 1.0],
+            vec![-1.0, 1.0],
+            vec![1.0, 2.0, 3.0, 4.0],
+        );
+        assert!(ok.is_ok());
+        let bad = Sinogram::from_readings(vec![0.0_f64], vec![-1.0, 1.0], vec![1.0]);
+        assert!(bad.is_err());
+        // map_readings preserves geometry and applies f in order.
+        let doubled = ok.unwrap().map_readings(|v| v * 2.0);
+        assert_eq!(doubled.dims(), (2, 2));
+        assert_eq!(doubled.get(1, 1), 8.0);
     }
 }

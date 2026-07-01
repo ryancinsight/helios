@@ -12,7 +12,9 @@
 #![deny(missing_docs)]
 
 mod fbp;
+mod noise;
 mod radon;
 
 pub use fbp::filtered_back_projection;
+pub use noise::add_quantum_noise;
 pub use radon::{parallel_beam_radon, Sinogram};

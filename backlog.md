@@ -79,7 +79,7 @@ for kwavers) requiring consumer coordination.
 | H-032 | `helios-analysis`: DVH (cumulative, Dx/Vx/mean) + 3D gamma index (Low, global norm) + pass rate | [minor] | done | claude-helios | `crates/helios-analysis/**` |
 | H-032b | `helios-analysis`: structure-masked DVH (RT-struct ROIs via ritk) + local-normalization gamma + low-dose threshold cutoff | [minor] | todo | — | `crates/helios-analysis/**` |
 | H-033 | `helios-analysis::image_quality`: MVCT quality metrics — reconstruction accuracy (`volume_rmse`, `volume_relative_l2_error`), noise (`roi_statistics` std), contrast (`michelson_contrast`) + CNR (`contrast_to_noise_ratio`). End-to-end recon-accuracy/contrast test in `helios-imaging` (FBP disk → metrics). | [minor] | done | claude-helios | `crates/helios-analysis/**`, `crates/helios-imaging/**` |
-| H-033b | Stochastic MVCT quantum-noise injector (deterministic seeded Poisson/Gaussian photon statistics on the sinogram) → exercise noise/CNR end-to-end on genuinely noisy reconstructions; validate noise σ vs analytical photon statistics | [minor] | todo | — | `crates/helios-imaging/**` |
+| H-033b | `helios-imaging::add_quantum_noise` — deterministic seeded MVCT quantum-noise model (`N=N₀e^{−τ}`, Poisson≈Gaussian draw, `τ'=−ln(N'/N₀)`) via a committed SplitMix64 PRNG + `Sinogram::from_readings`/`map_readings`. Validated: `Var(τ')≈e^{τ}/N₀` vs analytical photon statistics, noise↑ with attenuation, high-flux→clean, determinism; end-to-end noisy-recon std↑ and flux-scaling. | [minor] | done | claude-helios | `crates/helios-imaging/**` |
 
 ## Sprint 5 — End-to-end
 

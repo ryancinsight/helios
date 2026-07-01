@@ -6,7 +6,16 @@
 
 ## Owner: claude-helios
 
-### H-043 done — GPU-vs-CPU scaling study (performance instrument). Next in-flight: H-043b on-device fusion / H-033b quantum noise / H-004b ritk DICOM — `todo`
+### H-033b done — MVCT quantum-noise model (imaging noise/CNR sub-gate closed, synthetic). Next in-flight: H-043b GPU fusion / H-004b ritk DICOM / H-020f anisotropic dose — `todo`
+
+`helios-imaging::add_quantum_noise` (deterministic SplitMix64 photon-counting model)
++ `Sinogram::from_readings`/`map_readings`. Validated `Var(τ')≈e^{τ}/N₀` vs analytical
+photon statistics; end-to-end noisy-recon noise scales with flux. The H-033 metrics now
+run on genuinely noisy reconstructions → MVCT accuracy+noise+contrast all quantified on
+synthetic phantoms. 167 Rust tests pass (was 160: +5 noise oracles, +1 end-to-end,
++1 constructor). Remaining imaging: iterative recon + real-data (H-004b).
+
+### (prior) H-043 done — GPU-vs-CPU scaling study (performance instrument)
 
 `helios-gpu/benches/transmission_throughput.rs` + `validation_reports/2026-07-01-gpu-
 transmission-throughput.md` deliver the performance-gate measurement instrument with
@@ -69,12 +78,12 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-033 — MVCT image-quality metrics)
+## Gate status (last run, H-033b — MVCT quantum-noise model)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 11 crates) |
-| `cargo nextest run` | **160 passed / 0 failed** (incl. live GPU) |
+| `cargo nextest run` | **167 passed / 0 failed** (incl. live GPU) |
 | `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |
 | `cargo clippy -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |

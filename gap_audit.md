@@ -54,11 +54,12 @@ target closure.
   reconstruction (parallel-beam FBP) validated by a forward→reconstruct round-trip on a
   disk phantom, now *quantified* with `helios-analysis::image_quality` metrics
   (interior-ROI accuracy within 15% of μ₀, background suppression, disk/air contrast
-  >0.85, CNR >1). **Remaining:** stochastic quantum-noise injection to exercise
-  noise/CNR on genuinely noisy recons (H-033b), iterative reconstruction, and
-  validation vs *published TomoTherapy MVCT data* on real inputs (needs ritk DICOM,
-  H-004b). *Evidence tier: analytical/round-trip + synthetic-phantom metrics — real-data
-  and noise-model validation pending.*
+  >0.85, CNR >1), and *quantum noise* (H-033b: `Var(τ')≈e^{τ}/N₀` validated vs
+  analytical photon statistics; end-to-end noisy-recon noise scales with flux).
+  **Remaining:** iterative reconstruction (SART/OS-SEM), and validation vs *published
+  TomoTherapy MVCT data* on real inputs (needs ritk DICOM, H-004b). *Evidence tier:
+  analytical/round-trip + synthetic-phantom accuracy/noise/contrast metrics — real-data
+  validation pending.*
 
 ### Physics / numerics
 

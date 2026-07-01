@@ -220,6 +220,54 @@ mod tests {
     }
 
     #[test]
+    fn quantum_noise_degrades_recon_and_scales_with_flux() {
+        // End-to-end MVCT noise: inject quantum noise into the disk sinogram, then
+        // measure the reconstructed interior noise (roi std). Noise must exceed the
+        // (near-zero) noiseless recon ripple, and higher photon flux must lower it.
+        use crate::noise::add_quantum_noise;
+        use helios_analysis::roi_statistics;
+        let mu0 = 0.04;
+        let phantom = disk_phantom(mu0, 25.0);
+        let angles = uniform_angles(180);
+        let offsets = uniform_offsets(45.0, 181);
+        let clean_sino = parallel_beam_radon(&phantom, &angles, &offsets, 400.0, 0.25);
+
+        let interior = [18usize, 18, 0];
+        let interior_hi = [23usize, 23, 1];
+        let clean_std = roi_statistics(
+            &filtered_back_projection(&clean_sino, &recon_grid()),
+            interior,
+            interior_hi,
+        )
+        .std;
+
+        // Low flux → visible noise; high flux → less. Both exceed the clean ripple.
+        let low = add_quantum_noise(&clean_sino, 1.0e4, 20260701);
+        let high = add_quantum_noise(&clean_sino, 1.0e6, 20260701);
+        let std_low = roi_statistics(
+            &filtered_back_projection(&low, &recon_grid()),
+            interior,
+            interior_hi,
+        )
+        .std;
+        let std_high = roi_statistics(
+            &filtered_back_projection(&high, &recon_grid()),
+            interior,
+            interior_hi,
+        )
+        .std;
+
+        assert!(
+            std_low > clean_std,
+            "noisy recon std {std_low} not > clean {clean_std}"
+        );
+        assert!(
+            std_low > std_high,
+            "lower flux must be noisier: {std_low} !> {std_high}"
+        );
+    }
+
+    #[test]
     fn ram_lak_kernel_has_expected_structure() {
         let k = ram_lak_kernel::<f64>(4, 0.1); // len 4 → indices n=-3..3
         let base = 3;
