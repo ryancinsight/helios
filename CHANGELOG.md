@@ -42,9 +42,17 @@ under a Breaking subsection.
   - `Volume<T: Scalar>`: dense scalar field backed by leto `Array3` (C-contiguous),
     `from_shape_fn`/`zeros`/`from_shape_vec`, `get`, and `sample_trilinear`/
     `sample_world`. Trilinear reproduces affine fields exactly (analytical oracle).
+- `helios-physics` crate:
+  - `LinearAttenuation<T>` (cm⁻¹) and `MassAttenuation<T>` (cm²/g) validated
+    newtypes; `μ = (μ/ρ)·ρ` via `MassAttenuation::to_linear`.
+  - Beer–Lambert `transmission(path_cm)` and `half_value_layer` (`None` for μ=0).
+  - `relative_electron_density_from_hu` / `mass_density_from_hu` (first-order CT
+    calibration: air→0, water→1, clamped below air).
+  - Analytical tests: `T(HVL)=½`, `T(0)=1`, μ scaling with density, HU reference
+    points, f32 genericity.
 - Foundation documentation: `README.md`, `ARCHITECTURE.md` (layering + Atlas
   dependency map), and PM artifacts `backlog.md`, `CHECKLIST.md`, `gap_audit.md`,
-  `SPRINT_1.md`.
+  `SPRINT_1.md`, `SPRINT_2.md`.
 
 ### Verification
 - `cargo build`, `cargo clippy --all-targets --all-features -- -D warnings`,

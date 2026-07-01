@@ -6,7 +6,12 @@
 # inheritance against THEIR roots — no path scaffolding here). Members inherit the
 # shared version set below via `{ workspace = true }` (SSOT).
 [workspace]
-members = ["crates/helios-core", "crates/helios-math", "crates/helios-domain"]
+members = [
+    "crates/helios-core",
+    "crates/helios-math",
+    "crates/helios-domain",
+    "crates/helios-physics",
+]
 resolver = "2"
 
 [workspace.package]
@@ -31,6 +36,7 @@ all = { level = "warn", priority = -1 }
 helios-core = { path = "crates/helios-core", version = "0.0.1" }
 helios-math = { path = "crates/helios-math", version = "0.0.1" }
 helios-domain = { path = "crates/helios-domain", version = "0.0.1" }
+helios-physics = { path = "crates/helios-physics", version = "0.0.1" }
 
 # ── External foundation crates (versions verified against the installed 1.95
 #    toolchain / current registry; mirror kwavers' locked set). ──

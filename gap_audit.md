@@ -8,9 +8,14 @@ target closure.
 
 ### Physics / numerics
 
-- **G-1 (physics):** No radiation-interaction physics yet. Need photon linear
-  attenuation coefficients (μ/ρ) from a citable source (NIST XCOM / ICRU) and
-  electron transport model. *Evidence tier: none.* → H-011.
+- **G-1 (physics):** *Partially closed (H-011).* Photon attenuation **relations**
+  implemented and analytically verified in `helios-physics`: Beer–Lambert
+  transmission, half-value layer, `μ = (μ/ρ)·ρ`, and first-order HU→density CT
+  calibration (property/value-semantic tests: `T(HVL)=½`, `T(0)=1`, water/air/bone
+  calibration points, f32 genericity). **Still open:** concrete NIST XCOM μ/ρ data
+  tables (H-011b) and an electron-transport model; these are data/algorithm gaps,
+  not framework gaps. *Evidence tier: analytical (relations) — reference cross
+  sections pending.*
 - **G-2 (numerics):** ~~No `Scalar` seam.~~ **CLOSED (H-003).** `helios-math`
   establishes `Scalar = eunomia::RealField` (the Atlas numeric SSOT) as the Helios
   compute seam and re-exports the leto linear-algebra substrate. `helios-core`

@@ -24,7 +24,9 @@ Status: `todo` · `in-progress` · `review` · `done`
 | ID | Item | Class | Status | Owner | Scope |
 |----|------|-------|--------|-------|-------|
 | H-010 | `helios-gpu`: `ComputeBackend` seam over hephaestus-wgpu; kernel cache | [minor] | todo | — | `crates/helios-gpu/**` |
-| H-011 | `helios-physics`: photon attenuation (NIST XCOM-based μ/ρ), ray tracing through voxel grid | [minor] | todo | — | `crates/helios-physics/**` |
+| H-011 | `helios-physics`: photon attenuation relations — `LinearAttenuation`/`MassAttenuation`, Beer–Lambert, HVL, HU→density calibration | [minor] | done | claude-helios | `crates/helios-physics/**` |
+| H-011b | `helios-physics`: NIST XCOM μ/ρ data tables (energy-indexed, per material) loaded into `MassAttenuation` | [minor] | todo | — | `crates/helios-physics/**` |
+| H-011c | `helios-physics`: ray-marched line integral ∫μ dl through a `Volume` (MVCT projection / dose ray-trace core). Needs gaia `Ray`/voxel DDA (blocked on G-11) | [minor] | blocked | — | `crates/helios-physics/**` |
 | H-012 | `helios-solver`: GPU MVCT forward projector (Siddon/Joseph); CPU reference | [minor] | todo | — | `crates/helios-solver/**` |
 | H-013 | `helios-solver`: collapsed-cone / convolution-superposition dose engine (CPU ref first) | [major] | todo | — | `crates/helios-solver/**` |
 

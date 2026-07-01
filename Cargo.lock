@@ -168,6 +168,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "helios-physics"
+version = "0.0.1"
+dependencies = [
+ "approx",
+ "helios-core",
+ "helios-math",
+]
+
+[[package]]
 name = "leto"
 version = "0.35.1"
 source = "git+https://github.com/ryancinsight/leto#bd4b99cdad854ecffd991ced3764e047b152c0bd"

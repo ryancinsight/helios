@@ -1,0 +1,19 @@
+[package]
+name = "helios-physics"
+description = "Helios radiation-interaction physics: photon attenuation (Beer–Lambert), mass/linear attenuation, and CT-number-to-density calibration."
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+helios-core = { workspace = true }
+helios-math = { workspace = true }
+
+[dev-dependencies]
+approx = { workspace = true }

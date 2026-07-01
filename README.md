@@ -52,10 +52,11 @@ performance defect to profile and optimize, never a limit to raise.
 ## Sprint roadmap
 
 1. **Sprint 1 — Foundation:** workspace skeleton, `helios-core`, `helios-math`
-   seam, `helios-domain` + ritk/gaia integration (CT/MVCT + geometry). *(in
-   progress)*
-2. **Sprint 2 — GPU foundation:** hephaestus+moirai; first deterministic dose +
-   imaging projection kernels in `helios-solver`/`helios-gpu`.
+   seam, `helios-domain` (`VoxelGrid` + `Volume`). *(core done; ritk-io DICOM
+   pending — H-004b)*
+2. **Sprint 2 — Physics & GPU foundation:** `helios-physics` photon attenuation
+   *(landed)*; then hephaestus+moirai and the first deterministic dose + imaging
+   projection kernels in `helios-solver`/`helios-gpu`. *(in progress)*
 3. **Sprint 3 — Delivery:** binary-MLC modeling + full helical TomoTherapy delivery
    kinematics in `helios-simulation` with basic MVCT.
 4. **Sprint 4 — Planning & imaging:** `helios-planning` (coeus) + dedicated

@@ -1,29 +1,36 @@
 # Helios Checklist (tactical)
 
-**Sprint target version:** `0.0.1` (Foundation)
-**Current phase:** Phase 1 → Phase 2 boundary (Foundation established; entering
-Execution). Sprint 1 goal: workspace skeleton + `helios-core` + ritk/gaia domain
-integration.
+**Sprint target version:** `0.0.1` (Foundation → Sprint 2 physics/GPU)
+**Current phase:** Phase 2 (Execution). Sprint 1 domain core complete
+(`helios-core`/`math`/`domain`); Sprint 2 opened with `helios-physics`.
 
 ## Owner: claude-helios
 
-### In-flight item: H-004b `helios-domain` ritk-io DICOM load path — `todo`
+### In-flight item: H-011b `helios-physics` NIST μ/ρ data tables — `todo`
 
 Decomposed plan (each step has an observable completion condition):
 
-1. [ ] Verify `ritk-io` DICOM surface against source/`cargo doc` (anti-hallucination):
-   series read, pixel data, `PixelSpacing`, `ImagePositionPatient`,
-   `ImageOrientationPatient`, `RescaleSlope/Intercept`. — *symbols confirmed before use.*
-2. [ ] Feature-gated `dicom` module: read a CT/MVCT series into a `Volume<T>` +
-   `VoxelGrid` pose from geometry tags; apply rescale to HU. — *loads a synthetic/
-   fixture series; value-semantic voxel checks.*
-3. [ ] `CtVolume`/`MvctVolume` HU-semantic newtypes over `Volume`; validate HU range
-   at the boundary via `helios-core::HounsfieldUnit`. — *out-of-range rejected.*
+1. [ ] Define an energy-indexed `MassAttenuation` table type + interpolation
+   (log-log in energy, the NIST-standard scheme). — *interpolation reproduces
+   tabulated node values exactly; monotone between nodes.*
+2. [ ] Embed a small citable NIST XCOM μ/ρ dataset for water (and air) over the
+   MV/kV energy range, sourced from the NIST database (verified, not memorized).
+   — *values traceable to the cited table.*
+3. [ ] `Material` → `MassAttenuation(E)` lookup; mixture rule (mass-weighted
+   Σ wᵢ (μ/ρ)ᵢ). — *water vs mixture value-semantic checks.*
 4. [ ] clippy `-D warnings`, fmt, nextest, doctests green; sync artifacts.
 
-*Note:* ritk pulls burn (wgpu+autodiff) + dicom — heavy build; budget accordingly.
+*Parallel-unblock note:* H-011c (ray-marched ∫μ dl) and H-004b (ritk DICOM) remain
+sequenced — H-011c behind gaia geometry (G-11), H-004b behind a heavy ritk build.
 
-### Completed this sprint
+### Completed
+
+- [x] **H-011** `helios-physics`: `LinearAttenuation`/`MassAttenuation` newtypes,
+  Beer–Lambert `transmission`, `half_value_layer`, `μ=(μ/ρ)·ρ`, HU→density
+  calibration. 9 analytical tests. Closes G-1 (attenuation relations).
+- [x] **H-004** `helios-domain`: `VoxelGrid` + `Volume` trilinear (see SPRINT_1).
+
+### Completed (Sprint 1)
 
 - [x] **H-004** `helios-domain`: `VoxelGrid<T>` (dims, per-axis spacing, leto
   `Isometry3` pose; `index_to_world`/`world_to_index`/`voxel_center`) + `Volume<T>`
@@ -44,14 +51,14 @@ Decomposed plan (each step has an observable completion condition):
   (`EnergyMeV`, `HounsfieldUnit`, `VoxelSpacingMm`). 13 tests pass; build + clippy
   `-D warnings` + fmt + nextest green.
 
-## Gate status (last run, H-004)
+## Gate status (last run, H-011)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` | pass |
 | `cargo clippy --all-targets --all-features -D warnings` | pass, 0 warnings |
 | `cargo fmt --check` | pass |
-| `cargo nextest run` | 25 passed / 0 failed (0.23 s) |
+| `cargo nextest run` | 34 passed / 0 failed (0.56 s) |
 | `cargo test --doc` | pass |
 
 ## Decision log (this sprint)
