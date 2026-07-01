@@ -37,7 +37,8 @@ for kwavers) requiring consumer coordination.
 
 | ID | Item | Class | Status | Owner | Scope |
 |----|------|-------|--------|-------|-------|
-| H-010 | `helios-gpu`: program against `hephaestus_core::ComputeDevice`; runtime backend selection (wgpu/cuda); GPU HU→μ kernel differentially validated vs `helios-solver::attenuation_map`. **Blocked (G-12)** on Atlas leto/hephaestus stack convergence + wgpu build | [minor] | blocked | — | `crates/helios-gpu/**` |
+| H-010 | `helios-gpu`: dispatch over `hephaestus_core::ComputeDevice` + hephaestus-wgpu. **Done** — `beam_transmission_into` (GPU `exp(-τ)` via NegOp+ExpOp) differentially validated vs CPU on a live adapter; `default_device`. | [minor] | done | claude-helios | `crates/helios-gpu/**` |
+| H-010b | `helios-gpu`: GPU HU→μ kernel (needs a fused affine-clamp `UnaryWgslOp`, absent from hephaestus-wgpu's op set) differentially validated vs `helios-solver::attenuation_map`; GPU forward-projector; throughput benchmark vs CPU | [minor] | todo | — | `crates/helios-gpu/**` |
 | H-011 | `helios-physics`: photon attenuation relations — `LinearAttenuation`/`MassAttenuation`, Beer–Lambert, HVL, HU→density calibration | [minor] | done | claude-helios | `crates/helios-physics/**` |
 | H-011b | `helios-physics`: NIST XCOM μ/ρ data tables (energy-indexed, per material) loaded into `MassAttenuation` | [minor] | todo | — | `crates/helios-physics/**` |
 | H-011c | `helios-solver::forward_project_ray`: ray-march optical depth ∫μ dl of a gaia `Ray` through a μ `Volume` (clip to grid `Aabb`, midpoint trilinear sampling). MVCT forward-projection / dose ray-trace core. | [minor] | done | claude-helios | `crates/helios-solver/**` |

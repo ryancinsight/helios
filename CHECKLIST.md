@@ -23,6 +23,10 @@ H-004b (ritk DICOM).
 
 ### Completed
 
+- [x] **H-010** `helios-gpu`: real GPU kernel — `beam_transmission_into` computes
+  `exp(-τ)` on the GPU (hephaestus-wgpu `NegOp`+`ExpOp`), differentially validated
+  vs CPU `f32::exp` on a live adapter; `default_device`. Replicated hephaestus's
+  mnemosyne/moirai/hermes `[patch]` set (resolves the G-12 cluster skew). Closes G-12.
 - [x] **H-011c** `helios-solver::forward_project_ray`: MVCT forward projector —
   clip gaia `Ray` to grid `Aabb`, midpoint ray-march trilinear μ `Volume` → ∫μ dl.
   5 oracles (uniform slab τ=μ·L, affine midpoint-exact, step-invariance, miss, f32).
@@ -104,7 +108,7 @@ NIST μ/ρ tables, H-021 delivery simulation stepping.
 | `cargo build` | pass (local gaia/leto/eunomia via `[patch]`) |
 | `cargo clippy --all-targets --all-features -D warnings` | pass, 0 code warnings |
 | `cargo fmt --check` | pass |
-| `cargo nextest run` | 65 passed / 0 failed (4.1 s) |
+| `cargo nextest run` | 67 passed / 0 failed (incl. live GPU test) |
 | `cargo test --doc` | pass |
 
 ## Decision log (Sprint 2)

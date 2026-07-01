@@ -13,6 +13,7 @@ members = [
     "crates/helios-physics",
     "crates/helios-solver",
     "crates/helios-analysis",
+    "crates/helios-gpu",
 ]
 resolver = "2"
 
@@ -41,6 +42,7 @@ helios-domain = { path = "crates/helios-domain", version = "0.0.1" }
 helios-physics = { path = "crates/helios-physics", version = "0.0.1" }
 helios-solver = { path = "crates/helios-solver", version = "0.0.1" }
 helios-analysis = { path = "crates/helios-analysis", version = "0.0.1" }
+helios-gpu = { path = "crates/helios-gpu", version = "0.0.1" }
 
 # ── External foundation crates (versions verified against the installed 1.95
 #    toolchain / current registry; mirror kwavers' locked set). ──
@@ -114,6 +116,43 @@ eunomia = { path = "../eunomia/crates/eunomia" }
 
 [patch."https://github.com/ryancinsight/gaia"]
 gaia = { path = "../gaia" }
+
+[patch."https://github.com/ryancinsight/hephaestus"]
+hephaestus-core = { path = "../hephaestus/crates/hephaestus-core" }
+hephaestus-wgpu = { path = "../hephaestus/crates/hephaestus-wgpu" }
+
+# The GPU stack (hephaestus-wgpu → leto[parallel,mnemosyne-memory]) transitively
+# pulls the mnemosyne/moirai/hermes cluster; redirect those git sources to the
+# local synchronized checkout too (matching hephaestus's own root patches) so the
+# whole graph resolves to one consistent, buildable source set (fixes the
+# leto→mnemosyne(git 1e014d25)→themis ^0.8 skew, G-10).
+[patch."https://github.com/ryancinsight/Mnemosyne.git"]
+mnemosyne = { path = "../mnemosyne/crates/mnemosyne" }
+mnemosyne-core = { path = "../mnemosyne/crates/mnemosyne-core" }
+mnemosyne-arena = { path = "../mnemosyne/crates/mnemosyne-arena" }
+mnemosyne-local = { path = "../mnemosyne/crates/mnemosyne-local" }
+mnemosyne-heap = { path = "../mnemosyne/crates/mnemosyne-heap" }
+
+[patch."https://github.com/ryancinsight/Moirai.git"]
+moirai = { path = "../moirai/moirai" }
+moirai-core = { path = "../moirai/moirai-core" }
+moirai-scheduler = { path = "../moirai/moirai-scheduler" }
+moirai-parallel = { path = "../moirai/moirai-parallel" }
+moirai-gpu = { path = "../moirai/moirai-gpu" }
+moirai-sync = { path = "../moirai/moirai-sync" }
+moirai-async = { path = "../moirai/moirai-async" }
+moirai-executor = { path = "../moirai/moirai-executor" }
+moirai-transport = { path = "../moirai/moirai-transport" }
+moirai-iter = { path = "../moirai/moirai-iter" }
+moirai-pal = { path = "../moirai/moirai-pal" }
+moirai-tls = { path = "../moirai/moirai-tls" }
+moirai-http = { path = "../moirai/moirai-http" }
+moirai-python = { path = "../moirai/moirai-python" }
+moirai-utils = { path = "../moirai/moirai-utils" }
+moirai-metrics = { path = "../moirai/moirai-metrics" }
+
+[patch."https://github.com/ryancinsight/hermes.git"]
+hermes-simd = { path = "../hermes/crates/hermes-simd" }
 
 [profile.dev]
 opt-level = 1

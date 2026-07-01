@@ -1,0 +1,20 @@
+[package]
+name = "helios-gpu"
+description = "Helios GPU compute layer: dispatch over the hephaestus ComputeDevice/wgpu backend for imaging and dose kernels."
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+hephaestus-core = { workspace = true }
+hephaestus-wgpu = { workspace = true }
+leto = { workspace = true }
+
+[dev-dependencies]
+approx = { workspace = true }

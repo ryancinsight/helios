@@ -43,7 +43,7 @@ A lower layer never depends on a higher one. `helios-core` is the innermost crat
 | `helios-simulation` | Time-dependent helical TomoTherapy delivery with synchronized MVCT and motion. | planned (Sprint 3) |
 | `helios-planning` | Inverse planning / optimization (gradient-based, multi-criteria). | planned (Sprint 4) |
 | `helios-imaging` | MVCT acquisition modeling, reconstruction, portal dosimetry, IGRT workflows. | planned (Sprint 4) |
-| `helios-gpu` | wgpu/WGSL compute pipelines, memory management, kernel caching. | planned (Sprint 2) |
+| `helios-gpu` | GPU dispatch over `hephaestus_core::ComputeDevice` + hephaestus-wgpu. `beam_transmission_into` (GPU `exp(−τ)`) landed (0.0.1), differentially validated vs CPU; more kernels + throughput benchmarks pending. | **partial (0.0.1)** |
 | `helios-python` | High-level PyO3 API over simulation/planning/imaging. | planned (Sprint 5) |
 
 Crates are created only when their layer is built (architecture_scoping growth

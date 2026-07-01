@@ -50,6 +50,12 @@ under a Breaking subsection.
     calibration: air→0, water→1, clamped below air).
   - Analytical tests: `T(HVL)=½`, `T(0)=1`, μ scaling with density, HU reference
     points, f32 genericity.
+- `helios-gpu` crate (H-010): GPU compute over `hephaestus_core::ComputeDevice` +
+  hephaestus-wgpu. `default_device` (wgpu adapter) and `beam_transmission_into` —
+  MVCT detector transmission `exp(−τ)` computed on the GPU (`NegOp`+`ExpOp`),
+  differentially validated against CPU `f32::exp` on a live adapter. Replicated
+  hephaestus's mnemosyne/moirai/hermes `[patch]` set so the GPU dependency cluster
+  resolves against the local checkout (fixes the leto→mnemosyne→themis skew, G-12).
 - `helios-solver::forward_project_ray` (H-011c): MVCT forward-projection / dose
   ray-trace core — clips a gaia `Ray` to the `VoxelGrid` world `Aabb`, then
   midpoint ray-marches the trilinearly-sampled μ `Volume` to the optical depth

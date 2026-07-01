@@ -110,8 +110,16 @@ target closure.
   strided-elementwise-vs-CPU, sparse spmv/spmm all green). The source repo is not
   broken. **Remaining:** the git-dep *version-alignment* skew (hephaestus uses local
   path deps to the leto/mnemosyne/themis cluster) means Helios must consume it via a
-  local `[patch]`/path (synchronized checkout), same wiring as G-11. *Evidence tier:
-  verified — hephaestus builds + 130 tests + GPU adapter working locally.*
+  local `[patch]`/path (synchronized checkout), same wiring as G-11.
+  *Update (H-010): CLOSED.* `helios-gpu` dispatches a real GPU kernel —
+  `beam_transmission_into` computes `exp(-τ)` on the GPU (hephaestus-wgpu
+  `NegOp`+`ExpOp`); a differential test vs CPU `f32::exp` passes on the live adapter.
+  Wiring: replicated hephaestus's mnemosyne/moirai/hermes `[patch]` set so the
+  leto→mnemosyne(git 1e014d25)→themis ^0.8 skew resolves to the local consistent
+  cluster; hephaestus-wgpu consumed with default features (its `linalg` uses
+  `leto-ops` ungated). *Evidence tier: verified — Helios GPU kernel runs + matches
+  CPU (67 tests).* Remaining: fused HU→μ GPU kernel needs a custom affine-clamp
+  `UnaryWgslOp` (H-010b); throughput benchmark vs VoLO pending.
 
 ### Testing / tooling
 
