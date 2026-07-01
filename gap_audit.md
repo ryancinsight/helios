@@ -68,15 +68,17 @@ target closure.
 - **G-11 (integration, geometry ownership):** Geometry primitives (`Aabb`, `Ray`,
   intersection, meshes, CSG) are owned by **gaia**, not Helios. gaia already has
   `Aabb<T: Scalar>` (over `leto::Point3`) and a validated-`UnitVector3` `Ray` with
-  `intersect_aabb` (on branch `refactor/migrate-to-leto-geometry`, not yet on the
-  default branch — the leto/eunomia migration is "not building yet" per gaia's own
-  WIP commit). *Action taken:* removed the duplicate `Ray`/`Aabb` from
-  `helios-math` (they violated upstream ownership). *Blocker:* Helios consumes gaia
-  via a git dep on its default branch, which still carries the pre-leto (nalgebra)
-  geometry; consuming gaia's leto `Aabb`/`Ray` (H-003b) is blocked until gaia's
-  migration lands on `main` and is published. Do **not** re-add geometry to Helios;
-  do **not** disturb gaia's in-progress refactor branch (concurrent owner).
-  *Evidence tier: gaia source inspected (types exist upstream).*
+  `intersect_aabb`. *Update (this session):* gaia's leto/eunomia migration is now
+  **finalized and green** — gaia builds across all targets, **927 tests pass**,
+  doctests pass, fmt clean; `Ray`/`Aabb` are committed and re-exported from `gaia`'s
+  crate root (commits `b058eb0`, `ecd4060`). The source blocker is **resolved**.
+  *Action taken earlier:* removed the duplicate `Ray`/`Aabb` from `helios-math`
+  (upstream ownership). **Remaining (consumption wiring, H-003b):** the migration
+  lives on gaia's `refactor/migrate-to-leto-geometry` branch, not yet merged to
+  gaia's default branch — merging is a `refactor!` breaking change that also affects
+  kwavers (co-evolution). Helios can consume it now via a local `[patch]`/path to
+  the local gaia checkout (synchronized-checkout model); that wiring is the next
+  step. *Evidence tier: verified — gaia builds + 927 tests locally.*
 
 - **G-12 (integration, GPU backend blocked):** `helios-gpu` on `hephaestus-wgpu` is
   blocked on the Atlas stack's leto/hephaestus dependency convergence — the same
@@ -90,8 +92,16 @@ target closure.
   (H-010) is a differential drop-in once the stack stabilizes. The
   `hephaestus_core::ComputeDevice` seam and `hephaestus-wgpu` op surface
   (`WgpuDevice::try_default`, `unary/scalar_elementwise_strided`, `reduction`) are
-  already scoped for that increment. *Evidence tier: dependency graph inspected;
-  resolution risk reproduced-by-analogy (G-10).*
+  already scoped for that increment.
+  *Update (this session):* hephaestus is **verified green locally** — the workspace
+  builds, `hephaestus-core` (21 tests) and `hephaestus-wgpu` (109 tests) pass, fmt
+  clean, 0 code clippy warnings. Crucially the **wgpu GPU contract tests pass, so a
+  usable GPU adapter exists in this environment** (upload/download round-trips,
+  strided-elementwise-vs-CPU, sparse spmv/spmm all green). The source repo is not
+  broken. **Remaining:** the git-dep *version-alignment* skew (hephaestus uses local
+  path deps to the leto/mnemosyne/themis cluster) means Helios must consume it via a
+  local `[patch]`/path (synchronized checkout), same wiring as G-11. *Evidence tier:
+  verified — hephaestus builds + 130 tests + GPU adapter working locally.*
 
 ### Testing / tooling
 

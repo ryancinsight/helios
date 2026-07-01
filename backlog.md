@@ -19,6 +19,19 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-005 | `helios-domain`: gaia-backed binary-MLC + collimator/jaw geometry model | [minor] | todo | — | `crates/helios-domain/**` |
 | H-006 | ~~Shared `CARGO_TARGET_DIR`~~ — resolved: inherited from `repos/.cargo/config.toml` (shared `D:/atlas/target`) | [patch] | done | claude-helios | — |
 
+## Integration unblock (gaia/hephaestus now green)
+
+| ID | Item | Class | Status | Owner | Scope |
+|----|------|-------|--------|-------|-------|
+| H-050 | Wire Helios to the synchronized local Atlas checkout: `[patch]`/path deps to local `leto`/`eunomia`/`gaia`/`hephaestus-*` so one consistent leto source is used and Helios consumes the **migrated gaia geometry** (`Ray`/`Aabb`) + working **hephaestus-wgpu** (GPU adapter verified). Unblocks H-003b, H-011c, H-010. | [arch] | todo | — | `Cargo.toml` |
+
+Context: as of this session gaia's leto migration is finalized + green (927 tests)
+and hephaestus builds with wgpu GPU tests passing (130 tests, adapter available).
+The remaining blocker is purely dependency *wiring* (git-dep version skew across the
+leto/mnemosyne/themis cluster → use local path/patch). Merging gaia's `refactor!`
+migration to its default branch + pushing is a separate co-evolution step (breaking
+for kwavers) requiring consumer coordination.
+
 ## Sprint 2 — GPU foundation
 
 | ID | Item | Class | Status | Owner | Scope |
