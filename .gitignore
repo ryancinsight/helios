@@ -1,0 +1,21 @@
+# Rust build artifacts
+/target/
+**/target/
+*.rs.bk
+*.pdb
+
+# Python bindings build artifacts
+*.so
+*.pyd
+__pycache__/
+.venv/
+
+# Local environment / scratch
+.env
+*.log
+tmp/
+scratch/
+
+# OS
+.DS_Store
+Thumbs.db

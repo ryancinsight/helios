@@ -1,0 +1,14 @@
+# Test-time budget (CLAUDE.md core invariant #12): a test is marked slow at 30 s
+# and terminated at 60 s (two 30 s periods). Crossing 30 s is a performance defect
+# to profile and optimize in the real code — never raise the limit or shrink the
+# workload. A 60 s termination is a hang/deadlock to root-cause.
+[profile.default]
+slow-timeout = { period = "30s", terminate-after = 2, grace-period = "5s" }
+global-timeout = "15m"
+
+[profile.ci]
+test-threads = 4
+retries = 0
+fail-fast = true
+slow-timeout = { period = "30s", terminate-after = 2, grace-period = "10s" }
+global-timeout = "15m"
