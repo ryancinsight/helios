@@ -56,6 +56,12 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The voxel-DDA *segment generation* half awaits gaia
     geometry (G-11).
+- Integration wiring (H-050): `[patch]` redirecting `leto`/`eunomia`/`gaia` git
+  sources to the local synchronized Atlas checkout, so Helios builds against one
+  consistent source and consumes gaia's **migrated leto/eunomia geometry**.
+- `helios-math` (H-003b): re-exports `gaia::{Aabb, Ray}` as the Helios geometry
+  vocabulary (upstream ownership); bridge test verifies a gaia `Ray` intersects a
+  gaia `Aabb` through Helios. Unblocks the voxel-DDA projector (H-011c).
 - `helios-domain`: `HelicalDelivery<T>` — helical TomoTherapy delivery kinematics
   (gantry rotation + couch translation + pitch synchronization). Projection/time →
   gantry angle (unwrapped + wrapped) and couch position; pitch relation

@@ -6,7 +6,31 @@
 
 ## Owner: claude-helios
 
-### In-flight item: H-020b `helios-domain` binary-MLC leaf-open-time sinogram — `todo`
+### In-flight item: H-011c MVCT forward projector (voxel-DDA over gaia geometry) — `todo`
+
+**Unblocked** by H-050 (Helios now consumes gaia `Ray`/`Aabb`).
+
+1. [ ] `helios-solver`: Siddon/voxel-DDA traversal — clip a gaia `Ray` to the
+   `VoxelGrid` bounds (gaia `Aabb`), step voxel boundaries, emit `(μ, seg_len)`
+   from a μ `Volume`. — *sum of segment lengths == clipped ray length (analytical).*
+2. [ ] Line integral via `helios-physics::optical_depth`; `forward_project` a fan/
+   parallel geometry into a projection (Radon). — *uniform-μ box: ∫μ dl = μ·L exact.*
+3. [ ] clippy `-D warnings`, fmt, nextest, doctests green; sync artifacts.
+
+### Completed
+
+- [x] **H-050 / H-003b** Wired Helios to the local synchronized Atlas checkout
+  (`[patch]` leto/eunomia/gaia → local paths); `helios-math` re-exports
+  `gaia::{Aabb, Ray}`; bridge test green. Consumes gaia's migrated geometry;
+  unblocks the projector.
+
+### Deferred (still blocked / sequenced)
+
+- **H-020b** binary-MLC leaf-open-time sinogram (unblocked; queued after projector).
+- **H-010** GPU HU→μ kernel (add hephaestus-wgpu patch; adapter verified available).
+- **H-004b** ritk DICOM (heavy build).
+
+### Superseded in-flight plan: H-020b binary-MLC sinogram — `todo`
 
 Unblocked (timing/modulation model, not spatial MLC geometry which needs gaia).
 
@@ -66,14 +90,14 @@ NIST μ/ρ tables, H-021 delivery simulation stepping.
   (`EnergyMeV`, `HounsfieldUnit`, `VoxelSpacingMm`). 13 tests pass; build + clippy
   `-D warnings` + fmt + nextest green.
 
-## Gate status (last run, H-020)
+## Gate status (last run, H-050/H-003b)
 
 | Gate | Result |
 |------|--------|
-| `cargo build` | pass |
-| `cargo clippy --all-targets --all-features -D warnings` | pass, 0 warnings |
+| `cargo build` | pass (local gaia/leto/eunomia via `[patch]`) |
+| `cargo clippy --all-targets --all-features -D warnings` | pass, 0 code warnings |
 | `cargo fmt --check` | pass |
-| `cargo nextest run` | 59 passed / 0 failed (1.0 s) |
+| `cargo nextest run` | 60 passed / 0 failed (0.8 s) |
 | `cargo test --doc` | pass |
 
 ## Decision log (Sprint 2)

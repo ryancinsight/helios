@@ -23,7 +23,8 @@ Status: `todo` · `in-progress` · `review` · `done`
 
 | ID | Item | Class | Status | Owner | Scope |
 |----|------|-------|--------|-------|-------|
-| H-050 | Wire Helios to the synchronized local Atlas checkout: `[patch]`/path deps to local `leto`/`eunomia`/`gaia`/`hephaestus-*` so one consistent leto source is used and Helios consumes the **migrated gaia geometry** (`Ray`/`Aabb`) + working **hephaestus-wgpu** (GPU adapter verified). Unblocks H-003b, H-011c, H-010. | [arch] | todo | — | `Cargo.toml` |
+| H-050 | Wire Helios to the synchronized local Atlas checkout: `[patch]` redirecting `leto`/`eunomia`/`gaia` git sources to local paths (one consistent source). **Done** for geometry; hephaestus-wgpu patch added when GPU kernel lands (H-010). | [arch] | done | claude-helios | `Cargo.toml` |
+| H-003b | `helios-math` re-exports `gaia::{Aabb, Ray}` (consumed the migrated geometry); bridge test green. | [minor] | done | claude-helios | `crates/helios-math/**` |
 
 Context: as of this session gaia's leto migration is finalized + green (927 tests)
 and hephaestus builds with wgpu GPU tests passing (130 tests, adapter available).
@@ -39,7 +40,7 @@ for kwavers) requiring consumer coordination.
 | H-010 | `helios-gpu`: program against `hephaestus_core::ComputeDevice`; runtime backend selection (wgpu/cuda); GPU HU→μ kernel differentially validated vs `helios-solver::attenuation_map`. **Blocked (G-12)** on Atlas leto/hephaestus stack convergence + wgpu build | [minor] | blocked | — | `crates/helios-gpu/**` |
 | H-011 | `helios-physics`: photon attenuation relations — `LinearAttenuation`/`MassAttenuation`, Beer–Lambert, HVL, HU→density calibration | [minor] | done | claude-helios | `crates/helios-physics/**` |
 | H-011b | `helios-physics`: NIST XCOM μ/ρ data tables (energy-indexed, per material) loaded into `MassAttenuation` | [minor] | todo | — | `crates/helios-physics/**` |
-| H-011c | `helios-physics`: **reduction done** — `optical_depth`/`beam_transmission` over `(μ, length)` segments. Remaining: voxel-DDA/Siddon *segment generation* through a `Volume` needs gaia `Ray`/`Aabb` (blocked on G-11) | [minor] | partial | claude-helios | `crates/helios-physics/**` |
+| H-011c | `helios-physics`/`solver`: voxel-DDA/Siddon *segment generation* through a `Volume` using gaia `Ray`/`Aabb` (now consumable via H-050), feeding `optical_depth`/`beam_transmission` → MVCT forward projector / dose ray-trace. **Unblocked** | [minor] | todo | — | `crates/helios-solver/**` |
 | H-012 | `helios-solver`: GPU MVCT forward projector (Siddon/Joseph); CPU reference | [minor] | todo | — | `crates/helios-solver/**` |
 | H-012b | `helios-solver`: HU→μ attenuation-map engine (CPU reference; differential oracle for the GPU kernel) | [minor] | done | claude-helios | `crates/helios-solver/**` |
 | H-013 | `helios-solver`: collapsed-cone / convolution-superposition dose engine (CPU ref first) | [major] | todo | — | `crates/helios-solver/**` |

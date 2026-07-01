@@ -15,3 +15,4 @@ workspace = true
 helios-core = { workspace = true }
 eunomia = { workspace = true }
 leto = { workspace = true }
+gaia = { workspace = true }

@@ -76,9 +76,14 @@ target closure.
   (upstream ownership). **Remaining (consumption wiring, H-003b):** the migration
   lives on gaia's `refactor/migrate-to-leto-geometry` branch, not yet merged to
   gaia's default branch — merging is a `refactor!` breaking change that also affects
-  kwavers (co-evolution). Helios can consume it now via a local `[patch]`/path to
-  the local gaia checkout (synchronized-checkout model); that wiring is the next
-  step. *Evidence tier: verified — gaia builds + 927 tests locally.*
+  kwavers (co-evolution). **Update: consumption wired (H-050).** Helios now `[patch]`-
+  redirects `leto`/`eunomia`/`gaia` git sources to the local synchronized checkout
+  (one consistent source) and `helios-math` re-exports `gaia::{Aabb, Ray}`; a bridge
+  test (gaia `Ray` ∩ gaia `Aabb` through Helios) passes. **G-11 is effectively
+  closed** for local development — the projector (H-011c) is unblocked. Remaining
+  release step: merge gaia migration to its default branch + update kwavers, then
+  drop the patch. *Evidence tier: verified — Helios builds + 60 tests with local
+  gaia geometry.*
 
 - **G-12 (integration, GPU backend blocked):** `helios-gpu` on `hephaestus-wgpu` is
   blocked on the Atlas stack's leto/hephaestus dependency convergence — the same

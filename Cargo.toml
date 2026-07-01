@@ -96,6 +96,25 @@ themis = { git = "https://github.com/ryancinsight/themis" }
 # Spectral / transform methods.
 apollo = { git = "https://github.com/ryancinsight/apollo", package = "apollo-fft" }
 
+# ── Synchronized local-checkout patches (H-050) ──
+# The Atlas stack under D:/atlas/repos is a synchronized submodule checkout that
+# cross-links via local path deps (gaia→leto/eunomia, leto→eunomia). Redirect the
+# git sources to those same local paths so the whole graph resolves to ONE source
+# per crate, and Helios consumes the *migrated* local gaia geometry (leto/eunomia
+# Ray/Aabb) rather than gaia's pre-migration published default branch.
+#
+# This is the local development wiring; the git-dep declarations above remain the
+# release SSOT. When gaia's leto migration is merged+published (a `refactor!`
+# breaking change also updating kwavers), these patches can be dropped.
+[patch."https://github.com/ryancinsight/leto"]
+leto = { path = "../leto/crates/leto" }
+
+[patch."https://github.com/ryancinsight/eunomia"]
+eunomia = { path = "../eunomia/crates/eunomia" }
+
+[patch."https://github.com/ryancinsight/gaia"]
+gaia = { path = "../gaia" }
+
 [profile.dev]
 opt-level = 1
 
