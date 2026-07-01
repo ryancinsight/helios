@@ -244,5 +244,40 @@ mod tests {
             let hu = HounsfieldUnit::try_from(v).expect("in range");
             proptest::prop_assert_eq!(hu.get(), v);
         }
+
+        /// `EnergyMeV` rejects every non-positive value (the strict-positivity
+        /// invariant holds over the whole ≤0 range, not just sampled points).
+        #[test]
+        fn energy_rejects_all_non_positive(v in -1e6_f64..=0.0_f64) {
+            proptest::prop_assert!(EnergyMeV::try_from(v).is_err());
+        }
+
+        /// `HounsfieldUnit` rejects any value strictly above the representable max.
+        #[test]
+        fn hounsfield_rejects_above_max(v in (HounsfieldUnit::MAX + 1.0)..1e9_f64) {
+            proptest::prop_assert!(HounsfieldUnit::try_from(v).is_err());
+        }
+
+        /// `HounsfieldUnit`'s `PartialOrd` mirrors the underlying numeric order:
+        /// `a ≤ b` ⇒ `HU(a) ≤ HU(b)`. Preserving order matters for windowing and
+        /// thresholding on CT numbers.
+        #[test]
+        fn hounsfield_preserves_ordering(
+            a in HounsfieldUnit::MIN..=HounsfieldUnit::MAX,
+            b in HounsfieldUnit::MIN..=HounsfieldUnit::MAX,
+        ) {
+            let (ha, hb) = (
+                HounsfieldUnit::try_from(a).unwrap(),
+                HounsfieldUnit::try_from(b).unwrap(),
+            );
+            proptest::prop_assert_eq!(a <= b, ha <= hb);
+        }
+
+        /// Any finite positive spacing round-trips through `VoxelSpacingMm`.
+        #[test]
+        fn spacing_roundtrips_finite_positive(v in 1e-6_f64..1e3_f64) {
+            let s = VoxelSpacingMm::try_from(v).expect("finite positive is valid");
+            proptest::prop_assert_eq!(s.get(), v);
+        }
     }
 }
