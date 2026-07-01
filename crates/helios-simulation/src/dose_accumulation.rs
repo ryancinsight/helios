@@ -189,4 +189,34 @@ mod tests {
         let expected = 2.0_f32 * (1.0 - (-0.05_f32 * 1.6).exp());
         assert_relative_eq!(dose.sum(), expected, epsilon = 1e-5);
     }
+
+    #[test]
+    fn terma_then_scatter_produces_lateral_penumbra() {
+        // End-to-end stage 1 → stage 2: a single central +x beamlet deposits terma
+        // only on the y = z = centre line; the scatter kernel then spreads dose to
+        // laterally-adjacent voxels that received *zero* primary terma (penumbra),
+        // while the identity kernel leaves the terma unchanged.
+        use helios_solver::{scatter_superposition, symmetric_deposition_kernel};
+        let mu = uniform_cube(0.05);
+        let terma = accumulate_delivered_dose(&[frame(0.0, 8.0, 1.0)], &mu, 500.0, 2.0, 0.25);
+
+        // Off-line voxel (mid-beam x=4, one voxel over in y) gets no primary terma.
+        assert_relative_eq!(terma.get(4, 3, 4).unwrap(), 0.0, epsilon = 1e-15);
+
+        // Identity kernel: dose == terma (differential vs the primary reference).
+        let identity = scatter_superposition(&terma, &[1.0], &[1.0], &[1.0]);
+        assert_relative_eq!(
+            identity.get(4, 4, 4).unwrap(),
+            terma.get(4, 4, 4).unwrap(),
+            epsilon = 1e-15
+        );
+
+        // Spread kernel: the off-line voxel now receives scattered dose.
+        let k = symmetric_deposition_kernel(0.5_f64, 0.2, 1);
+        let dose = scatter_superposition(&terma, &k, &k, &k);
+        assert!(
+            dose.get(4, 3, 4).unwrap() > 0.0,
+            "lateral neighbour must receive scattered penumbra dose"
+        );
+    }
 }

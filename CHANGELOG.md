@@ -97,6 +97,17 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-solver::scatter_superposition` + `symmetric_deposition_kernel` (H-020e):
+  stage 2 of the collapsed-cone / convolution dose model — spreads the delivered
+  terma (stage 1) into dose. Separable 3-D convolution (`K = kₓ ⊗ k_y ⊗ k_z`, three
+  `O(N·taps)` axis passes) with centred, `Σ=1`-normalized per-axis kernels; produces
+  lateral penumbra (a beamlet's energy reaches off-line voxels) and depth build-up
+  that the primary-only terma lacks. Oracles: `[1]`-kernel identity (differential vs
+  the primary reference), interior point-source energy conservation, symmetric
+  spread, off-axis penumbra, fluence linearity, kernel normalization/peaking, f32,
+  and an end-to-end `accumulate_delivered_dose → scatter_superposition` composition
+  test (zero-terma off-line voxel gains scattered dose). Separable-isotropic
+  approximation; anisotropic forward-peaked CC kernel + divergent fan = H-020f.
 - `helios-solver::deposit_ray_terma` + `helios-simulation::accumulate_delivered_dose`
   (H-020d): the delivery→dose loop. `deposit_ray_terma` ray-marches a gaia `Ray`
   through the μ volume depositing the primary-beam energy lost in each path segment,

@@ -199,12 +199,17 @@ target closure.
   derivation tests, not by an external authoritative fetch this session; values are
   standard and cross-checked, but a future audit should confirm against the live
   NIST database.
-- **G-16 (dose model fidelity, H-020d).** `accumulate_delivered_dose` deposits only
-  *primary* terma (`w·(1−e^{−τ})`) along **parallel** beamlets — no lateral scatter
-  spread and no divergent point-source fan. It is energy-conserving and exact against
-  its analytic oracle, but it is not yet a full collapsed-cone/convolution-superposition
-  dose (build-up, penumbra, and scatter tails are absent). This is sufficient to close
-  the delivery→dose *loop* and exercise DVH/gamma on self-consistent phantoms, but the
-  therapy gamma/DVH clinical-agreement gate needs the H-020e scatter+fan upgrade (and
-  real CT via H-004b). Evidence tier: analytical oracle (primary-transport model);
-  NOT validated against a Monte-Carlo/reference dose engine.
+- **G-16 (dose model fidelity, H-020d/H-020e).** *Partially addressed.* Stage 1
+  (`deposit_ray_terma`/`accumulate_delivered_dose`) deposits primary terma along
+  **parallel** beamlets; stage 2 (`scatter_superposition`, H-020e) now spreads it with
+  a **separable-isotropic** deposition kernel, so lateral penumbra and depth build-up
+  are present and energy-conserving (verified). Still approximate vs a clinical
+  collapsed-cone dose: the scatter kernel is separable-isotropic (not the anisotropic,
+  forward-peaked, poly-energetic CC kernel) and the fan is parallel (no divergent
+  point source / inverse-square), tracked as H-020f. Sufficient to exercise DVH/gamma
+  on self-consistent phantoms; the therapy gamma/DVH clinical-agreement gate still
+  needs the H-020f kernel/fan upgrade AND real CT (H-004b) AND an external
+  Monte-Carlo/reference dose engine (VoLO/TOPAS/GATE/EGSnrc) — the last of which is
+  **not runnable in this environment**, so that specific gate cannot be closed here and
+  will not be fabricated. Evidence tier: analytical oracles (conservation, identity
+  differential, symmetry); NOT validated against a reference dose engine.

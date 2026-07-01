@@ -6,15 +6,20 @@
 
 ## Owner: claude-helios
 
-### H-020d done — delivery→dose loop closed. Next in-flight: H-004b ritk DICOM / H-020e divergent fan+scatter — `todo`
+### H-020e done — collapsed-cone stage 2 (lateral scatter). Next in-flight: H-020f anisotropic kernel+divergent fan / H-004b ritk DICOM — `todo`
 
-`helios-solver::deposit_ray_terma` (primary-energy terma deposition, exact
-`w·(1−e^{−τ})` conservation) + `helios-simulation::accumulate_delivered_dose`
-(per-frame per-leaf beamlets → delivered-dose `Volume`) close the delivery→dose loop.
-143 Rust tests pass (was 129: +7 deposition, +6 dose-accumulation, +1 `Volume::add_at`).
-Delivered dose now feeds the DVH/gamma machinery on self-consistent synthetic
-phantoms. Remaining for physical fidelity: divergent point-source fan + lateral
-scatter kernel (H-020e); for clinical-reference validation: real DICOM (H-004b).
+`helios-solver::scatter_superposition` (+ `symmetric_deposition_kernel`) spreads the
+delivered terma with a separable 3-D deposition kernel → lateral penumbra + build-up,
+completing the two-stage dose model (terma → dose). 151 Rust tests pass (was 143:
++7 scatter, +1 end-to-end composition). The dose now has penumbra/build-up; remaining
+fidelity gaps (G-16): anisotropic forward-peaked CC kernel + divergent point-source
+fan (H-020f). Clinical gamma-vs-reference gate additionally needs real CT (H-004b) and
+an external MC engine (VoLO/TOPAS/GATE/EGSnrc) that is not runnable here.
+
+### (prior) H-020d done — delivery→dose loop closed
+
+`deposit_ray_terma` + `accumulate_delivered_dose`: per-frame per-leaf beamlets →
+delivered-dose `Volume`, exact `w·(1−e^{−τ})` conservation oracle.
 
 ### (prior) H-040 done — 11/11 crate roster complete
 
@@ -46,12 +51,12 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-020d — delivery→dose loop)
+## Gate status (last run, H-020e — collapsed-cone scatter stage)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 11 crates) |
-| `cargo nextest run` | **143 passed / 0 failed** (incl. live GPU) |
+| `cargo nextest run` | **151 passed / 0 failed** (incl. live GPU) |
 | `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |
 | `cargo clippy -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |
