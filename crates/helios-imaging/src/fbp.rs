@@ -57,9 +57,8 @@ pub fn filtered_back_projection<T: GeometryScalar>(
     let offsets = sinogram.offsets();
     let mm_to_cm = <T as GeometryScalar>::from_f64(MM_PER_CM).recip();
 
-    // Detector spacing and origin, in cm.
+    // Detector spacing in cm (drives the ramp-filter sample spacing).
     let ds_cm = (offsets[1] - offsets[0]) * mm_to_cm;
-    let off0_cm = offsets[0] * mm_to_cm;
     let kernel = ram_lak_kernel::<T>(n_off, ds_cm);
     let base = n_off as isize - 1;
 
@@ -76,41 +75,13 @@ pub fn filtered_back_projection<T: GeometryScalar>(
         }
     }
 
-    // Precompute (cosθ, sinθ) and the back-projection angular weight Δθ.
-    let trig: Vec<(T, T)> = angles.iter().map(|&t| (t.cos(), t.sin())).collect();
+    // Back-project the ramp-filtered rows, weighted by the angular step Δθ.
     let d_theta = if n_ang > 1 {
         angles[1] - angles[0]
     } else {
         T::PI
     };
-
-    let grid = *recon;
-    let [nx, ny, nz] = grid.dims();
-    let centre = grid.voxel_center((nx - 1) / 2, (ny - 1) / 2, (nz - 1) / 2);
-    let _ = nz;
-
-    Volume::from_shape_fn(grid, |idx| {
-        let world = grid.voxel_center(idx[0], idx[1], idx[2]);
-        let dx = world.x - centre.x;
-        let dy = world.y - centre.y;
-        let mut sum = zero;
-        for (a, &(cos_t, sin_t)) in trig.iter().enumerate() {
-            // Signed detector coordinate of this pixel at angle a, in cm.
-            let s_cm = (dx * cos_t + dy * sin_t) * mm_to_cm;
-            // Linear interpolation into the filtered projection.
-            let pos = (s_cm - off0_cm) * ds_cm.recip();
-            let floor = pos.floor();
-            let j0 = floor.to_f64() as isize;
-            if j0 >= 0 && (j0 as usize) + 1 < n_off {
-                let frac = pos - floor;
-                let j = j0 as usize;
-                let lo = filtered[a * n_off + j];
-                let hi = filtered[a * n_off + j + 1];
-                sum += lo + (hi - lo) * frac;
-            }
-        }
-        sum * d_theta
-    })
+    crate::backproject::back_project_rows(angles, offsets, &filtered, recon, d_theta)
 }
 
 #[cfg(test)]

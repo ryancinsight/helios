@@ -6,7 +6,18 @@
 
 ## Owner: claude-helios
 
-### H-020f done — divergent point-source fan (TomoTherapy beam geometry). Next in-flight: H-020g anisotropic CC kernel / H-043b GPU fusion / H-004d HU newtypes+oriented pose — `todo`
+### H-030c done — SIRT iterative reconstruction (imaging accuracy, robust to noise/sparse-angle). Next in-flight: H-020g anisotropic CC kernel / H-043b GPU fusion / H-004d HU newtypes+oriented pose — `todo`
+
+`helios-imaging::sirt_reconstruction` (normalized SIRT, non-negativity-projected) adds
+a second MVCT reconstruction method robust where FBP streaks. Consolidated the
+back-projection geometry into a shared `back_project_rows` (FBP + SIRT). Verified:
+converges to its forward model (interior mean within 15% of μ₀), monotone error decay,
+zero→zero, f32. 173 default / 178 `--all-features` tests pass.
+
+### (prior) H-020f done — divergent point-source fan (TomoTherapy beam geometry)
+
+`BeamGeometry::PointSource` — beamlets diverge from a focal spot (verified parallel
+limit + multi-row divergence).
 
 `helios-simulation::BeamGeometry` seam: `accumulate_delivered_dose` now supports a
 divergent point-source fan (`PointSource { source_axis_mm }`) alongside the parallel
@@ -103,13 +114,13 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-020f — divergent point-source fan)
+## Gate status (last run, H-030c — SIRT iterative reconstruction)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 11 crates) |
-| `cargo nextest run` (default) | 169 passed / 0 failed (incl. live GPU) |
-| `cargo nextest run --all-features` | **174 passed / 0 failed** (+5 DICOM slice/series) |
+| `cargo nextest run` (default) | 173 passed / 0 failed (incl. live GPU) |
+| `cargo nextest run --all-features` | **178 passed / 0 failed** (+5 DICOM slice/series) |
 | `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |
 | `cargo clippy -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |

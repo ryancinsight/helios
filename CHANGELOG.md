@@ -97,6 +97,16 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-imaging::sirt_reconstruction` (H-030c): SIRT iterative MVCT reconstruction —
+  `x ← max(0, x + λ · C⁻¹ ⊙ Aᵀ(R⁻¹ ⊙ (b − A x)))` with `A` the Radon projector, `R⁻¹`
+  per-ray chord normalization, `C⁻¹` per-voxel hit normalization, and a non-negativity
+  (`μ ≥ 0`) projection. Iterative and robust to noise / sparse-angle data where FBP
+  streaks. The back-projection geometry is extracted into a shared `back_project_rows`
+  used by both FBP and SIRT (consolidation — FBP re-expressed as ramp-filter →
+  back_project, net deletion of the duplicated loop). Verified: converges to its own
+  forward model (interior mean within the 15% reconstruction tolerance; whole-image L2
+  edge-Gibbs-dominated < 20%), error falls monotonically with iterations, zero sinogram
+  → zero image, f32.
 - `helios-simulation::BeamGeometry` + divergent-fan dose accumulation (H-020f): the
   `accumulate_delivered_dose` beam model is now a seam — `BeamGeometry::Parallel`
   (small-fan approximation, unchanged) or `BeamGeometry::PointSource { source_axis_mm }`,
