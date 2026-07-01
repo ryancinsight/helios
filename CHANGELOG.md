@@ -56,6 +56,12 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The voxel-DDA *segment generation* half awaits gaia
     geometry (G-11).
+- `helios-domain`: `HelicalDelivery<T>` — helical TomoTherapy delivery kinematics
+  (gantry rotation + couch translation + pitch synchronization). Projection/time →
+  gantry angle (unwrapped + wrapped) and couch position; pitch relation
+  (`couch_travel_per_rotation = pitch·field_width`), couch velocity. 7 analytical
+  tests (one-rotation advances angle by 2π and couch by the pitch travel,
+  projection↔time agreement, half-rotation = π, monotonic couch, f32).
 - `helios-analysis` crate:
   - `Dvh`: cumulative dose-volume histogram from a dose `Volume` — `min`/`max`/
     `mean`, `volume_fraction_at_dose` (Vx), `dose_at_volume_fraction` (Dx,

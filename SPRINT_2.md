@@ -50,9 +50,11 @@ geometry-independent physics lands first:
 | Test wall-clock | 1.4 s |
 
 Also delivered: `helios-analysis` (DVH + 3D gamma index, the 3%/2 mm + DVH quality-
-gate machinery) — a Sprint-4 crate pulled forward because it is unblocked and
-directly implements mandatory validation gates, unlike the GPU/geometry work which
-is blocked on the Atlas stack (G-11/G-12).
+gate machinery) and `helios-domain::HelicalDelivery` (helical gantry+couch+pitch
+kinematics — the "helical synchronization" clinical-realism capability). Both are
+Sprint-3/4 items pulled forward because they are unblocked and directly implement
+mandatory capabilities, unlike the GPU/geometry work blocked on the Atlas stack
+(G-11/G-12). Tests: 59 total. Crates: 6/11.
 
 Also delivered: `helios-physics::projection` (line-integral reduction) and
 `helios-solver::attenuation_map` (deterministic HU→μ engine — the first Sprint-2

@@ -6,24 +6,30 @@
 
 ## Owner: claude-helios
 
-### In-flight item: H-011b `helios-physics` NIST μ/ρ data tables — `todo`
+### In-flight item: H-020b `helios-domain` binary-MLC leaf-open-time sinogram — `todo`
 
-Next unblocked increment (GPU H-010 blocked on stack convergence, G-12).
+Unblocked (timing/modulation model, not spatial MLC geometry which needs gaia).
 
-1. [ ] Energy-indexed `MassAttenuation` table + log-log interpolation. —
-   *interpolation reproduces node values exactly; monotone between nodes.*
-2. [ ] Embed a small citable NIST XCOM μ/ρ dataset (water, air) over the MV/kV
-   range, sourced from the NIST database (verified, not memorized). — *values
-   traceable to the cited table.*
-3. [ ] `Material`→`MassAttenuation(E)` lookup + mass-weighted mixture rule. —
-   *water vs mixture value-semantic checks.*
+1. [ ] `LeafOpenTimeSinogram`: per-projection × per-leaf open-time fractions in
+   `[0,1]`; validated bounds; indexed by (projection, leaf). — *round-trip
+   set/get; out-of-range rejected.*
+2. [ ] Effective per-leaf fluence weight = open_fraction·(1−leakage) + leakage
+   (binary-MLC transmission/leakage model). — *closed vs open vs partial value
+   checks; leakage floor honored.*
+3. [ ] Tongue-and-groove inter-leaf underdose factor between adjacent open leaves.
+   — *analytical factor vs hand-computed.*
 4. [ ] clippy `-D warnings`, fmt, nextest, doctests green; sync artifacts.
 
-*Blocked:* H-010 GPU kernel (G-12: hephaestus/leto stack convergence + wgpu build),
-H-011c segment-generation (gaia G-11), H-004b ritk DICOM (heavy build).
+*Blocked:* H-010 GPU kernel (G-12), H-011c segment-generation + spatial MLC
+geometry (gaia G-11), H-004b ritk DICOM (heavy build). *Unblocked queue:* H-011b
+NIST μ/ρ tables, H-021 delivery simulation stepping.
 
 ### Completed
 
+- [x] **H-020** `helios-domain::HelicalDelivery`: helical delivery kinematics
+  (gantry rotation + couch translation + pitch/time synchronization). 7 tests
+  (one-rotation angle 2π + couch travel, projection↔time agreement, half-rotation π,
+  monotonic couch, f32). Clinical-realism "helical synchronization" capability.
 - [x] **H-032** `helios-analysis`: cumulative `Dvh` (Dx/Vx/mean) + `gamma_index_3d`
   (Low, global norm) + `gamma_pass_rate`. 8 tests (identical→γ=0, γ scales with
   dose ratio, 2×criterion→fail, uniform-DVH step, ramp quantiles, f32). Builds the
@@ -60,14 +66,14 @@ H-011c segment-generation (gaia G-11), H-004b ritk DICOM (heavy build).
   (`EnergyMeV`, `HounsfieldUnit`, `VoxelSpacingMm`). 13 tests pass; build + clippy
   `-D warnings` + fmt + nextest green.
 
-## Gate status (last run, H-032)
+## Gate status (last run, H-020)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` | pass |
 | `cargo clippy --all-targets --all-features -D warnings` | pass, 0 warnings |
 | `cargo fmt --check` | pass |
-| `cargo nextest run` | 52 passed / 0 failed (1.4 s) |
+| `cargo nextest run` | 59 passed / 0 failed (1.0 s) |
 | `cargo test --doc` | pass |
 
 ## Decision log (Sprint 2)

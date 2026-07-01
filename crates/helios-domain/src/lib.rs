@@ -13,7 +13,9 @@
 #![deny(missing_docs)]
 
 mod grid;
+mod helical;
 mod volume;
 
 pub use grid::VoxelGrid;
+pub use helical::HelicalDelivery;
 pub use volume::Volume;

@@ -35,7 +35,8 @@ Status: `todo` · `in-progress` · `review` · `done`
 
 | ID | Item | Class | Status | Owner | Scope |
 |----|------|-------|--------|-------|-------|
-| H-020 | `helios-domain`: helical delivery kinematics (gantry rotation + couch velocity + leaf sequencing) | [minor] | todo | — | `crates/helios-domain/**` |
+| H-020 | `helios-domain`: helical delivery kinematics (gantry rotation + couch velocity + pitch/time synchronization) — `HelicalDelivery<T>` | [minor] | done | claude-helios | `crates/helios-domain/**` |
+| H-020b | `helios-domain`: binary-MLC leaf-open-time sinogram model (per-projection leaf pattern) + leakage/transmission/tongue-and-groove factors | [minor] | todo | — | `crates/helios-domain/**` |
 | H-021 | `helios-simulation`: moirai-orchestrated time-dependent helical delivery + synchronized MVCT | [major] | todo | — | `crates/helios-simulation/**` |
 | H-022 | Binary-MLC leakage/transmission/tongue-and-groove model | [minor] | todo | — | `crates/helios-domain/**` |
 
