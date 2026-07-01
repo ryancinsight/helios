@@ -46,6 +46,13 @@ pub use leto::{
 /// the ray/voxel traversal the imaging projectors and dose ray-trace use.
 pub use gaia::{Aabb, Ray};
 
+/// The scalar bound required by gaia's geometry primitives ([`Ray`], [`Aabb`]).
+///
+/// This is gaia's `Scalar` trait — a supertrait of [`Scalar`] (`eunomia::RealField`)
+/// adding geometric-tolerance helpers. Code that uses gaia geometry *and* the
+/// Helios numeric/volume APIs bounds on `GeometryScalar`, which implies [`Scalar`].
+pub use gaia::domain::core::Scalar as GeometryScalar;
+
 #[cfg(test)]
 mod gaia_geometry_bridge_tests {
     //! Proves Helios consumes gaia's migrated (leto/eunomia) geometry through the

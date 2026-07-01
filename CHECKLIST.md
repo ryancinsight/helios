@@ -6,19 +6,26 @@
 
 ## Owner: claude-helios
 
-### In-flight item: H-011c MVCT forward projector (voxel-DDA over gaia geometry) — `todo`
+### In-flight item: H-013 collapsed-cone / convolution-superposition dose engine — `todo`
 
-**Unblocked** by H-050 (Helios now consumes gaia `Ray`/`Aabb`).
+Now that a μ map (H-012b) and a ray-march line integral (H-011c) exist, the dose
+engine is the next reference solution feeding the gamma/DVH gates.
 
-1. [ ] `helios-solver`: Siddon/voxel-DDA traversal — clip a gaia `Ray` to the
-   `VoxelGrid` bounds (gaia `Aabb`), step voxel boundaries, emit `(μ, seg_len)`
-   from a μ `Volume`. — *sum of segment lengths == clipped ray length (analytical).*
-2. [ ] Line integral via `helios-physics::optical_depth`; `forward_project` a fan/
-   parallel geometry into a projection (Radon). — *uniform-μ box: ∫μ dl = μ·L exact.*
-3. [ ] clippy `-D warnings`, fmt, nextest, doctests green; sync artifacts.
+1. [ ] TERMA from the ray-marched primary fluence attenuation through the μ volume.
+2. [ ] Point/collapsed-cone kernel superposition (CPU reference) → dose `Volume`.
+3. [ ] Validate vs an analytical case (e.g. exponential depth-dose in a homogeneous
+   slab) then feed `helios-analysis` gamma/DVH.
+4. [ ] clippy `-D warnings`, fmt, nextest, doctests green; sync artifacts.
+
+*Also unblocked/queued:* H-011d (exact Siddon + oriented-grid + full sinogram),
+H-020b (binary-MLC sinogram), H-010 (GPU HU→μ kernel, adapter verified),
+H-004b (ritk DICOM).
 
 ### Completed
 
+- [x] **H-011c** `helios-solver::forward_project_ray`: MVCT forward projector —
+  clip gaia `Ray` to grid `Aabb`, midpoint ray-march trilinear μ `Volume` → ∫μ dl.
+  5 oracles (uniform slab τ=μ·L, affine midpoint-exact, step-invariance, miss, f32).
 - [x] **H-050 / H-003b** Wired Helios to the local synchronized Atlas checkout
   (`[patch]` leto/eunomia/gaia → local paths); `helios-math` re-exports
   `gaia::{Aabb, Ray}`; bridge test green. Consumes gaia's migrated geometry;
@@ -90,14 +97,14 @@ NIST μ/ρ tables, H-021 delivery simulation stepping.
   (`EnergyMeV`, `HounsfieldUnit`, `VoxelSpacingMm`). 13 tests pass; build + clippy
   `-D warnings` + fmt + nextest green.
 
-## Gate status (last run, H-050/H-003b)
+## Gate status (last run, H-011c)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` | pass (local gaia/leto/eunomia via `[patch]`) |
 | `cargo clippy --all-targets --all-features -D warnings` | pass, 0 code warnings |
 | `cargo fmt --check` | pass |
-| `cargo nextest run` | 60 passed / 0 failed (0.8 s) |
+| `cargo nextest run` | 65 passed / 0 failed (4.1 s) |
 | `cargo test --doc` | pass |
 
 ## Decision log (Sprint 2)

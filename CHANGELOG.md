@@ -32,8 +32,8 @@ under a Breaking subsection.
   - leto consumed with `default-features = false, features=["std"]` to avoid the
     leto→mnemosyne→themis version skew (see `gap_audit.md` G-10).
   - Geometry *primitives* (`Aabb`/`Ray`/intersection) are **owned by gaia**, not
-    Helios; consuming them is tracked as H-003b (blocked on gaia's leto-geometry
-    migration, `gap_audit.md` G-11). Helios does not define its own.
+    Helios; `helios-math` re-exports `gaia::{Aabb, Ray}` (H-003b) once gaia's leto
+    migration is consumed via the H-050 wiring. Helios does not define its own.
 - `helios-domain` crate:
   - `VoxelGrid<T: Scalar>`: anisotropic per-axis spacing + rigid leto `Isometry3`
     patient pose; `index_to_world`/`world_to_index`/`voxel_center` affine mapping;
@@ -50,12 +50,19 @@ under a Breaking subsection.
     calibration: air→0, water→1, clamped below air).
   - Analytical tests: `T(HVL)=½`, `T(0)=1`, μ scaling with density, HU reference
     points, f32 genericity.
+- `helios-solver::forward_project_ray` (H-011c): MVCT forward-projection / dose
+  ray-trace core — clips a gaia `Ray` to the `VoxelGrid` world `Aabb`, then
+  midpoint ray-marches the trilinearly-sampled μ `Volume` to the optical depth
+  `∫μ dl`. Axis-aligned grids (oriented-grid + exact Siddon tracked H-011d). 5
+  analytical tests: homogeneous slab `τ=μ·L`, affine-field midpoint-exact,
+  step-invariance, miss→`None`, f32. First consumer of the wired gaia geometry.
+- `helios-physics`:
   - `projection` module: geometry-free ray line-integral reduction —
     `optical_depth(τ = Σ μᵢ·Lᵢ)` and `beam_transmission(exp(−τ))` over
     `(LinearAttenuation, length)` segments. 5 analytical tests (empty path,
     homogeneous = μ·L discretization oracle, additivity, multiplicative
-    composition, f32). The voxel-DDA *segment generation* half awaits gaia
-    geometry (G-11).
+    composition, f32). The geometry-coupled projector over this reduction landed
+    in `helios-solver` (H-011c).
 - Integration wiring (H-050): `[patch]` redirecting `leto`/`eunomia`/`gaia` git
   sources to the local synchronized Atlas checkout, so Helios builds against one
   consistent source and consumes gaia's **migrated leto/eunomia geometry**.

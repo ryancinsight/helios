@@ -26,9 +26,14 @@ target closure.
   gamma index (Low, global normalization) + pass rate, with analytical oracles
   (identical→γ=0, criterion-scaled γ, uniform-DVH step, ramp quantiles). **Still
   open:** the dose-engine/projector *reference solutions* to validate (need
-  H-013/H-011c) and clinical comparison vs VoLO/TOPAS/GATE/EGSnrc (H-042). The
-  gates are implemented; the distributions to feed them are the remaining work.
-  *Evidence tier: analytical (metrics verified) — clinical inputs pending.*
+  H-013) and clinical comparison vs VoLO/TOPAS/GATE/EGSnrc (H-042). *Update:* the
+  **MVCT forward projector** (`helios-solver::forward_project_ray`, H-011c) now
+  produces line-integral projections (∫μ dl), analytically verified (uniform slab
+  τ=μ·L, affine-field midpoint-exact); a dose engine (H-013) is the remaining
+  reference solution. The gates are implemented; a projector reference now exists;
+  the dose distributions and clinical inputs are the remaining work.
+  *Evidence tier: analytical (metrics + projector verified) — dose engine + clinical
+  inputs pending.*
 - **G-4 (numerics):** Reduction-order sensitivity for future GPU vs CPU differential
   tests not yet characterized; epsilon bounds must be derived per reduction depth
   when the projector/dose kernels land. → H-012.

@@ -11,5 +11,7 @@
 #![deny(missing_docs)]
 
 mod attenuation_map;
+mod projector;
 
 pub use attenuation_map::attenuation_map;
+pub use projector::forward_project_ray;
