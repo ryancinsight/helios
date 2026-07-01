@@ -97,6 +97,14 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-solver::deposit_ray_terma_diverging` + divergent-fan inverse-square (H-020g):
+  the divergent point-source fan now applies inverse-square fluence falloff — each
+  per-segment terma is scaled by `(SAD/r)²` from the focal spot (`r` = focal-to-segment
+  distance), 1 at isocentre, >1 nearer the source, <1 beyond. `BeamGeometry::PointSource`
+  routes through it (parallel path unchanged; shared ray-march, no duplication).
+  Verified: reduces to the energy-conserving no-falloff deposition as `SAD → ∞`, and
+  steepens the entry/exit dose ratio (near-source enhancement) beyond pure attenuation.
+  Anisotropic beam-aligned collapsed-cone kernel = H-020h.
 - `helios-analysis::Dvh::from_volume_masked` (H-032b): structure-masked (per-PTV/OAR)
   cumulative DVH built only from voxels a mask predicate selects — the per-structure DVH
   clinical plan evaluation and DVH-agreement metrics operate on. `from_volume` is now the

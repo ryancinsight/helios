@@ -14,13 +14,14 @@
 //! laterally offset along the in-plane perpendicular `p = (−sinθ, cosθ, 0)` by
 //! `(leaf − centre)·leaf_width`, at the couch `z` slice. [`BeamGeometry`] selects
 //! whether the beamlets run parallel (small-fan approximation) or diverge from a
-//! point source (true fan). Inverse-square fluence falloff and per-leaf gaia
-//! collimation are a later increment.
+//! point source (true fan, with inverse-square fluence falloff). An anisotropic
+//! beam-aligned collapsed-cone kernel and per-leaf gaia collimation are a later
+//! increment.
 
 use crate::delivery::DeliveryFrame;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
-use helios_solver::deposit_ray_terma;
+use helios_solver::{deposit_ray_terma, deposit_ray_terma_diverging};
 
 /// Beam geometry for delivered-dose accumulation — the seam that selects how each
 /// MLC leaf's beamlet ray is cast for a gantry angle.
@@ -79,10 +80,10 @@ pub fn accumulate_delivered_dose<T: GeometryScalar>(
             }
             let offset =
                 (<T as GeometryScalar>::from_f64(leaf as f64) - centre_leaf) * leaf_width_mm;
-            // Cast the beamlet ray for this leaf per the selected geometry. Both
-            // branches lie in the couch z-slice (dir.z = perp.z = 0); the ray
+            // (origin, direction, inverse-square falloff) per the selected geometry.
+            // Both branches lie in the couch z-slice (dir.z = perp.z = 0); the ray
             // constructor normalizes the direction vector.
-            let (origin, direction) = match geometry {
+            let (origin, direction, falloff) = match geometry {
                 BeamGeometry::Parallel { standoff_mm } => (
                     Point3::new(
                         centre.x + perp.x * offset - dir.x * standoff_mm,
@@ -90,12 +91,14 @@ pub fn accumulate_delivered_dose<T: GeometryScalar>(
                         frame.couch_mm,
                     ),
                     dir,
+                    None,
                 ),
                 BeamGeometry::PointSource { source_axis_mm } => {
                     // Focal spot behind isocentre; ray aims through the leaf's
                     // isocentre-plane point `centre + perp·offset`, so
                     // direction = (perp·offset + dir·SAD). For offset 0 this is the
-                    // central axis; off-axis leaves fan out with depth.
+                    // central axis; off-axis leaves fan out with depth. The fluence
+                    // falls off inverse-square from the focal spot (SAD reference).
                     let focal = Point3::new(
                         centre.x - dir.x * source_axis_mm,
                         centre.y - dir.y * source_axis_mm,
@@ -106,11 +109,16 @@ pub fn accumulate_delivered_dose<T: GeometryScalar>(
                         perp.y * offset + dir.y * source_axis_mm,
                         zero,
                     );
-                    (focal, aim)
+                    (focal, aim, Some((focal, source_axis_mm)))
                 }
             };
             if let Some(ray) = Ray::try_from_direction(origin, direction) {
-                let _deposited = deposit_ray_terma(&mut dose, mu, &ray, weight, step_mm);
+                let _deposited = match falloff {
+                    Some((focal, sad)) => deposit_ray_terma_diverging(
+                        &mut dose, mu, &ray, weight, step_mm, focal, sad,
+                    ),
+                    None => deposit_ray_terma(&mut dose, mu, &ray, weight, step_mm),
+                };
             }
         }
     }
