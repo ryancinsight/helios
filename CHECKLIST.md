@@ -6,7 +6,18 @@
 
 ## Owner: claude-helios
 
-### H-041 done — end-to-end workflow validation (integrated imaging+delivery). Next in-flight: H-020g anisotropic CC kernel / H-043b GPU fusion / H-041b runnable example+Python — `todo`
+### H-041b done — runnable end-to-end example with inspected PNG renders. Next in-flight: H-020g anisotropic CC kernel / H-043b GPU fusion / H-041c real-DICOM example+Python — `todo`
+
+`helios-simulation/examples/tomotherapy_workflow.rs` runs the full pipeline and renders
+`ct/mu/recon/dose.png` (Output & visual verification — **inspected**: phantom, FBP
+recovery, central rotational dose falloff). Reports recon μ +0.1% of target, self-gamma
+100%. `cargo build --examples` covers it in CI; output dir gitignored. 178 default / 183
+`--all-features` tests pass. This completes the Sprint-5 `examples/` required artifact.
+
+### (prior) H-041 done — end-to-end workflow validation (integration test)
+
+Shared μ drives imaging + therapy branches with self-consistency oracles across all
+layers.
 
 `helios-simulation/tests/end_to_end.rs`: one shared μ (CT→`attenuation_map`) drives both
 the imaging branch (Radon→FBP→water-ROI μ within 20%; registration recovers a known

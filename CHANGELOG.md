@@ -97,6 +97,14 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- Runnable end-to-end example (H-041b): `helios-simulation/examples/tomotherapy_workflow.rs`
+  runs the full pipeline (CT→μ→Radon/FBP recon + helical MLC delivery→divergent-fan
+  dose→collapsed-cone scatter→DVH/gamma) and renders inspectable PNGs (`ct/mu/recon/dose`)
+  per the Output & visual verification discipline. On the synthetic phantom it reports
+  recon water-ROI μ within +0.1% of 0.06 cm⁻¹ and a 3%/2 mm self-gamma of 100%; the
+  rendered images were inspected and depict the expected structure (air/water/bone
+  phantom, FBP recovery, central rotational-delivery dose falloff). Adds `image`
+  (PNG-only) as a dev-dep; `cargo build --examples` covers it in CI.
 - End-to-end workflow validation (H-041): `helios-simulation/tests/end_to_end.rs` — a
   single integration test where one shared attenuation volume `μ` (from a CT phantom via
   `attenuation_map`) drives BOTH the imaging branch (parallel-beam Radon → FBP → water-ROI

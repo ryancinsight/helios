@@ -20,6 +20,9 @@ wheels/
 *.log
 tmp/
 scratch/
+# Example render outputs (Output & visual verification artifacts are inspected,
+# not committed; golden snapshots, when added, live under tests/snapshots/).
+helios_workflow_output/
 
 # OS
 .DS_Store

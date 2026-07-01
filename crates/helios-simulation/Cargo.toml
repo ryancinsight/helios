@@ -26,3 +26,6 @@ approx = { workspace = true }
 # production dependency cycle (imaging/analysis do not depend on simulation).
 helios-imaging = { workspace = true }
 helios-analysis = { workspace = true }
+# PNG-only image encoder for the end-to-end example's inspectable render
+# artifacts (Output & visual verification). Dev-only; not a production dep.
+image = { version = "0.25", default-features = false, features = ["png"] }
