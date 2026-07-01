@@ -97,6 +97,11 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-imaging::filtered_back_projection` (H-030): MVCT reconstruction by
+  Ram-Lak filtered back-projection (ramp filter + linear-interpolated back-
+  projection, computed in cm so it recovers μ directly). Forward→reconstruct
+  round-trip on a disk phantom recovers the interior μ (centre within 15%) with
+  near-zero background — the MVCT-reconstruction-accuracy capability.
 - `helios-imaging` crate (H-030a): `parallel_beam_radon` + `Sinogram` — the MVCT
   forward-projection sinogram `p(θ,s) = ∫μ dl` over projection angles and signed
   detector offsets, built on the ray-march projector. Validated against the

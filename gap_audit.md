@@ -50,6 +50,13 @@ target closure.
   -p helios-physics`). Only geometry-dependent crates (`helios-domain`/`-solver`,
   whole-workspace `cargo build`) remain blocked until the foundation settles.
 
+- **G-15 (imaging accuracy):** *Partially addressed (H-030).* MVCT reconstruction
+  (parallel-beam FBP) implemented and validated by a forward→reconstruct round-trip
+  on a disk phantom (interior μ recovered within 15%, background ~0). **Remaining:**
+  noise/contrast metrics, iterative reconstruction, and validation vs *published
+  TomoTherapy MVCT data* on real inputs (needs ritk DICOM, H-004b). *Evidence tier:
+  analytical/round-trip — real-data metrics pending.*
+
 ### Physics / numerics
 
 - **G-1 (physics):** *Partially closed (H-011).* Photon attenuation **relations**

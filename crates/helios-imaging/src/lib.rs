@@ -11,6 +11,8 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+mod fbp;
 mod radon;
 
+pub use fbp::filtered_back_projection;
 pub use radon::{parallel_beam_radon, Sinogram};

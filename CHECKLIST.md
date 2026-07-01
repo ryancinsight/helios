@@ -31,19 +31,19 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-030a — MVCT forward projection)
+## Gate status (last run, H-030 — MVCT FBP reconstruction)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 9 crates) |
-| `cargo nextest run` | 107 passed / 0 failed (incl. live GPU) |
+| `cargo nextest run` | 110 passed / 0 failed (incl. live GPU) |
 | `cargo clippy --all-targets --all-features -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |
 | `cargo fmt --check` | pass |
 
-9/11 crates: core, math, domain, physics, solver, analysis, gpu, simulation,
-imaging. Remaining: helios-planning, helios-python. Next: H-030 FBP reconstruction
-(closes the imaging round-trip → MVCT reconstruction gate), then ritk DICOM (H-004b).
+9/11 crates. Imaging round-trip works: CT→μ→Radon→FBP recovers μ. Remaining crates:
+helios-planning (coeus inverse planning), helios-python (PyO3). Next: H-031 planning
+or H-004b ritk DICOM (real inputs → clinical validation) or H-020b binary-MLC.
 
 ### Completed
 
