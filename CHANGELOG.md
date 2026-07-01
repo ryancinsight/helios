@@ -56,6 +56,13 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The voxel-DDA *segment generation* half awaits gaia
     geometry (G-11).
+- `helios-solver` crate:
+  - `attenuation_map`: deterministic per-voxel HU→μ engine mapping a CT `Volume`
+    to a linear-attenuation `Volume` (cm⁻¹) via `ρ = mass_density_from_hu(HU)` and
+    `μ = (μ/ρ)·ρ` (Compton-dominated MV approximation). CPU reference — the
+    differential oracle for the future GPU kernel (H-010).
+  - Tests: uniform-water constant μ, air→0/bone-scaling, per-voxel closed-form
+    differential match over a heterogeneous field, grid preservation, f32.
 - Foundation documentation: `README.md`, `ARCHITECTURE.md` (layering + Atlas
   dependency map), and PM artifacts `backlog.md`, `CHECKLIST.md`, `gap_audit.md`,
   `SPRINT_1.md`, `SPRINT_2.md`.

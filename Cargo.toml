@@ -11,6 +11,7 @@ members = [
     "crates/helios-math",
     "crates/helios-domain",
     "crates/helios-physics",
+    "crates/helios-solver",
 ]
 resolver = "2"
 
@@ -37,6 +38,7 @@ helios-core = { path = "crates/helios-core", version = "0.0.1" }
 helios-math = { path = "crates/helios-math", version = "0.0.1" }
 helios-domain = { path = "crates/helios-domain", version = "0.0.1" }
 helios-physics = { path = "crates/helios-physics", version = "0.0.1" }
+helios-solver = { path = "crates/helios-solver", version = "0.0.1" }
 
 # ── External foundation crates (versions verified against the installed 1.95
 #    toolchain / current registry; mirror kwavers' locked set). ──

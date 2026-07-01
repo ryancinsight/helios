@@ -6,29 +6,28 @@
 
 ## Owner: claude-helios
 
-### In-flight item: H-010 `helios-gpu` — hephaestus `ComputeDevice` foundation — `todo (DoR)`
+### In-flight item: H-011b `helios-physics` NIST μ/ρ data tables — `todo`
 
-Decomposed plan (each step has an observable completion condition):
+Next unblocked increment (GPU H-010 blocked on stack convergence, G-12).
 
-1. [ ] Create `crates/helios-gpu`; depend on `hephaestus-core` (+ `hephaestus-wgpu`
-   behind a `wgpu` feature). Program against `hephaestus_core::ComputeDevice` — do
-   **not** reinvent a device trait. — *builds; feature matrix compiles.*
-2. [ ] Runtime backend selection (wgpu if an adapter is present, else CPU
-   reference), surfacing the choice + reason (capability detection, not a silent
-   stub). — *selection logged; no `todo!()` behind a feature.*
-3. [ ] A first real kernel (e.g. per-voxel `μ` map: HU→density→μ) with a CPU
-   reference; differential test CPU vs GPU (epsilon by reduction order) when an
-   adapter exists, else CPU-reference value-semantic test. — *bitwise/epsilon match.*
+1. [ ] Energy-indexed `MassAttenuation` table + log-log interpolation. —
+   *interpolation reproduces node values exactly; monotone between nodes.*
+2. [ ] Embed a small citable NIST XCOM μ/ρ dataset (water, air) over the MV/kV
+   range, sourced from the NIST database (verified, not memorized). — *values
+   traceable to the cited table.*
+3. [ ] `Material`→`MassAttenuation(E)` lookup + mass-weighted mixture rule. —
+   *water vs mixture value-semantic checks.*
 4. [ ] clippy `-D warnings`, fmt, nextest, doctests green; sync artifacts.
 
-*Risk:* wgpu is a heavy first compile and GPU-adapter availability in the test
-env is unverified — the CPU-reference path keeps the increment green regardless.
-
-*Sequenced/blocked:* H-011b (NIST μ/ρ data), H-011c segment-generation (gaia G-11),
-H-004b (ritk DICOM, heavy build).
+*Blocked:* H-010 GPU kernel (G-12: hephaestus/leto stack convergence + wgpu build),
+H-011c segment-generation (gaia G-11), H-004b ritk DICOM (heavy build).
 
 ### Completed
 
+- [x] **H-012b** `helios-solver::attenuation_map`: deterministic per-voxel HU→μ
+  engine (CT `Volume` → μ `Volume`, Compton-MV approximation). CPU reference / GPU
+  differential oracle. 5 tests (uniform water, air/bone, closed-form differential,
+  grid preservation, f32).
 - [x] **H-011c (reduction)** `helios-physics::projection`: `optical_depth`
   (τ=Σμᵢ·Lᵢ) + `beam_transmission` (exp(−τ)) over `(μ,length)` segments. 5 tests
   (homogeneous=μ·L oracle, additivity, multiplicative composition, empty, f32).
@@ -56,14 +55,14 @@ H-004b (ritk DICOM, heavy build).
   (`EnergyMeV`, `HounsfieldUnit`, `VoxelSpacingMm`). 13 tests pass; build + clippy
   `-D warnings` + fmt + nextest green.
 
-## Gate status (last run, H-011c reduction)
+## Gate status (last run, H-012b)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` | pass |
 | `cargo clippy --all-targets --all-features -D warnings` | pass, 0 warnings |
 | `cargo fmt --check` | pass |
-| `cargo nextest run` | 39 passed / 0 failed (0.34 s) |
+| `cargo nextest run` | 44 passed / 0 failed (0.45 s) |
 | `cargo test --doc` | pass |
 
 ## Decision log (Sprint 2)

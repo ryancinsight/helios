@@ -73,6 +73,21 @@ target closure.
   do **not** disturb gaia's in-progress refactor branch (concurrent owner).
   *Evidence tier: gaia source inspected (types exist upstream).*
 
+- **G-12 (integration, GPU backend blocked):** `helios-gpu` on `hephaestus-wgpu` is
+  blocked on the Atlas stack's leto/hephaestus dependency convergence — the same
+  migration the goal flags ("gaia will need to move to leto/hephaestus"). Evidence:
+  hephaestus's workspace consumes `leto`/`mnemosyne`/`themis` via **local path deps**
+  with the `mnemosyne-memory` feature and a pinned `themis` rev, i.e. the same
+  leto→mnemosyne→themis cluster that failed resolution in G-10, now compounded by a
+  heavy `wgpu` build. Consuming `hephaestus-wgpu` as a git dep would not resolve
+  cleanly against the current stack. *Decision:* do not force the GPU backend now;
+  author every engine as a CPU reference first (`helios-solver`) so the GPU path
+  (H-010) is a differential drop-in once the stack stabilizes. The
+  `hephaestus_core::ComputeDevice` seam and `hephaestus-wgpu` op surface
+  (`WgpuDevice::try_default`, `unary/scalar_elementwise_strided`, `reduction`) are
+  already scoped for that increment. *Evidence tier: dependency graph inspected;
+  resolution risk reproduced-by-analogy (G-10).*
+
 ### Testing / tooling
 
 - **G-8 (coverage):** No `cargo-llvm-cov` run yet; >80% core-logic coverage target

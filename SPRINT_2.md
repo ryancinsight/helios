@@ -44,20 +44,28 @@ geometry-independent physics lands first:
 
 | Metric | Value |
 |--------|-------|
-| Crates implemented | 4 / 11 (`core`, `math`, `domain`, `physics`) |
-| Tests | 39 passed / 0 failed |
+| Crates implemented | 5 / 11 (`core`, `math`, `domain`, `physics`, `solver`) |
+| Tests | 44 passed / 0 failed |
 | Clippy warnings (production) | 0 |
-| Test wall-clock | 0.34 s |
+| Test wall-clock | 0.45 s |
 
-Also delivered: `helios-physics::projection` — the geometry-free line-integral
-reduction (`optical_depth`/`beam_transmission`), the physics half of the MVCT
-forward projector / dose ray-trace (5 analytical tests). The geometry half (voxel
-DDA) is sequenced behind gaia (G-11). hephaestus `ComputeDevice` seam read and
-scoped into a DoR-ready H-010.
+Also delivered: `helios-physics::projection` (line-integral reduction) and
+`helios-solver::attenuation_map` (deterministic HU→μ engine — the first Sprint-2
+compute kernel, CPU reference).
+
+## GPU backend status (H-010, blocked — G-12)
+
+Evidence-based finding: `hephaestus-wgpu` consumes the leto/mnemosyne/themis cluster
+(path deps + `mnemosyne-memory` + pinned themis rev) — the same graph that failed
+resolution in G-10 — plus a heavy `wgpu` build. Consuming it as a git dep would not
+resolve cleanly against the current stack, which is mid-migration to a consistent
+leto/hephaestus foundation (the migration the goal flags for gaia). Decision: author
+every engine CPU-first; the GPU kernel is a differential drop-in against
+`attenuation_map` once the stack converges. The `hephaestus_core::ComputeDevice`
+seam and `hephaestus-wgpu` op surface are already scoped.
 
 ## Next increment
 
-**H-010:** `helios-gpu` foundation — program against `hephaestus_core::ComputeDevice`
-with runtime backend selection (wgpu/CPU-reference) and a first differential-tested
-kernel (per-voxel HU→μ map). CPU-reference path keeps it green independent of GPU
-availability. Decomposed plan in `CHECKLIST.md`.
+**H-011b:** energy-indexed NIST XCOM μ/ρ tables (water/air) + log-log interpolation
+and material/mixture lookup, feeding `MassAttenuation` (values sourced/verified from
+NIST). Unblocked. Decomposed plan in `CHECKLIST.md`.

@@ -1,0 +1,21 @@
+[package]
+name = "helios-solver"
+description = "Helios computational engines: deterministic material-property and dose/imaging kernels over voxel volumes (CPU reference; GPU backend via helios-gpu)."
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+helios-core = { workspace = true }
+helios-math = { workspace = true }
+helios-domain = { workspace = true }
+helios-physics = { workspace = true }
+
+[dev-dependencies]
+approx = { workspace = true }
