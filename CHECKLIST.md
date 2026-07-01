@@ -31,20 +31,20 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-020b — binary MLC)
+## Gate status (last run, H-020c — integrated delivery)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 9 crates) |
-| `cargo nextest run` | 117 passed / 0 failed (incl. live GPU) |
+| `cargo nextest run` | 122 passed / 0 failed (incl. live GPU) |
 | `cargo clippy --all-targets --all-features -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |
 | `cargo fmt --check` | pass |
 
-Clinical-realism gate progress: helical synchronization (H-020/H-021) ✓, binary-MLC
-leakage/tongue-and-groove (H-020b) ✓. Remaining: MLC↔simulation integration
-(H-020c), IGRT workflows (H-041). Crates 9/11; remaining helios-planning,
-helios-python.
+Clinical-realism gate: helical synchronization ✓, binary-MLC leakage/tongue-and-
+groove ✓, integrated imaging-delivery workflow (H-020c) ✓. Remaining: IGRT
+registration workflows (H-041, needs ritk), delivered-dose accumulation (H-020d).
+Crates 9/11; remaining helios-planning (coeus), helios-python (PyO3).
 
 9/11 crates. Imaging round-trip works: CT→μ→Radon→FBP recovers μ. Remaining crates:
 helios-planning (coeus inverse planning), helios-python (PyO3). Next: H-031 planning

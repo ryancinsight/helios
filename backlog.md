@@ -59,7 +59,8 @@ for kwavers) requiring consumer coordination.
 |----|------|-------|--------|-------|-------|
 | H-020 | `helios-domain`: helical delivery kinematics (gantry rotation + couch velocity + pitch/time synchronization) — `HelicalDelivery<T>` | [minor] | done | claude-helios | `crates/helios-domain/**` |
 | H-020b | `helios-domain`: binary-MLC `LeafOpenTimeSinogram` + `MlcModel` (leakage/transmission + tongue-and-groove effective fluence) | [minor] | done | claude-helios | `crates/helios-domain/**` |
-| H-020c | Integrate MLC effective-fluence into the helical delivery simulation (per-leaf beamlet weighting) + spatial MLC/jaw geometry via gaia | [minor] | todo | — | `crates/helios-simulation/**` |
+| H-020c | `helios-simulation::simulate_helical_delivery`: integrated MLC + helical kinematics → time-ordered `DeliveryFrame` sequence (machine state + effective per-leaf fluence). | [minor] | done | claude-helios | `crates/helios-simulation/**` |
+| H-020d | Per-leaf beamlet ray-trace: accumulate `DeliveryFrame` fluence into a dose `Volume` (fan geometry via gaia) → full delivered-dose simulation | [major] | todo | — | `crates/helios-simulation/**` |
 | H-021 | `helios-simulation::simulate_helical_sinogram`: time-dependent helical MVCT acquisition — gantry rotation + couch translation drive the forward projector per projection (helix). CPU reference; moirai orchestration = H-021b. | [minor] | done | claude-helios | `crates/helios-simulation/**` |
 | H-021b | `helios-simulation`: moirai-parallel projection dispatch; fan/cone-beam detector rows (full sinogram); motion modeling | [minor] | todo | — | `crates/helios-simulation/**` |
 | H-022 | Binary-MLC leakage/transmission/tongue-and-groove model | [minor] | todo | — | `crates/helios-domain/**` |

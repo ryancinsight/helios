@@ -15,5 +15,7 @@
 #![deny(missing_docs)]
 
 mod acquisition;
+mod delivery;
 
 pub use acquisition::{simulate_helical_sinogram, HelicalProjection};
+pub use delivery::{simulate_helical_delivery, total_delivered_fluence, DeliveryFrame};

@@ -107,6 +107,13 @@ under a Breaking subsection.
   detector offsets, built on the ray-march projector. Validated against the
   analytical uniform-disk sinogram `μ·2√(R²−s²)` (2% at 0.5 mm voxels),
   angle-independence, off-object zero. FBP reconstruction = H-030.
+- `helios-simulation` integrated delivery (H-020c): `simulate_helical_delivery`
+  ties `HelicalDelivery` kinematics to the binary-MLC `LeafOpenTimeSinogram`/
+  `MlcModel` → a time-ordered `DeliveryFrame` sequence (gantry angle + couch +
+  effective per-leaf fluence with leakage/T&G). `total_delivered_fluence`
+  integrates the sequence. The integrated imaging-delivery-workflow layer. Oracles:
+  frame count/kinematics track the sinogram, per-frame fluence matches `MlcModel`,
+  all-closed → leakage-only total, all-open → full total, f32.
 - `helios-simulation` crate (H-021): `simulate_helical_sinogram` — time-dependent
   helical MVCT acquisition integrating `HelicalDelivery` (gantry rotation + couch
   translation, a helix) with the forward projector: each projection rotates the
