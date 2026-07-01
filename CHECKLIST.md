@@ -6,14 +6,19 @@
 
 ## Owner: claude-helios
 
-### In-flight item: H-013b dose kernel superposition (collapsed-cone) — `todo`
+### BLOCKED: H-013b dose kernel superposition — code written, UNVERIFIED (G-14)
 
-Primary transport (H-013a) produces Ψ; the remaining stage spreads energy to dose.
+**Blocker (G-14):** a concurrent refactor removed `leto::geometry` (geometry moving
+to gaia-native); gaia no longer compiles, so the whole Helios workspace fails to
+build — including last green commit `2ce36787`. `dose_convolution_x` +
+`exponential_deposition_kernel` are written in `dose.rs` with exact analytical
+oracles but **cannot be verified or committed** until the foundation settles. Do NOT
+fix the peer's in-flight geometry relocation or revert the shared submodule.
 
-1. [ ] TERMA = (μ/ρ)·Ψ from the primary fluence (needs μ/ρ split — pairs with H-011b).
-2. [ ] Dose-deposition kernel (point/collapsed-cone) superposition → dose `Volume`.
-3. [ ] Validate depth-dose buildup vs a reference; feed `helios-analysis` gamma/DVH.
-4. [ ] clippy `-D warnings`, fmt, nextest, doctests green; sync artifacts.
+**Unblock sequence when leto/gaia geometry stabilizes:**
+1. [ ] H-003c: point `helios-math` geometry re-exports at gaia (leto no longer exports it).
+2. [ ] Rebuild; verify H-013b (dose convolution) green; commit.
+3. [ ] Resume: TERMA=(μ/ρ)·Ψ, feed `helios-analysis` gamma/DVH end-to-end.
 
 *Also queued:* H-011d (exact Siddon + oriented-grid + sinogram), H-020b (binary-MLC
 sinogram), H-010b (GPU HU→μ + throughput bench), H-004b (ritk DICOM).

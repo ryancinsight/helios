@@ -6,6 +6,30 @@ target closure.
 
 ## Open gaps
 
+### BLOCKER (concurrent foundation refactor)
+
+- **G-14 (integration, BLOCKED — concurrent leto geometry relocation):** Mid-session
+  the shared **leto** submodule advanced (peer/concurrent work) and its `geometry`
+  module (`Vector3`/`Point3`/`Isometry3`/`UnitQuaternion`/…) is no longer present at
+  leto's current HEAD (`git ls-files crates/leto/src/geometry` is empty; earlier this
+  session gaia built 927 tests against `leto::geometry`). The types are not yet
+  relocated to a discoverable home, so **gaia fails to compile** (86 errors,
+  `unresolved import leto::geometry`), and every Helios crate that depends on
+  `helios-math` (which re-exports gaia geometry) transitively fails to build —
+  including at the last green commit `2ce36787` (the foundation shifted under it).
+  *Interpretation:* the Atlas stack is mid-migration to **gaia-native geometry**
+  (geometry moving out of leto into gaia), the end-state the earlier feedback
+  intended. *Action (discipline):* do NOT fix leto/gaia's in-flight relocation
+  (peer's active, cross-stack work; unknown target), do NOT revert the shared
+  submodule, do NOT commit broken/unverified Helios code. **Deferred item H-013b
+  (dose kernel superposition, `dose_convolution_x` + `exponential_deposition_kernel`)
+  is written in `crates/helios-solver/src/dose.rs` with exact analytical oracles
+  (delta-kernel identity, normalized-kernel interior conservation, physical build-up)
+  but is UNVERIFIED — it cannot build until the geometry foundation settles.**
+  *Unblock:* when gaia's native geometry lands, update `helios-math` to re-export all
+  geometry from gaia (H-003c), then verify + commit H-013b. *Evidence tier:
+  reproduced (leto HEAD has no geometry; gaia 86-error build failure).*
+
 ### Physics / numerics
 
 - **G-1 (physics):** *Partially closed (H-011).* Photon attenuation **relations**
