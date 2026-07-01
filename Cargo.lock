@@ -701,6 +701,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "helios-planning"
+version = "0.0.1"
+dependencies = [
+ "approx",
+ "helios-core",
+ "helios-math",
+]
+
+[[package]]
 name = "helios-simulation"
 version = "0.0.1"
 dependencies = [

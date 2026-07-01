@@ -97,6 +97,12 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-planning` crate (H-031): inverse treatment planning by projected gradient
+  descent — `DoseInfluence` (linear dose model `A`, `apply`/`transpose_apply`) and
+  `optimize_beam_weights` minimizing `½‖A x − d‖²` over `x ≥ 0`. Convex-convergence
+  oracles: identity problem → prescription, negative target → 0, monotone objective
+  decrease, diagonal least-squares solution, f32. (coeus-autodiff backend for
+  non-quadratic objectives = H-031b.)
 - `helios-imaging::filtered_back_projection` (H-030): MVCT reconstruction by
   Ram-Lak filtered back-projection (ramp filter + linear-interpolated back-
   projection, computed in cm so it recovers μ directly). Forward→reconstruct

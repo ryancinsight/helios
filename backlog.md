@@ -72,7 +72,8 @@ for kwavers) requiring consumer coordination.
 | H-030a | `helios-imaging::parallel_beam_radon` + `Sinogram`: MVCT forward projection (parallel-beam Radon). Validated vs analytical disk sinogram. | [minor] | done | claude-helios | `crates/helios-imaging/**` |
 | H-030 | `helios-imaging::filtered_back_projection`: MVCT reconstruction (Ram-Lak FBP). Round-trip recovers disk μ (centre within 15%, background ~0). | [minor] | done | claude-helios | `crates/helios-imaging/**` |
 | H-030b | `helios-imaging`: iterative reconstruction (SART/OS-SEM), MVCT noise/contrast metrics, portal dosimetry, IGRT registration workflows (via ritk) | [major] | todo | — | `crates/helios-imaging/**` |
-| H-031 | `helios-planning`: coeus-autodiff inverse planning (gradient-based) | [major] | todo | — | `crates/helios-planning/**` |
+| H-031 | `helios-planning::optimize_beam_weights`: projected-gradient inverse planning (½‖Ax−d‖², x≥0) + `DoseInfluence`. Convex-convergence oracles. | [minor] | done | claude-helios | `crates/helios-planning/**` |
+| H-031b | `helios-planning`: coeus-autodiff backend for general (DVH/biological, non-quadratic) objectives; replace the exact hand gradient. Needs coeus dep + patch set. | [major] | todo | — | `crates/helios-planning/**` |
 | H-032 | `helios-analysis`: DVH (cumulative, Dx/Vx/mean) + 3D gamma index (Low, global norm) + pass rate | [minor] | done | claude-helios | `crates/helios-analysis/**` |
 | H-032b | `helios-analysis`: structure-masked DVH (RT-struct ROIs via ritk) + local-normalization gamma + low-dose threshold cutoff | [minor] | todo | — | `crates/helios-analysis/**` |
 

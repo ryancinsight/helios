@@ -16,6 +16,7 @@ members = [
     "crates/helios-gpu",
     "crates/helios-simulation",
     "crates/helios-imaging",
+    "crates/helios-planning",
 ]
 resolver = "2"
 
@@ -47,6 +48,7 @@ helios-analysis = { path = "crates/helios-analysis", version = "0.0.1" }
 helios-gpu = { path = "crates/helios-gpu", version = "0.0.1" }
 helios-simulation = { path = "crates/helios-simulation", version = "0.0.1" }
 helios-imaging = { path = "crates/helios-imaging", version = "0.0.1" }
+helios-planning = { path = "crates/helios-planning", version = "0.0.1" }
 
 # ── External foundation crates (versions verified against the installed 1.95
 #    toolchain / current registry; mirror kwavers' locked set). ──

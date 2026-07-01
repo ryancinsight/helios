@@ -31,15 +31,19 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-020c — integrated delivery)
+## Gate status (last run, H-031 — inverse planning)
 
 | Gate | Result |
 |------|--------|
-| `cargo build` (whole workspace) | pass (all 9 crates) |
-| `cargo nextest run` | 122 passed / 0 failed (incl. live GPU) |
+| `cargo build` (whole workspace) | pass (all 10 crates) |
+| `cargo nextest run` | 129 passed / 0 failed (incl. live GPU) |
 | `cargo clippy --all-targets --all-features -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |
 | `cargo fmt --check` | pass |
+
+**10/11 crates** (only `helios-python` remains). Next: H-051 `helios-python` PyO3
+bindings (thin), then real-data/Atlas integrations (ritk DICOM H-004b, coeus autodiff
+H-031b, moirai GPU orchestration H-021b) for the clinical-validation gates.
 
 Clinical-realism gate: helical synchronization ✓, binary-MLC leakage/tongue-and-
 groove ✓, integrated imaging-delivery workflow (H-020c) ✓. Remaining: IGRT
