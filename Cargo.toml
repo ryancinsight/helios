@@ -74,6 +74,11 @@ approx = "0.5"
 ritk-core = { git = "https://github.com/ryancinsight/ritk" }
 ritk-io = { git = "https://github.com/ryancinsight/ritk" }
 ritk-registration = { git = "https://github.com/ryancinsight/ritk" }
+# Native DICOM parse/decode (CT/MVCT real-input path). ritk-dicom is clean of the
+# Atlas numeric cluster (anyhow/arrayvec/dicom-rs/ritk-codecs only); `dicom` is
+# dicom-rs, used directly for attribute (Tag) reads on the parsed object.
+ritk-dicom = { git = "https://github.com/ryancinsight/ritk" }
+dicom = { version = "0.8", default-features = false, features = ["pixeldata", "ndarray"] }
 # Geometry kernel (binary MLC, collimators, jaws, patient meshes).
 gaia = { git = "https://github.com/ryancinsight/gaia", default-features = false }
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.
@@ -124,6 +129,9 @@ eunomia = { path = "../eunomia/crates/eunomia" }
 
 [patch."https://github.com/ryancinsight/gaia"]
 gaia = { path = "../gaia" }
+
+[patch."https://github.com/ryancinsight/ritk"]
+ritk-dicom = { path = "../ritk/crates/ritk-dicom" }
 
 [patch."https://github.com/ryancinsight/hephaestus"]
 hephaestus-core = { path = "../hephaestus/crates/hephaestus-core" }

@@ -15,6 +15,15 @@ workspace = true
 helios-core = { workspace = true }
 helios-math = { workspace = true }
 leto = { workspace = true }
+# DICOM CT/MVCT load path — feature-gated so the heavy dicom-rs parser stays out
+# of the core build for consumers that do not need real-file I/O. The feature
+# gates a *complete* implementation (not a stub), per the build-size discipline.
+ritk-dicom = { workspace = true, optional = true }
+dicom = { workspace = true, optional = true }
+
+[features]
+dicom = ["dep:ritk-dicom", "dep:dicom"]
 
 [dev-dependencies]
 approx = { workspace = true }
+tempfile = "3"

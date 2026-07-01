@@ -26,6 +26,15 @@ pub enum HeliosError {
         /// The invariant that `value` violated.
         reason: &'static str,
     },
+
+    /// A medical-image I/O operation (e.g. DICOM parse/decode/attribute read)
+    /// failed. Carries a human-readable description of the failing step; the
+    /// distinct variant keeps I/O failures from collapsing into validation errors.
+    #[error("DICOM I/O error: {reason}")]
+    Dicom {
+        /// Description of the parse/decode/attribute-lookup failure.
+        reason: String,
+    },
 }
 
 /// Convenience alias for fallible Helios operations.

@@ -56,10 +56,13 @@ target closure.
   (interior-ROI accuracy within 15% of μ₀, background suppression, disk/air contrast
   >0.85, CNR >1), and *quantum noise* (H-033b: `Var(τ')≈e^{τ}/N₀` validated vs
   analytical photon statistics; end-to-end noisy-recon noise scales with flux).
-  **Remaining:** iterative reconstruction (SART/OS-SEM), and validation vs *published
-  TomoTherapy MVCT data* on real inputs (needs ritk DICOM, H-004b). *Evidence tier:
-  analytical/round-trip + synthetic-phantom accuracy/noise/contrast metrics — real-data
-  validation pending.*
+  **Remaining:** iterative reconstruction (SART/OS-SEM), multi-slice series stacking
+  (H-004c), and validation vs *published TomoTherapy MVCT data*. The DICOM real-input
+  path itself now exists (H-004b: `load_ct_slice` via `ritk-dicom`, single slice), so a
+  real CT/MVCT slice can drive the pipeline — clinical *dataset* validation still needs
+  a licensed reference dataset. *Evidence tier: analytical/round-trip + synthetic-phantom
+  metrics + real DICOM parse (synthetic round-trip through dicom-rs) — published-data
+  comparison pending.*
 
 ### Physics / numerics
 
@@ -196,9 +199,12 @@ target closure.
 
 ## Residual risk register
 
-- Atlas upstream APIs may drift (multi-repo co-evolution); Helios must pin commits
-  in `Cargo.lock` and add cross-repo contract tests as it consumes each crate
-  (G-5). Currently no lockfile committed for git deps because none are used yet.
+- Atlas upstream APIs may drift (multi-repo co-evolution); Helios pins the local
+  synchronized checkout via `[patch]` and commits `Cargo.lock`. `ritk-dicom` is now
+  consumed (H-004b) and is **skew-free** (no leto/mnemosyne/themis/eunomia cluster —
+  only anyhow/arrayvec/dicom-rs 0.8/ritk-codecs), so it needed no patch-cluster work.
+  Remaining ritk surfaces (`ritk-registration`) pull the burn stack and are heavier
+  (G-5); add cross-repo contract tests as each is consumed.
 - **G-18 (performance, GPU transfer-bound).** The GPU-vs-CPU study (H-043,
   `validation_reports/2026-07-01-gpu-transmission-throughput.md`) shows the isolated
   `beam_transmission_into` kernel is memory-/transfer-bound: even on an RTX 5080 it

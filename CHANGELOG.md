@@ -97,6 +97,16 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-domain::load_ct_slice` (H-004b, feature `dicom`): the real-input DICOM
+  boundary — parses a CT/MVCT slice with `ritk-dicom` (dicom-rs backend), decodes the
+  pixel frame with its `RescaleSlope`/`RescaleIntercept` calibration to Hounsfield
+  units, and maps Rows/Columns/PixelSpacing/SliceThickness/ImagePositionPatient into a
+  typed HU `Volume` on an axis-aligned `VoxelGrid`. **First consumption of the mandatory
+  `ritk` Atlas component.** Feature-gated so the dicom-rs parser stays out of the core
+  build (a complete impl, not a stub). Adds `HeliosError::Dicom`. Verified by a
+  deterministic synthetic-DICOM round-trip through the real parser (2×2 slice, raw
+  [10,20,30,40] · slope 2 − 10 → HU [10,30,50,70], spacing/origin exact) and a
+  missing-file error-path test. Multi-slice series stacking = H-004c.
 - `helios-imaging::add_quantum_noise` (H-033b): deterministic MVCT quantum
   (photon-counting) noise model — `N = N₀·exp(−τ)`, Poisson draw (Gaussian
   approximation `N + √N·z`, exact for large counts), `τ' = −ln(N'/N₀)` — via a

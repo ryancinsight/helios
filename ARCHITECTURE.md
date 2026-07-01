@@ -36,7 +36,7 @@ A lower layer never depends on a higher one. `helios-core` is the innermost crat
 |-------|----------------|--------|
 | `helios-core` | Typed errors, physical constants, validating domain newtypes, config, logging, arena hooks. | **implemented (0.0.1)** |
 | `helios-math` | Numeric seam (`Scalar` = `eunomia::RealField`), leto linear-algebra substrate re-export, numerical methods. Geometry *primitives* (`Aabb`/`Ray`/mesh) are consumed from **gaia**, not defined here. | **implemented (0.0.1)** |
-| `helios-domain` | Patient/imaging geometry (CT/MVCT), beam/source/sensor models, binary MLC + collimator geometry, helical delivery kinematics. `VoxelGrid` + `Volume` landed (0.0.1); DICOM I/O and beam/MLC models pending. | **partial (0.0.1)** |
+| `helios-domain` | Patient/imaging geometry (CT/MVCT), beam/source/sensor models, binary MLC + collimator geometry, helical delivery kinematics. Landed (0.0.1): `VoxelGrid` + `Volume`, `HelicalDelivery`, binary-MLC `MlcModel`, and `load_ct_slice` (single-slice DICOM → HU `Volume` via `ritk-dicom`, feature `dicom`). Multi-slice series stacking + gaia MLC geometry pending. | **partial (0.0.1)** |
 | `helios-physics` | Radiation interaction physics: photon/electron transport, scatter, attenuation, projection physics. Beer–Lambert attenuation + HU→density landed (0.0.1); NIST μ/ρ data, ray-marched line integral, electron transport pending. | **partial (0.0.1)** |
 | `helios-solver` | GPU-accelerated deterministic dose engines (collapsed-cone / convolution-superposition) and imaging forward projectors/reconstruction. Landed (0.0.1): HU→μ engine, `forward_project_ray` (∫μ dl), primary-fluence transport, `deposit_ray_terma` (primary-energy terma deposition, exact `w·(1−e^{−τ})` conservation), `scatter_superposition` (separable 3-D kernel superposition → lateral penumbra + build-up). Anisotropic CC kernel + divergent fan + GPU backend pending. | **partial (0.0.1)** |
 | `helios-analysis` | Dosimetric analysis (DVH, gamma), imaging quality metrics, visualization. Landed (0.0.1): cumulative DVH, 3-D gamma index (3%/2 mm), and MVCT `image_quality` metrics (RMSE / relative-L2 accuracy, ROI noise, Michelson contrast, CNR). Structure-masked DVH + local-norm gamma pending. | **partial (0.0.1)** |
@@ -58,7 +58,7 @@ the SSOT in the root `Cargo.toml` `[workspace.dependencies]`.
 
 | Atlas component | Crates (packages) | Consumed by | Purpose in Helios |
 |-----------------|-------------------|-------------|-------------------|
-| **ritk** | `ritk-core`, `ritk-io`, `ritk-registration` | domain, analysis, imaging | DICOM I/O (CT, MVCT, RT struct/plan/dose), image registration, VTK visualization. |
+| **ritk** | `ritk-dicom` (**consumed**, feature `dicom`), `ritk-core`, `ritk-registration` | domain, analysis, imaging | DICOM I/O (CT/MVCT via `ritk-dicom` — parse + rescale-calibrated decode); RT struct/plan/dose, registration, VTK pending. |
 | **gaia** | `gaia` | domain | Geometry kernel: binary MLC, collimators, jaws, patient surface/mesh. |
 | **hephaestus** | `hephaestus-core`, `hephaestus-wgpu` (`-cuda`, `-metal` optional) | gpu, solver | GPU compute dispatch, WGSL pipelines, kernel caching. |
 | **moirai** | `moirai`, `moirai-parallel` (`-async`, `-gpu`, `-iter`) | simulation, solver | Orchestration of time-dependent helical delivery + imaging; execution policies. |
