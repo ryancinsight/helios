@@ -680,6 +680,7 @@ name = "helios-imaging"
 version = "0.0.1"
 dependencies = [
  "approx",
+ "helios-analysis",
  "helios-core",
  "helios-domain",
  "helios-math",

@@ -97,6 +97,17 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-analysis::image_quality` (H-033): quantitative MVCT image-quality metrics —
+  reconstruction accuracy (`volume_rmse`, `volume_relative_l2_error` vs a ground-truth
+  attenuation volume), noise (`roi_statistics` — mean + population std over a uniform
+  ROI), contrast (`michelson_contrast`), and detectability (`contrast_to_noise_ratio`).
+  Oracles: uniform-ROI zero noise, hand-computed mean/std, Michelson `(3,1)=0.5`, CNR
+  `|10−4|/2=3`, RMSE identity + constant-offset, relative-L2 closed form (`0.25`),
+  dimension-mismatch / zero-norm errors, f32. An end-to-end test in `helios-imaging`
+  reconstructs the disk phantom (Radon→FBP) and quantifies interior-ROI accuracy
+  (mean within 15 % of μ₀), background suppression, disk/air contrast (>0.85), and CNR
+  (>1) with these metrics — the MVCT-reconstruction-accuracy/contrast gate on synthetic
+  data. Stochastic quantum-noise injection (for end-to-end noise/CNR) = H-033b.
 - `helios-solver::scatter_superposition` + `symmetric_deposition_kernel` (H-020e):
   stage 2 of the collapsed-cone / convolution dose model — spreads the delivered
   terma (stage 1) into dose. Separable 3-D convolution (`K = kₓ ⊗ k_y ⊗ k_z`, three

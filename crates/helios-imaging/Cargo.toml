@@ -19,3 +19,6 @@ helios-solver = { workspace = true }
 
 [dev-dependencies]
 approx = { workspace = true }
+# Quantify reconstruction accuracy / contrast with the analysis image-quality
+# metrics in an end-to-end recon test (analysis is a lower layer; dev-only).
+helios-analysis = { workspace = true }

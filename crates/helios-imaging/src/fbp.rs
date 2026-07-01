@@ -183,6 +183,43 @@ mod tests {
     }
 
     #[test]
+    fn mvct_reconstruction_quality_metrics() {
+        // End-to-end MVCT image-quality gate: reconstruct the disk and quantify
+        // accuracy (interior mean vs μ₀), background suppression, contrast, and CNR
+        // with the helios-analysis metrics.
+        use helios_analysis::{contrast_to_noise_ratio, michelson_contrast, roi_statistics};
+        let mu0 = 0.04;
+        let phantom = disk_phantom(mu0, 25.0);
+        let angles = uniform_angles(180);
+        let offsets = uniform_offsets(45.0, 181);
+        let sino = parallel_beam_radon(&phantom, &angles, &offsets, 400.0, 0.25);
+        let recon = filtered_back_projection(&sino, &recon_grid());
+
+        // Interior ROI (well inside the 25 mm disk around centre voxel 20,20):
+        // reconstruction accuracy — mean recovers μ₀ within FBP tolerance.
+        let interior = roi_statistics(&recon, [18, 18, 0], [23, 23, 1]);
+        assert_relative_eq!(interior.mean, mu0, max_relative = 0.15);
+
+        // Background ROI (corner, far outside the disk): near zero.
+        let background = roi_statistics(&recon, [0, 0, 0], [5, 5, 1]);
+        assert!(
+            background.mean.abs() < 0.1 * mu0,
+            "background mean {} not ~0",
+            background.mean
+        );
+
+        // Contrast disk-vs-air is near 1; CNR shows the disk is clearly detectable
+        // above the interior reconstruction ripple.
+        let contrast = michelson_contrast(interior.mean, background.mean.abs());
+        assert!(
+            contrast > 0.85,
+            "disk/background contrast {contrast} too low"
+        );
+        let cnr = contrast_to_noise_ratio(interior.mean, background.mean, interior.std);
+        assert!(cnr > 1.0, "cnr {cnr} indicates the disk is not detectable");
+    }
+
+    #[test]
     fn ram_lak_kernel_has_expected_structure() {
         let k = ram_lak_kernel::<f64>(4, 0.1); // len 4 → indices n=-3..3
         let base = 3;

@@ -6,15 +6,23 @@
 
 ## Owner: claude-helios
 
-### H-020e done — collapsed-cone stage 2 (lateral scatter). Next in-flight: H-020f anisotropic kernel+divergent fan / H-004b ritk DICOM — `todo`
+### H-033 done — MVCT image-quality metrics (imaging gate, synthetic). Next in-flight: H-033b quantum noise / H-020f anisotropic dose / H-004b ritk DICOM — `todo`
 
-`helios-solver::scatter_superposition` (+ `symmetric_deposition_kernel`) spreads the
-delivered terma with a separable 3-D deposition kernel → lateral penumbra + build-up,
-completing the two-stage dose model (terma → dose). 151 Rust tests pass (was 143:
-+7 scatter, +1 end-to-end composition). The dose now has penumbra/build-up; remaining
-fidelity gaps (G-16): anisotropic forward-peaked CC kernel + divergent point-source
-fan (H-020f). Clinical gamma-vs-reference gate additionally needs real CT (H-004b) and
-an external MC engine (VoLO/TOPAS/GATE/EGSnrc) that is not runnable here.
+`helios-analysis::image_quality` adds the MVCT quality instruments — reconstruction
+accuracy (`volume_rmse`/`volume_relative_l2_error`), noise (`roi_statistics`),
+contrast (`michelson_contrast`), CNR (`contrast_to_noise_ratio`) — and an end-to-end
+`helios-imaging` test that quantifies FBP disk-recon accuracy (interior mean within
+15% of μ₀), background suppression, contrast (>0.85), CNR (>1). 160 Rust tests pass
+(was 151: +8 metric oracles, +1 end-to-end). The MVCT accuracy/contrast gate is met on
+synthetic phantoms; genuine quantum-noise validation (H-033b) and real-data (H-004b)
+remain. **Coverage gate blocked (G-17):** `cargo llvm-cov` fails to link under the
+MSYS2 GNU toolchain (profiler-runtime linker error) — coverage % unmeasurable here.
+
+### (prior) H-020e done — collapsed-cone stage 2 (lateral scatter)
+
+`scatter_superposition` (+ `symmetric_deposition_kernel`): separable 3-D kernel
+superposition → lateral penumbra + build-up, completing the two-stage dose model.
+Fidelity gaps (G-16): anisotropic CC kernel + divergent fan (H-020f).
 
 ### (prior) H-020d done — delivery→dose loop closed
 
@@ -51,16 +59,17 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-020e — collapsed-cone scatter stage)
+## Gate status (last run, H-033 — MVCT image-quality metrics)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 11 crates) |
-| `cargo nextest run` | **151 passed / 0 failed** (incl. live GPU) |
+| `cargo nextest run` | **160 passed / 0 failed** (incl. live GPU) |
 | `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |
 | `cargo clippy -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |
 | `cargo fmt --check` | pass |
+| `cargo llvm-cov` (coverage %) | **blocked** — GNU-toolchain profiler-runtime link failure (G-17) |
 
 **11/11 crates — full roster delivered.** `helios-python` is a thin abi3-py39 PyO3
 surface (`import helios`) over the physics/planning cores, GIL released around the

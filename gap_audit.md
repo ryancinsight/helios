@@ -50,12 +50,15 @@ target closure.
   -p helios-physics`). Only geometry-dependent crates (`helios-domain`/`-solver`,
   whole-workspace `cargo build`) remain blocked until the foundation settles.
 
-- **G-15 (imaging accuracy):** *Partially addressed (H-030).* MVCT reconstruction
-  (parallel-beam FBP) implemented and validated by a forward→reconstruct round-trip
-  on a disk phantom (interior μ recovered within 15%, background ~0). **Remaining:**
-  noise/contrast metrics, iterative reconstruction, and validation vs *published
-  TomoTherapy MVCT data* on real inputs (needs ritk DICOM, H-004b). *Evidence tier:
-  analytical/round-trip — real-data metrics pending.*
+- **G-15 (imaging accuracy):** *Partially addressed (H-030, H-033).* MVCT
+  reconstruction (parallel-beam FBP) validated by a forward→reconstruct round-trip on a
+  disk phantom, now *quantified* with `helios-analysis::image_quality` metrics
+  (interior-ROI accuracy within 15% of μ₀, background suppression, disk/air contrast
+  >0.85, CNR >1). **Remaining:** stochastic quantum-noise injection to exercise
+  noise/CNR on genuinely noisy recons (H-033b), iterative reconstruction, and
+  validation vs *published TomoTherapy MVCT data* on real inputs (needs ritk DICOM,
+  H-004b). *Evidence tier: analytical/round-trip + synthetic-phantom metrics — real-data
+  and noise-model validation pending.*
 
 ### Physics / numerics
 
@@ -195,6 +198,15 @@ target closure.
 - Atlas upstream APIs may drift (multi-repo co-evolution); Helios must pin commits
   in `Cargo.lock` and add cross-repo contract tests as it consumes each crate
   (G-5). Currently no lockfile committed for git deps because none are used yet.
+- **G-17 (tooling, coverage gate blocked).** The >80% coverage gate cannot be
+  *measured* in this environment: `cargo llvm-cov` fails to link the instrumented
+  binaries under the pinned MSYS2 GNU toolchain (`x86_64-w64-mingw32-gcc` /
+  `collect2.exe: ld returned 5` on the `__llvm_profile_runtime` symbol / profiler
+  builtins). llvm-tools are present but the GNU linker rejects the profiler-runtime
+  link. Coverage is therefore an unverified number, not a claimed pass. Mitigation
+  options (future): switch this workspace's toolchain to `x86_64-pc-windows-msvc` for
+  coverage runs, or run llvm-cov in a Linux CI container. Test breadth is high (160
+  value-semantic tests across 11 crates) but the coverage *percentage* is unquantified.
 - Physical constants (G-2) are CODATA-2018/ICRU-90 values verified by inter-constant
   derivation tests, not by an external authoritative fetch this session; values are
   standard and cross-checked, but a future audit should confirm against the live
