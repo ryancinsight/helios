@@ -104,6 +104,20 @@ impl<T: Scalar> Dvh<T> {
         let k = k.clamp(1, n);
         self.sorted[n - k]
     }
+
+    /// ICRU-83 dose **homogeneity index** `HI = (D₂ − D₉₈) / D₅₀` over the sampled
+    /// (usually target) volume. Lower is more homogeneous; a perfectly uniform
+    /// dose gives `0`. Returns `0` when `D₅₀` is zero (no dose to normalize by).
+    #[must_use]
+    pub fn homogeneity_index(&self) -> T {
+        let d2 = self.dose_at_volume_fraction(T::from_f64(0.02));
+        let d98 = self.dose_at_volume_fraction(T::from_f64(0.98));
+        let d50 = self.dose_at_volume_fraction(T::from_f64(0.5));
+        if d50 <= <T as NumericElement>::ZERO {
+            return <T as NumericElement>::ZERO;
+        }
+        (d2 - d98) * d50.recip()
+    }
 }
 
 #[cfg(test)]
@@ -174,6 +188,19 @@ mod tests {
         assert_eq!(point.count(), 1);
         assert_relative_eq!(point.min(), 6.0, epsilon = 1e-15);
         assert_relative_eq!(point.dose_at_volume_fraction(1.0), 6.0, epsilon = 1e-15);
+    }
+
+    #[test]
+    fn homogeneity_index_is_zero_for_uniform_and_known_for_a_ramp() {
+        // Uniform dose → every Dx equal → HI = 0.
+        let uniform = Dvh::from_volume(&Volume::from_shape_fn(grid([4, 4, 4]), |_| 3.0));
+        assert_relative_eq!(uniform.homogeneity_index(), 0.0, epsilon = 1e-15);
+
+        // Ramp 0..99 over 100 voxels: D2 = 98, D98 = 2, D50 = 50 → HI = 96/50 = 1.92.
+        let g = VoxelGrid::axis_aligned([100, 1, 1], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
+            .unwrap();
+        let ramp = Dvh::from_volume(&Volume::from_shape_fn(g, |idx| idx[0] as f64));
+        assert_relative_eq!(ramp.homogeneity_index(), 96.0 / 50.0, epsilon = 1e-12);
     }
 
     #[test]

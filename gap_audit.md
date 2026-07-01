@@ -228,15 +228,18 @@ target closure.
   not a speedup. The "competitive with VoLO-class throughput" gate additionally needs an
   external VoLO reference not available here. *Evidence tier: empirical (criterion, this
   machine).*
-- **G-17 (tooling, coverage gate blocked).** The >80% coverage gate cannot be
-  *measured* in this environment: `cargo llvm-cov` fails to link the instrumented
-  binaries under the pinned MSYS2 GNU toolchain (`x86_64-w64-mingw32-gcc` /
-  `collect2.exe: ld returned 5` on the `__llvm_profile_runtime` symbol / profiler
-  builtins). llvm-tools are present but the GNU linker rejects the profiler-runtime
-  link. Coverage is therefore an unverified number, not a claimed pass. Mitigation
-  options (future): switch this workspace's toolchain to `x86_64-pc-windows-msvc` for
-  coverage runs, or run llvm-cov in a Linux CI container. Test breadth is high (160
-  value-semantic tests across 11 crates) but the coverage *percentage* is unquantified.
+- **G-17 (tooling, coverage gate — link unblocked, attribution still empty).** Refined:
+  the original blocker (the mingw `ld` bfd linker failing on `__llvm_profile_runtime` /
+  profiler builtins) **is fixable** — `RUSTFLAGS="-Clink-arg=-fuse-ld=lld"` (LLVM `lld`,
+  present in the MSYS2 ucrt64 toolchain) links the instrumented binaries, and the full
+  suite runs under instrumentation (183 tests pass, 356 `.profraw` generated;
+  `LLVM_COV`/`LLVM_PROFDATA` point at the MSYS2 llvm-cov 22.1.4 ≈ rustc-LLVM 22.1.3).
+  A *distinct* secondary issue remains: `cargo llvm-cov report` attributes **0 regions**
+  on the GNU target (empty coverage map matching), so the *percentage* is still not
+  obtainable via cargo-llvm-cov here. Path forward (future): try `grcov` on the profraw,
+  or run coverage on `x86_64-pc-windows-msvc` / a Linux CI container. Test breadth is
+  high (185 value-semantic tests across the CPU crates) but the coverage number is
+  unquantified — not fabricated.
 - Physical constants (G-2) are CODATA-2018/ICRU-90 values verified by inter-constant
   derivation tests, not by an external authoritative fetch this session; values are
   standard and cross-checked, but a future audit should confirm against the live

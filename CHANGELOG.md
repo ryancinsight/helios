@@ -97,6 +97,16 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-analysis::Dvh::homogeneity_index` (H-032e): the ICRU-83 dose homogeneity
+  index `HI = (D₂ − D₉₈)/D₅₀`, a standard target plan-quality metric (lower = more
+  homogeneous). Verified: `0` for uniform dose, `1.92` for a 0..99 ramp (D₂=98, D₉₈=2,
+  D₅₀=50); `0`-guarded when `D₅₀` is zero.
+- Tooling (G-17, coverage): the coverage-instrumentation *link* is unblocked —
+  `RUSTFLAGS="-Clink-arg=-fuse-ld=lld"` (LLVM lld from the MSYS2 toolchain) links the
+  instrumented binaries where the mingw bfd `ld` failed, and the full suite runs
+  instrumented (183 tests, 356 profraw). A residual `cargo llvm-cov` region-attribution
+  issue on the GNU target still leaves the coverage *percentage* unquantified (path
+  forward: grcov / MSVC / Linux CI). Recorded, not fabricated.
 - `helios-analysis::gamma_index_3d_local` (H-032c): local-normalization gamma index —
   the dose-difference criterion `ΔD = criterion·D_r` scales with the *local* reference
   dose (vs a single global value), the stricter, appropriate metric where relative

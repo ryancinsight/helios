@@ -6,14 +6,19 @@
 
 ## Owner: claude-helios
 
-### H-032c done — local-normalization gamma + low-dose cutoff (therapy gamma machinery). Next in-flight: H-020h anisotropic CC kernel / H-043b GPU fusion / H-032d RT-struct masks — `todo`
+### H-032e + G-17 progress — ICRU-83 homogeneity index; coverage link unblocked (lld). Next in-flight: H-020h anisotropic CC kernel / H-060 coverage attribution / H-032d RT-struct masks — `todo`
 
-`helios-analysis::gamma_index_3d_local` adds local normalization (`ΔD = criterion·D_r`)
-+ low-dose cutoff, sharing one impl with the global variant. Verified: equals global for
-uniform dose, strictly stricter in low-dose (local γ=1.0 vs global γ=0.2), cutoff
-exclusion. The therapy gamma gate now supports both global and local 3%/2 mm evaluation.
-185 default / 190 `--all-features` tests pass. Remaining analysis: RT-struct rasterization
-→ DVH mask via ritk (H-032d).
+`Dvh::homogeneity_index` (ICRU-83 `HI=(D₂−D₉₈)/D₅₀`) adds a target plan-quality metric
+(0 uniform, 1.92 ramp). **G-17 refined:** `RUSTFLAGS=-Clink-arg=-fuse-ld=lld` unblocks
+the coverage-instrumentation *link* (183 tests ran instrumented, 356 profraw); a residual
+`cargo llvm-cov` region-attribution issue on the GNU target keeps the coverage %
+unquantified (grcov / MSVC / Linux CI = H-060). 186 default / 191 `--all-features` tests
+pass.
+
+### (prior) H-032c done — local-normalization gamma + low-dose cutoff
+
+`gamma_index_3d_local` — global + local 3%/2 mm gamma; local γ=1.0 vs global γ=0.2 in
+low-dose, cutoff exclusion.
 
 ### (prior) H-020g done — inverse-square fluence falloff on the divergent fan
 
@@ -163,14 +168,15 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-032c — local-normalization gamma)
+## Gate status (last run, H-032e — homogeneity index + G-17 coverage-link fix)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 11 crates) |
 | `cargo build --examples` | pass (tomotherapy_workflow) |
-| `cargo nextest run` (default) | 185 passed / 0 failed (incl. live GPU + E2E) |
-| `cargo nextest run --all-features` | **190 passed / 0 failed** (+5 DICOM slice/series) |
+| `cargo nextest run` (default) | 186 passed / 0 failed (incl. live GPU + E2E) |
+| `cargo nextest run --all-features` | **191 passed / 0 failed** (+5 DICOM slice/series) |
+| `cargo llvm-cov` (coverage %) | link unblocked via lld (183 ran instrumented); attribution empty on GNU target (G-17/H-060) |
 | `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |
 | `cargo clippy -D warnings` | 0 code warnings |
 | `cargo test --doc` | pass |
