@@ -89,4 +89,5 @@ for kwavers) requiring consumer coordination.
 | H-040b | `helios-python`: expose Volume / attenuation_map / forward_project_ray / filtered_back_projection via numpy zero-copy (`numpy`/`PyArray`); needs the geometry feature + array-buffer protocol | [minor] | todo | — | `crates/helios-python/**` |
 | H-041 | End-to-end helical TomoTherapy workflow example (Rust + Python) | [minor] | todo | — | `examples/**` |
 | H-042 | Validation report: gamma/DVH vs reference; MVCT image metrics | [minor] | todo | — | `validation_reports/**` |
-| H-043 | Performance: GPU scaling study + criterion baselines | [minor] | todo | — | `benches/**` |
+| H-043 | Performance: GPU-vs-CPU scaling study — criterion benchmark of `beam_transmission_into` across sizes (`helios-gpu/benches/transmission_throughput.rs`) + quantitative report. Finding: the isolated transmission kernel is transfer-bound; GPU does not beat CPU at any tested size (RTX 5080 vs Core Ultra 9 285K). | [minor] | done | claude-helios | `crates/helios-gpu/benches/**`, `validation_reports/**` |
+| H-043b | Performance: on-device fused imaging pipeline (HU→μ → forward projection → `exp(−τ)` resident on GPU, one CT upload + one sinogram download) to amortize transfer and realize GPU throughput > CPU; re-benchmark vs the H-043 baseline | [major] | todo | — | `crates/helios-gpu/**`, `crates/helios-solver/**` |

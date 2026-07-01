@@ -6,7 +6,17 @@
 
 ## Owner: claude-helios
 
-### H-033 done — MVCT image-quality metrics (imaging gate, synthetic). Next in-flight: H-033b quantum noise / H-020f anisotropic dose / H-004b ritk DICOM — `todo`
+### H-043 done — GPU-vs-CPU scaling study (performance instrument). Next in-flight: H-043b on-device fusion / H-033b quantum noise / H-004b ritk DICOM — `todo`
+
+`helios-gpu/benches/transmission_throughput.rs` + `validation_reports/2026-07-01-gpu-
+transmission-throughput.md` deliver the performance-gate measurement instrument with
+real numbers (RTX 5080 vs Core Ultra 9 285K). **Honest finding (G-18):** the isolated
+`exp(−τ)` kernel is transfer-bound — GPU reaches only ~0.5–0.72× a single-threaded CPU
+loop because each call round-trips the buffer over PCIe for ~1 flop/element. GPU
+throughput needs the on-device fused pipeline (H-043b); "competitive with VoLO" is not
+claimed (no external reference). Benchmark is instrument-only; 160 lib tests unchanged.
+
+### (prior) H-033 done — MVCT image-quality metrics (imaging gate, synthetic)
 
 `helios-analysis::image_quality` adds the MVCT quality instruments — reconstruction
 accuracy (`volume_rmse`/`volume_relative_l2_error`), noise (`roi_statistics`),
@@ -70,6 +80,7 @@ H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 | `cargo test --doc` | pass |
 | `cargo fmt --check` | pass |
 | `cargo llvm-cov` (coverage %) | **blocked** — GNU-toolchain profiler-runtime link failure (G-17) |
+| GPU-vs-CPU perf (H-043) | instrument delivered; transmission kernel transfer-bound, GPU ~0.5–0.72× CPU (G-18) |
 
 **11/11 crates — full roster delivered.** `helios-python` is a thin abi3-py39 PyO3
 surface (`import helios`) over the physics/planning cores, GIL released around the

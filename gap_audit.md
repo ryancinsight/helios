@@ -198,6 +198,17 @@ target closure.
 - Atlas upstream APIs may drift (multi-repo co-evolution); Helios must pin commits
   in `Cargo.lock` and add cross-repo contract tests as it consumes each crate
   (G-5). Currently no lockfile committed for git deps because none are used yet.
+- **G-18 (performance, GPU transfer-bound).** The GPU-vs-CPU study (H-043,
+  `validation_reports/2026-07-01-gpu-transmission-throughput.md`) shows the isolated
+  `beam_transmission_into` kernel is memory-/transfer-bound: even on an RTX 5080 it
+  reaches only ~0.5–0.72× a single-threaded CPU loop, because every call round-trips the
+  buffer over PCIe for ~1 flop/element. This is a correct roofline result, not a defect.
+  GPU throughput requires an **on-device fused pipeline** (H-043b) that keeps τ resident
+  across HU→μ / projection / transmission so one CT upload + one sinogram download
+  amortize many kernels. Until then the GPU path is a differentially-correct reference,
+  not a speedup. The "competitive with VoLO-class throughput" gate additionally needs an
+  external VoLO reference not available here. *Evidence tier: empirical (criterion, this
+  machine).*
 - **G-17 (tooling, coverage gate blocked).** The >80% coverage gate cannot be
   *measured* in this environment: `cargo llvm-cov` fails to link the instrumented
   binaries under the pinned MSYS2 GNU toolchain (`x86_64-w64-mingw32-gcc` /

@@ -97,6 +97,15 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-gpu/benches/transmission_throughput.rs` (H-043): GPU-vs-CPU scaling study for
+  the Beer–Lambert transmission kernel (criterion, elements/s across 1 k–4 M). Delivers
+  the performance-gate measurement instrument + a quantitative report
+  (`validation_reports/2026-07-01-gpu-transmission-throughput.md`). Honest finding: the
+  isolated `exp(−τ)` kernel is transfer-bound — on an RTX 5080 it reaches only
+  ~0.5–0.72× a single-threaded CPU loop because each call round-trips the buffer over
+  PCIe for ~1 flop/element (a correct roofline result). GPU throughput needs the
+  on-device fused pipeline filed as H-043b; "competitive with VoLO" is not claimed (no
+  external reference).
 - `helios-analysis::image_quality` (H-033): quantitative MVCT image-quality metrics —
   reconstruction accuracy (`volume_rmse`, `volume_relative_l2_error` vs a ground-truth
   attenuation volume), noise (`roi_statistics` — mean + population std over a uniform
