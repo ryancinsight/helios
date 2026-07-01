@@ -246,4 +246,53 @@ mod tests {
         let hvl = mu.half_value_layer().unwrap();
         assert_relative_eq!(mu.transmission(hvl), 0.5_f32, epsilon = 1e-6);
     }
+
+    proptest::proptest! {
+        /// Beer–Lambert transmission is bounded in `[0, 1]` for any non-negative
+        /// coefficient and path length. (At extreme optical depth `exp(−μx)`
+        /// underflows to exactly 0 — physical extinction — so 0 is included.)
+        #[test]
+        fn transmission_is_bounded_unit_interval(
+            mu_val in 0.0_f64..20.0,
+            path in 0.0_f64..100.0,
+        ) {
+            let mu = LinearAttenuation::new(mu_val).unwrap();
+            let t = mu.transmission(path);
+            proptest::prop_assert!((0.0..=1.0).contains(&t), "T={t}");
+        }
+
+        /// Transmission decreases monotonically with path length (more material →
+        /// less transmitted).
+        #[test]
+        fn transmission_decreases_with_path(
+            mu_val in 1e-3_f64..20.0,
+            p1 in 0.0_f64..50.0,
+            extra in 0.0_f64..50.0,
+        ) {
+            let mu = LinearAttenuation::new(mu_val).unwrap();
+            proptest::prop_assert!(mu.transmission(p1 + extra) <= mu.transmission(p1));
+        }
+
+        /// Beer–Lambert composes multiplicatively over concatenated path segments:
+        /// `T(x₁+x₂) = T(x₁)·T(x₂)`.
+        #[test]
+        fn transmission_composes_over_segments(
+            mu_val in 0.0_f64..10.0,
+            x1 in 0.0_f64..30.0,
+            x2 in 0.0_f64..30.0,
+        ) {
+            let mu = LinearAttenuation::new(mu_val).unwrap();
+            let whole = mu.transmission(x1 + x2);
+            let parts = mu.transmission(x1) * mu.transmission(x2);
+            proptest::prop_assert!((whole - parts).abs() <= 1e-12 * (1.0 + whole));
+        }
+
+        /// CT-density calibration is monotonic non-decreasing in HU (denser tissue
+        /// → higher density).
+        #[test]
+        fn density_is_monotonic_in_hu(a in -1000.0_f64..3000.0, b in -1000.0_f64..3000.0) {
+            let (da, db) = (mass_density_from_hu(a, 1.0), mass_density_from_hu(b, 1.0));
+            proptest::prop_assert_eq!(a <= b, da <= db);
+        }
+    }
 }

@@ -182,4 +182,37 @@ mod tests {
             max_relative = 1e-4
         );
     }
+
+    proptest::proptest! {
+        /// Klein–Nishina is positive and never exceeds the Thomson cross-section
+        /// across the diagnostic→therapy energy range.
+        #[test]
+        fn kn_is_positive_and_below_thomson(e in 1e-3_f64..25.0) {
+            let sigma = klein_nishina_cross_section(e);
+            let sigma_t = thomson_cross_section::<f64>();
+            // Small tolerance on the upper bound for the near-α=0 cancellation.
+            proptest::prop_assert!(sigma > 0.0 && sigma <= sigma_t * (1.0 + 1e-6), "σ={sigma}");
+        }
+
+        /// The cross-section decreases monotonically with photon energy.
+        #[test]
+        fn kn_decreases_with_energy(e in 0.05_f64..25.0, delta in 1e-3_f64..25.0) {
+            let lo = klein_nishina_cross_section(e);
+            let hi = klein_nishina_cross_section(e + delta);
+            proptest::prop_assert!(hi <= lo);
+        }
+
+        /// Derived Compton μ/ρ is positive and scales linearly with electron
+        /// density (doubling electrons/gram doubles μ/ρ).
+        #[test]
+        fn compton_mu_over_rho_scales_with_electron_density(
+            e in 0.1_f64..25.0,
+            epg in 1e22_f64..1e24,
+        ) {
+            let single = compton_mass_attenuation(e, epg).get();
+            let double = compton_mass_attenuation(e, epg * 2.0).get();
+            proptest::prop_assert!(single > 0.0);
+            proptest::prop_assert!((double - 2.0 * single).abs() <= 1e-9 * (1.0 + double));
+        }
+    }
 }
