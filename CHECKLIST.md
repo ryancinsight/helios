@@ -15,10 +15,25 @@ build — including last green commit `2ce36787`. `dose_convolution_x` +
 oracles but **cannot be verified or committed** until the foundation settles. Do NOT
 fix the peer's in-flight geometry relocation or revert the shared submodule.
 
+**Mitigation done (H-055):** `helios-math` geometry is behind a default `geometry`
+feature; `helios-physics` builds without it. So `helios-core` + `helios-math`(scalar)
++ `helios-physics` build/test independently of the churn — that path stays productive
+(e.g. Compton H-011d2 landed there this turn).
+
 **Unblock sequence when leto/gaia geometry stabilizes:**
 1. [ ] H-003c: point `helios-math` geometry re-exports at gaia (leto no longer exports it).
 2. [ ] Rebuild; verify H-013b (dose convolution) green; commit.
 3. [ ] Resume: TERMA=(μ/ρ)·Ψ, feed `helios-analysis` gamma/DVH end-to-end.
+
+## Gate status (last run, H-055 / H-011d2 — geometry-independent subset)
+
+| Gate (`-p helios-core -p helios-physics`) | Result |
+|------|--------|
+| `cargo nextest run` | 36 passed / 0 failed |
+| `cargo clippy -- -D warnings` | 0 code warnings |
+| `cargo test --doc` | pass |
+| `cargo fmt --check` | pass |
+| full-workspace `cargo build` | BLOCKED (G-14, geometry stack) |
 
 *Also queued:* H-011d (exact Siddon + oriented-grid + sinogram), H-020b (binary-MLC
 sinogram), H-010b (GPU HU→μ + throughput bench), H-004b (ritk DICOM).

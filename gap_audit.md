@@ -29,6 +29,12 @@ target closure.
   *Unblock:* when gaia's native geometry lands, update `helios-math` to re-export all
   geometry from gaia (H-003c), then verify + commit H-013b. *Evidence tier:
   reproduced (leto HEAD has no geometry; gaia 86-error build failure).*
+  *Mitigation (H-055):* `helios-math`'s geometry vocabulary is now behind a default
+  `geometry` feature and `helios-physics` consumes it with `default-features=false`,
+  so `helios-core`, `helios-math` (scalar seam) and `helios-physics` **build/test
+  independently** of the churning geometry stack (`cargo nextest run -p helios-core
+  -p helios-physics`). Only geometry-dependent crates (`helios-domain`/`-solver`,
+  whole-workspace `cargo build`) remain blocked until the foundation settles.
 
 ### Physics / numerics
 

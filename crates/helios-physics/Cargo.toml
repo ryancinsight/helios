@@ -13,7 +13,11 @@ workspace = true
 
 [dependencies]
 helios-core = { workspace = true }
-helios-math = { workspace = true }
+# Physics needs only the Scalar seam, not the geometry vocabulary. A direct path
+# dep (not `workspace = true`) is used so `default-features = false` is honored —
+# under workspace inheritance cargo ignores it. This keeps the physics layer
+# buildable independently of the geometry stack.
+helios-math = { path = "../helios-math", default-features = false }
 
 [dev-dependencies]
 approx = { workspace = true }

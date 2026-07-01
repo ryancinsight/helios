@@ -13,9 +13,11 @@
 #![deny(missing_docs)]
 
 pub mod attenuation;
+pub mod compton;
 pub mod projection;
 
 pub use attenuation::{
     mass_density_from_hu, relative_electron_density_from_hu, LinearAttenuation, MassAttenuation,
 };
+pub use compton::{klein_nishina_cross_section, thomson_cross_section};
 pub use projection::{beam_transmission, optical_depth};

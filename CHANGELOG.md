@@ -42,6 +42,15 @@ under a Breaking subsection.
   - `Volume<T: Scalar>`: dense scalar field backed by leto `Array3` (C-contiguous),
     `from_shape_fn`/`zeros`/`from_shape_vec`, `get`, and `sample_trilinear`/
     `sample_world`. Trilinear reproduces affine fields exactly (analytical oracle).
+- `helios-math` (H-055): geometry vocabulary (leto substrate + gaia primitives)
+  moved behind a default `geometry` feature; the `Scalar` numeric seam is always
+  available. Lets the numeric/physics layers build independently of the geometry
+  kernel (and of the concurrent geometry-stack churn, G-14).
+- `helios-physics::compton` (H-011d2): Klein–Nishina total Compton cross-section
+  and Thomson cross-section (first-principles, `r_e`/`m_e c²` from `helios-core`).
+  Analytical oracles: Thomson matches the CODATA value, low-energy KN limit →
+  Thomson from below, monotonic decrease with energy, σ(6 MeV) ≪ σ_T, f32
+  differential vs f64 (near-α=0 cancellation documented as f64-conditioned).
 - `helios-physics` crate:
   - `LinearAttenuation<T>` (cm⁻¹) and `MassAttenuation<T>` (cm²/g) validated
     newtypes; `μ = (μ/ρ)·ρ` via `MassAttenuation::to_linear`.

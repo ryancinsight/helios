@@ -11,8 +11,15 @@ rust-version.workspace = true
 [lints]
 workspace = true
 
+[features]
+# The `Scalar` numeric seam (eunomia) is always available; the geometry
+# vocabulary (leto substrate + gaia primitives) is optional so the numeric/physics
+# layers do not depend on the geometry kernel. On by default.
+default = ["geometry"]
+geometry = ["dep:leto", "dep:gaia"]
+
 [dependencies]
 helios-core = { workspace = true }
 eunomia = { workspace = true }
-leto = { workspace = true }
-gaia = { workspace = true }
+leto = { workspace = true, optional = true }
+gaia = { workspace = true, optional = true }

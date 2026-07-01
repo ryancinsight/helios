@@ -35,7 +35,10 @@ pub use eunomia::RealField as Scalar;
 pub use eunomia::{CastFrom, CastTo, FloatElement, NumericElement};
 
 /// Linear-algebra substrate from leto, re-exported as the Helios vocabulary.
+/// Gated on the `geometry` feature (numeric/physics layers do not need it).
+#[cfg(feature = "geometry")]
 pub use leto::geometry::{UnitVector2, UnitVector3};
+#[cfg(feature = "geometry")]
 pub use leto::{
     Isometry3, Point3, Quaternion, Translation3, Unit, UnitQuaternion, Vector2, Vector3,
 };
@@ -44,6 +47,7 @@ pub use leto::{
 /// geometry vocabulary (upstream ownership — Helios never re-implements these).
 /// `gaia::Ray` carries a validated unit direction; `Ray::intersect_aabb` provides
 /// the ray/voxel traversal the imaging projectors and dose ray-trace use.
+#[cfg(feature = "geometry")]
 pub use gaia::{Aabb, Ray};
 
 /// The scalar bound required by gaia's geometry primitives ([`Ray`], [`Aabb`]).
@@ -51,9 +55,10 @@ pub use gaia::{Aabb, Ray};
 /// This is gaia's `Scalar` trait — a supertrait of [`Scalar`] (`eunomia::RealField`)
 /// adding geometric-tolerance helpers. Code that uses gaia geometry *and* the
 /// Helios numeric/volume APIs bounds on `GeometryScalar`, which implies [`Scalar`].
+#[cfg(feature = "geometry")]
 pub use gaia::domain::core::Scalar as GeometryScalar;
 
-#[cfg(test)]
+#[cfg(all(test, feature = "geometry"))]
 mod gaia_geometry_bridge_tests {
     //! Proves Helios consumes gaia's migrated (leto/eunomia) geometry through the
     //! synchronized-checkout wiring (H-050): a gaia `Ray` intersects a gaia `Aabb`
