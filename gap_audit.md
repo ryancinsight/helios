@@ -199,6 +199,16 @@ target closure.
 - **G-6 (build hygiene):** Helios inherits the shared `D:/atlas/target` build dir
   via `repos/.cargo/config.toml`; no per-repo target. Verified this session.
 
+## Integrated-workflow status
+
+- **Integrated imaging-delivery workflow (clinical-realism gate): demonstrated end-to-end
+  on synthetic/self-consistent data (H-041).** `helios-simulation/tests/end_to_end.rs`
+  runs a shared μ through both branches (Radon→FBP→registration; helical MLC delivery→
+  divergent-fan dose→scatter→DVH/gamma) with self-consistency oracles. What remains for
+  the *clinical* therapy gate is orthogonal and environment-blocked: a licensed CT/plan
+  dataset and an external MC reference engine (G-16), plus the anisotropic CC kernel
+  (H-020g). The workflow *plumbing* across all layers is verified.
+
 ## Residual risk register
 
 - Atlas upstream APIs may drift (multi-repo co-evolution); Helios pins the local

@@ -1326,8 +1326,10 @@ name = "helios-simulation"
 version = "0.0.1"
 dependencies = [
  "approx",
+ "helios-analysis",
  "helios-core",
  "helios-domain",
+ "helios-imaging",
  "helios-math",
  "helios-physics",
  "helios-solver",

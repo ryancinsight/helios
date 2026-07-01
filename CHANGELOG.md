@@ -97,6 +97,16 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- End-to-end workflow validation (H-041): `helios-simulation/tests/end_to_end.rs` — a
+  single integration test where one shared attenuation volume `μ` (from a CT phantom via
+  `attenuation_map`) drives BOTH the imaging branch (parallel-beam Radon → FBP → water-ROI
+  μ recovery within 20%; rigid registration recovers a known couch shift) AND the therapy
+  branch (helical MLC delivery → divergent-fan terma deposition → collapsed-cone scatter →
+  dose, then DVH mean > 0 and 3%/2 mm self-gamma 100% pass). Proves the domain / physics /
+  solver / imaging / analysis / simulation layers compose across their seams. Pulls
+  `helios-imaging`/`helios-analysis` as test-only dev-deps (no production cycle). This is
+  the integrated imaging-delivery clinical-realism workflow on synthetic/self-consistent
+  data; a runnable `examples/` + Python program on real DICOM is H-041b.
 - `helios-imaging::register_translation` (H-044): IGRT rigid setup correction — the
   whole-voxel translation `s` aligning a daily image (e.g. an MVCT reconstruction) to a
   planning reference by minimizing the mean squared difference over their overlap
