@@ -45,12 +45,19 @@ geometry-independent physics lands first:
 | Metric | Value |
 |--------|-------|
 | Crates implemented | 4 / 11 (`core`, `math`, `domain`, `physics`) |
-| Tests | 34 passed / 0 failed |
+| Tests | 39 passed / 0 failed |
 | Clippy warnings (production) | 0 |
-| Test wall-clock | 0.56 s |
+| Test wall-clock | 0.34 s |
+
+Also delivered: `helios-physics::projection` — the geometry-free line-integral
+reduction (`optical_depth`/`beam_transmission`), the physics half of the MVCT
+forward projector / dose ray-trace (5 analytical tests). The geometry half (voxel
+DDA) is sequenced behind gaia (G-11). hephaestus `ComputeDevice` seam read and
+scoped into a DoR-ready H-010.
 
 ## Next increment
 
-**H-011b:** energy-indexed NIST XCOM μ/ρ tables (water/air) with log-log
-interpolation and a material/mixture lookup, feeding `MassAttenuation`. Decomposed
-plan in `CHECKLIST.md`.
+**H-010:** `helios-gpu` foundation — program against `hephaestus_core::ComputeDevice`
+with runtime backend selection (wgpu/CPU-reference) and a first differential-tested
+kernel (per-voxel HU→μ map). CPU-reference path keeps it green independent of GPU
+availability. Decomposed plan in `CHECKLIST.md`.

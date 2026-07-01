@@ -34,8 +34,11 @@ target closure.
   (`RealField`/`FloatElement`/`NumericElement`) and **leto** (`Vector3`, `Point3`,
   `Isometry3`, `Translation3`, `UnitQuaternion`/`Unit`, `Array3` C-contiguous +
   `as_slice`) verified against real usage and building in-tree (H-003, H-004).
-  `ritk-io` (DICOM/MVCT), `gaia` (MLC geometry), hephaestus, moirai, coeus, consus
-  surfaces remain unverified; symbol existence must be confirmed via
+  `ritk-io` (DICOM/MVCT), `gaia` (MLC geometry), moirai, coeus, consus surfaces
+  remain unverified; **hephaestus** `ComputeDevice` seam (GAT `Buffer<T: Pod>`,
+  `alloc_zeroed`/`upload`/`download`/`write_buffer` with `themis::PlacementHint`)
+  read and scoped for H-010 (not yet built — heavy wgpu compile + GPU-device
+  availability are the gating risks). Symbol existence must be confirmed via
   `cargo doc`/source before each first use (anti-hallucination). → H-004b, H-005,
   H-010+.
 - **G-10 (integration, upstream co-evolution):** leto's **default** features pull

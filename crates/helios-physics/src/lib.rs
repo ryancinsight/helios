@@ -13,7 +13,9 @@
 #![deny(missing_docs)]
 
 pub mod attenuation;
+pub mod projection;
 
 pub use attenuation::{
     mass_density_from_hu, relative_electron_density_from_hu, LinearAttenuation, MassAttenuation,
 };
+pub use projection::{beam_transmission, optical_depth};

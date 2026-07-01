@@ -50,6 +50,12 @@ under a Breaking subsection.
     calibration: air→0, water→1, clamped below air).
   - Analytical tests: `T(HVL)=½`, `T(0)=1`, μ scaling with density, HU reference
     points, f32 genericity.
+  - `projection` module: geometry-free ray line-integral reduction —
+    `optical_depth(τ = Σ μᵢ·Lᵢ)` and `beam_transmission(exp(−τ))` over
+    `(LinearAttenuation, length)` segments. 5 analytical tests (empty path,
+    homogeneous = μ·L discretization oracle, additivity, multiplicative
+    composition, f32). The voxel-DDA *segment generation* half awaits gaia
+    geometry (G-11).
 - Foundation documentation: `README.md`, `ARCHITECTURE.md` (layering + Atlas
   dependency map), and PM artifacts `backlog.md`, `CHECKLIST.md`, `gap_audit.md`,
   `SPRINT_1.md`, `SPRINT_2.md`.

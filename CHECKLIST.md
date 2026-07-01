@@ -6,28 +6,33 @@
 
 ## Owner: claude-helios
 
-### In-flight item: H-011b `helios-physics` NIST μ/ρ data tables — `todo`
+### In-flight item: H-010 `helios-gpu` — hephaestus `ComputeDevice` foundation — `todo (DoR)`
 
 Decomposed plan (each step has an observable completion condition):
 
-1. [ ] Define an energy-indexed `MassAttenuation` table type + interpolation
-   (log-log in energy, the NIST-standard scheme). — *interpolation reproduces
-   tabulated node values exactly; monotone between nodes.*
-2. [ ] Embed a small citable NIST XCOM μ/ρ dataset for water (and air) over the
-   MV/kV energy range, sourced from the NIST database (verified, not memorized).
-   — *values traceable to the cited table.*
-3. [ ] `Material` → `MassAttenuation(E)` lookup; mixture rule (mass-weighted
-   Σ wᵢ (μ/ρ)ᵢ). — *water vs mixture value-semantic checks.*
+1. [ ] Create `crates/helios-gpu`; depend on `hephaestus-core` (+ `hephaestus-wgpu`
+   behind a `wgpu` feature). Program against `hephaestus_core::ComputeDevice` — do
+   **not** reinvent a device trait. — *builds; feature matrix compiles.*
+2. [ ] Runtime backend selection (wgpu if an adapter is present, else CPU
+   reference), surfacing the choice + reason (capability detection, not a silent
+   stub). — *selection logged; no `todo!()` behind a feature.*
+3. [ ] A first real kernel (e.g. per-voxel `μ` map: HU→density→μ) with a CPU
+   reference; differential test CPU vs GPU (epsilon by reduction order) when an
+   adapter exists, else CPU-reference value-semantic test. — *bitwise/epsilon match.*
 4. [ ] clippy `-D warnings`, fmt, nextest, doctests green; sync artifacts.
 
-*Parallel-unblock note:* H-011c (ray-marched ∫μ dl) and H-004b (ritk DICOM) remain
-sequenced — H-011c behind gaia geometry (G-11), H-004b behind a heavy ritk build.
+*Risk:* wgpu is a heavy first compile and GPU-adapter availability in the test
+env is unverified — the CPU-reference path keeps the increment green regardless.
+
+*Sequenced/blocked:* H-011b (NIST μ/ρ data), H-011c segment-generation (gaia G-11),
+H-004b (ritk DICOM, heavy build).
 
 ### Completed
 
-- [x] **H-011** `helios-physics`: `LinearAttenuation`/`MassAttenuation` newtypes,
-  Beer–Lambert `transmission`, `half_value_layer`, `μ=(μ/ρ)·ρ`, HU→density
-  calibration. 9 analytical tests. Closes G-1 (attenuation relations).
+- [x] **H-011c (reduction)** `helios-physics::projection`: `optical_depth`
+  (τ=Σμᵢ·Lᵢ) + `beam_transmission` (exp(−τ)) over `(μ,length)` segments. 5 tests
+  (homogeneous=μ·L oracle, additivity, multiplicative composition, empty, f32).
+- [x] **H-011** `helios-physics`: attenuation relations + HU→density (9 tests).
 - [x] **H-004** `helios-domain`: `VoxelGrid` + `Volume` trilinear (see SPRINT_1).
 
 ### Completed (Sprint 1)
@@ -51,15 +56,27 @@ sequenced — H-011c behind gaia geometry (G-11), H-004b behind a heavy ritk bui
   (`EnergyMeV`, `HounsfieldUnit`, `VoxelSpacingMm`). 13 tests pass; build + clippy
   `-D warnings` + fmt + nextest green.
 
-## Gate status (last run, H-011)
+## Gate status (last run, H-011c reduction)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` | pass |
 | `cargo clippy --all-targets --all-features -D warnings` | pass, 0 warnings |
 | `cargo fmt --check` | pass |
-| `cargo nextest run` | 34 passed / 0 failed (0.56 s) |
+| `cargo nextest run` | 39 passed / 0 failed (0.34 s) |
 | `cargo test --doc` | pass |
+
+## Decision log (Sprint 2)
+
+- **Program against `hephaestus_core::ComputeDevice`, don't reinvent a Helios
+  `ComputeBackend`.** hephaestus-core is the Atlas GPU-agnostic device seam that
+  apollo/coeus already target; Helios adds GPU *utilities* (buffer helpers, kernel
+  cache, backend selection) on top, per DIP + upstream ownership. Avoids a parallel
+  device abstraction (anti-duplication).
+- **Projector split (physics vs geometry).** The line-integral *reduction*
+  (`optical_depth`/`beam_transmission`) is geometry-free and implemented/tested now;
+  *segment generation* (voxel DDA/Siddon) needs gaia `Ray`/`Aabb` and is sequenced
+  behind G-11. Same reduction will run over CPU- or GPU-generated segments unchanged.
 
 ## Decision log (this sprint)
 

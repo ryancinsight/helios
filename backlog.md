@@ -23,10 +23,10 @@ Status: `todo` · `in-progress` · `review` · `done`
 
 | ID | Item | Class | Status | Owner | Scope |
 |----|------|-------|--------|-------|-------|
-| H-010 | `helios-gpu`: `ComputeBackend` seam over hephaestus-wgpu; kernel cache | [minor] | todo | — | `crates/helios-gpu/**` |
+| H-010 | `helios-gpu`: program against `hephaestus_core::ComputeDevice` seam; runtime backend selection (wgpu now, cuda later); buffer helpers for `Volume`/projection; differential CPU-reference test | [minor] | todo (DoR) | — | `crates/helios-gpu/**` |
 | H-011 | `helios-physics`: photon attenuation relations — `LinearAttenuation`/`MassAttenuation`, Beer–Lambert, HVL, HU→density calibration | [minor] | done | claude-helios | `crates/helios-physics/**` |
 | H-011b | `helios-physics`: NIST XCOM μ/ρ data tables (energy-indexed, per material) loaded into `MassAttenuation` | [minor] | todo | — | `crates/helios-physics/**` |
-| H-011c | `helios-physics`: ray-marched line integral ∫μ dl through a `Volume` (MVCT projection / dose ray-trace core). Needs gaia `Ray`/voxel DDA (blocked on G-11) | [minor] | blocked | — | `crates/helios-physics/**` |
+| H-011c | `helios-physics`: **reduction done** — `optical_depth`/`beam_transmission` over `(μ, length)` segments. Remaining: voxel-DDA/Siddon *segment generation* through a `Volume` needs gaia `Ray`/`Aabb` (blocked on G-11) | [minor] | partial | claude-helios | `crates/helios-physics/**` |
 | H-012 | `helios-solver`: GPU MVCT forward projector (Siddon/Joseph); CPU reference | [minor] | todo | — | `crates/helios-solver/**` |
 | H-013 | `helios-solver`: collapsed-cone / convolution-superposition dose engine (CPU ref first) | [major] | todo | — | `crates/helios-solver/**` |
 
