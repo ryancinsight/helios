@@ -24,6 +24,11 @@ H-011c segment-generation (gaia G-11), H-004b ritk DICOM (heavy build).
 
 ### Completed
 
+- [x] **H-032** `helios-analysis`: cumulative `Dvh` (Dx/Vx/mean) + `gamma_index_3d`
+  (Low, global norm) + `gamma_pass_rate`. 8 tests (identical→γ=0, γ scales with
+  dose ratio, 2×criterion→fail, uniform-DVH step, ramp quantiles, f32). Builds the
+  3%/2 mm + DVH quality-gate machinery (G-3 partial). *(Sprint-4 crate pulled
+  forward — it is unblocked and gate-relevant, unlike the GPU/geometry work.)*
 - [x] **H-012b** `helios-solver::attenuation_map`: deterministic per-voxel HU→μ
   engine (CT `Volume` → μ `Volume`, Compton-MV approximation). CPU reference / GPU
   differential oracle. 5 tests (uniform water, air/bone, closed-form differential,
@@ -55,14 +60,14 @@ H-011c segment-generation (gaia G-11), H-004b ritk DICOM (heavy build).
   (`EnergyMeV`, `HounsfieldUnit`, `VoxelSpacingMm`). 13 tests pass; build + clippy
   `-D warnings` + fmt + nextest green.
 
-## Gate status (last run, H-012b)
+## Gate status (last run, H-032)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` | pass |
 | `cargo clippy --all-targets --all-features -D warnings` | pass, 0 warnings |
 | `cargo fmt --check` | pass |
-| `cargo nextest run` | 44 passed / 0 failed (0.45 s) |
+| `cargo nextest run` | 52 passed / 0 failed (1.4 s) |
 | `cargo test --doc` | pass |
 
 ## Decision log (Sprint 2)

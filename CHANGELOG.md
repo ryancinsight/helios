@@ -56,6 +56,14 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The voxel-DDA *segment generation* half awaits gaia
     geometry (G-11).
+- `helios-analysis` crate:
+  - `Dvh`: cumulative dose-volume histogram from a dose `Volume` — `min`/`max`/
+    `mean`, `volume_fraction_at_dose` (Vx), `dose_at_volume_fraction` (Dx,
+    nearest-rank). Verified on uniform (step) and ramp (known quantiles) fields.
+  - `gamma_index_3d`: Low's 3D gamma (dose-difference / distance-to-agreement,
+    global normalization) with grid + criterion validation, and `gamma_pass_rate`.
+    Analytical oracles: identical→γ=0/100% pass, γ scales with dose-ratio, 2×
+    criterion→fail, f32 genericity. The 3%/2 mm quality-gate machinery.
 - `helios-solver` crate:
   - `attenuation_map`: deterministic per-voxel HU→μ engine mapping a CT `Volume`
     to a linear-attenuation `Volume` (cm⁻¹) via `ρ = mass_density_from_hu(HU)` and

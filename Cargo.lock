@@ -139,6 +139,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "helios-analysis"
+version = "0.0.1"
+dependencies = [
+ "approx",
+ "helios-core",
+ "helios-domain",
+ "helios-math",
+]
+
+[[package]]
 name = "helios-core"
 version = "0.0.1"
 dependencies = [

@@ -21,9 +21,14 @@ target closure.
   compute seam and re-exports the leto linear-algebra substrate. `helios-core`
   constants remain `f64` literals by design and are converted by callers. The seam
   is exercised natively (`f32`/`f64`) by the first compute kernels as they land.
-- **G-3 (accuracy):** No dose-engine or projector reference solutions yet. Gamma
-  (3%/2mm), DVH, and MVCT image-quality oracles are unimplemented. Validation vs
-  VoLO/TOPAS/GATE/EGSnrc pending. *Evidence tier: none.* → H-012, H-013, H-042.
+- **G-3 (accuracy):** *Partially closed (H-032).* The **validation machinery** now
+  exists: `helios-analysis` implements the cumulative DVH (Dx/Vx/mean) and the 3D
+  gamma index (Low, global normalization) + pass rate, with analytical oracles
+  (identical→γ=0, criterion-scaled γ, uniform-DVH step, ramp quantiles). **Still
+  open:** the dose-engine/projector *reference solutions* to validate (need
+  H-013/H-011c) and clinical comparison vs VoLO/TOPAS/GATE/EGSnrc (H-042). The
+  gates are implemented; the distributions to feed them are the remaining work.
+  *Evidence tier: analytical (metrics verified) — clinical inputs pending.*
 - **G-4 (numerics):** Reduction-order sensitivity for future GPU vs CPU differential
   tests not yet characterized; epsilon bounds must be derived per reduction depth
   when the projector/dose kernels land. → H-012.

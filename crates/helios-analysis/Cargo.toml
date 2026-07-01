@@ -1,0 +1,20 @@
+[package]
+name = "helios-analysis"
+description = "Helios dosimetric analysis: dose-volume histograms and the gamma index (dose-difference / distance-to-agreement) for plan/measurement comparison."
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+helios-core = { workspace = true }
+helios-math = { workspace = true }
+helios-domain = { workspace = true }
+
+[dev-dependencies]
+approx = { workspace = true }

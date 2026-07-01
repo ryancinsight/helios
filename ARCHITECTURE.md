@@ -39,7 +39,7 @@ A lower layer never depends on a higher one. `helios-core` is the innermost crat
 | `helios-domain` | Patient/imaging geometry (CT/MVCT), beam/source/sensor models, binary MLC + collimator geometry, helical delivery kinematics. `VoxelGrid` + `Volume` landed (0.0.1); DICOM I/O and beam/MLC models pending. | **partial (0.0.1)** |
 | `helios-physics` | Radiation interaction physics: photon/electron transport, scatter, attenuation, projection physics. Beer–Lambert attenuation + HU→density landed (0.0.1); NIST μ/ρ data, ray-marched line integral, electron transport pending. | **partial (0.0.1)** |
 | `helios-solver` | GPU-accelerated deterministic dose engines (collapsed-cone / convolution-superposition) and imaging forward projectors/reconstruction. HU→μ material-property engine landed (0.0.1, CPU reference); dose/projector engines + GPU backend pending. | **partial (0.0.1)** |
-| `helios-analysis` | Dosimetric analysis (DVH, gamma), imaging quality metrics, visualization. | planned (Sprint 4/5) |
+| `helios-analysis` | Dosimetric analysis (DVH, gamma), imaging quality metrics, visualization. DVH + 3D gamma index landed (0.0.1); structure-masked DVH, local-norm gamma, imaging metrics pending. | **partial (0.0.1)** |
 | `helios-simulation` | Time-dependent helical TomoTherapy delivery with synchronized MVCT and motion. | planned (Sprint 3) |
 | `helios-planning` | Inverse planning / optimization (gradient-based, multi-criteria). | planned (Sprint 4) |
 | `helios-imaging` | MVCT acquisition modeling, reconstruction, portal dosimetry, IGRT workflows. | planned (Sprint 4) |
