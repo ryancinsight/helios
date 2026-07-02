@@ -81,6 +81,84 @@ pub fn register_translation<T: GeometryScalar>(
     best
 }
 
+/// Normalized-cross-correlation (NCC) variant of [`register_translation`],
+/// **robust on low-texture images**.
+///
+/// Returns the integer-voxel displacement `s ∈ [−max_shift, max_shift]` maximizing
+/// the NCC over the overlap:
+/// `NCC(s) = Σ(m−m̄)(f−f̄) / (N·σ_m·σ_f)`, `m = moving(v)`, `f = fixed(v − s)`.
+/// Because NCC measures *correlation* (invariant to intensity offset/scale), a
+/// shift that slides all structure out of the overlap leaves a near-constant
+/// (zero-variance) region — which is rejected rather than scored as a perfect
+/// match, curing the SSD false-minimum on near-flat images (the H-044 limitation).
+/// Overlaps with fewer than two voxels or vanishing variance are skipped; if no
+/// shift yields a valid correlation the result is `[0, 0, 0]`.
+#[must_use]
+pub fn register_translation_ncc<T: GeometryScalar>(
+    fixed: &Volume<T>,
+    moving: &Volume<T>,
+    max_shift: [usize; 3],
+) -> [isize; 3] {
+    let dims = fixed.grid().dims();
+    let r = [
+        max_shift[0] as isize,
+        max_shift[1] as isize,
+        max_shift[2] as isize,
+    ];
+
+    let mut best = [0isize; 3];
+    let mut best_ncc = f64::NEG_INFINITY;
+    for s0 in -r[0]..=r[0] {
+        for s1 in -r[1]..=r[1] {
+            for s2 in -r[2]..=r[2] {
+                let (mut sm, mut sf, mut smf, mut smm, mut sff) = (0.0, 0.0, 0.0, 0.0, 0.0);
+                let mut count = 0usize;
+                for i in 0..dims[0] {
+                    for j in 0..dims[1] {
+                        for k in 0..dims[2] {
+                            let (fi, fj, fk) = (i as isize - s0, j as isize - s1, k as isize - s2);
+                            if fi < 0 || fj < 0 || fk < 0 {
+                                continue;
+                            }
+                            let (Some(m), Some(f)) = (
+                                moving.get(i, j, k),
+                                fixed.get(fi as usize, fj as usize, fk as usize),
+                            ) else {
+                                continue;
+                            };
+                            let (m, f) = (m.to_f64(), f.to_f64());
+                            sm += m;
+                            sf += f;
+                            smf += m * f;
+                            smm += m * m;
+                            sff += f * f;
+                            count += 1;
+                        }
+                    }
+                }
+                if count < 2 {
+                    continue;
+                }
+                let n = count as f64;
+                let (mbar, fbar) = (sm / n, sf / n);
+                let cov = smf / n - mbar * fbar;
+                let var_m = (smm / n - mbar * mbar).max(0.0);
+                let var_f = (sff / n - fbar * fbar).max(0.0);
+                let denom = (var_m * var_f).sqrt();
+                if denom <= 1e-12 {
+                    continue; // near-constant overlap carries no correlation signal
+                }
+                let ncc = cov / denom;
+                if ncc > best_ncc {
+                    best_ncc = ncc;
+                    best = [s0, s1, s2];
+                }
+            }
+        }
+    }
+    best
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -139,6 +217,65 @@ mod tests {
         };
         assert_eq!(
             register_translation(&bowl_f32(3.0, 3.0), &bowl_f32(5.0, 2.0), [3, 3, 0]),
+            [2, -1, 0]
+        );
+    }
+
+    // Low-texture phantom: flat background 1.0 with a single bright voxel at
+    // `spike` — the SSD-over-overlap case where a large shift can slide the feature
+    // out of overlap and tie the true minimum (H-044 note).
+    fn spike(sx: usize, sy: usize) -> Volume<f64> {
+        let grid = VoxelGrid::axis_aligned([9, 9, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
+            .unwrap();
+        Volume::from_shape_fn(grid, move |idx| {
+            if idx[0] == sx && idx[1] == sy {
+                10.0
+            } else {
+                1.0
+            }
+        })
+    }
+
+    #[test]
+    fn ncc_recovers_shift_on_a_low_texture_image() {
+        // moving spike at (4,2), fixed at (2,3) → displacement (2,−1,0). NCC rejects
+        // the flat-overlap shifts that make plain SSD ambiguous here.
+        let fixed = spike(2, 3);
+        let moving = spike(4, 2);
+        assert_eq!(
+            register_translation_ncc(&fixed, &moving, [3, 3, 0]),
+            [2, -1, 0]
+        );
+    }
+
+    #[test]
+    fn ncc_recovers_shift_on_a_textured_image_and_zero_for_identical() {
+        assert_eq!(
+            register_translation_ncc(&bowl(2.0, 5.0), &bowl(4.0, 4.0), [3, 3, 0]),
+            [2, -1, 0]
+        );
+        assert_eq!(
+            register_translation_ncc(&bowl(4.0, 4.0), &bowl(4.0, 4.0), [2, 2, 0]),
+            [0, 0, 0]
+        );
+    }
+
+    #[test]
+    fn ncc_is_generic_over_scalar_f32() {
+        let grid =
+            VoxelGrid::<f32>::axis_aligned([9, 9, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
+                .unwrap();
+        let spike_f32 = |sx: usize, sy: usize| {
+            Volume::from_shape_fn(grid, move |idx| {
+                if idx[0] == sx && idx[1] == sy {
+                    10.0_f32
+                } else {
+                    1.0
+                }
+            })
+        };
+        assert_eq!(
+            register_translation_ncc(&spike_f32(3, 3), &spike_f32(5, 2), [3, 3, 0]),
             [2, -1, 0]
         );
     }

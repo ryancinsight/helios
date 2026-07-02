@@ -97,6 +97,15 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-imaging::register_translation_ncc` (H-044b): normalized-cross-correlation
+  rigid translation registration, robust on low-texture images. It maximizes
+  `NCC = Σ(m−m̄)(f−f̄)/(N·σ_m·σ_f)` over the overlap; because NCC measures correlation
+  (invariant to intensity offset/scale), a shift that slides all structure out of the
+  overlap leaves a near-constant, zero-variance region that is *rejected* rather than
+  scored as a perfect match — curing the SSD false-minimum documented for
+  `register_translation` (H-044). Verified: recovers a known shift on the flat-background
+  spike phantom where plain SSD is ambiguous, on a textured phantom, and is generic over
+  f32. Sub-voxel/rotation/deformable registration via ritk = H-044c.
 - `helios-analysis::Dvh::homogeneity_index` (H-032e): the ICRU-83 dose homogeneity
   index `HI = (D₂ − D₉₈)/D₅₀`, a standard target plan-quality metric (lower = more
   homogeneous). Verified: `0` for uniform dose, `1.92` for a 0..99 ramp (D₂=98, D₉₈=2,
