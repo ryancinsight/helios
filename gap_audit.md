@@ -209,6 +209,18 @@ target closure.
   dataset and an external MC reference engine (G-16), plus the anisotropic CC kernel
   (H-020g). The workflow *plumbing* across all layers is verified.
 
+## Concurrent-agent status
+
+- **Peer `mnemosyne-arena` WIP is currently broken (build-blocking `helios-gpu`).** As of
+  this session a peer holds uncommitted changes in `repos/mnemosyne/crates/mnemosyne-
+  arena/src/segment/pool/tagged_stack.rs` (+105/−5) that do not compile (`E0061`).
+  `helios-gpu → hephaestus-wgpu → leto[mnemosyne-memory] → mnemosyne-arena` pulls it, so
+  the **full-workspace** `cargo nextest run` fails to compile `mnemosyne-arena`. This is a
+  peer's in-flight work, NOT a Helios defect — per concurrent-agent discipline it is left
+  untouched (not reverted/fixed). The **non-GPU** workspace (`--exclude helios-gpu`) is
+  green (195 tests). The moirai consumption (H-021b) was designed then reverted because it
+  transitively pulls the same broken crate; retry once the peer commits a green fix.
+
 ## Residual risk register
 
 - Atlas upstream APIs may drift (multi-repo co-evolution); Helios pins the local

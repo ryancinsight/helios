@@ -17,6 +17,7 @@
 mod dvh;
 mod gamma;
 mod image_quality;
+mod roi;
 
 pub use dvh::Dvh;
 pub use gamma::{gamma_index_3d, gamma_index_3d_local, gamma_pass_rate};
@@ -24,3 +25,4 @@ pub use image_quality::{
     contrast_to_noise_ratio, michelson_contrast, roi_statistics, volume_relative_l2_error,
     volume_rmse, RoiStats,
 };
+pub use roi::{box_mask, spherical_mask};

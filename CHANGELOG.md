@@ -97,6 +97,12 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-analysis::{spherical_mask, box_mask}` (H-047): geometric ROI mask predicates
+  (sphere / axis-aligned box over a `VoxelGrid`) returning `Fn([usize;3]) -> bool`,
+  directly usable as the mask for `Dvh::from_volume_masked` — per-structure DVH/statistics
+  on analytically-defined ROIs (phantom inserts, simple targets) without a hand-written
+  closure. Verified: radius/box voxel selection, masked-DVH mean over the ROI, f32.
+  (Contour-defined ROIs via a ritk RT-struct rasterization remain H-032d.)
 - `helios-simulation::frame_portal_fluence` (H-045): portal (EPID) exit dosimetry — the
   per-leaf transmitted primary fluence `Ψ_leaf · exp(−τ_leaf)` for a delivery frame, the
   image used to *verify* delivered fluence against the plan. Composes the forward
