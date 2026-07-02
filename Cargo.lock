@@ -1303,6 +1303,10 @@ version = "0.0.1"
 dependencies = [
  "approx",
  "criterion",
+ "helios-core",
+ "helios-domain",
+ "helios-math",
+ "helios-solver",
  "hephaestus-core",
  "hephaestus-wgpu",
  "leto",

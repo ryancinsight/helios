@@ -6,7 +6,17 @@
 
 ## Owner: claude-helios
 
-### H-043b step 1 done — fused ExpNegOp upstreamed to hephaestus + consumed. Next: H-043b on-device pipeline / H-020h anisotropic CC / H-031b coeus-autodiff — `todo`
+### H-043b RESOLVED — resident GPU projector, 171×/371× vs CPU. Next: H-031b coeus-autodiff / H-020h anisotropic CC / H-010b GPU HU→μ — `todo`
+
+Upstreamed `ray_line_integrals` to hephaestus (volume ray-integral kernel, 792ccc3 +
+9354260, 4 live-GPU oracles; peer WIP untouched via disjoint files) and consumed it as
+`helios_gpu::GpuProjector` (μ resident on-device, batched sinogram projection, mm→cm at
+the boundary). **171× @ 90×128 / 371× @ 360×256 sinogram vs single-thread CPU** on a
+128³ volume; per-ray differential vs `forward_project_ray` within 1e-3 (derived f32
+bound). Closes G-18; GPU-scaling gate demonstrated on the pipeline workload. 200 default
+tests pass; clippy/fmt clean. Bench + report committed.
+
+### (prior) H-043b step 1 — fused ExpNegOp upstreamed + consumed
 
 Upstreamed `ExpNegOp` (`exp(−x)`) to hephaestus-wgpu (commit 669a9b3; live-GPU contract
 test; peer WIP in reduction.rs/device.rs untouched — disjoint-scope concurrent work, not
@@ -214,14 +224,15 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-048 — perf/consolidation pass)
+## Gate status (last run, H-043b — resident GPU projector)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 11 crates) |
-| `cargo nextest run --all-features` | **207 passed / 0 failed** (bitwise-identical after kernel rewrite) |
-| `cargo clippy -D warnings` / `cargo fmt --check` | clean |
-| criterion `scatter_superposition` | 8.3× @32³ / 7.4× @64³ vs recorded baseline (report committed) |
+| `cargo nextest run` (default) | **200 passed / 0 failed** (incl. live-GPU projector differential) |
+| `cargo clippy -D warnings` / `cargo fmt --check` | clean (helios + hephaestus additions) |
+| criterion `forward_projection_sinogram` | GPU **171×/371×** vs single-thread CPU (report committed) |
+| criterion `scatter_superposition` | 8.3× @32³ / 7.4× @64³ vs recorded baseline |
 | `cargo llvm-cov` (coverage %) | link unblocked via lld (183 ran instrumented); attribution empty on GNU target (G-17/H-060) |
 | `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |
 | `cargo clippy -D warnings` | 0 code warnings |

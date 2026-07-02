@@ -227,7 +227,14 @@ target closure.
   only anyhow/arrayvec/dicom-rs 0.8/ritk-codecs), so it needed no patch-cluster work.
   Remaining ritk surfaces (`ritk-registration`) pull the burn stack and are heavier
   (G-5); add cross-repo contract tests as each is consumed.
-- **G-18 (performance, GPU transfer-bound).** The GPU-vs-CPU study (H-043,
+- **G-18 — RESOLVED (H-043b).** The residency step landed: hephaestus gained a volume
+  ray-integral kernel (`ray_line_integrals`) and `helios_gpu::GpuProjector` keeps μ
+  on-device, projecting whole sinograms per dispatch. Measured 171×/371× vs the
+  single-thread CPU projector (report `2026-07-02-gpu-projection-throughput.md`);
+  differential per-ray agreement within a derived 1e-3 f32 bound. The *elementwise*
+  `exp(−τ)` path remains transfer-bound by physics (documented; use the resident
+  pipeline instead). "VoLO-competitive" is still unclaimable (no reference engine).
+- **(historical) G-18 (performance, GPU transfer-bound).** The GPU-vs-CPU study (H-043,
   `validation_reports/2026-07-01-gpu-transmission-throughput.md`) shows the isolated
   `beam_transmission_into` kernel is memory-/transfer-bound: even on an RTX 5080 it
   reaches only ~0.5–0.72× a single-threaded CPU loop, because every call round-trips the

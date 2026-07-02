@@ -12,14 +12,23 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+helios-core = { workspace = true }
+helios-domain = { workspace = true }
 hephaestus-core = { workspace = true }
 hephaestus-wgpu = { workspace = true }
 leto = { workspace = true }
 
 [dev-dependencies]
 approx = { workspace = true }
+# Differential reference for the GPU projector tests only.
+helios-math = { workspace = true }
+helios-solver = { workspace = true }
 criterion = { workspace = true }
 
 [[bench]]
 name = "transmission_throughput"
+harness = false
+
+[[bench]]
+name = "projection_throughput"
 harness = false

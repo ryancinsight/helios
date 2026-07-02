@@ -97,6 +97,19 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- Resident GPU forward projection (H-043b **resolved**): `helios_gpu::GpuProjector`
+  uploads the attenuation volume once and forward-projects whole ray batches per
+  dispatch through hephaestus's new `ray_line_integrals` volume ray-integral kernel
+  (**upstreamed**, commits 792ccc3/9354260: slab-clip to the node AABB →
+  `n = ceil(L/step)` midpoint trilinear samples, one thread per ray, 4 live-GPU
+  analytical oracles). Measured on a 128³ volume (report
+  `validation_reports/2026-07-02-gpu-projection-throughput.md`): **171× vs the
+  single-thread CPU projector at a 90×128 sinogram (75.4 ms → 0.441 ms) and 371× at
+  360×256 (589.6 ms → 1.591 ms)** — residency converts the GPU from the
+  transfer-bound elementwise loss into a two-order-of-magnitude win on the pipeline's
+  dominant workload. Per-ray differential agreement with `forward_project_ray` within
+  a derived 1e-3 f32 bound (live-adapter test); misses are exactly 0 on both paths.
+  Closes G-18. ("VoLO-competitive" remains unclaimed — no reference engine here.)
 - Fused GPU transmission kernel (H-043b step 1): `beam_transmission_into` now dispatches
   hephaestus's fused `ExpNegOp` (`exp(−x)`) — **upstreamed to hephaestus-wgpu for this
   path** (commit 669a9b3, with a live-GPU contract test) — one dispatch and no

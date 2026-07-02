@@ -13,11 +13,13 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+mod projection;
 mod transmission;
 
 pub use hephaestus_core::{HephaestusError, Result};
 pub use hephaestus_wgpu::WgpuDevice;
 
+pub use projection::GpuProjector;
 pub use transmission::beam_transmission_into;
 
 /// Acquire the default wgpu compute device (highest-power adapter available).
