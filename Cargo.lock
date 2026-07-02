@@ -1903,6 +1903,7 @@ name = "leto-ops"
 version = "0.35.1"
 dependencies = [
  "bytemuck",
+ "eunomia",
  "half",
  "hermes-simd",
  "leto",
@@ -4033,6 +4034,22 @@ checksum = "27bc9d5b815bc103f142aa054f561d9187d191692ec7c2d1e2b4737f8dbd7296"
 dependencies = [
  "zune-core",
 ]
+
+[[patch.unused]]
+name = "coeus-autograd"
+version = "0.5.5"
+
+[[patch.unused]]
+name = "coeus-core"
+version = "0.5.5"
+
+[[patch.unused]]
+name = "coeus-optim"
+version = "0.5.5"
+
+[[patch.unused]]
+name = "coeus-tensor"
+version = "0.5.5"
 
 [[patch.unused]]
 name = "moirai-http"

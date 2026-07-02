@@ -38,6 +38,12 @@ impl<T: Scalar> DoseInfluence<T> {
         (self.voxels, self.beamlets)
     }
 
+    /// Zero-copy view of the row-major (`voxels × beamlets`) matrix entries.
+    #[must_use]
+    pub fn rows(&self) -> &[T] {
+        &self.data
+    }
+
     /// Dose `A · x` from beamlet weights `x` (length `beamlets`).
     #[must_use]
     pub fn apply(&self, x: &[T]) -> Vec<T> {

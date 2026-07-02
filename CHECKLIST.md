@@ -6,7 +6,19 @@
 
 ## Owner: claude-helios
 
-### H-043b RESOLVED — resident GPU projector, 171×/371× vs CPU. Next: H-031b coeus-autodiff / H-020h anisotropic CC / H-010b GPU HU→μ — `todo`
+### H-031b advanced — apollo feature-unification fix landed; coeus module designed, blocked on peer moirai-core WIP. Next: re-land parked autodiff when moirai green / H-020h anisotropic CC — `todo`
+
+Root-caused the coeus consumption failure across three layers: (1) leto-ops E0034 ×332
+under `leto/ndarray-compat` → trigger was apollo's **vestigial** workspace-level feature
+request (no apollo lib/test code needs it) → **fixed upstream** (apollo f1ddf7a, whole
+apollo workspace verified `--all-targets` without it); (2) with that resolved, the next
+layer is **peer WIP in moirai-core** (staged `dtype/` deletion + `mod security` w/o the
+file — actively churning) — their claimed scope, sequenced behind, NOT touched. The
+complete autodiff module (tape gradient + differential test vs the exact hand gradient)
+is parked (session scratchpad) for immediate re-landing; `DoseInfluence::rows()` +
+the coeus `[patch]` block landed now. 209 `--all-features` tests pass.
+
+### (prior) H-043b RESOLVED — resident GPU projector, 171×/371× vs CPU
 
 Upstreamed `ray_line_integrals` to hephaestus (volume ray-integral kernel, 792ccc3 +
 9354260, 4 live-GPU oracles; peer WIP untouched via disjoint files) and consumed it as
