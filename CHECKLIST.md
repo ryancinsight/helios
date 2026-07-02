@@ -6,7 +6,15 @@
 
 ## Owner: claude-helios
 
-### H-048 done — perf/consolidation pass (8.3× scatter kernel; MM_PER_CM SSOT). Next: H-020h anisotropic CC / H-031b coeus-autodiff / H-032d RT-struct — `todo`
+### H-043b step 1 done — fused ExpNegOp upstreamed to hephaestus + consumed. Next: H-043b on-device pipeline / H-020h anisotropic CC / H-031b coeus-autodiff — `todo`
+
+Upstreamed `ExpNegOp` (`exp(−x)`) to hephaestus-wgpu (commit 669a9b3; live-GPU contract
+test; peer WIP in reduction.rs/device.rs untouched — disjoint-scope concurrent work, not
+deferred). `beam_transmission_into` = one dispatch, no intermediate buffer: GPU +30% at
+4M (373→485 Melem/s) but still PCIe-bound at 0.66–0.73× CPU (report addendum). The
+remaining GPU-beats-CPU path is the resident on-device μ→projection→transmission pipeline.
+
+### (prior) H-048 done — perf/consolidation pass (8.3× scatter kernel; MM_PER_CM SSOT)
 
 `Volume::as_slice` zero-copy accessor (documented layout contract); `convolve_axis`
 strided-slice rewrite — **8.3×/7.4× at 32³/64³, bitwise-identical** (baseline report in

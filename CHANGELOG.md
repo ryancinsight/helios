@@ -97,6 +97,13 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- Fused GPU transmission kernel (H-043b step 1): `beam_transmission_into` now dispatches
+  hephaestus's fused `ExpNegOp` (`exp(−x)`) — **upstreamed to hephaestus-wgpu for this
+  path** (commit 669a9b3, with a live-GPU contract test) — one dispatch and no
+  intermediate device buffer, replacing the `NegOp → ExpOp` chain. Measured: +30 % GPU
+  throughput at 4M elements (373→485 Melem/s); still PCIe-transfer-bound at 0.66–0.73×
+  CPU (honest addendum in the H-043 validation report). Remaining H-043b scope: the
+  full on-device μ→projection→transmission pipeline.
 - Performance/consolidation pass (H-048): `Volume::as_slice` — a public zero-copy view
   with a documented C-contiguous `(i,j,k)` layout contract (the private alias deleted;
   one accessor). The dose engine's hottest kernel, `scatter::convolve_axis`, now iterates

@@ -56,3 +56,23 @@ fused pipeline); it is the change that would let the GPU arm exceed the CPU.
 
 The benchmark is a measurement instrument: optimization work changes the *kernel /
 pipeline*, never the benchmark body or its timed region.
+
+## Addendum (2026-07-02): fused `ExpNegOp` kernel
+
+`beam_transmission_into` now runs hephaestus's fused `ExpNegOp` (`exp(-x)`, upstreamed
+for this path) — **one** dispatch and no intermediate device buffer, replacing the
+`NegOp → ExpOp` chain. Re-measured (criterion `--quick`, same machine/instrument):
+
+| Elements | CPU (Melem/s) | GPU chained (07-01) | GPU fused (07-02) |
+|---------:|--------------:|--------------------:|------------------:|
+| 262 144 | 738 | 323 | 392 |
+| 1 048 576 | 732 | 524 | 450 |
+| 4 194 304 | 667 | 373 | **485 (+30 %)** |
+
+Conclusion sharpened, not changed: fusing the dispatch chain helps at large sizes but
+the isolated kernel remains **PCIe-transfer-bound** — the GPU arm still peaks at
+~0.66–0.73× the single-threaded CPU. Removing a dispatch cannot beat the physics of
+round-tripping 4 bytes/element each way for ~1 flop. The only remaining path to
+GPU > CPU on this workload is the full on-device pipeline (μ-map → projection →
+transmission resident on the accelerator; one CT upload, one sinogram download),
+which is the remaining H-043b scope.

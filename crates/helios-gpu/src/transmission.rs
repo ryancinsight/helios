@@ -1,12 +1,13 @@
 //! GPU Beer–Lambert transmission: `exp(−τ)` over a projection buffer.
 //!
 //! Converts a buffer of optical depths `τ = ∫μ dl` (from the forward projector)
-//! into MVCT detector transmission `exp(−τ)` on the GPU, composing two tested
-//! hephaestus-wgpu elementwise kernels: `NegOp` then `ExpOp`. Differentially
-//! validated against the CPU `f32::exp` reference.
+//! into MVCT detector transmission `exp(−τ)` on the GPU with hephaestus-wgpu's
+//! fused [`ExpNegOp`] kernel — one dispatch, no intermediate device buffer
+//! (previously a `NegOp` → `ExpOp` chain; the fused op was upstreamed for this
+//! path, H-043b). Differentially validated against the CPU `f32::exp` reference.
 
 use hephaestus_core::{BlockWidth, ComputeDevice, Result};
-use hephaestus_wgpu::{unary_elementwise_strided, ExpOp, NegOp, StridedOperand, WgpuDevice};
+use hephaestus_wgpu::{unary_elementwise_strided, ExpNegOp, StridedOperand, WgpuDevice};
 use leto::Layout;
 
 /// Compute `out[i] = exp(-optical_depth[i])` on the GPU.
@@ -29,25 +30,13 @@ pub fn beam_transmission_into(
     let layout = Layout::c_contiguous([optical_depth.len()])
         .expect("invariant: rank-1 contiguous layout of a slice length is valid");
 
-    let input_operand = StridedOperand {
-        buffer: &input,
-        layout: &layout,
-    };
-    let shape = [optical_depth.len()];
-    let negated = unary_elementwise_strided::<NegOp, f32, 1>(
+    let transmitted = unary_elementwise_strided::<ExpNegOp, f32, 1>(
         device,
-        input_operand,
-        shape,
-        BlockWidth::DEFAULT,
-    )?;
-    let negated_operand = StridedOperand {
-        buffer: &negated,
-        layout: &layout,
-    };
-    let transmitted = unary_elementwise_strided::<ExpOp, f32, 1>(
-        device,
-        negated_operand,
-        shape,
+        StridedOperand {
+            buffer: &input,
+            layout: &layout,
+        },
+        [optical_depth.len()],
         BlockWidth::DEFAULT,
     )?;
     device.download(&transmitted, out)
