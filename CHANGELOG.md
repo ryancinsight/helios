@@ -97,6 +97,14 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-simulation::frame_portal_fluence` (H-045): portal (EPID) exit dosimetry — the
+  per-leaf transmitted primary fluence `Ψ_leaf · exp(−τ_leaf)` for a delivery frame, the
+  image used to *verify* delivered fluence against the plan. Composes the forward
+  projector with the per-leaf beamlet geometry, now factored into a shared
+  `beamlet_ray`/`gantry_basis` (a `Beamlet` struct) used by both portal dosimetry and
+  dose accumulation — one fan-geometry definition, no duplication. Verified: full
+  transmission at μ=0, Beer–Lambert attenuation (`fluence·e^{−μ·chord}`), closed leaf
+  reads 0, higher μ darkens, f32.
 - `helios-imaging::register_translation_ncc` (H-044b): normalized-cross-correlation
   rigid translation registration, robust on low-texture images. It maximizes
   `NCC = Σ(m−m̄)(f−f̄)/(N·σ_m·σ_f)` over the overlap; because NCC measures correlation

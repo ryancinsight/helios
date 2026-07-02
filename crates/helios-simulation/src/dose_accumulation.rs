@@ -61,68 +61,110 @@ pub fn accumulate_delivered_dose<T: GeometryScalar>(
 ) -> Volume<T> {
     let zero = <T as NumericElement>::ZERO;
     let grid = *mu.grid();
-    let [nx, ny, nz] = grid.dims();
-    let centre = grid.voxel_center((nx - 1) / 2, (ny - 1) / 2, (nz - 1) / 2);
     let mut dose = Volume::zeros(grid);
 
     for frame in frames {
-        let theta = frame.gantry_angle_rad;
-        let (cos, sin) = (theta.cos(), theta.sin());
-        // Central-axis direction and in-plane lateral (leaf-offset) direction.
-        let dir = Vector3::new(cos, sin, zero);
-        let perp = Vector3::new(-sin, cos, zero);
-
-        let leaves = frame.leaf_fluence.len();
-        let centre_leaf = <T as GeometryScalar>::from_f64((leaves as f64 - 1.0) * 0.5);
+        let (centre, dir, perp) = gantry_basis(&grid, frame.gantry_angle_rad);
         for (leaf, &weight) in frame.leaf_fluence.iter().enumerate() {
             if weight <= zero {
                 continue; // closed/leak-free leaf deposits nothing.
             }
-            let offset =
-                (<T as GeometryScalar>::from_f64(leaf as f64) - centre_leaf) * leaf_width_mm;
-            // (origin, direction, inverse-square falloff) per the selected geometry.
-            // Both branches lie in the couch z-slice (dir.z = perp.z = 0); the ray
-            // constructor normalizes the direction vector.
-            let (origin, direction, falloff) = match geometry {
-                BeamGeometry::Parallel { standoff_mm } => (
-                    Point3::new(
-                        centre.x + perp.x * offset - dir.x * standoff_mm,
-                        centre.y + perp.y * offset - dir.y * standoff_mm,
-                        frame.couch_mm,
-                    ),
-                    dir,
-                    None,
-                ),
-                BeamGeometry::PointSource { source_axis_mm } => {
-                    // Focal spot behind isocentre; ray aims through the leaf's
-                    // isocentre-plane point `centre + perp·offset`, so
-                    // direction = (perp·offset + dir·SAD). For offset 0 this is the
-                    // central axis; off-axis leaves fan out with depth. The fluence
-                    // falls off inverse-square from the focal spot (SAD reference).
-                    let focal = Point3::new(
-                        centre.x - dir.x * source_axis_mm,
-                        centre.y - dir.y * source_axis_mm,
-                        frame.couch_mm,
-                    );
-                    let aim = Vector3::new(
-                        perp.x * offset + dir.x * source_axis_mm,
-                        perp.y * offset + dir.y * source_axis_mm,
-                        zero,
-                    );
-                    (focal, aim, Some((focal, source_axis_mm)))
-                }
+            let Some(beamlet) =
+                beamlet_ray(centre, dir, perp, frame, leaf, leaf_width_mm, geometry)
+            else {
+                continue;
             };
-            if let Some(ray) = Ray::try_from_direction(origin, direction) {
-                let _deposited = match falloff {
-                    Some((focal, sad)) => deposit_ray_terma_diverging(
-                        &mut dose, mu, &ray, weight, step_mm, focal, sad,
-                    ),
-                    None => deposit_ray_terma(&mut dose, mu, &ray, weight, step_mm),
-                };
-            }
+            let _deposited = match beamlet.falloff {
+                Some((focal, sad)) => deposit_ray_terma_diverging(
+                    &mut dose,
+                    mu,
+                    &beamlet.ray,
+                    weight,
+                    step_mm,
+                    focal,
+                    sad,
+                ),
+                None => deposit_ray_terma(&mut dose, mu, &beamlet.ray, weight, step_mm),
+            };
         }
     }
     dose
+}
+
+/// A single MLC-leaf beamlet: its ray plus, for a divergent fan, the inverse-square
+/// falloff `(focal spot, SAD)`.
+pub(crate) struct Beamlet<T: GeometryScalar> {
+    pub ray: Ray<T>,
+    pub falloff: Option<(Point3<T>, T)>,
+}
+
+/// Construct the [`Beamlet`] for one MLC `leaf` of a `frame` under the selected
+/// [`BeamGeometry`]. Shared by dose accumulation and portal dosimetry so the fan
+/// geometry lives in one place.
+///
+/// `centre` is the grid axial centre; `dir`/`perp` the gantry basis (central-axis
+/// and in-plane lateral). Returns `None` if the resulting direction is degenerate.
+pub(crate) fn beamlet_ray<T: GeometryScalar>(
+    centre: Point3<T>,
+    dir: Vector3<T>,
+    perp: Vector3<T>,
+    frame: &DeliveryFrame<T>,
+    leaf: usize,
+    leaf_width_mm: T,
+    geometry: BeamGeometry<T>,
+) -> Option<Beamlet<T>> {
+    let zero = <T as NumericElement>::ZERO;
+    let leaves = frame.leaf_fluence.len();
+    let centre_leaf = <T as GeometryScalar>::from_f64((leaves as f64 - 1.0) * 0.5);
+    let offset = (<T as GeometryScalar>::from_f64(leaf as f64) - centre_leaf) * leaf_width_mm;
+    // (origin, direction, inverse-square falloff) per the selected geometry. Both
+    // branches lie in the couch z-slice (dir.z = perp.z = 0); the ray constructor
+    // normalizes the direction vector.
+    let (origin, direction, falloff) = match geometry {
+        BeamGeometry::Parallel { standoff_mm } => (
+            Point3::new(
+                centre.x + perp.x * offset - dir.x * standoff_mm,
+                centre.y + perp.y * offset - dir.y * standoff_mm,
+                frame.couch_mm,
+            ),
+            dir,
+            None,
+        ),
+        BeamGeometry::PointSource { source_axis_mm } => {
+            // Focal spot behind isocentre; ray aims through the leaf's isocentre-
+            // plane point `centre + perp·offset`, so direction = (perp·offset +
+            // dir·SAD). For offset 0 this is the central axis; off-axis leaves fan
+            // out with depth. Fluence falls off inverse-square from the focal spot.
+            let focal = Point3::new(
+                centre.x - dir.x * source_axis_mm,
+                centre.y - dir.y * source_axis_mm,
+                frame.couch_mm,
+            );
+            let aim = Vector3::new(
+                perp.x * offset + dir.x * source_axis_mm,
+                perp.y * offset + dir.y * source_axis_mm,
+                zero,
+            );
+            (focal, aim, Some((focal, source_axis_mm)))
+        }
+    };
+    Ray::try_from_direction(origin, direction).map(|ray| Beamlet { ray, falloff })
+}
+
+/// The gantry basis `(centre, dir, perp)` for a frame's gantry angle over `grid`.
+pub(crate) fn gantry_basis<T: GeometryScalar>(
+    grid: &helios_domain::VoxelGrid<T>,
+    gantry_angle_rad: T,
+) -> (Point3<T>, Vector3<T>, Vector3<T>) {
+    let zero = <T as NumericElement>::ZERO;
+    let [nx, ny, nz] = grid.dims();
+    let centre = grid.voxel_center((nx - 1) / 2, (ny - 1) / 2, (nz - 1) / 2);
+    let (cos, sin) = (gantry_angle_rad.cos(), gantry_angle_rad.sin());
+    (
+        centre,
+        Vector3::new(cos, sin, zero),
+        Vector3::new(-sin, cos, zero),
+    )
 }
 
 #[cfg(test)]

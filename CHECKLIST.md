@@ -6,14 +6,19 @@
 
 ## Owner: claude-helios
 
-### H-044b done — NCC registration (robust IGRT on low-texture images). Next in-flight: H-020h anisotropic CC kernel / H-060 coverage attribution / H-032d RT-struct masks — `todo`
+### H-045 done — portal (EPID) exit dosimetry. Next in-flight: H-020h anisotropic CC kernel / H-060 coverage (CI) / H-032d RT-struct masks — `todo`
 
-`helios-imaging::register_translation_ncc` maximizes normalized cross-correlation over the
-overlap, rejecting zero-variance (flat) overlaps — curing the SSD false-minimum on
-low-texture images (the H-044 limitation). Verified: recovers a known shift on the
-flat-background spike phantom (where plain SSD is ambiguous), on a textured phantom, and
-f32. 189 default / 194 `--all-features` tests pass. Sub-voxel/rotation/deformable via
-ritk = H-044c.
+`helios-simulation::frame_portal_fluence` computes per-leaf transmitted fluence
+`Ψ_leaf·exp(−τ_leaf)` for a delivery frame (delivery-verification image), sharing the
+`beamlet_ray`/`gantry_basis` geometry with dose accumulation (consolidated into a
+`Beamlet` struct). Verified: full transmission at μ=0, Beer–Lambert attenuation, closed
+leaf 0, darkening with μ, f32. 193 default / 198 `--all-features` tests pass. The
+delivery-side imaging surface (MVCT acquisition, portal dosimetry) is now complete.
+
+### (prior) H-044b done — NCC registration (robust IGRT on low-texture images)
+
+`register_translation_ncc` — NCC over overlap, rejecting zero-variance overlaps; recovers
+a known shift on the flat-background spike phantom where SSD is ambiguous.
 
 ### (prior) H-032e + G-17 — homogeneity index; coverage link unblocked (lld)
 
@@ -173,14 +178,14 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-044b — NCC registration)
+## Gate status (last run, H-045 — portal exit dosimetry)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 11 crates) |
 | `cargo build --examples` | pass (tomotherapy_workflow) |
-| `cargo nextest run` (default) | 189 passed / 0 failed (incl. live GPU + E2E) |
-| `cargo nextest run --all-features` | **194 passed / 0 failed** (+5 DICOM slice/series) |
+| `cargo nextest run` (default) | 193 passed / 0 failed (incl. live GPU + E2E) |
+| `cargo nextest run --all-features` | **198 passed / 0 failed** (+5 DICOM slice/series) |
 | `cargo llvm-cov` (coverage %) | link unblocked via lld (183 ran instrumented); attribution empty on GNU target (G-17/H-060) |
 | `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |
 | `cargo clippy -D warnings` | 0 code warnings |
