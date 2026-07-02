@@ -234,12 +234,15 @@ target closure.
   present in the MSYS2 ucrt64 toolchain) links the instrumented binaries, and the full
   suite runs under instrumentation (183 tests pass, 356 `.profraw` generated;
   `LLVM_COV`/`LLVM_PROFDATA` point at the MSYS2 llvm-cov 22.1.4 ≈ rustc-LLVM 22.1.3).
-  A *distinct* secondary issue remains: `cargo llvm-cov report` attributes **0 regions**
-  on the GNU target (empty coverage map matching), so the *percentage* is still not
-  obtainable via cargo-llvm-cov here. Path forward (future): try `grcov` on the profraw,
-  or run coverage on `x86_64-pc-windows-msvc` / a Linux CI container. Test breadth is
-  high (185 value-semantic tests across the CPU crates) but the coverage number is
-  unquantified — not fabricated.
+  A *distinct* secondary issue remains and is now **conclusively diagnosed**: source/
+  region *attribution* is broken on this GNU target — `cargo llvm-cov report` gives
+  **0 regions** and `grcov 0.10.5` (which uses its own profraw parser) gives an empty
+  file table / **NaN%**, from the *same* 145 profraw. Two independent tools failing
+  identically confirms the coverage-map is not read from the mingw (`x86_64-pc-windows-
+  gnu`) instrumented binaries — a toolchain-level limitation, not a tool bug. Coverage %
+  is therefore **not obtainable on this host**; it requires `x86_64-pc-windows-msvc` or a
+  Linux CI container (H-060 re-scoped to CI). Test breadth is high (189 value-semantic
+  tests across the CPU crates) but the coverage number is unquantified — not fabricated.
 - Physical constants (G-2) are CODATA-2018/ICRU-90 values verified by inter-constant
   derivation tests, not by an external authoritative fetch this session; values are
   standard and cross-checked, but a future audit should confirm against the live
