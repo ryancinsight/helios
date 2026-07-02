@@ -465,6 +465,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "consus-compression"
+version = "0.1.0"
+dependencies = [
+ "byteorder",
+ "consus-core",
+]
+
+[[package]]
+name = "consus-core"
+version = "0.1.0"
+dependencies = [
+ "byteorder",
+ "smallvec",
+ "zerocopy",
+]
+
+[[package]]
+name = "consus-hdf5"
+version = "0.1.0"
+dependencies = [
+ "byteorder",
+ "consus-compression",
+ "consus-core",
+ "consus-io",
+]
+
+[[package]]
+name = "consus-io"
+version = "0.1.0"
+dependencies = [
+ "consus-core",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1252,6 +1286,9 @@ name = "helios-domain"
 version = "0.0.1"
 dependencies = [
  "approx",
+ "consus-core",
+ "consus-hdf5",
+ "consus-io",
  "dicom",
  "helios-core",
  "helios-math",
@@ -2044,6 +2081,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "mnemosyne-build-util"
+version = "0.1.0"
+
+[[package]]
 name = "mnemosyne-core"
 version = "0.1.0"
 
@@ -2094,6 +2135,7 @@ name = "mnemosyne-prof"
 version = "0.1.0"
 dependencies = [
  "backtrace",
+ "mnemosyne-build-util",
  "mnemosyne-core",
 ]
 

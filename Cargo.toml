@@ -133,6 +133,12 @@ gaia = { path = "../gaia" }
 [patch."https://github.com/ryancinsight/ritk"]
 ritk-dicom = { path = "../ritk/crates/ritk-dicom" }
 
+[patch."https://github.com/ryancinsight/consus"]
+consus-core = { path = "../consus/crates/consus-core" }
+consus-hdf5 = { path = "../consus/crates/consus-hdf5" }
+consus-io = { path = "../consus/crates/consus-io" }
+consus-compression = { path = "../consus/crates/consus-compression" }
+
 [patch."https://github.com/ryancinsight/hephaestus"]
 hephaestus-core = { path = "../hephaestus/crates/hephaestus-core" }
 hephaestus-wgpu = { path = "../hephaestus/crates/hephaestus-wgpu" }

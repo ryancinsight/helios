@@ -20,9 +20,16 @@ leto = { workspace = true }
 # gates a *complete* implementation (not a stub), per the build-size discipline.
 ritk-dicom = { workspace = true, optional = true }
 dicom = { workspace = true, optional = true }
+# Volumetric storage boundary (consus, mandated Atlas component) — feature-gated
+# like `dicom` so the HDF5 machinery stays out of the core build. The feature
+# gates a complete implementation, not a stub.
+consus-core = { workspace = true, optional = true }
+consus-hdf5 = { workspace = true, optional = true }
+consus-io = { workspace = true, optional = true }
 
 [features]
 dicom = ["dep:ritk-dicom", "dep:dicom"]
+storage = ["dep:consus-core", "dep:consus-hdf5", "dep:consus-io"]
 
 [dev-dependencies]
 approx = { workspace = true }

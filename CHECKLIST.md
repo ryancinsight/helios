@@ -6,14 +6,20 @@
 
 ## Owner: claude-helios
 
-### H-021b done — moirai-parallel helical-projection dispatch (mandated moirai consumed). Next: H-020h anisotropic CC / H-032d RT-struct / H-043b GPU fusion — `todo`
+### H-046 done — consus HDF5 volumetric storage (mandated consus consumed). Next: H-020h anisotropic CC / H-031b coeus-autodiff / H-032d RT-struct — `todo`
 
-`simulate_helical_sinogram` now dispatches the independent per-projection forward
-projections through moirai's `Adaptive` execution policy (`map_collect_index_with`),
-consuming the mandated moirai orchestration component. Index-ordered → identical to
-sequential (verified deterministic at 256 projections). The peer `mnemosyne-arena`
-breakage that blocked this last cycle is reconciled — **full workspace green again**:
-198 default / 203 `--all-features` tests pass.
+`helios-domain::{save_volume_hdf5, load_volume_hdf5}` (feature `storage`) archive a
+`Volume` (data + grid geometry) to standard HDF5 via consus-core/hdf5/io ([patch]ed to
+the local checkout; skew-free). Verified: bitwise f64 round-trip, HDF5 superblock
+signature, f32 exactness, typed error paths. Adds `HeliosError::Storage`. 198 default /
+**207 `--all-features`** tests pass. Consumed mandated components now: ritk, gaia,
+hephaestus, moirai, consus, leto, hermes, eunomia. Remaining: coeus (H-031b),
+mnemosyne/themis (indirect via leto), apollo.
+
+### (prior) H-021b done — moirai-parallel helical-projection dispatch
+
+`simulate_helical_sinogram` dispatches per-projection work via moirai `Adaptive`
+(deterministic, order-preserving; verified at 256 projections).
 
 ### (prior) H-047 done — geometric ROI masks (per-structure DVH)
 
@@ -193,13 +199,13 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-021b — moirai parallel dispatch; full workspace green)
+## Gate status (last run, H-046 — consus HDF5 storage)
 
 | Gate | Result |
 |------|--------|
-| `cargo build` (whole workspace) | pass (all 11 crates; peer mnemosyne-arena reconciled) |
+| `cargo build` (whole workspace) | pass (all 11 crates) |
 | `cargo nextest run` (default) | 198 passed / 0 failed (incl. live GPU + E2E) |
-| `cargo nextest run --all-features` | **203 passed / 0 failed** (+5 DICOM slice/series) |
+| `cargo nextest run --all-features` | **207 passed / 0 failed** (+5 DICOM, +4 storage) |
 | `cargo clippy -D warnings` / `cargo fmt --check` | clean |
 | `cargo llvm-cov` (coverage %) | link unblocked via lld (183 ran instrumented); attribution empty on GNU target (G-17/H-060) |
 | `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |

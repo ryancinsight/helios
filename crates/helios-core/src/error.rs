@@ -35,6 +35,15 @@ pub enum HeliosError {
         /// Description of the parse/decode/attribute-lookup failure.
         reason: String,
     },
+
+    /// A volumetric-storage operation (HDF5 write/read via consus) failed.
+    /// Distinct from [`Dicom`](Self::Dicom) so acquisition-input failures and
+    /// archive-storage failures stay separable at match sites.
+    #[error("storage I/O error: {reason}")]
+    Storage {
+        /// Description of the write/read/parse failure.
+        reason: String,
+    },
 }
 
 /// Convenience alias for fallible Helios operations.

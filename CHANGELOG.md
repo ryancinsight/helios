@@ -97,6 +97,16 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-domain::{save_volume_hdf5, load_volume_hdf5}` (H-046, feature `storage`):
+  volumetric storage boundary via **consus** (the mandated Atlas storage component, now
+  consumed — pure-Rust consus-core/consus-hdf5/consus-io, `[patch]`ed to the local
+  checkout). Archives a dose/CT/MVCT `Volume` to a standard HDF5 file — a `volume`
+  dataset (f64 LE, the Volume's own C-contiguous `(i,j,k)` order) plus a 6-element
+  `geometry` dataset (spacing + origin) — and reconstructs the typed `Volume` on load.
+  Adds `HeliosError::Storage` (distinct from `Dicom`). Verified: bitwise f64 round-trip
+  on a distinct-per-voxel field with non-trivial spacing/origin, the file carries the
+  standard HDF5 superblock signature (external-tool interoperability), f32 round-trips
+  exactly through the f64 archive, and missing-file/garbage inputs are typed errors.
 - `helios-simulation::simulate_helical_sinogram` moirai-parallel dispatch (H-021b): the
   independent per-projection forward projections are now dispatched through moirai's
   `Adaptive` execution policy (`map_collect_index_with` — sequential below its threshold,
