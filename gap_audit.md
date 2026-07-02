@@ -211,15 +211,13 @@ target closure.
 
 ## Concurrent-agent status
 
-- **Peer `mnemosyne-arena` WIP is currently broken (build-blocking `helios-gpu`).** As of
-  this session a peer holds uncommitted changes in `repos/mnemosyne/crates/mnemosyne-
-  arena/src/segment/pool/tagged_stack.rs` (+105/−5) that do not compile (`E0061`).
-  `helios-gpu → hephaestus-wgpu → leto[mnemosyne-memory] → mnemosyne-arena` pulls it, so
-  the **full-workspace** `cargo nextest run` fails to compile `mnemosyne-arena`. This is a
-  peer's in-flight work, NOT a Helios defect — per concurrent-agent discipline it is left
-  untouched (not reverted/fixed). The **non-GPU** workspace (`--exclude helios-gpu`) is
-  green (195 tests). The moirai consumption (H-021b) was designed then reverted because it
-  transitively pulls the same broken crate; retry once the peer commits a green fix.
+- **RESOLVED (next cycle).** The peer `mnemosyne-arena` breakage that blocked `helios-gpu`
+  and the moirai consumption last cycle has been reconciled by the peer (new mnemosyne
+  commits landed; the crate compiles). The full workspace builds green again, and the
+  moirai consumption (H-021b) was re-applied and verified — `simulate_helical_sinogram`
+  dispatches per-projection work through moirai's `Adaptive` policy. Kept per the
+  concurrent-agent discipline: the peer crate was never touched; the change was designed,
+  reverted to stay green while blocked, then re-landed once upstream compiled.
 
 ## Residual risk register
 

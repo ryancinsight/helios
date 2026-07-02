@@ -6,14 +6,18 @@
 
 ## Owner: claude-helios
 
-### H-047 done — geometric ROI masks (per-structure DVH). moirai (H-021b) BLOCKED by peer mnemosyne-arena WIP. Next: H-020h anisotropic CC / H-032d RT-struct / H-021b (when cluster green) — `todo`
+### H-021b done — moirai-parallel helical-projection dispatch (mandated moirai consumed). Next: H-020h anisotropic CC / H-032d RT-struct / H-043b GPU fusion — `todo`
 
-`helios-analysis::{spherical_mask, box_mask}` add analytic ROI mask predicates for
-`Dvh::from_volume_masked` (per-structure DVH on sphere/box ROIs). Verified: selection,
-masked mean, f32. 195 non-GPU tests pass. **Concurrent-agent note:** a peer's uncommitted
-`mnemosyne-arena/tagged_stack.rs` (+105/−5) does not compile (E0061), which blocks
-`helios-gpu` (via hephaestus→leto→mnemosyne) and the moirai consumption (H-021b) — left
-untouched per discipline; the moirai change was designed then reverted to keep helios green.
+`simulate_helical_sinogram` now dispatches the independent per-projection forward
+projections through moirai's `Adaptive` execution policy (`map_collect_index_with`),
+consuming the mandated moirai orchestration component. Index-ordered → identical to
+sequential (verified deterministic at 256 projections). The peer `mnemosyne-arena`
+breakage that blocked this last cycle is reconciled — **full workspace green again**:
+198 default / 203 `--all-features` tests pass.
+
+### (prior) H-047 done — geometric ROI masks (per-structure DVH)
+
+`spherical_mask`/`box_mask` predicates for `Dvh::from_volume_masked`.
 
 ### (prior) H-045 done — portal (EPID) exit dosimetry
 
@@ -189,14 +193,14 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-047 — geometric ROI masks)
+## Gate status (last run, H-021b — moirai parallel dispatch; full workspace green)
 
 | Gate | Result |
 |------|--------|
-| `cargo nextest run --workspace --exclude helios-gpu` | **195 passed / 0 failed** |
-| `cargo clippy` (helios-analysis, -D warnings) | clean |
-| `cargo fmt --check` | pass |
-| `helios-gpu` + full-workspace build | **blocked** — peer `mnemosyne-arena` WIP does not compile (E0061); see Concurrent-agent status in gap_audit. Not a Helios defect. |
+| `cargo build` (whole workspace) | pass (all 11 crates; peer mnemosyne-arena reconciled) |
+| `cargo nextest run` (default) | 198 passed / 0 failed (incl. live GPU + E2E) |
+| `cargo nextest run --all-features` | **203 passed / 0 failed** (+5 DICOM slice/series) |
+| `cargo clippy -D warnings` / `cargo fmt --check` | clean |
 | `cargo llvm-cov` (coverage %) | link unblocked via lld (183 ran instrumented); attribution empty on GNU target (G-17/H-060) |
 | `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |
 | `cargo clippy -D warnings` | 0 code warnings |

@@ -1334,6 +1334,7 @@ dependencies = [
  "helios-physics",
  "helios-solver",
  "image",
+ "moirai-parallel",
 ]
 
 [[package]]

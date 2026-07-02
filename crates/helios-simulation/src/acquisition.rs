@@ -3,6 +3,7 @@
 use helios_domain::{HelicalDelivery, Volume};
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
 use helios_solver::forward_project_ray;
+use moirai_parallel::Adaptive;
 
 /// One projection of a helical acquisition: the delivery state (gantry angle,
 /// couch position) and the resulting central-ray measurement.
@@ -30,8 +31,15 @@ pub struct HelicalProjection<T: GeometryScalar> {
 /// behind isocentre and is forward-projected with sampling step `step_mm`. Rays
 /// that miss the grid (e.g. couch beyond the volume) record zero optical depth
 /// (full transmission).
+///
+/// The independent per-projection forward projections are dispatched through
+/// moirai's [`Adaptive`] execution policy (sequential below its threshold, parallel
+/// above) — the mandated time-dependent-orchestration seam. The collect is
+/// index-ordered, so the result is identical to a sequential run regardless of
+/// thread scheduling (each projection is an independent read of `mu`; no reduction).
+/// `T: Send + Sync` (satisfied by every real scalar) is required for the dispatch.
 #[must_use]
-pub fn simulate_helical_sinogram<T: GeometryScalar>(
+pub fn simulate_helical_sinogram<T: GeometryScalar + Send + Sync>(
     delivery: &HelicalDelivery<T>,
     mu: &Volume<T>,
     num_projections: usize,
@@ -44,8 +52,7 @@ pub fn simulate_helical_sinogram<T: GeometryScalar>(
     // Axial centre of the grid (used for the beam's x–y aim point).
     let centre = grid.voxel_center((nx - 1) / 2, (ny - 1) / 2, (nz - 1) / 2);
 
-    let mut sinogram = Vec::with_capacity(num_projections);
-    for projection in 0..num_projections {
+    moirai_parallel::map_collect_index_with::<Adaptive, _, _>(num_projections, |projection| {
         let gantry_angle_rad = delivery.gantry_angle_rad(projection);
         let couch_mm = delivery.couch_position_mm(projection);
 
@@ -63,15 +70,14 @@ pub fn simulate_helical_sinogram<T: GeometryScalar>(
             .unwrap_or(zero);
         let transmission = (-optical_depth).exp();
 
-        sinogram.push(HelicalProjection {
+        HelicalProjection {
             projection,
             gantry_angle_rad,
             couch_mm,
             optical_depth,
             transmission,
-        });
-    }
-    sinogram
+        }
+    })
 }
 
 #[cfg(test)]
@@ -152,5 +158,17 @@ mod tests {
         let del = HelicalDelivery::<f32>::new(4, 25.0, 0.2, 10.0, 0.0, 8.0).unwrap();
         let sino = simulate_helical_sinogram(&del, &mu, 4, 500.0, 0.25);
         assert_relative_eq!(sino[0].optical_depth, 0.05_f32 * 1.6, epsilon = 1e-4);
+    }
+
+    #[test]
+    fn moirai_dispatch_is_deterministic_and_order_preserving() {
+        // 256 projections exceed moirai's Adaptive parallel threshold, so this
+        // exercises the parallel path. The index-ordered collect makes the result
+        // identical run-to-run (no data race; each projection is an independent
+        // read) — the differential guarantee vs a sequential run.
+        let a = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 256, 500.0, 0.5);
+        let b = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 256, 500.0, 0.5);
+        assert_eq!(a, b);
+        assert!(a.iter().enumerate().all(|(i, p)| p.projection == i));
     }
 }

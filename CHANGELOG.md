@@ -97,6 +97,14 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-simulation::simulate_helical_sinogram` moirai-parallel dispatch (H-021b): the
+  independent per-projection forward projections are now dispatched through moirai's
+  `Adaptive` execution policy (`map_collect_index_with` — sequential below its threshold,
+  parallel above), consuming the mandated **moirai** orchestration component. The
+  index-ordered collect makes the result identical to a sequential run regardless of
+  scheduling (each projection is an independent read of `μ`; no reduction), verified by a
+  determinism/order-preservation oracle at 256 projections. (The peer `mnemosyne-arena`
+  breakage that blocked this last cycle has been reconciled; full workspace green again.)
 - `helios-analysis::{spherical_mask, box_mask}` (H-047): geometric ROI mask predicates
   (sphere / axis-aligned box over a `VoxelGrid`) returning `Fn([usize;3]) -> bool`,
   directly usable as the mask for `Dvh::from_volume_masked` — per-structure DVH/statistics

@@ -17,6 +17,9 @@ helios-math = { workspace = true }
 helios-domain = { workspace = true }
 helios-physics = { workspace = true }
 helios-solver = { workspace = true }
+# moirai (mandated Atlas orchestration): parallel dispatch of the independent
+# per-projection forward projections via the Adaptive execution policy.
+moirai-parallel = { workspace = true }
 
 [dev-dependencies]
 approx = { workspace = true }
