@@ -56,6 +56,13 @@ pub const WATER_DENSITY_G_PER_CM3: f64 = 1.0;
 /// evaluation for electron/proton transport.
 pub const WATER_MEAN_EXCITATION_ENERGY_EV: f64 = 78.0;
 
+/// Millimetres per centimetre — the unit-conversion factor between world/DICOM
+/// geometry (mm) and attenuation-physics lengths (μ in cm⁻¹).
+///
+/// SSOT for the mm→cm path-length conversion used by every projector, deposition,
+/// and reconstruction kernel; a locally redefined copy is a consolidation defect.
+pub const MM_PER_CM: f64 = 10.0;
+
 #[cfg(test)]
 mod tests {
     use super::*;

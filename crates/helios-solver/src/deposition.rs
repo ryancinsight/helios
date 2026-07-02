@@ -7,11 +7,9 @@
 //! collapsed-cone/convolution dose engine spreads with a scatter kernel.
 
 use crate::projector::world_aabb;
+use helios_core::constants::MM_PER_CM;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray};
-
-/// Millimetres per centimetre — the world grid is in mm, `μ` in cm⁻¹.
-const MM_PER_CM: f64 = 10.0;
 
 /// Nearest voxel index along one axis for a continuous index `coord`, clamped to
 /// `[0, n−1]`. Segment midpoints lie inside the node-centre AABB, so the clamp

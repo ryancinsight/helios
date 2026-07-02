@@ -17,11 +17,9 @@
 //! In a homogeneous medium this is the exact exponential `Ψ₀·exp(−μx)` — the
 //! analytical oracle used in the tests.
 
+use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Scalar;
-
-/// Millimetres per centimetre — grid spacing is mm, `μ` is cm⁻¹.
-const MM_PER_CM: f64 = 10.0;
 
 /// Attenuated primary energy fluence for a parallel beam entering along **+x**.
 ///

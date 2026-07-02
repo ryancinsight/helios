@@ -53,24 +53,42 @@ pub fn symmetric_deposition_kernel<T: Scalar>(range_cm: T, voxel_cm: T, radius: 
 /// Offset-0 is kernel index `len/2`; taps whose source voxel falls outside the grid
 /// are dropped (energy leaving the boundary is not wrapped), so interior voxels are
 /// exact while the boundary layer loses the truncated tail.
+///
+/// Iterates the volume's zero-copy [`as_slice`](Volume::as_slice) view with a
+/// precomputed axis stride: per tap this is one strided slice read instead of a
+/// three-axis bounds check + flat-index recomputation through `get`. The tap
+/// summation order is unchanged, so results are bitwise-identical to the previous
+/// per-voxel form (the differential guarantee for this optimization).
 fn convolve_axis<T: Scalar>(vol: &Volume<T>, kernel: &[T], axis: usize) -> Volume<T> {
     let grid: VoxelGrid<T> = *vol.grid();
-    let dims = grid.dims();
+    let [nx, ny, nz] = grid.dims();
     let center = (kernel.len() / 2) as isize;
-    let extent = dims[axis] as isize;
-    Volume::from_shape_fn(grid, |idx| {
-        let mut acc = <T as NumericElement>::ZERO;
-        for (t, &weight) in kernel.iter().enumerate() {
-            let src = idx[axis] as isize + (t as isize - center);
-            if src < 0 || src >= extent {
-                continue;
+    let extent = [nx, ny, nz][axis] as isize;
+    // C-contiguous (i, j, k) strides — the Volume layout contract.
+    let axis_stride = [ny * nz, nz, 1][axis] as isize;
+
+    let src = vol.as_slice();
+    let mut out = vec![<T as NumericElement>::ZERO; src.len()];
+    let mut base = 0usize;
+    for i in 0..nx {
+        for j in 0..ny {
+            for k in 0..nz {
+                let pos = [i, j, k][axis] as isize;
+                let mut acc = <T as NumericElement>::ZERO;
+                for (t, &weight) in kernel.iter().enumerate() {
+                    let s = pos + (t as isize - center);
+                    if s < 0 || s >= extent {
+                        continue;
+                    }
+                    let offset = base as isize + (s - pos) * axis_stride;
+                    acc += src[offset as usize] * weight;
+                }
+                out[base] = acc;
+                base += 1;
             }
-            let mut s = idx;
-            s[axis] = src as usize;
-            acc += vol.get(s[0], s[1], s[2]).expect("source index within grid") * weight;
         }
-        acc
-    })
+    }
+    Volume::from_shape_vec(grid, out).expect("output length equals input voxel count")
 }
 
 /// Dose by separable 3-D convolution-superposition of a `terma` volume with

@@ -10,11 +10,9 @@
 //! detector offsets — the standard parallel-beam FBP sampling.
 
 use crate::radon::Sinogram;
+use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{GeometryScalar, NumericElement};
-
-/// Millimetres per centimetre (detector offsets are mm, line integrals cm).
-const MM_PER_CM: f64 = 10.0;
 
 /// Ram-Lak ramp-filter kernel `h[n]` for `n ∈ [−(len−1), len−1]`, sample spacing
 /// `ds_cm`. `h[0]=1/(4Δs²)`, `h[odd]=−1/(π²n²Δs²)`, `h[even≠0]=0`. Returned as a

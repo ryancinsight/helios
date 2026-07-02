@@ -80,15 +80,9 @@ pub fn save_volume_hdf5<T: Scalar>(
     let grid = volume.grid();
     let [nx, ny, nz] = grid.dims();
 
-    // Field bytes in the Volume's own C-contiguous (i, j, k) order.
-    let mut field = Vec::with_capacity(nx * ny * nz);
-    for i in 0..nx {
-        for j in 0..ny {
-            for k in 0..nz {
-                field.push(volume.get(i, j, k).expect("index within grid").to_f64());
-            }
-        }
-    }
+    // Field bytes straight from the zero-copy slice view — already the archive's
+    // C-contiguous (i, j, k) order (the Volume layout contract).
+    let field: Vec<f64> = volume.as_slice().iter().map(|v| v.to_f64()).collect();
     let spacing = grid.spacing();
     let origin = grid.origin();
     let geometry = [
@@ -211,12 +205,9 @@ mod tests {
     fn test_volume() -> Volume<f64> {
         // Distinct value per voxel locks the (i, j, k) storage order; non-trivial
         // spacing/origin lock the geometry round-trip.
-        let grid = VoxelGrid::axis_aligned(
-            [4, 3, 2],
-            [1.25, 2.0, 3.5],
-            Point3::new(-5.0, 7.5, 11.0),
-        )
-        .expect("grid");
+        let grid =
+            VoxelGrid::axis_aligned([4, 3, 2], [1.25, 2.0, 3.5], Point3::new(-5.0, 7.5, 11.0))
+                .expect("grid");
         Volume::from_shape_fn(grid, |idx| {
             100.0 * idx[0] as f64 + 10.0 * idx[1] as f64 + idx[2] as f64 + 0.125
         })

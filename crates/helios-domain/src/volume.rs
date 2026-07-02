@@ -72,8 +72,16 @@ impl<T: Scalar> Volume<T> {
         (i * ny + j) * nz + k
     }
 
+    /// Zero-copy borrowed view of the underlying storage.
+    ///
+    /// Layout contract: C-contiguous `(i, j, k)` order with `k` fastest —
+    /// `flat(i, j, k) = (i·ny + j)·nz + k` for dims `[nx, ny, nz]`. Hot kernels
+    /// iterate this slice directly instead of per-voxel [`get`](Self::get)
+    /// (which bounds-checks every axis); the layout is an API guarantee, locked
+    /// by the `get`-vs-generator test.
+    #[must_use]
     #[inline]
-    fn slice(&self) -> &[T] {
+    pub fn as_slice(&self) -> &[T] {
         self.data
             .as_slice()
             .expect("invariant: volume storage is C-contiguous")
@@ -86,7 +94,7 @@ impl<T: Scalar> Volume<T> {
         if i >= nx || j >= ny || k >= nz {
             return None;
         }
-        Some(self.slice()[self.flat_index(i, j, k)])
+        Some(self.as_slice()[self.flat_index(i, j, k)])
     }
 
     /// Add `value` to voxel `(i, j, k)` in place (dose / energy accumulation).
@@ -109,7 +117,7 @@ impl<T: Scalar> Volume<T> {
     /// Sum of all voxel values (e.g. total deposited energy / monitor units).
     #[must_use]
     pub fn sum(&self) -> T {
-        self.slice()
+        self.as_slice()
             .iter()
             .copied()
             .fold(<T as NumericElement>::ZERO, |a, b| a + b)
@@ -146,7 +154,7 @@ impl<T: Scalar> Volume<T> {
             frac[axis] = c - floor;
         }
 
-        let v = |i: usize, j: usize, k: usize| self.slice()[self.flat_index(i, j, k)];
+        let v = |i: usize, j: usize, k: usize| self.as_slice()[self.flat_index(i, j, k)];
         // Interpolate along x, then y, then z.
         let (tx, ty, tz) = (frac[0], frac[1], frac[2]);
         let c00 = lerp(v(lo[0], lo[1], lo[2]), v(hi[0], lo[1], lo[2]), tx);

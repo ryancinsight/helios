@@ -6,11 +6,9 @@
 //! scaled by Δθ) and SIRT ([`crate::sirt_reconstruction`], on raw residual rows),
 //! so the interpolation geometry lives in exactly one place.
 
+use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{GeometryScalar, NumericElement};
-
-/// Millimetres per centimetre (detector offsets are mm, line integrals cm).
-const MM_PER_CM: f64 = 10.0;
 
 /// Back-project projection `rows` (row-major `[angle][offset]`) onto `recon`,
 /// scaling every voxel by `scale`.

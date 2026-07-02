@@ -16,6 +16,7 @@
 //! trivial `ImageOrientationPatient` cosines) return [`None`] rather than a
 //! silently-wrong result; general-pose clipping is a tracked follow-up.
 
+use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{Aabb, GeometryScalar, Point3, Ray};
 
@@ -28,9 +29,6 @@ pub(crate) fn world_aabb<T: GeometryScalar>(grid: &VoxelGrid<T>) -> Aabb<T> {
     let max = grid.voxel_center(nx - 1, ny - 1, nz - 1);
     Aabb::new(min, max)
 }
-
-/// Millimetres per centimetre — the world grid is in mm, `μ` in cm⁻¹.
-const MM_PER_CM: f64 = 10.0;
 
 /// Ray-march the optical depth `τ = ∫ μ dl` of `ray` through the `mu` volume.
 ///

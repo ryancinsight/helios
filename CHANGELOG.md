@@ -97,6 +97,17 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- Performance/consolidation pass (H-048): `Volume::as_slice` — a public zero-copy view
+  with a documented C-contiguous `(i,j,k)` layout contract (the private alias deleted;
+  one accessor). The dose engine's hottest kernel, `scatter::convolve_axis`, now iterates
+  that slice with a precomputed axis stride instead of per-voxel bounds-checked
+  `get().expect()` inside a `from_shape_fn` closure: **8.3× faster at 32³
+  (4.31→0.52 ms) and 7.4× at 64³ (37.41→5.02 ms), bitwise-identical results** (all 35
+  solver oracles unchanged; criterion baseline + roofline analysis in
+  `validation_reports/2026-07-02-scatter-superposition-optimization.md`; new
+  `scatter_superposition` bench committed). `save_volume_hdf5` serializes the field via
+  the same slice view. `MM_PER_CM` — previously duplicated in **five** modules — is now
+  a single SSOT constant in `helios-core::constants` (all sites import it).
 - `helios-domain::{save_volume_hdf5, load_volume_hdf5}` (H-046, feature `storage`):
   volumetric storage boundary via **consus** (the mandated Atlas storage component, now
   consumed — pure-Rust consus-core/consus-hdf5/consus-io, `[patch]`ed to the local

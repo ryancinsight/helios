@@ -23,9 +23,9 @@ mod volume;
 
 #[cfg(feature = "dicom")]
 pub use dicom::{load_ct_series, load_ct_slice};
-#[cfg(feature = "storage")]
-pub use storage::{load_volume_hdf5, save_volume_hdf5};
 pub use grid::VoxelGrid;
 pub use helical::HelicalDelivery;
 pub use mlc::{LeafOpenTimeSinogram, MlcModel};
+#[cfg(feature = "storage")]
+pub use storage::{load_volume_hdf5, save_volume_hdf5};
 pub use volume::Volume;

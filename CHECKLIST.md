@@ -6,7 +6,14 @@
 
 ## Owner: claude-helios
 
-### H-046 done — consus HDF5 volumetric storage (mandated consus consumed). Next: H-020h anisotropic CC / H-031b coeus-autodiff / H-032d RT-struct — `todo`
+### H-048 done — perf/consolidation pass (8.3× scatter kernel; MM_PER_CM SSOT). Next: H-020h anisotropic CC / H-031b coeus-autodiff / H-032d RT-struct — `todo`
+
+`Volume::as_slice` zero-copy accessor (documented layout contract); `convolve_axis`
+strided-slice rewrite — **8.3×/7.4× at 32³/64³, bitwise-identical** (baseline report in
+validation_reports/); `save_volume_hdf5` via the slice view; `MM_PER_CM` 5 duplicates →
+one helios-core SSOT constant. 207 `--all-features` tests pass, clippy/fmt clean.
+
+### (prior) H-046 done — consus HDF5 volumetric storage (mandated consus consumed)
 
 `helios-domain::{save_volume_hdf5, load_volume_hdf5}` (feature `storage`) archive a
 `Volume` (data + grid geometry) to standard HDF5 via consus-core/hdf5/io ([patch]ed to
@@ -199,14 +206,14 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-046 — consus HDF5 storage)
+## Gate status (last run, H-048 — perf/consolidation pass)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 11 crates) |
-| `cargo nextest run` (default) | 198 passed / 0 failed (incl. live GPU + E2E) |
-| `cargo nextest run --all-features` | **207 passed / 0 failed** (+5 DICOM, +4 storage) |
+| `cargo nextest run --all-features` | **207 passed / 0 failed** (bitwise-identical after kernel rewrite) |
 | `cargo clippy -D warnings` / `cargo fmt --check` | clean |
+| criterion `scatter_superposition` | 8.3× @32³ / 7.4× @64³ vs recorded baseline (report committed) |
 | `cargo llvm-cov` (coverage %) | link unblocked via lld (183 ran instrumented); attribution empty on GNU target (G-17/H-060) |
 | `pytest` (helios-python, maturin develop) | 13 passed / 0 failed |
 | `cargo clippy -D warnings` | 0 code warnings |
