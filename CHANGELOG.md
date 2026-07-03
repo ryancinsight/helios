@@ -97,6 +97,16 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-planning::objective_gradient_autodiff` (H-031b **resolved**, feature
+  `autodiff`): the planning gradient `∇ₓ ½‖A·x − d‖²` computed by coeus reverse-mode
+  autodiff (`Var`/`matmul`/`sub`/`mul`/`sum` tape over the MoiraiBackend) — the mandated
+  **coeus** component, the last unconsumed Atlas component, is now in use. Verified: the
+  tape gradient matches the exact hand gradient `Aᵀ(A·x − d)` within 1e-12 (differential
+  test), is zero at the least-squares optimum, and shape mismatches are typed errors.
+  Landing required two cross-repo unblocks in prior cycles: apollo's vestigial
+  `leto/ndarray-compat` feature leak (apollo f1ddf7a) and the peer's moirai-core
+  refactor completing (moirai 2451715). Adds `DoseInfluence::rows()`. This is the
+  gradient backend that generalizes to non-quadratic (DVH/biological) objectives.
 - Resident GPU forward projection (H-043b **resolved**): `helios_gpu::GpuProjector`
   uploads the attenuation volume once and forward-projects whole ray batches per
   dispatch through hephaestus's new `ray_line_integrals` volume ray-integral kernel

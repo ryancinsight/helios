@@ -13,6 +13,10 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+#[cfg(feature = "autodiff")]
+mod autodiff;
 mod optimize;
 
+#[cfg(feature = "autodiff")]
+pub use autodiff::objective_gradient_autodiff;
 pub use optimize::{objective_value, optimize_beam_weights, DoseInfluence};

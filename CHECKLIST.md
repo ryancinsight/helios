@@ -6,7 +6,18 @@
 
 ## Owner: claude-helios
 
-### H-031b advanced — apollo feature-unification fix landed; coeus module designed, blocked on peer moirai-core WIP. Next: re-land parked autodiff when moirai green / H-020h anisotropic CC — `todo`
+### H-031b RESOLVED — coeus autodiff consumed (last mandated component). Next: H-020h anisotropic CC / non-quadratic objectives on the autodiff backend / H-010b GPU HU→μ — `todo`
+
+The peer's moirai-core refactor landed (2451715) → the parked module re-landed and
+verified: `objective_gradient_autodiff` (feature `autodiff`) — coeus tape gradient ==
+exact hand gradient `Aᵀ(Ax−d)` within 1e-12, zero at the least-squares optimum, typed
+shape errors. **All mandated Atlas components are now consumed** (ritk, gaia,
+hephaestus, moirai, coeus, consus, leto, hermes, eunomia; mnemosyne/themis + apollo
+transitively). 217 `--all-features` tests pass, clippy/fmt clean. Detect-and-reconcile
+note: peers refactored hephaestus ops into a dialect seam (`UnaryExpr<Wgsl>`) migrating
+our `ExpNegOp`/volume kernel compatibly — helios builds unchanged.
+
+### (prior) H-031b advanced — apollo feature-unification fix; blocked on moirai WIP
 
 Root-caused the coeus consumption failure across three layers: (1) leto-ops E0034 ×332
 under `leto/ndarray-compat` → trigger was apollo's **vestigial** workspace-level feature
@@ -236,7 +247,7 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-043b — resident GPU projector)
+## Gate status (last run, H-031b — coeus autodiff consumed)
 
 | Gate | Result |
 |------|--------|

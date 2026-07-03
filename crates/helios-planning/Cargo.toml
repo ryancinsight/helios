@@ -15,5 +15,15 @@ workspace = true
 helios-core = { workspace = true }
 # Only the Scalar seam is needed; the geometry vocabulary is not.
 helios-math = { path = "../helios-math", default-features = false }
+# coeus (mandated Atlas autodiff component) — feature-gated so the tensor/tape
+# machinery stays out of the core build. The feature gates a complete
+# implementation, not a stub.
+coeus-autograd = { workspace = true, optional = true }
+coeus-core = { workspace = true, optional = true }
+coeus-tensor = { workspace = true, optional = true }
+
+[features]
+autodiff = ["dep:coeus-autograd", "dep:coeus-core", "dep:coeus-tensor"]
+
 [dev-dependencies]
 approx = { workspace = true }
