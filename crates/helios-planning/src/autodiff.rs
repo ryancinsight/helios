@@ -77,7 +77,6 @@ pub fn objective_gradient_autodiff(
     Ok(grad.as_slice().iter().map(|&g| 0.5 * g).collect())
 }
 
-
 /// One-sided DVH-style penalty band for the non-quadratic planning objective:
 /// underdose below `floor` and overdose above `ceiling` are penalized
 /// quadratically; dose inside the band costs nothing.
@@ -242,7 +241,6 @@ mod tests {
         }
     }
 
-
     #[test]
     fn dvh_gradient_matches_the_hand_subgradient() {
         // ∇L = −2·w_u·Aᵀ relu(f − Ax) + 2·w_o·Aᵀ relu(Ax − c). Choose x so both
@@ -258,8 +256,16 @@ mod tests {
             weight_over: 3.0,
         };
         let ax = inf.apply(&x);
-        let under: Vec<f64> = ax.iter().zip(&floor).map(|(&d, &f)| (f - d).max(0.0)).collect();
-        let over: Vec<f64> = ax.iter().zip(&ceiling).map(|(&d, &c)| (d - c).max(0.0)).collect();
+        let under: Vec<f64> = ax
+            .iter()
+            .zip(&floor)
+            .map(|(&d, &f)| (f - d).max(0.0))
+            .collect();
+        let over: Vec<f64> = ax
+            .iter()
+            .zip(&ceiling)
+            .map(|(&d, &c)| (d - c).max(0.0))
+            .collect();
         let gu = inf.transpose_apply(&under);
         let go = inf.transpose_apply(&over);
         let hand: Vec<f64> = gu

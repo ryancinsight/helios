@@ -60,9 +60,21 @@ pub fn symmetric_deposition_kernel<T: Scalar>(range_cm: T, voxel_cm: T, radius: 
 /// summation order is unchanged, so results are bitwise-identical to the previous
 /// per-voxel form (the differential guarantee for this optimization).
 fn convolve_axis<T: Scalar>(vol: &Volume<T>, kernel: &[T], axis: usize) -> Volume<T> {
+    convolve_axis_at(vol, kernel, kernel.len() / 2, axis)
+}
+
+/// [`convolve_axis`] with an explicit zero-offset index `center` — the general
+/// form serving **asymmetric** (forward-peaked) kernels, where offset 0 is not
+/// the midpoint. `center = len/2` recovers the centred behaviour exactly.
+fn convolve_axis_at<T: Scalar>(
+    vol: &Volume<T>,
+    kernel: &[T],
+    center: usize,
+    axis: usize,
+) -> Volume<T> {
     let grid: VoxelGrid<T> = *vol.grid();
     let [nx, ny, nz] = grid.dims();
-    let center = (kernel.len() / 2) as isize;
+    let center = center as isize;
     let extent = [nx, ny, nz][axis] as isize;
     // C-contiguous (i, j, k) strides — the Volume layout contract.
     let axis_stride = [ny * nz, nz, 1][axis] as isize;
@@ -76,7 +88,11 @@ fn convolve_axis<T: Scalar>(vol: &Volume<T>, kernel: &[T], axis: usize) -> Volum
                 let pos = [i, j, k][axis] as isize;
                 let mut acc = <T as NumericElement>::ZERO;
                 for (t, &weight) in kernel.iter().enumerate() {
-                    let s = pos + (t as isize - center);
+                    // True convolution: dose(pos) gathers src(pos − offset), so a
+                    // downstream-weighted (offset > 0) tap carries energy FROM the
+                    // upstream source TO pos. (Correlation — pos + offset — would
+                    // invert asymmetric kernels; symmetric ones cannot tell.)
+                    let s = pos - (t as isize - center);
                     if s < 0 || s >= extent {
                         continue;
                     }
@@ -110,6 +126,72 @@ pub fn scatter_superposition<T: Scalar>(
     convolve_axis(&after_y, kz, 2)
 }
 
+/// Forward-peaked (anisotropic) deposition kernel along the beam axis:
+/// `k[d] ∝ exp(−|offset|·voxel_cm / range)` with **different ranges upstream vs
+/// downstream** — `range_down_cm` (beam direction, secondary-electron forward
+/// transport) and `range_up_cm` (backscatter, physically much shorter). Offsets
+/// span `[−radius_up, +radius_down]`; the returned `usize` is the zero-offset
+/// index (`radius_up`). Normalized so `Σ = 1` (energy-conserving in the
+/// interior). Equal ranges and radii reduce to
+/// [`symmetric_deposition_kernel`] exactly (the differential oracle).
+#[must_use]
+pub fn forward_peaked_kernel<T: Scalar>(
+    range_up_cm: T,
+    range_down_cm: T,
+    voxel_cm: T,
+    radius_up: usize,
+    radius_down: usize,
+) -> (Vec<T>, usize) {
+    let zero = <T as NumericElement>::ZERO;
+    let taps = radius_up + radius_down + 1;
+    let (inv_up, inv_down) = (range_up_cm.recip(), range_down_cm.recip());
+    let mut kernel = Vec::with_capacity(taps);
+    let mut sum = zero;
+    for t in 0..taps {
+        let offset = t as f64 - radius_up as f64; // <0 upstream, >0 downstream
+        let distance = T::from_f64(offset.abs()) * voxel_cm;
+        let inv_range = if offset < 0.0 { inv_up } else { inv_down };
+        let weight = (-(distance * inv_range)).exp();
+        kernel.push(weight);
+        sum += weight;
+    }
+    if sum > zero {
+        let inv_sum = sum.recip();
+        for w in &mut kernel {
+            *w *= inv_sum;
+        }
+    }
+    (kernel, radius_up)
+}
+
+/// Dose by **beam-aligned anisotropic** separable superposition: the
+/// forward-peaked `(beam_kernel, beam_center)` (from [`forward_peaked_kernel`])
+/// applies along `beam_axis` (0 = x, 1 = y, 2 = z) and the symmetric `lateral`
+/// kernel along the two remaining axes.
+///
+/// This is the collapsed-cone anisotropy for an axis-aligned beam: more energy
+/// carried downstream than upstream (build-up/downstream tail), symmetric
+/// penumbra laterally. With equal up/down ranges it reduces **exactly** to
+/// [`scatter_superposition`] — the differential oracle. Rotated (per-gantry-
+/// angle) cone axes remain future work; the helical geometry applies this in
+/// the beam's eye view.
+#[must_use]
+pub fn anisotropic_scatter_superposition<T: Scalar>(
+    terma: &Volume<T>,
+    beam_axis: usize,
+    beam_kernel: &[T],
+    beam_center: usize,
+    lateral: &[T],
+) -> Volume<T> {
+    let mut vol = convolve_axis_at(terma, beam_kernel, beam_center, beam_axis);
+    for axis in 0..3 {
+        if axis != beam_axis {
+            vol = convolve_axis(&vol, lateral, axis);
+        }
+    }
+    vol
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -124,6 +206,81 @@ mod tests {
     // Terma concentrated in the single centre voxel (3,3,3).
     fn point_terma() -> Volume<f64> {
         Volume::from_shape_fn(grid(), |idx| if idx == [3, 3, 3] { 1.0 } else { 0.0 })
+    }
+
+    #[test]
+    fn forward_peaked_reduces_to_symmetric_for_equal_ranges() {
+        // Equal up/down ranges and radii → identical taps and centre to the
+        // symmetric kernel (differential oracle for the asymmetric constructor).
+        let sym = symmetric_deposition_kernel(0.5_f64, 0.2, 2);
+        let (fp, centre) = forward_peaked_kernel(0.5_f64, 0.5, 0.2, 2, 2);
+        assert_eq!(centre, 2);
+        assert_eq!(fp.len(), sym.len());
+        for (a, b) in fp.iter().zip(&sym) {
+            assert_relative_eq!(a, b, epsilon = 1e-15);
+        }
+        // And the anisotropic superposition equals the symmetric one exactly.
+        let iso = scatter_superposition(&point_terma(), &sym, &sym, &sym);
+        let aniso = anisotropic_scatter_superposition(&point_terma(), 0, &fp, centre, &sym);
+        for i in 0..7 {
+            for j in 0..7 {
+                for k in 0..7 {
+                    assert_relative_eq!(
+                        aniso.get(i, j, k).unwrap(),
+                        iso.get(i, j, k).unwrap(),
+                        epsilon = 1e-15
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn forward_peaking_puts_more_energy_downstream_than_upstream() {
+        // Long downstream range, short upstream: the voxel one step downstream
+        // (+x) of the point source must receive strictly more dose than one step
+        // upstream (−x) — the defining collapsed-cone anisotropy. Laterally the
+        // spread stays symmetric.
+        let (fp, centre) = forward_peaked_kernel(0.1_f64, 1.0, 0.2, 1, 3);
+        let lat = symmetric_deposition_kernel(0.3_f64, 0.2, 1);
+        let dose = anisotropic_scatter_superposition(&point_terma(), 0, &fp, centre, &lat);
+        let down = dose.get(4, 3, 3).unwrap(); // +x of the source at (3,3,3)
+        let up = dose.get(2, 3, 3).unwrap(); // −x
+        assert!(down > up, "downstream {down} must exceed upstream {up}");
+        // Lateral symmetry is preserved.
+        assert_relative_eq!(
+            dose.get(3, 2, 3).unwrap(),
+            dose.get(3, 4, 3).unwrap(),
+            epsilon = 1e-14
+        );
+    }
+
+    #[test]
+    fn anisotropic_kernel_conserves_interior_point_energy() {
+        // Source far enough from every boundary that no tail truncates: the total
+        // dose equals the total terma (Σ=1 normalization on every axis).
+        let (fp, centre) = forward_peaked_kernel(0.2_f64, 0.6, 0.2, 1, 2);
+        let lat = symmetric_deposition_kernel(0.4_f64, 0.2, 1);
+        let dose = anisotropic_scatter_superposition(&point_terma(), 0, &fp, centre, &lat);
+        assert_relative_eq!(dose.sum(), 1.0, epsilon = 1e-13);
+    }
+
+    #[test]
+    fn anisotropic_is_generic_over_scalar_f32_and_axis_selectable() {
+        let g =
+            VoxelGrid::<f32>::axis_aligned([7, 7, 7], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
+                .unwrap();
+        let terma = Volume::from_shape_fn(g, |idx| if idx == [3, 3, 3] { 1.0_f32 } else { 0.0 });
+        let (fp, centre) = forward_peaked_kernel(0.1_f32, 1.0, 0.2, 1, 2);
+        let lat = symmetric_deposition_kernel(0.3_f32, 0.2, 1);
+        // Beam along y: anisotropy shows on the j axis, not i.
+        let dose = anisotropic_scatter_superposition(&terma, 1, &fp, centre, &lat);
+        assert!(dose.get(3, 4, 3).unwrap() > dose.get(3, 2, 3).unwrap());
+        assert_relative_eq!(
+            dose.get(2, 3, 3).unwrap(),
+            dose.get(4, 3, 3).unwrap(),
+            epsilon = 1e-6
+        );
     }
 
     #[test]

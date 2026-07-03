@@ -6,7 +6,18 @@
 
 ## Owner: claude-helios
 
-### H-031c done — non-quadratic DVH-penalty objective + optimizer on the coeus backend. Next: H-020h anisotropic CC / H-010b GPU HU→μ / biological (EUD) objectives — `todo`
+### H-020h done — anisotropic beam-aligned collapsed-cone scatter. Next: H-020i rotated cone axes / H-010b GPU HU→μ / EUD objectives — `todo`
+
+`forward_peaked_kernel` (asymmetric up/downstream ranges, Σ=1) +
+`anisotropic_scatter_superposition` (forward-peaked along the beam axis, symmetric
+lateral) on a generalized `convolve_axis_at`. The anisotropy oracle caught a real
+defect — the gather was correlation, not convolution (invisible to symmetric kernels,
+inverts asymmetric ones) — fixed with symmetric results bitwise-unchanged. Verified:
+exact reduction to the symmetric case, downstream > upstream, lateral symmetry,
+interior conservation, f32/axis-select. The last modelled dose-fidelity gap at the
+axis-aligned level is closed; rotated per-gantry cones = H-020i.
+
+### (prior) H-031c done — non-quadratic DVH-penalty objective + optimizer
 
 `DvhPenalty` + `dvh_objective_gradient_autodiff` + `optimize_beam_weights_dvh` (feature
 `autodiff`): one-sided underdose/overdose penalties with the gradient from the coeus
@@ -14,6 +25,21 @@ tape (`relu` kinks via reverse-mode AD, weights as `[1]` constant `Var`s, one ba
 Verified: tape grad == hand sub-gradient (1e-12), value cross-check, zero inside the
 band, and the optimizer picks the OAR-sparing beamlet (target ≥ floor, OAR ≤ ceiling).
 This is the no-closed-form capability coeus was mandated for.
+
+### (prior) H-010b done — GPU HU→μ mapper over the Hephaestus authored-kernel seam
+
+`helios_gpu::GpuAttenuationMapper` computes `μ = max(fma(scale, HU, offset), 0)` in
+one WGSL dispatch authored as a Helios consumer kernel over
+`hephaestus_core::KernelInterface` + `KernelSource<Wgsl>`. No type-specific
+affine-clamp helper was required upstream: the Hephaestus seam is the support
+surface. Evidence tier: differential/empirical validation. Current focused checks:
+`rustup run nightly cargo nextest run -p helios-gpu attenuation` passes 5/5
+(closed-form clamp, solver oracle via `helios_solver::attenuation_map`, typed error
+paths) and `rustup run nightly cargo nextest run -p hephaestus-core -p
+hephaestus-wgpu stream` passes 8/8. No separate throughput report is added for this
+single elementwise upload/download lane; H-043/H-043b already record that isolated
+elementwise GPU calls are transfer-bound and that throughput evidence belongs to the
+resident on-device pipeline.
 
 ### (prior) H-031b RESOLVED — coeus autodiff consumed (last mandated component)
 
@@ -253,14 +279,15 @@ Next: H-021 (moirai-orchestrated helical delivery simulation combining
 then end-to-end dose→gamma/DVH validation.
 
 *Also queued:* H-020b (binary-MLC sinogram), H-003d (oriented grids when leto
-`Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
-H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
+`Isometry3` gains transforms), H-011d (exact Siddon), H-004b (ritk DICOM),
+H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-031c — DVH-penalty objective)
+## Gate status (last run, H-020h — anisotropic scatter)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 11 crates) |
+| `cargo nextest run` (focused H-010b) | `rustup run nightly cargo nextest run -p helios-gpu attenuation` pass: 5/5 (incl. live-GPU HU→μ solver differential) |
 | `cargo nextest run` (default) | **200 passed / 0 failed** (incl. live-GPU projector differential) |
 | `cargo clippy -D warnings` / `cargo fmt --check` | clean (helios + hephaestus additions) |
 | criterion `forward_projection_sinogram` | GPU **171×/371×** vs single-thread CPU (report committed) |
@@ -314,7 +341,7 @@ or H-004b ritk DICOM (real inputs → clinical validation) or H-020b binary-MLC.
 ### Deferred (still blocked / sequenced)
 
 - **H-020b** binary-MLC leaf-open-time sinogram (unblocked; queued after projector).
-- **H-010** GPU HU→μ kernel (add hephaestus-wgpu patch; adapter verified available).
+- **H-020h** anisotropic collapsed-cone kernel.
 - **H-004b** ritk DICOM (heavy build).
 
 ### Superseded in-flight plan: H-020b binary-MLC sinogram — `todo`

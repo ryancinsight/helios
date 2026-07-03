@@ -76,6 +76,11 @@ under a Breaking subsection.
   differentially validated against CPU `f32::exp` on a live adapter. Replicated
   hephaestus's mnemosyne/moirai/hermes `[patch]` set so the GPU dependency cluster
   resolves against the local checkout (fixes the leto→mnemosyne→themis skew, G-12).
+- `helios-gpu::GpuAttenuationMapper` (H-010b): GPU HU→μ map as a Helios-authored
+  WGSL kernel over Hephaestus `KernelInterface` + `KernelSource<Wgsl>`, computing
+  `μ = max(fma(scale, HU, offset), 0)` in one dispatch. Differential oracles cover
+  the closed-form clamp and `helios_solver::attenuation_map`; the upstream seam
+  required no type-specific affine-clamp helper.
 - `helios-solver::forward_project_ray` (H-011c): MVCT forward-projection / dose
   ray-trace core — clips a gaia `Ray` to the `VoxelGrid` world `Aabb`, then
   midpoint ray-marches the trilinearly-sampled μ `Volume` to the optical depth
@@ -97,6 +102,19 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-solver::{forward_peaked_kernel, anisotropic_scatter_superposition}` (H-020h):
+  the beam-aligned **anisotropic** collapsed-cone scatter stage. `forward_peaked_kernel`
+  builds a Σ=1 deposition kernel with *different* upstream/downstream exponential ranges
+  (secondary electrons travel forward; backscatter is short-ranged), returning the
+  zero-offset index; `anisotropic_scatter_superposition` applies it along the beam axis
+  with the symmetric kernel laterally, on a generalized `convolve_axis_at` (explicit
+  centre; the centred path delegates — one loop, no duplication). **Defect caught by the
+  new oracle:** the shared gather was correlation (`src[pos+off]`), not convolution —
+  invisible to every symmetric kernel, but it inverts anisotropy; fixed to
+  `src[pos−off]` with symmetric results bitwise-unchanged. Verified: equal ranges reduce
+  exactly to `scatter_superposition`; a point source deposits strictly more energy
+  downstream than upstream while lateral symmetry holds; interior energy conserved;
+  f32 + beam-axis selectability. Rotated per-gantry cone axes = H-020i.
 - `helios-planning::{DvhPenalty, dvh_objective_gradient_autodiff, optimize_beam_weights_dvh}`
   (H-031c, feature `autodiff`): the **non-quadratic** clinical planning objective —
   one-sided DVH-style penalties `L(x) = w_u·Σ relu(floor − A·x)² + w_o·Σ relu(A·x −
