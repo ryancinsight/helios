@@ -1501,7 +1501,7 @@ dependencies = [
 
 [[package]]
 name = "hephaestus-core"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "bytemuck",
  "themis 0.6.0",
@@ -1510,7 +1510,7 @@ dependencies = [
 
 [[package]]
 name = "hephaestus-wgpu"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "bytemuck",
  "hephaestus-core",
@@ -1531,14 +1531,12 @@ dependencies = [
 name = "hermes-simd"
 version = "0.3.0"
 dependencies = [
- "bytemuck",
  "eunomia",
  "half",
  "hermes-simd-core",
  "hermes-simd-intrinsics",
  "hermes-simd-macros",
  "hermes-simd-types",
- "rkyv",
 ]
 
 [[package]]
@@ -1557,11 +1555,9 @@ dependencies = [
 name = "hermes-simd-intrinsics"
 version = "0.3.0"
 dependencies = [
- "bytemuck",
  "eunomia",
  "half",
  "hermes-simd-core",
- "rkyv",
 ]
 
 [[package]]
@@ -2127,7 +2123,7 @@ version = "0.7.0"
 [[package]]
 name = "melinoe"
 version = "0.7.0"
-source = "git+https://github.com/ryancinsight/melinoe.git#cb53ac7295392350e7be6bb0752a23fafc64925e"
+source = "git+https://github.com/ryancinsight/melinoe.git#f0139dd77e2c175aeea51687669ef5d5fdafd078"
 
 [[package]]
 name = "memchr"
@@ -3499,7 +3495,7 @@ dependencies = [
 [[package]]
 name = "themis"
 version = "0.9.17"
-source = "git+https://github.com/ryancinsight/themis#49c609a473960913d9cf6778cba44af51947cb0b"
+source = "git+https://github.com/ryancinsight/themis#e87618a241c69502302da296767a9e3c0acc4906"
 dependencies = [
  "melinoe 0.7.0 (git+https://github.com/ryancinsight/melinoe.git)",
 ]

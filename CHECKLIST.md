@@ -6,7 +6,16 @@
 
 ## Owner: claude-helios
 
-### H-031b RESOLVED — coeus autodiff consumed (last mandated component). Next: H-020h anisotropic CC / non-quadratic objectives on the autodiff backend / H-010b GPU HU→μ — `todo`
+### H-031c done — non-quadratic DVH-penalty objective + optimizer on the coeus backend. Next: H-020h anisotropic CC / H-010b GPU HU→μ / biological (EUD) objectives — `todo`
+
+`DvhPenalty` + `dvh_objective_gradient_autodiff` + `optimize_beam_weights_dvh` (feature
+`autodiff`): one-sided underdose/overdose penalties with the gradient from the coeus
+tape (`relu` kinks via reverse-mode AD, weights as `[1]` constant `Var`s, one backward).
+Verified: tape grad == hand sub-gradient (1e-12), value cross-check, zero inside the
+band, and the optimizer picks the OAR-sparing beamlet (target ≥ floor, OAR ≤ ceiling).
+This is the no-closed-form capability coeus was mandated for.
+
+### (prior) H-031b RESOLVED — coeus autodiff consumed (last mandated component)
 
 The peer's moirai-core refactor landed (2451715) → the parked module re-landed and
 verified: `objective_gradient_autodiff` (feature `autodiff`) — coeus tape gradient ==
@@ -247,7 +256,7 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-010b (GPU HU→μ + throughput),
 H-004b (ritk DICOM), H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-031b — coeus autodiff consumed)
+## Gate status (last run, H-031c — DVH-penalty objective)
 
 | Gate | Result |
 |------|--------|

@@ -97,6 +97,18 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- `helios-planning::{DvhPenalty, dvh_objective_gradient_autodiff, optimize_beam_weights_dvh}`
+  (H-031c, feature `autodiff`): the **non-quadratic** clinical planning objective —
+  one-sided DVH-style penalties `L(x) = w_u·Σ relu(floor − A·x)² + w_o·Σ relu(A·x −
+  ceiling)²` (underdose below the prescription floor and overdose above the OAR ceiling
+  penalized; the band in between free) — with its gradient from the coeus tape (`relu`
+  kinks handled by reverse-mode AD; weights folded as `[1]`-shaped constant `Var`s, one
+  backward pass) and a projected-gradient optimizer on top. Verified: the tape gradient
+  matches the hand sub-gradient `−2w_u·Aᵀrelu(floor−Ax) + 2w_o·Aᵀrelu(Ax−ceiling)`
+  within 1e-12; objective value cross-checked; zero value/gradient strictly inside the
+  band; and on a target/OAR toy problem the optimizer selects the OAR-sparing beamlet
+  (target dose ≥ floor, OAR dose ≤ ceiling, weights ≥ 0). This is the capability the
+  mandated coeus component exists for — objectives with no closed-form gradient.
 - `helios-planning::objective_gradient_autodiff` (H-031b **resolved**, feature
   `autodiff`): the planning gradient `∇ₓ ½‖A·x − d‖²` computed by coeus reverse-mode
   autodiff (`Var`/`matmul`/`sub`/`mul`/`sum` tape over the MoiraiBackend) — the mandated
