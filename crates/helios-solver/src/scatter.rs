@@ -164,6 +164,74 @@ pub fn forward_peaked_kernel<T: Scalar>(
     (kernel, radius_up)
 }
 
+/// One spectral component of a poly-energetic beam for
+/// [`poly_forward_peaked_kernel`]: its forward-peaked upstream/downstream
+/// transport ranges (cm) and its relative energy-fluence `weight`.
+///
+/// Higher-energy components carry farther downstream (larger `range_down_cm`),
+/// so a spectrum weighted toward high energy is more forward-peaked — the
+/// beam-hardening signature.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SpectralComponent<T: Scalar> {
+    /// Upstream (backscatter) transport range (cm).
+    pub range_up_cm: T,
+    /// Downstream (forward) transport range (cm).
+    pub range_down_cm: T,
+    /// Relative energy-fluence weight (need not be pre-normalized).
+    pub weight: T,
+}
+
+/// Poly-energetic forward-peaked deposition kernel: the energy-fluence-weighted
+/// convex combination of the monoenergetic [`forward_peaked_kernel`]s of each
+/// `components` entry (all sharing `radius_up`/`radius_down`, so they superpose
+/// tap-for-tap). Models beam hardening — a real MV beam is a spectrum, and its
+/// harder components reach farther downstream.
+///
+/// Because each monoenergetic kernel is already `Σ = 1`, the weighted sum sums to
+/// the total weight and is renormalized to `Σ = 1` here, so `weight`s need not be
+/// pre-normalized (the result is scale-invariant in the weights). A single
+/// positive-weight component reduces **exactly** to [`forward_peaked_kernel`]
+/// (the differential oracle). With no positive-weight component the kernel is the
+/// centred delta (identity — no spread). Returns the kernel and its zero-offset
+/// index (`radius_up`).
+#[must_use]
+pub fn poly_forward_peaked_kernel<T: Scalar>(
+    components: &[SpectralComponent<T>],
+    voxel_cm: T,
+    radius_up: usize,
+    radius_down: usize,
+) -> (Vec<T>, usize) {
+    let zero = <T as NumericElement>::ZERO;
+    let taps = radius_up + radius_down + 1;
+    let mut acc = vec![zero; taps];
+    let mut total_weight = zero;
+    for component in components {
+        if component.weight <= zero {
+            continue; // non-positive weight contributes nothing.
+        }
+        let (mono, _) = forward_peaked_kernel(
+            component.range_up_cm,
+            component.range_down_cm,
+            voxel_cm,
+            radius_up,
+            radius_down,
+        );
+        for (a, &m) in acc.iter_mut().zip(&mono) {
+            *a += m * component.weight;
+        }
+        total_weight += component.weight;
+    }
+    if total_weight > zero {
+        let inv = total_weight.recip();
+        for a in &mut acc {
+            *a *= inv;
+        }
+    } else {
+        acc[radius_up] = <T as NumericElement>::ONE; // degenerate ⇒ identity.
+    }
+    (acc, radius_up)
+}
+
 /// Dose by **beam-aligned anisotropic** separable superposition: the
 /// forward-peaked `(beam_kernel, beam_center)` (from [`forward_peaked_kernel`])
 /// applies along `beam_axis` (0 = x, 1 = y, 2 = z) and the symmetric `lateral`
@@ -263,6 +331,98 @@ mod tests {
         let lat = symmetric_deposition_kernel(0.4_f64, 0.2, 1);
         let dose = anisotropic_scatter_superposition(&point_terma(), 0, &fp, centre, &lat);
         assert_relative_eq!(dose.sum(), 1.0, epsilon = 1e-13);
+    }
+
+    fn spectral(range_up_cm: f64, range_down_cm: f64, weight: f64) -> SpectralComponent<f64> {
+        SpectralComponent {
+            range_up_cm,
+            range_down_cm,
+            weight,
+        }
+    }
+
+    #[test]
+    fn single_component_poly_reduces_to_the_monoenergetic_kernel() {
+        // A one-component spectrum (any positive weight) is the monoenergetic
+        // kernel exactly — the weight cancels in the Σ=1 renormalization.
+        let (mono, mc) = forward_peaked_kernel(0.15_f64, 0.6, 0.2, 1, 3);
+        let (poly, pc) = poly_forward_peaked_kernel(&[spectral(0.15, 0.6, 3.7)], 0.2, 1, 3);
+        assert_eq!(mc, pc);
+        assert_eq!(mono.len(), poly.len());
+        for (a, b) in poly.iter().zip(&mono) {
+            assert_relative_eq!(a, b, epsilon = 1e-15);
+        }
+    }
+
+    #[test]
+    fn poly_kernel_is_invariant_to_weight_scaling_and_sums_to_one() {
+        // Scaling every weight by a constant leaves the convex combination
+        // unchanged, and the kernel is normalized.
+        let comps = [spectral(0.1, 0.4, 1.0), spectral(0.2, 1.2, 2.0)];
+        let scaled = [spectral(0.1, 0.4, 10.0), spectral(0.2, 1.2, 20.0)];
+        let (ka, _) = poly_forward_peaked_kernel(&comps, 0.2, 1, 3);
+        let (kb, _) = poly_forward_peaked_kernel(&scaled, 0.2, 1, 3);
+        for (a, b) in ka.iter().zip(&kb) {
+            assert_relative_eq!(a, b, epsilon = 1e-15);
+        }
+        assert_relative_eq!(ka.iter().sum::<f64>(), 1.0, epsilon = 1e-14);
+    }
+
+    #[test]
+    fn harder_spectrum_is_more_forward_peaked() {
+        // Downstream/upstream mass ratio grows as weight shifts to the harder
+        // (longer downstream range) component — the beam-hardening signature.
+        let soft = spectral(0.2, 0.3, 1.0); // near-isotropic
+        let hard = spectral(0.05, 1.5, 1.0); // strongly forward
+        let ratio = |k: &[f64], centre: usize| -> f64 {
+            let down: f64 = k[centre + 1..].iter().sum();
+            let up: f64 = k[..centre].iter().sum();
+            down / up
+        };
+        let (mostly_soft, c) = poly_forward_peaked_kernel(
+            &[spectral(0.2, 0.3, 9.0), spectral(0.05, 1.5, 1.0)],
+            0.2,
+            2,
+            2,
+        );
+        let (mostly_hard, _) = poly_forward_peaked_kernel(
+            &[spectral(0.2, 0.3, 1.0), spectral(0.05, 1.5, 9.0)],
+            0.2,
+            2,
+            2,
+        );
+        let _ = (soft, hard);
+        assert!(
+            ratio(&mostly_hard, c) > ratio(&mostly_soft, c),
+            "harder spectrum ratio {} must exceed softer {}",
+            ratio(&mostly_hard, c),
+            ratio(&mostly_soft, c)
+        );
+    }
+
+    #[test]
+    fn empty_spectrum_is_the_identity_kernel() {
+        let (k, centre) = poly_forward_peaked_kernel::<f64>(&[], 0.2, 2, 1);
+        assert_eq!(centre, 2);
+        assert_eq!(k, vec![0.0, 0.0, 1.0, 0.0]); // centred delta at radius_up = 2
+    }
+
+    #[test]
+    fn poly_kernel_is_generic_over_scalar_f32() {
+        let (mono, _) = forward_peaked_kernel(0.1_f32, 0.5, 0.2, 1, 2);
+        let (poly, _) = poly_forward_peaked_kernel(
+            &[SpectralComponent {
+                range_up_cm: 0.1_f32,
+                range_down_cm: 0.5,
+                weight: 2.0,
+            }],
+            0.2,
+            1,
+            2,
+        );
+        for (a, b) in poly.iter().zip(&mono) {
+            assert_relative_eq!(a, b, epsilon = 1e-6);
+        }
     }
 
     #[test]

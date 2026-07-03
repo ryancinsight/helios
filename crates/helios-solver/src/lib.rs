@@ -23,6 +23,6 @@ pub use dose::{dose_convolution_x, exponential_deposition_kernel, primary_fluenc
 pub use oriented_scatter::{directional_convolve, oriented_forward_scatter};
 pub use projector::forward_project_ray;
 pub use scatter::{
-    anisotropic_scatter_superposition, forward_peaked_kernel, scatter_superposition,
-    symmetric_deposition_kernel,
+    anisotropic_scatter_superposition, forward_peaked_kernel, poly_forward_peaked_kernel,
+    scatter_superposition, symmetric_deposition_kernel, SpectralComponent,
 };
