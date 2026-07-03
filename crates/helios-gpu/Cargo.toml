@@ -12,6 +12,7 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+bytemuck = { workspace = true }
 helios-core = { workspace = true }
 helios-domain = { workspace = true }
 hephaestus-core = { workspace = true }
@@ -20,8 +21,9 @@ leto = { workspace = true }
 
 [dev-dependencies]
 approx = { workspace = true }
-# Differential reference for the GPU projector tests only.
+# Differential references for the GPU projector / attenuation tests only.
 helios-math = { workspace = true }
+helios-physics = { workspace = true }
 helios-solver = { workspace = true }
 criterion = { workspace = true }
 

@@ -184,8 +184,9 @@ target closure.
   leto→mnemosyne(git 1e014d25)→themis ^0.8 skew resolves to the local consistent
   cluster; hephaestus-wgpu consumed with default features (its `linalg` uses
   `leto-ops` ungated). *Evidence tier: verified — Helios GPU kernel runs + matches
-  CPU (67 tests).* Remaining: fused HU→μ GPU kernel needs a custom affine-clamp
-  `UnaryWgslOp` (H-010b); throughput benchmark vs VoLO pending.
+  CPU (67 tests).* Remaining: throughput benchmark vs VoLO pending. (H-010b fused HU→μ
+  kernel delivered 2026-07-02 via the hephaestus ADR-0004 authored-kernel
+  seam — consumer-side `GpuAttenuationMapper`, differential vs solver 9/9.)
 
 ### Testing / tooling
 

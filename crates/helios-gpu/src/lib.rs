@@ -13,12 +13,14 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+mod attenuation;
 mod projection;
 mod transmission;
 
 pub use hephaestus_core::{HephaestusError, Result};
 pub use hephaestus_wgpu::WgpuDevice;
 
+pub use attenuation::GpuAttenuationMapper;
 pub use projection::GpuProjector;
 pub use transmission::beam_transmission_into;
 
