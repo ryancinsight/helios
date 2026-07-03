@@ -102,6 +102,23 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- Beam-following anisotropic delivered dose (H-020i). **helios-solver**:
+  `directional_convolve` — an oriented 1-D convolution along an **arbitrary** unit
+  direction via trilinear resampling of the field (gather = `p − offset·d`, boundary
+  samples → 0) — and `oriented_forward_scatter`, which composes it into a beam-frame
+  collapsed cone (forward-peaked along the beam, symmetric across a Gram–Schmidt lateral
+  basis). Reduces to `anisotropic_scatter_superposition` (H-020h) when the beam is a grid
+  axis and the sample step is that axis's pitch (samples land on nodes — the differential
+  oracle). **helios-simulation**: `CollapsedCone` (forward-peaked kernel config) and
+  `accumulate_delivered_dose_anisotropic`, which scatters **each frame's terma along that
+  frame's own gantry direction** before summing, so the forward-peaked physics follows
+  the rotating helical beam (a single scatter on the pooled terma has no coherent beam
+  axis). The per-frame beamlet deposition is extracted to a shared `deposit_frame_terma`
+  (SSOT; `accumulate_delivered_dose` unchanged). Verified: axis-aligned reduction to the
+  separable pipeline (1e-10), oblique downstream>upstream with lateral symmetry, interior
+  energy conservation, forward-peaking shifts the delivered-dose beam-axis centroid
+  downstream, and linearity + f32. Poly-energetic spectra + gaia per-leaf collimation are
+  filed as H-020j.
 - `helios-solver::{forward_peaked_kernel, anisotropic_scatter_superposition}` (H-020h):
   the beam-aligned **anisotropic** collapsed-cone scatter stage. `forward_peaked_kernel`
   builds a Σ=1 deposition kernel with *different* upstream/downstream exponential ranges

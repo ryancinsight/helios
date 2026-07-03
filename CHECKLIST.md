@@ -6,7 +6,20 @@
 
 ## Owner: claude-helios
 
-### H-020h done — anisotropic beam-aligned collapsed-cone scatter. Next: H-020i rotated cone axes / H-010b GPU HU→μ / EUD objectives — `todo`
+### H-020i done — beam-following anisotropic delivered dose (rotated cone axes reach the pipeline). Next: H-020j poly-energetic spectra + gaia collimation / EUD objectives — `todo`
+
+**helios-solver**: `directional_convolve` (oriented 1-D convolution along any unit vector,
+trilinear gather) + `oriented_forward_scatter` (forward-peaked collapsed cone along an
+arbitrary beam direction, Gram–Schmidt lateral basis). **helios-simulation**:
+`CollapsedCone` + `accumulate_delivered_dose_anisotropic` — scatters each frame's terma
+along that frame's gantry direction before summing, so forward-peaking follows the
+rotating beam; per-frame beamlet deposition extracted to a shared `deposit_frame_terma`
+(SSOT, `accumulate_delivered_dose` behavior unchanged). Oracles: axis reduction to the
+separable pipeline (1e-10), oblique downstream>upstream + lateral symmetry, conservation,
+delivered-dose centroid shifts downstream under forward-peaking, linearity, f32. This
+wires the H-020h capability into actual delivered dose at real gantry angles.
+
+### (prior) H-020h done — anisotropic beam-aligned collapsed-cone scatter (grid-axis)
 
 `forward_peaked_kernel` (asymmetric up/downstream ranges, Σ=1) +
 `anisotropic_scatter_superposition` (forward-peaked along the beam axis, symmetric
@@ -282,13 +295,13 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-004b (ritk DICOM),
 H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-020h — anisotropic scatter)
+## Gate status (last run, H-020i — beam-following anisotropic dose)
 
 | Gate | Result |
 |------|--------|
 | `cargo build` (whole workspace) | pass (all 11 crates) |
 | `cargo nextest run` (focused H-010b) | `rustup run nightly cargo nextest run -p helios-gpu attenuation` pass: 5/5 (incl. live-GPU HU→μ solver differential) |
-| `cargo nextest run` (default) | **200 passed / 0 failed** (incl. live-GPU projector differential) |
+| `cargo nextest run --all-features` | **231 passed / 0 failed** (+7: oriented scatter + anisotropic delivery) |
 | `cargo clippy -D warnings` / `cargo fmt --check` | clean (helios + hephaestus additions) |
 | criterion `forward_projection_sinogram` | GPU **171×/371×** vs single-thread CPU (report committed) |
 | criterion `scatter_superposition` | 8.3× @32³ / 7.4× @64³ vs recorded baseline |

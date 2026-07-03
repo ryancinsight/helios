@@ -14,14 +14,21 @@
 //! laterally offset along the in-plane perpendicular `p = (−sinθ, cosθ, 0)` by
 //! `(leaf − centre)·leaf_width`, at the couch `z` slice. [`BeamGeometry`] selects
 //! whether the beamlets run parallel (small-fan approximation) or diverge from a
-//! point source (true fan, with inverse-square fluence falloff). An anisotropic
-//! beam-aligned collapsed-cone kernel and per-leaf gaia collimation are a later
-//! increment.
+//! point source (true fan, with inverse-square fluence falloff).
+//!
+//! [`accumulate_delivered_dose`] returns the pooled **terma**; a beam-aligned
+//! anisotropic collapsed cone is available via
+//! [`accumulate_delivered_dose_anisotropic`], which scatters each frame's terma
+//! along that frame's own gantry direction (the forward-peaked physics follows
+//! the rotating beam). Per-leaf gaia collimation remains a later increment.
 
 use crate::delivery::DeliveryFrame;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
-use helios_solver::{deposit_ray_terma, deposit_ray_terma_diverging};
+use helios_solver::{
+    deposit_ray_terma, deposit_ray_terma_diverging, forward_peaked_kernel,
+    oriented_forward_scatter, symmetric_deposition_kernel,
+};
 
 /// Beam geometry for delivered-dose accumulation — the seam that selects how each
 /// MLC leaf's beamlet ray is cast for a gantry angle.
@@ -59,36 +66,135 @@ pub fn accumulate_delivered_dose<T: GeometryScalar>(
     leaf_width_mm: T,
     step_mm: T,
 ) -> Volume<T> {
-    let zero = <T as NumericElement>::ZERO;
     let grid = *mu.grid();
     let mut dose = Volume::zeros(grid);
-
     for frame in frames {
-        let (centre, dir, perp) = gantry_basis(&grid, frame.gantry_angle_rad);
-        for (leaf, &weight) in frame.leaf_fluence.iter().enumerate() {
-            if weight <= zero {
-                continue; // closed/leak-free leaf deposits nothing.
-            }
-            let Some(beamlet) =
-                beamlet_ray(centre, dir, perp, frame, leaf, leaf_width_mm, geometry)
-            else {
-                continue;
-            };
-            let _deposited = match beamlet.falloff {
-                Some((focal, sad)) => deposit_ray_terma_diverging(
-                    &mut dose,
-                    mu,
-                    &beamlet.ray,
-                    weight,
-                    step_mm,
-                    focal,
-                    sad,
-                ),
-                None => deposit_ray_terma(&mut dose, mu, &beamlet.ray, weight, step_mm),
-            };
-        }
+        deposit_frame_terma(&mut dose, frame, mu, geometry, leaf_width_mm, step_mm);
     }
     dose
+}
+
+/// Deposit one `frame`'s per-leaf beamlet terma into `dose`, returning the beam's
+/// forward unit direction (the gantry central axis) — the SSOT deposition loop
+/// shared by the isotropic accumulation and the per-frame anisotropic path, so
+/// the beamlet geometry lives in exactly one place.
+fn deposit_frame_terma<T: GeometryScalar>(
+    dose: &mut Volume<T>,
+    frame: &DeliveryFrame<T>,
+    mu: &Volume<T>,
+    geometry: BeamGeometry<T>,
+    leaf_width_mm: T,
+    step_mm: T,
+) -> Vector3<T> {
+    let zero = <T as NumericElement>::ZERO;
+    let (centre, dir, perp) = gantry_basis(mu.grid(), frame.gantry_angle_rad);
+    for (leaf, &weight) in frame.leaf_fluence.iter().enumerate() {
+        if weight <= zero {
+            continue; // closed/leak-free leaf deposits nothing.
+        }
+        let Some(beamlet) = beamlet_ray(centre, dir, perp, frame, leaf, leaf_width_mm, geometry)
+        else {
+            continue;
+        };
+        let _deposited = match beamlet.falloff {
+            Some((focal, sad)) => {
+                deposit_ray_terma_diverging(dose, mu, &beamlet.ray, weight, step_mm, focal, sad)
+            }
+            None => deposit_ray_terma(dose, mu, &beamlet.ray, weight, step_mm),
+        };
+    }
+    dir
+}
+
+/// Beam-frame collapsed-cone scatter kernel for anisotropic delivered dose: a
+/// forward-peaked axial kernel (secondary electrons carried downstream) plus a
+/// symmetric lateral kernel across the beam, both sampled at `sample_step_mm`.
+///
+/// Built once and reused across every frame; the anisotropy is re-oriented to
+/// each frame's gantry direction at application time.
+#[derive(Debug, Clone, PartialEq)]
+pub struct CollapsedCone<T: GeometryScalar> {
+    beam_kernel: Vec<T>,
+    beam_center: usize,
+    lateral: Vec<T>,
+    sample_step_mm: T,
+}
+
+impl<T: GeometryScalar> CollapsedCone<T> {
+    /// Build a forward-peaked cone: exponential deposition with distinct upstream
+    /// (`range_up_cm`) and downstream (`range_down_cm`) ranges along the beam and a
+    /// symmetric `lateral_range_cm` across it. `voxel_cm` is the sampling pitch in
+    /// cm (the trilinear step is `voxel_cm × 10` mm); the radii bound each kernel's
+    /// tap support. Equal up/down ranges give an isotropic (direction-independent)
+    /// cone.
+    #[must_use]
+    pub fn forward_peaked(
+        range_up_cm: T,
+        range_down_cm: T,
+        lateral_range_cm: T,
+        voxel_cm: T,
+        radius_up: usize,
+        radius_down: usize,
+        lateral_radius: usize,
+    ) -> Self {
+        let (beam_kernel, beam_center) =
+            forward_peaked_kernel(range_up_cm, range_down_cm, voxel_cm, radius_up, radius_down);
+        let lateral = symmetric_deposition_kernel(lateral_range_cm, voxel_cm, lateral_radius);
+        let sample_step_mm = voxel_cm * <T as GeometryScalar>::from_f64(10.0);
+        Self {
+            beam_kernel,
+            beam_center,
+            lateral,
+            sample_step_mm,
+        }
+    }
+}
+
+/// Accumulate delivered dose with a **beam-aligned anisotropic** collapsed cone:
+/// each frame's terma is scattered along that frame's own gantry direction before
+/// summing, so the forward-peaked physics follows the rotating beam (unlike a
+/// single separable scatter applied to the pooled terma, which has no coherent
+/// beam axis).
+///
+/// Identical to [`accumulate_delivered_dose`] in beamlet geometry; it adds the
+/// per-frame [`oriented_forward_scatter`] stage. With an isotropic `cone` (equal
+/// up/down ranges) and a single frame at gantry angle 0 it reduces to
+/// [`scatter_superposition`](helios_solver::scatter_superposition) of the
+/// delivered terma (the differential oracle).
+#[must_use]
+pub fn accumulate_delivered_dose_anisotropic<T: GeometryScalar>(
+    frames: &[DeliveryFrame<T>],
+    mu: &Volume<T>,
+    geometry: BeamGeometry<T>,
+    leaf_width_mm: T,
+    step_mm: T,
+    cone: &CollapsedCone<T>,
+) -> Volume<T> {
+    let grid = *mu.grid();
+    let mut acc = vec![<T as NumericElement>::ZERO; grid.num_voxels()];
+    for frame in frames {
+        let mut frame_terma = Volume::zeros(grid);
+        let dir = deposit_frame_terma(
+            &mut frame_terma,
+            frame,
+            mu,
+            geometry,
+            leaf_width_mm,
+            step_mm,
+        );
+        let frame_dose = oriented_forward_scatter(
+            &frame_terma,
+            dir,
+            &cone.beam_kernel,
+            cone.beam_center,
+            &cone.lateral,
+            cone.sample_step_mm,
+        );
+        for (a, d) in acc.iter_mut().zip(frame_dose.as_slice()) {
+            *a += *d;
+        }
+    }
+    Volume::from_shape_vec(grid, acc).expect("output length equals grid voxel count")
 }
 
 /// A single MLC-leaf beamlet: its ray plus, for a divergent fan, the inverse-square
@@ -449,5 +555,102 @@ mod tests {
             dose.get(4, 3, 4).unwrap() > 0.0,
             "lateral neighbour must receive scattered penumbra dose"
         );
+    }
+
+    // Energy-weighted centroid along the beam axis (x, at θ=0).
+    fn beam_axis_centroid_x(dose: &Volume<f64>) -> f64 {
+        let [nx, ny, nz] = dose.grid().dims();
+        let (mut num, mut den) = (0.0, 0.0);
+        for i in 0..nx {
+            for j in 0..ny {
+                for k in 0..nz {
+                    let d = dose.get(i, j, k).unwrap();
+                    num += d * dose.grid().voxel_center(i, j, k).x;
+                    den += d;
+                }
+            }
+        }
+        num / den
+    }
+
+    #[test]
+    fn anisotropic_isotropic_cone_matches_the_separable_scatter_pipeline() {
+        // Single frame at θ=0 (beam = +x), an ISOTROPIC cone (equal up/down
+        // ranges) and a 2 mm sample step (= voxel pitch): every sample lands on a
+        // node, so the per-frame oriented scatter reduces to scatter_superposition
+        // of the delivered terma — the differential oracle tying the new path to
+        // the verified isotropic pipeline.
+        use helios_solver::scatter_superposition;
+        let mu = uniform_cube(0.05);
+        let geom = BeamGeometry::Parallel { standoff_mm: 500.0 };
+        let frames = [frame(0.0, 8.0, 2.0)];
+        let voxel_cm = 0.2;
+
+        let cone = CollapsedCone::forward_peaked(0.4, 0.4, 0.3, voxel_cm, 1, 1, 1);
+        let (beam_k, _) = forward_peaked_kernel(0.4, 0.4, voxel_cm, 1, 1);
+        let lat = symmetric_deposition_kernel(0.3, voxel_cm, 1);
+
+        let terma = accumulate_delivered_dose(&frames, &mu, geom, 2.0, 0.25);
+        let expected = scatter_superposition(&terma, &beam_k, &lat, &lat);
+        let got = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 2.0, 0.25, &cone);
+
+        for i in 0..9 {
+            for j in 0..9 {
+                for k in 0..9 {
+                    assert_relative_eq!(
+                        got.get(i, j, k).unwrap(),
+                        expected.get(i, j, k).unwrap(),
+                        epsilon = 1e-10
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn forward_peaked_cone_shifts_delivered_dose_downstream() {
+        // Same θ=0 delivery under an isotropic vs a forward-peaked cone: the
+        // forward-peaked kernel must move the beam-axis dose centroid downstream
+        // (larger x) — proof the anisotropy reaches delivered dose, not just the
+        // solver primitive.
+        let mu = uniform_cube(0.05);
+        let geom = BeamGeometry::Parallel { standoff_mm: 500.0 };
+        let frames = [frame(0.0, 8.0, 2.0)];
+        let voxel_cm = 0.2;
+        let iso = CollapsedCone::forward_peaked(0.4, 0.4, 0.3, voxel_cm, 2, 2, 1);
+        let fwd = CollapsedCone::forward_peaked(0.1, 1.0, 0.3, voxel_cm, 2, 2, 1);
+
+        let d_iso = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 2.0, 0.25, &iso);
+        let d_fwd = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 2.0, 0.25, &fwd);
+        let (c_iso, c_fwd) = (beam_axis_centroid_x(&d_iso), beam_axis_centroid_x(&d_fwd));
+        assert!(
+            c_fwd > c_iso,
+            "forward-peaked centroid {c_fwd} must exceed isotropic {c_iso}"
+        );
+    }
+
+    #[test]
+    fn anisotropic_dose_is_linear_in_fluence() {
+        let mu = uniform_cube(0.05);
+        let geom = BeamGeometry::Parallel { standoff_mm: 500.0 };
+        let voxel_cm = 0.2;
+        let cone = CollapsedCone::forward_peaked(0.1, 1.0, 0.3, voxel_cm, 2, 2, 1);
+        let d1 = accumulate_delivered_dose_anisotropic(
+            &[frame(0.0, 8.0, 1.0)],
+            &mu,
+            geom,
+            2.0,
+            0.25,
+            &cone,
+        );
+        let d2 = accumulate_delivered_dose_anisotropic(
+            &[frame(0.0, 8.0, 2.0)],
+            &mu,
+            geom,
+            2.0,
+            0.25,
+            &cone,
+        );
+        assert_relative_eq!(d2.sum(), 2.0 * d1.sum(), epsilon = 1e-12);
     }
 }
