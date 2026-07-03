@@ -20,14 +20,18 @@
 //! anisotropic collapsed cone is available via
 //! [`accumulate_delivered_dose_anisotropic`], which scatters each frame's terma
 //! along that frame's own gantry direction (the forward-peaked physics follows
-//! the rotating beam). Per-leaf gaia collimation remains a later increment.
+//! the rotating beam). The [`CollapsedCone`] kernel is monoenergetic
+//! ([`CollapsedCone::forward_peaked`]) or poly-energetic / beam-hardened
+//! ([`CollapsedCone::poly_forward_peaked`]). Per-leaf gaia collimation remains a
+//! later increment.
 
 use crate::delivery::DeliveryFrame;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
 use helios_solver::{
     deposit_ray_terma, deposit_ray_terma_diverging, forward_peaked_kernel,
-    oriented_forward_scatter, symmetric_deposition_kernel,
+    oriented_forward_scatter, poly_forward_peaked_kernel, symmetric_deposition_kernel,
+    SpectralComponent,
 };
 
 /// Beam geometry for delivered-dose accumulation — the seam that selects how each
@@ -139,6 +143,50 @@ impl<T: GeometryScalar> CollapsedCone<T> {
     ) -> Self {
         let (beam_kernel, beam_center) =
             forward_peaked_kernel(range_up_cm, range_down_cm, voxel_cm, radius_up, radius_down);
+        Self::from_beam_kernel(
+            beam_kernel,
+            beam_center,
+            lateral_range_cm,
+            voxel_cm,
+            lateral_radius,
+        )
+    }
+
+    /// Build a **poly-energetic** forward-peaked cone: the beam kernel is the
+    /// energy-fluence-weighted [`poly_forward_peaked_kernel`] of the spectral
+    /// `components` (beam hardening — harder components reach farther downstream),
+    /// with the same symmetric lateral spread. A single-component spectrum reduces
+    /// to [`forward_peaked`](Self::forward_peaked) exactly.
+    #[must_use]
+    pub fn poly_forward_peaked(
+        components: &[SpectralComponent<T>],
+        lateral_range_cm: T,
+        voxel_cm: T,
+        radius_up: usize,
+        radius_down: usize,
+        lateral_radius: usize,
+    ) -> Self {
+        let (beam_kernel, beam_center) =
+            poly_forward_peaked_kernel(components, voxel_cm, radius_up, radius_down);
+        Self::from_beam_kernel(
+            beam_kernel,
+            beam_center,
+            lateral_range_cm,
+            voxel_cm,
+            lateral_radius,
+        )
+    }
+
+    /// Shared assembly: pair a prepared beam kernel with the symmetric lateral
+    /// kernel and the trilinear sample step (`voxel_cm × 10` mm). SSOT for the two
+    /// public constructors above.
+    fn from_beam_kernel(
+        beam_kernel: Vec<T>,
+        beam_center: usize,
+        lateral_range_cm: T,
+        voxel_cm: T,
+        lateral_radius: usize,
+    ) -> Self {
         let lateral = symmetric_deposition_kernel(lateral_range_cm, voxel_cm, lateral_radius);
         let sample_step_mm = voxel_cm * <T as GeometryScalar>::from_f64(10.0);
         Self {
@@ -626,6 +674,101 @@ mod tests {
         assert!(
             c_fwd > c_iso,
             "forward-peaked centroid {c_fwd} must exceed isotropic {c_iso}"
+        );
+    }
+
+    #[test]
+    fn single_component_poly_cone_matches_the_monoenergetic_cone() {
+        // A one-component poly-energetic cone delivers exactly the same dose as
+        // the monoenergetic cone with the same ranges (the differential oracle
+        // tying the poly path to the verified monoenergetic one).
+        let mu = uniform_cube(0.05);
+        let geom = BeamGeometry::Parallel { standoff_mm: 500.0 };
+        let frames = [frame(0.0, 8.0, 2.0)];
+        let voxel_cm = 0.2;
+        let mono = CollapsedCone::forward_peaked(0.1, 1.0, 0.3, voxel_cm, 2, 3, 1);
+        let poly = CollapsedCone::poly_forward_peaked(
+            &[SpectralComponent {
+                range_up_cm: 0.1,
+                range_down_cm: 1.0,
+                weight: 5.0,
+            }],
+            0.3,
+            voxel_cm,
+            2,
+            3,
+            1,
+        );
+        let d_mono = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 2.0, 0.25, &mono);
+        let d_poly = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 2.0, 0.25, &poly);
+        for i in 0..9 {
+            for j in 0..9 {
+                for k in 0..9 {
+                    assert_relative_eq!(
+                        d_poly.get(i, j, k).unwrap(),
+                        d_mono.get(i, j, k).unwrap(),
+                        epsilon = 1e-13
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn harder_spectrum_shifts_delivered_dose_further_downstream() {
+        // Two-component spectra weighted soft vs hard: the harder-weighted beam
+        // pushes the delivered-dose beam-axis centroid further downstream.
+        let mu = uniform_cube(0.05);
+        let geom = BeamGeometry::Parallel { standoff_mm: 500.0 };
+        let frames = [frame(0.0, 8.0, 2.0)];
+        let voxel_cm = 0.2;
+        let soft = SpectralComponent {
+            range_up_cm: 0.2,
+            range_down_cm: 0.3,
+            weight: 1.0,
+        };
+        let hard = SpectralComponent {
+            range_up_cm: 0.05,
+            range_down_cm: 1.5,
+            weight: 1.0,
+        };
+        let mostly_soft = CollapsedCone::poly_forward_peaked(
+            &[
+                SpectralComponent {
+                    weight: 9.0,
+                    ..soft
+                },
+                hard,
+            ],
+            0.3,
+            voxel_cm,
+            2,
+            2,
+            1,
+        );
+        let mostly_hard = CollapsedCone::poly_forward_peaked(
+            &[
+                soft,
+                SpectralComponent {
+                    weight: 9.0,
+                    ..hard
+                },
+            ],
+            0.3,
+            voxel_cm,
+            2,
+            2,
+            1,
+        );
+        let d_soft =
+            accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 2.0, 0.25, &mostly_soft);
+        let d_hard =
+            accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 2.0, 0.25, &mostly_hard);
+        assert!(
+            beam_axis_centroid_x(&d_hard) > beam_axis_centroid_x(&d_soft),
+            "harder spectrum centroid {} must exceed softer {}",
+            beam_axis_centroid_x(&d_hard),
+            beam_axis_centroid_x(&d_soft)
         );
     }
 

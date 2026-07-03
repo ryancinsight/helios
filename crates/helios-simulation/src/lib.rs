@@ -24,4 +24,5 @@ pub use delivery::{simulate_helical_delivery, total_delivered_fluence, DeliveryF
 pub use dose_accumulation::{
     accumulate_delivered_dose, accumulate_delivered_dose_anisotropic, BeamGeometry, CollapsedCone,
 };
+pub use helios_solver::SpectralComponent;
 pub use portal::frame_portal_fluence;

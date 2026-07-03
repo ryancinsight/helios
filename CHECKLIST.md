@@ -6,7 +6,16 @@
 
 ## Owner: claude-helios
 
-### H-020i done — beam-following anisotropic delivered dose (rotated cone axes reach the pipeline). Next: H-020j poly-energetic spectra + gaia collimation / EUD objectives — `todo`
+### H-020j done — poly-energetic (beam-hardened) collapsed-cone kernels reach delivered dose. Next: H-020k gaia per-leaf collimation / EUD objectives / anisotropic dose in the E2E example — `todo`
+
+**helios-solver**: `poly_forward_peaked_kernel` + `SpectralComponent` — energy-fluence-weighted
+convex combination of monoenergetic `forward_peaked_kernel`s (beam hardening: harder
+components reach farther downstream). **helios-simulation**: `CollapsedCone::poly_forward_peaked`
+(two constructors share a private `from_beam_kernel` SSOT). Oracles: single-component reduces to
+mono (kernel 1e-15, delivered dose 1e-13), weight scale-invariance + Σ=1, harder spectrum →
+higher downstream/upstream ratio + downstream centroid shift, empty→identity, f32.
+
+### (prior) H-020i done — beam-following anisotropic delivered dose (rotated cone axes)
 
 **helios-solver**: `directional_convolve` (oriented 1-D convolution along any unit vector,
 trilinear gather) + `oriented_forward_scatter` (forward-peaked collapsed cone along an
@@ -295,7 +304,7 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-004b (ritk DICOM),
 H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-020i — beam-following anisotropic dose)
+## Gate status (last run, H-020j — poly-energetic kernels)
 
 | Gate | Result |
 |------|--------|

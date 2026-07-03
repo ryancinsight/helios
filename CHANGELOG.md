@@ -102,6 +102,18 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- Poly-energetic collapsed-cone kernels (H-020j). **helios-solver**:
+  `poly_forward_peaked_kernel` + `SpectralComponent` — the deposition kernel is the
+  energy-fluence-weighted convex combination of the monoenergetic `forward_peaked_kernel`s
+  of a spectrum's components (each already Σ=1, so the sum renormalizes to Σ=1; weights
+  need not be pre-normalized). Models **beam hardening**: harder (longer-range) components
+  reach farther downstream. **helios-simulation**: `CollapsedCone::poly_forward_peaked`
+  carries it into delivered dose (the two `CollapsedCone` constructors share a private
+  `from_beam_kernel` assembly — SSOT). Verified: a single positive-weight component reduces
+  to the monoenergetic kernel exactly (1e-15) and to the monoenergetic delivered dose
+  (1e-13); weight scale-invariance + Σ=1; a harder-weighted spectrum raises the
+  downstream/upstream kernel-mass ratio and shifts the delivered-dose beam-axis centroid
+  downstream; empty spectrum → identity; f32. Per-leaf gaia collimation filed as H-020k.
 - Beam-following anisotropic delivered dose (H-020i). **helios-solver**:
   `directional_convolve` — an oriented 1-D convolution along an **arbitrary** unit
   direction via trilinear resampling of the field (gather = `p − offset·d`, boundary
