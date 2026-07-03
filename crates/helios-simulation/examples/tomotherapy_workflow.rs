@@ -5,8 +5,8 @@
 //!
 //! 1. CT phantom (HU) → attenuation map `μ`.
 //! 2. Imaging: parallel-beam Radon → FBP reconstruction of `μ`.
-//! 3. Therapy: helical MLC delivery → divergent-fan terma → collapsed-cone scatter
-//!    → dose; DVH + 3%/2 mm self-gamma.
+//! 3. Therapy: helical MLC delivery → divergent-fan terma → beam-following
+//!    poly-energetic (beam-hardened) collapsed-cone dose; DVH + 3%/2 mm self-gamma.
 //!
 //! Writes `ct.png`, `mu.png`, `recon.png`, `dose.png` to the output directory (first
 //! CLI arg, default `helios_workflow_output/`) and prints a quantitative summary.
@@ -20,8 +20,11 @@ use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel, Volume, Vox
 use helios_imaging::{filtered_back_projection, parallel_beam_radon};
 use helios_math::Point3;
 use helios_physics::MassAttenuation;
-use helios_simulation::{accumulate_delivered_dose, simulate_helical_delivery, BeamGeometry};
-use helios_solver::{attenuation_map, scatter_superposition, symmetric_deposition_kernel};
+use helios_simulation::{
+    accumulate_delivered_dose_anisotropic, simulate_helical_delivery, BeamGeometry, CollapsedCone,
+    SpectralComponent,
+};
+use helios_solver::attenuation_map;
 
 const NX: usize = 61;
 const NZ: usize = 5;
@@ -124,7 +127,24 @@ fn main() {
     let lot = LeafOpenTimeSinogram::from_fractions(projections, leaves, fractions).unwrap();
     let mlc = MlcModel::new(0.01, 0.05).unwrap();
     let frames = simulate_helical_delivery(&delivery, &lot, &mlc);
-    let terma = accumulate_delivered_dose(
+    // Beam-following, poly-energetic collapsed cone: a two-component (soft/hard)
+    // spectrum, forward-peaked (longer downstream range) and re-oriented to each
+    // frame's gantry direction. Beam hardening + forward transport shape the dose.
+    let voxel_cm = SPACING / 10.0;
+    let spectrum = [
+        SpectralComponent {
+            range_up_cm: 0.10,
+            range_down_cm: 0.35,
+            weight: 0.7,
+        }, // soft component
+        SpectralComponent {
+            range_up_cm: 0.05,
+            range_down_cm: 0.90,
+            weight: 0.3,
+        }, // hard component (reaches farther downstream)
+    ];
+    let cone = CollapsedCone::poly_forward_peaked(&spectrum, 0.6, voxel_cm, 2, 3, 2);
+    let dose = accumulate_delivered_dose_anisotropic(
         &frames,
         &mu,
         BeamGeometry::PointSource {
@@ -132,9 +152,8 @@ fn main() {
         },
         3.0,
         0.25,
+        &cone,
     );
-    let kernel = symmetric_deposition_kernel(0.6_f64, SPACING / 10.0, 2);
-    let dose = scatter_superposition(&terma, &kernel, &kernel, &kernel);
 
     // Analysis.
     let dvh = Dvh::from_volume(&dose);

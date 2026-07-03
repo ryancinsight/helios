@@ -102,6 +102,16 @@ under a Breaking subsection.
     homogeneous = μ·L discretization oracle, additivity, multiplicative
     composition, f32). The geometry-coupled projector over this reduction landed
     in `helios-solver` (H-011c).
+- End-to-end demonstration + coverage of the beam-following poly-energetic dose
+  (H-041c): `examples/tomotherapy_workflow` now drives the therapy stage through
+  `accumulate_delivered_dose_anisotropic` with a two-component (soft/hard)
+  `CollapsedCone::poly_forward_peaked`, and its dose render was **inspected** (a
+  centrally-concentrated distribution with smooth penumbra — the rotation-averaged
+  forward-peaked helical delivery; recon μ +0.1%, self-gamma 100%). A new integration
+  test `beam_following_poly_energetic_dose_end_to_end` exercises the full CT→delivery→
+  anisotropic-poly-dose→DVH→gamma pipeline with analytical oracles: non-negativity,
+  energy conservation (scattered dose ≤ deposited terma, >85% retained), positive DVH
+  mean, and 3%/2 mm self-gamma 100%.
 - Poly-energetic collapsed-cone kernels (H-020j). **helios-solver**:
   `poly_forward_peaked_kernel` + `SpectralComponent` — the deposition kernel is the
   energy-fluence-weighted convex combination of the monoenergetic `forward_peaked_kernel`s

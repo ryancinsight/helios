@@ -6,7 +6,17 @@
 
 ## Owner: claude-helios
 
-### H-020j done — poly-energetic (beam-hardened) collapsed-cone kernels reach delivered dose. Next: H-020k gaia per-leaf collimation / EUD objectives / anisotropic dose in the E2E example — `todo`
+### H-041c done — beam-following poly-energetic dose demonstrated end-to-end (example render inspected + integration test). Next: H-020k gaia per-leaf collimation / EUD objectives — `todo`
+
+`tomotherapy_workflow` example upgraded to `accumulate_delivered_dose_anisotropic` +
+`CollapsedCone::poly_forward_peaked`; ran it and **inspected the dose render**
+(centrally-concentrated with smooth penumbra — correct rotation-averaged forward-peaked
+helical delivery; recon μ +0.1%, self-gamma 100%). Added integration test
+`beam_following_poly_energetic_dose_end_to_end`: non-negativity, energy conservation
+(dose≤terma, >85% retained), positive DVH, 3%/2 mm self-gamma 100%. Examples build gate
+(`cargo build --examples`) green.
+
+### (prior) H-020j done — poly-energetic (beam-hardened) collapsed-cone kernels
 
 **helios-solver**: `poly_forward_peaked_kernel` + `SpectralComponent` — energy-fluence-weighted
 convex combination of monoenergetic `forward_peaked_kernel`s (beam hardening: harder
@@ -304,7 +314,7 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-004b (ritk DICOM),
 H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-020j — poly-energetic kernels)
+## Gate status (last run, H-041c — beam-following dose end-to-end)
 
 | Gate | Result |
 |------|--------|

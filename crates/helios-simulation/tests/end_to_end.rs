@@ -17,7 +17,10 @@ use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel, Volume, Vox
 use helios_imaging::{filtered_back_projection, parallel_beam_radon, register_translation};
 use helios_math::Point3;
 use helios_physics::MassAttenuation;
-use helios_simulation::{accumulate_delivered_dose, simulate_helical_delivery, BeamGeometry};
+use helios_simulation::{
+    accumulate_delivered_dose, accumulate_delivered_dose_anisotropic, simulate_helical_delivery,
+    BeamGeometry, CollapsedCone, SpectralComponent,
+};
 use helios_solver::{attenuation_map, scatter_superposition, symmetric_deposition_kernel};
 
 const NX: usize = 31;
@@ -126,6 +129,80 @@ fn shared_mu_drives_imaging_and_delivery_end_to_end() {
     let dvh = Dvh::from_volume(&dose);
     assert!(dvh.mean() > 0.0, "DVH mean dose must be positive");
     // Gamma of the dose against itself is identically 0 → 100% pass at 3%/2 mm.
+    let peak = dose.mean_top_dose();
+    let gamma = gamma_index_3d(&dose, &dose, 0.03, 2.0, peak, 6.0).unwrap();
+    let pass = gamma_pass_rate(&gamma, &dose, 0.1 * peak);
+    assert!(
+        (pass - 1.0).abs() < 1e-9,
+        "self-gamma pass rate {pass} must be 100%"
+    );
+}
+
+#[test]
+fn beam_following_poly_energetic_dose_end_to_end() {
+    // The therapy branch through the H-020i/H-020j dose model: helical delivery →
+    // per-frame terma → beam-following, poly-energetic (beam-hardened) collapsed
+    // cone → dose. Oracles are analytical / self-consistent (no external engine).
+    let ct = ct_phantom();
+    let mu = attenuation_map(&ct, MassAttenuation::new(0.06).unwrap(), 1.0);
+
+    let leaves = 9;
+    let projections = 20;
+    let delivery = HelicalDelivery::new(51, 20.0, 0.3, 10.0, 0.0, 0.0).unwrap();
+    let lot =
+        LeafOpenTimeSinogram::from_fractions(projections, leaves, vec![1.0; projections * leaves])
+            .unwrap();
+    let mlc = MlcModel::new(0.01, 0.05).unwrap();
+    let frames = simulate_helical_delivery(&delivery, &lot, &mlc);
+    let geom = BeamGeometry::PointSource {
+        source_axis_mm: 850.0,
+    };
+
+    // Two-component (soft/hard) forward-peaked spectrum, re-oriented per gantry angle.
+    let voxel_cm = SPACING / 10.0; // 0.2 cm
+    let spectrum = [
+        SpectralComponent {
+            range_up_cm: 0.10,
+            range_down_cm: 0.35,
+            weight: 0.7,
+        },
+        SpectralComponent {
+            range_up_cm: 0.05,
+            range_down_cm: 0.90,
+            weight: 0.3,
+        },
+    ];
+    let cone = CollapsedCone::poly_forward_peaked(&spectrum, 0.5, voxel_cm, 2, 3, 1);
+    let dose = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 4.0, 0.5, &cone);
+
+    // Non-negativity everywhere; the delivery deposited energy.
+    assert!(dose.sum() > 0.0, "delivery deposited no dose");
+    for k in 0..NZ {
+        for j in 0..NX {
+            for i in 0..NX {
+                assert!(dose.get(i, j, k).unwrap() >= 0.0, "negative dose");
+            }
+        }
+    }
+
+    // Energy conservation: the Σ=1 collapsed cone can only redistribute or truncate
+    // energy at the boundary, never create it — so the scattered dose total is ≤ the
+    // deposited terma total, and (delivery concentrated near centre) retains most of
+    // it. `accumulate_delivered_dose` with the same frames/geometry yields the terma.
+    let terma = accumulate_delivered_dose(&frames, &mu, geom, 4.0, 0.5);
+    let (dsum, tsum) = (dose.sum(), terma.sum());
+    assert!(
+        dsum <= tsum * (1.0 + 1e-9),
+        "scattered dose {dsum} exceeds deposited terma {tsum} (energy created)"
+    );
+    assert!(
+        dsum > tsum * 0.85,
+        "scattered dose {dsum} lost too much of terma {tsum} to boundary truncation"
+    );
+
+    // DVH + 3%/2 mm self-gamma self-consistency (dose vs itself → 100% pass).
+    let dvh = Dvh::from_volume(&dose);
+    assert!(dvh.mean() > 0.0, "DVH mean dose must be positive");
     let peak = dose.mean_top_dose();
     let gamma = gamma_index_3d(&dose, &dose, 0.03, 2.0, peak, 6.0).unwrap();
     let pass = gamma_pass_rate(&gamma, &dose, 0.1 * peak);
