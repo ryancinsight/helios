@@ -12,10 +12,15 @@
 //! core build. The feature gates a complete implementation, not a stub.
 
 use crate::optimize::DoseInfluence;
-use coeus_autograd::{add, matmul, mul, relu, sub, sum, Var};
+use coeus_autograd::{add, matmul, mean, mul, pow, relu, sub, sum, Var};
 use coeus_core::MoiraiBackend;
 use coeus_tensor::Tensor;
 use helios_core::HeliosError;
+
+/// A constant (non-differentiated) scalar `Var` of shape `[1]` on `backend`.
+fn scalar_const(value: f64, backend: &MoiraiBackend) -> Var<f64, MoiraiBackend> {
+    Var::new(Tensor::from_slice_on(vec![1], &[value], backend), false)
+}
 
 /// Gradient of the quadratic objective `½‖A·x − d‖²` with respect to `x`,
 /// computed by coeus reverse-mode autodiff.
@@ -198,6 +203,121 @@ pub fn optimize_beam_weights_dvh(
     Ok(x)
 }
 
+/// Niemierko generalized equivalent uniform dose (gEUD) of a dose sample:
+///
+/// ```text
+/// gEUD = ( (1/N) Σ_i D_i^a )^(1/a)
+/// ```
+///
+/// The volume-effect parameter `a` tunes the tissue response: `a = 1` gives the
+/// mean dose, `a → +∞` the maximum (serial organs / hot-spot control), and
+/// `a → −∞` the minimum (parallel targets / cold-spot control). A uniform dose
+/// yields that dose for any `a`. Doses must be non-negative (`a` non-integer
+/// requires `D_i > 0` for a finite result), and `a ≠ 0`.
+///
+/// # Panics
+/// Debug-asserts `a ≠ 0`; in release, `a = 0` yields a non-finite result.
+#[must_use]
+pub fn generalized_eud(doses: &[f64], a: f64) -> f64 {
+    debug_assert!(a != 0.0, "gEUD volume parameter a must be non-zero");
+    if doses.is_empty() {
+        return 0.0;
+    }
+    let n = doses.len() as f64;
+    let mean_pow = doses.iter().map(|&d| d.powf(a)).sum::<f64>() / n;
+    mean_pow.powf(1.0 / a)
+}
+
+/// Which side of the gEUD reference an [`EudPenalty`] penalizes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EudKind {
+    /// Penalize gEUD **above** the reference (an OAR dose ceiling; `a ≥ 1`).
+    UpperLimit,
+    /// Penalize gEUD **below** the reference (a target dose floor; `a < 1`).
+    LowerLimit,
+}
+
+/// A one-sided quadratic gEUD objective for one structure: penalize the
+/// structure's gEUD for violating `reference` on the [`kind`](Self::kind) side,
+/// weighted by `weight`.
+#[derive(Debug, Clone, Copy)]
+pub struct EudPenalty {
+    /// Niemierko volume-effect parameter (`a ≠ 0`).
+    pub a: f64,
+    /// gEUD reference dose (ceiling for `UpperLimit`, floor for `LowerLimit`).
+    pub reference: f64,
+    /// Which side is penalized.
+    pub kind: EudKind,
+    /// Penalty weight.
+    pub weight: f64,
+}
+
+/// Objective value and gradient of a one-sided gEUD penalty
+/// `weight · relu(±(gEUD(A·x) − reference))²` with respect to the beam weights
+/// `x`, computed on the coeus tape.
+///
+/// The gEUD `(mean((A·x)^a))^(1/a)` is built from differentiable `matmul` / `pow`
+/// / `mean` ops, so its gradient through the dose-influence matrix has **no**
+/// closed form yet flows by reverse-mode AD — the capability the mandated coeus
+/// component provides. The tests pin the returned gradient against a central
+/// finite-difference of the objective (the differential oracle). Dose must be
+/// positive where `a` is non-integer.
+///
+/// # Errors
+/// [`HeliosError::InvalidDomainValue`] if `x`'s length differs from the beamlet
+/// count, or `penalty.a == 0`.
+pub fn eud_objective_gradient_autodiff(
+    influence: &DoseInfluence<f64>,
+    x: &[f64],
+    penalty: &EudPenalty,
+) -> Result<(f64, Vec<f64>), HeliosError> {
+    let (voxels, beamlets) = influence.dims();
+    if x.len() != beamlets {
+        return Err(HeliosError::InvalidDomainValue {
+            field: "eud_objective_gradient_autodiff::x",
+            value: x.len() as f64,
+            reason: "weight count must equal the beamlet count",
+        });
+    }
+    if penalty.a == 0.0 {
+        return Err(HeliosError::InvalidDomainValue {
+            field: "eud_objective_gradient_autodiff::a",
+            value: 0.0,
+            reason: "gEUD volume parameter a must be non-zero",
+        });
+    }
+
+    let backend = MoiraiBackend::new();
+    let a = Var::<f64, MoiraiBackend>::new(
+        Tensor::from_slice_on(vec![voxels, beamlets], influence.rows(), &backend),
+        false,
+    );
+    let xv = Var::new(Tensor::from_slice_on(vec![beamlets, 1], x, &backend), true);
+
+    // gEUD = ( mean( (A·x)^a ) )^(1/a).
+    let dose = matmul(&a, &xv);
+    let geud = pow(&mean(&pow(&dose, penalty.a)), 1.0 / penalty.a);
+
+    // One-sided hinge: violation = ±(gEUD − reference), penalized when > 0.
+    let reference = scalar_const(penalty.reference, &backend);
+    let violation = match penalty.kind {
+        EudKind::UpperLimit => sub(&geud, &reference),
+        EudKind::LowerLimit => sub(&reference, &geud),
+    };
+    let hinge = relu(&violation);
+    let weight = scalar_const(penalty.weight, &backend);
+    let loss = mul(&mul(&hinge, &hinge), &weight);
+
+    let value = loss.tensor.as_slice()[0];
+    loss.backward();
+    let grad = xv.grad().ok_or(HeliosError::InvalidDomainValue {
+        field: "eud_objective_gradient_autodiff::grad",
+        value: f64::NAN,
+        reason: "autograd tape produced no gradient for x",
+    })?;
+    Ok((value, grad.as_slice().to_vec()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -207,6 +327,136 @@ mod tests {
     /// hand gradient Aᵀ(A·x − d) from the projected-gradient solver.
     fn influence() -> DoseInfluence<f64> {
         DoseInfluence::from_rows(3, 2, vec![1.0, 2.0, 0.5, -1.0, 3.0, 4.0]).unwrap()
+    }
+
+    // All-positive 3×2 influence so `A·x > 0` for positive `x` (gEUD with a
+    // non-integer `a` needs positive dose).
+    fn positive_influence() -> DoseInfluence<f64> {
+        DoseInfluence::from_rows(3, 2, vec![1.0, 0.5, 2.0, 1.0, 0.5, 1.5]).unwrap()
+    }
+
+    #[test]
+    fn generalized_eud_recovers_known_limits() {
+        // a = 1 is the arithmetic mean.
+        assert_relative_eq!(generalized_eud(&[1.0, 2.0, 3.0], 1.0), 2.0, epsilon = 1e-13);
+        // A uniform dose is its own gEUD for any a.
+        for a in [2.0, -4.0, 8.0, 0.5] {
+            assert_relative_eq!(
+                generalized_eud(&[5.0, 5.0, 5.0], a),
+                5.0,
+                max_relative = 1e-12
+            );
+        }
+        // gEUD is the Niemierko power mean: bounded in [min, max] for every a, and
+        // monotonically increasing in a (M_{−∞}=min, M_1=mean, M_{+∞}=max). It
+        // approaches the extremes only slowly — the (1/N)^{1/a} factor keeps large
+        // |a| a few % off, and larger a overflows f64 — so assert the rigorous
+        // power-mean bounds + ordering rather than a tight equality with max/min.
+        let d = [1.0, 2.0, 10.0]; // min 1, mean ≈ 4.333, max 10
+        let (lo, hi) = (generalized_eud(&d, -40.0), generalized_eud(&d, 40.0));
+        assert!(
+            (1.0..=10.0).contains(&lo),
+            "gEUD(a=−40) {lo} out of [min,max]"
+        );
+        assert!(
+            (1.0..=10.0).contains(&hi),
+            "gEUD(a=+40) {hi} out of [min,max]"
+        );
+        let mean = generalized_eud(&d, 1.0);
+        assert!(
+            lo < mean && mean < hi,
+            "gEUD must increase with a: {lo} < {mean} < {hi}"
+        );
+        assert!(lo < 1.5, "gEUD(a=−40) {lo} should be near min (1.0)");
+        assert!(hi > 9.0, "gEUD(a=+40) {hi} should be near max (10.0)");
+    }
+
+    #[test]
+    fn tape_geud_value_matches_the_analytic_geud() {
+        // UpperLimit with reference 0 makes the objective L = gEUD², so √L is the
+        // tape's gEUD — cross-check it against the analytic generalized_eud.
+        let inf = positive_influence();
+        let x = [0.8, 0.6];
+        let a = 2.5;
+        let penalty = EudPenalty {
+            a,
+            reference: 0.0,
+            kind: EudKind::UpperLimit,
+            weight: 1.0,
+        };
+        let (value, _) = eud_objective_gradient_autodiff(&inf, &x, &penalty).unwrap();
+        let analytic = generalized_eud(&inf.apply(&x), a);
+        assert_relative_eq!(value.sqrt(), analytic, max_relative = 1e-10);
+    }
+
+    #[test]
+    fn eud_gradient_matches_central_finite_difference() {
+        // Active upper hinge: pin the tape gradient against a central finite
+        // difference of the objective (the differential oracle over the whole
+        // gEUD-plus-penalty tape).
+        let inf = positive_influence();
+        let x = [0.8, 0.6];
+        let a = 3.0;
+        let geud = generalized_eud(&inf.apply(&x), a);
+        let penalty = EudPenalty {
+            a,
+            reference: 0.5 * geud, // strictly below gEUD ⇒ hinge active
+            kind: EudKind::UpperLimit,
+            weight: 2.0,
+        };
+        let value_at = |x: &[f64]| {
+            eud_objective_gradient_autodiff(&inf, x, &penalty)
+                .unwrap()
+                .0
+        };
+        let (_, grad) = eud_objective_gradient_autodiff(&inf, &x, &penalty).unwrap();
+        let h = 1e-6;
+        for k in 0..x.len() {
+            let (mut xp, mut xm) = (x, x);
+            xp[k] += h;
+            xm[k] -= h;
+            let fd = (value_at(&xp) - value_at(&xm)) / (2.0 * h);
+            assert_relative_eq!(grad[k], fd, max_relative = 1e-5, epsilon = 1e-7);
+        }
+    }
+
+    #[test]
+    fn eud_gradient_is_zero_within_the_limit() {
+        // gEUD strictly below the upper reference ⇒ hinge inactive ⇒ L = 0, ∇ = 0.
+        let inf = positive_influence();
+        let x = [0.8, 0.6];
+        let a = 3.0;
+        let geud = generalized_eud(&inf.apply(&x), a);
+        let penalty = EudPenalty {
+            a,
+            reference: geud * 2.0, // well above ⇒ no violation
+            kind: EudKind::UpperLimit,
+            weight: 5.0,
+        };
+        let (value, grad) = eud_objective_gradient_autodiff(&inf, &x, &penalty).unwrap();
+        assert_relative_eq!(value, 0.0, epsilon = 1e-12);
+        for g in grad {
+            assert_relative_eq!(g, 0.0, epsilon = 1e-12);
+        }
+    }
+
+    #[test]
+    fn eud_zero_a_and_shape_mismatch_are_typed_errors() {
+        let inf = positive_influence();
+        let bad_a = EudPenalty {
+            a: 0.0,
+            reference: 1.0,
+            kind: EudKind::UpperLimit,
+            weight: 1.0,
+        };
+        assert!(eud_objective_gradient_autodiff(&inf, &[0.8, 0.6], &bad_a).is_err());
+        let ok = EudPenalty {
+            a: 2.0,
+            reference: 1.0,
+            kind: EudKind::UpperLimit,
+            weight: 1.0,
+        };
+        assert!(eud_objective_gradient_autodiff(&inf, &[0.8], &ok).is_err());
     }
 
     #[test]

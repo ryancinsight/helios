@@ -154,6 +154,18 @@ under a Breaking subsection.
   exactly to `scatter_superposition`; a point source deposits strictly more energy
   downstream than upstream while lateral symmetry holds; interior energy conserved;
   f32 + beam-axis selectability. Rotated per-gantry cone axes = H-020i.
+- `helios-planning::{generalized_eud, EudPenalty, EudKind, eud_objective_gradient_autodiff}`
+  (H-031d, feature `autodiff`): a **generalized-EUD (Niemierko)** biological planning
+  objective. `generalized_eud` computes `gEUD = (mean(D^a))^(1/a)` (a=1→mean, a→+∞→max
+  for serial/OAR control, a→−∞→min for parallel/target coverage). The gEUD of `A·x` is
+  built from differentiable `matmul`/`pow`/`mean` ops on the coeus tape, so a one-sided
+  quadratic gEUD penalty (`EudPenalty` — OAR upper limit / target lower limit) has its
+  gradient w.r.t. beam weights by reverse-mode AD — a gradient with **no closed form**,
+  the capability the mandated coeus component exists for. Verified: gEUD power-mean bounds
+  + monotonicity in a + uniform-dose invariance; the tape gEUD value matches the analytic
+  `generalized_eud`; the objective gradient matches a central finite difference (the
+  differential oracle over the whole gEUD-plus-penalty tape); zero gradient when the hinge
+  is inactive; typed errors for a=0 / shape mismatch.
 - `helios-planning::{DvhPenalty, dvh_objective_gradient_autodiff, optimize_beam_weights_dvh}`
   (H-031c, feature `autodiff`): the **non-quadratic** clinical planning objective —
   one-sided DVH-style penalties `L(x) = w_u·Σ relu(floor − A·x)² + w_o·Σ relu(A·x −

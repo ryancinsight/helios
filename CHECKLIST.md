@@ -6,7 +6,19 @@
 
 ## Owner: claude-helios
 
-### H-041c done — beam-following poly-energetic dose demonstrated end-to-end (example render inspected + integration test). Next: H-020k gaia per-leaf collimation / EUD objectives — `todo`
+### H-031d done — generalized-EUD (Niemierko) biological objective on the coeus tape. Next: H-020k gaia per-leaf collimation / TCP-NTCP objectives / H-011b NIST μ/ρ — `todo`
+
+`generalized_eud` (gEUD = (mean(D^a))^(1/a)) + `EudPenalty`/`eud_objective_gradient_autodiff`
+— a one-sided gEUD hinge whose gradient w.r.t. beam weights flows by reverse-mode AD
+through matmul/pow/mean (no closed form). Oracles: power-mean bounds + monotonicity +
+uniform invariance; tape value == analytic gEUD; **autodiff gradient == central finite
+difference** (differential oracle over the whole tape); inactive-hinge zero; typed errors.
+Concurrency note: a transient peer coeus WIP (uncommitted topk.rs deletion) briefly broke
+the build; detected, left untouched, self-reconciled. A test threshold I first wrote was
+analytically unsound (gEUD→max is slow, (1/N)^{1/a}); corrected to rigorous power-mean
+bounds, not weakened.
+
+### (prior) H-041c done — beam-following poly-energetic dose demonstrated end-to-end
 
 `tomotherapy_workflow` example upgraded to `accumulate_delivered_dose_anisotropic` +
 `CollapsedCone::poly_forward_peaked`; ran it and **inspected the dose render**
@@ -314,7 +326,7 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-004b (ritk DICOM),
 H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-041c — beam-following dose end-to-end)
+## Gate status (last run, H-031d — generalized-EUD objective)
 
 | Gate | Result |
 |------|--------|
