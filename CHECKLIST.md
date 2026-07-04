@@ -6,7 +6,14 @@
 
 ## Owner: claude-helios
 
-### H-033 done — radiobiology metrics (gEUD/TCP/NTCP) in helios-analysis; gEUD promoted to its correct crate. Next: H-020k gaia per-leaf collimation / H-011b NIST μ/ρ / TCP-NTCP as autodiff objectives — `todo`
+### H-033c done — per-structure plan evaluation demonstrated end-to-end (masked DVH→gEUD→TCP/NTCP over delivered dose). Next: H-020k gaia per-leaf collimation / H-011b NIST μ/ρ — `todo`
+
+Integration test `per_structure_plan_evaluation_over_delivered_dose`: helical delivery →
+beam-following collapsed-cone dose → central-PTV vs off-axis-OAR masked DVH → gEUD → TCP
+(PTV) / NTCP (OAR). Clinical-plausibility oracles: target hotter than OAR (rotational
+convergence), PTV gEUD > OAR gEUD, PTV TCP>0.5, OAR NTCP<0.5, all well-formed.
+
+### (prior) H-033/H-033b done — radiobiology metrics + per-structure DVH outcome methods
 
 New `helios-analysis::radiobiology`: `generalized_eud` (**promoted from planning** — a dose
 metric, no longer gated behind the `autodiff` feature; now generic over Scalar),
@@ -336,7 +343,7 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-004b (ritk DICOM),
 H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-033 — radiobiology metrics)
+## Gate status (last run, H-033c — per-structure evaluation E2E)
 
 | Gate | Result |
 |------|--------|

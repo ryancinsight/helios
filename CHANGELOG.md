@@ -154,6 +154,14 @@ under a Breaking subsection.
   exactly to `scatter_superposition`; a point source deposits strictly more energy
   downstream than upstream while lateral symmetry holds; interior energy conserved;
   f32 + beam-axis selectability. Rotated per-gantry cone axes = H-020i.
+- End-to-end per-structure plan evaluation (H-033c): a new integration test
+  `per_structure_plan_evaluation_over_delivered_dose` runs the full surface — helical
+  delivery → beam-following collapsed-cone dose → **masked** DVH (central target vs
+  off-axis OAR spheres) → gEUD → TCP / NTCP. Oracles are clinical-plausibility +
+  probability well-formedness: the central target is hotter than the off-axis OAR
+  (rotational convergence), PTV gEUD > OAR gEUD, PTV TCP > 0.5 (TCD50 below the target
+  gEUD), OAR NTCP < 0.5 (TD50 above the OAR gEUD) — proving the masks + DVH + radiobiology
+  metrics compose over real delivered dose.
 - Per-structure outcome methods on the DVH (H-033b): `Dvh::dose_sample` (zero-copy view
   of the structure's ascending-sorted doses) plus `Dvh::{generalized_eud, tcp_logistic,
   ntcp_lkb}`, which evaluate the radiobiology models on the sample the histogram already

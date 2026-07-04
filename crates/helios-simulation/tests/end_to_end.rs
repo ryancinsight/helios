@@ -12,7 +12,7 @@
 //! or licensed dataset is involved (those gates are environment-blocked, see
 //! gap_audit G-16/G-18).
 
-use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, Dvh};
+use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, spherical_mask, Dvh};
 use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel, Volume, VoxelGrid};
 use helios_imaging::{filtered_back_projection, parallel_beam_radon, register_translation};
 use helios_math::Point3;
@@ -209,6 +209,73 @@ fn beam_following_poly_energetic_dose_end_to_end() {
     assert!(
         (pass - 1.0).abs() < 1e-9,
         "self-gamma pass rate {pass} must be 100%"
+    );
+}
+
+#[test]
+fn per_structure_plan_evaluation_over_delivered_dose() {
+    // Run the per-structure plan-evaluation surface over real delivered dose:
+    // masked DVH → gEUD → TCP (target) / NTCP (OAR). Oracles are clinical-
+    // plausibility + probability well-formedness (no external engine).
+    let ct = ct_phantom();
+    let mu = attenuation_map(&ct, MassAttenuation::new(0.06).unwrap(), 1.0);
+    let grid = *mu.grid();
+
+    let (leaves, projections) = (9, 20);
+    let delivery = HelicalDelivery::new(51, 20.0, 0.3, 10.0, 0.0, 0.0).unwrap();
+    let lot =
+        LeafOpenTimeSinogram::from_fractions(projections, leaves, vec![1.0; projections * leaves])
+            .unwrap();
+    let mlc = MlcModel::new(0.01, 0.05).unwrap();
+    let frames = simulate_helical_delivery(&delivery, &lot, &mlc);
+    let geom = BeamGeometry::PointSource {
+        source_axis_mm: 850.0,
+    };
+    let voxel_cm = SPACING / 10.0;
+    let cone = CollapsedCone::forward_peaked(0.1, 0.6, 0.5, voxel_cm, 2, 3, 1);
+    let dose = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 4.0, 0.5, &cone);
+
+    // Central target (isocentre) vs an off-axis OAR, both inside the water cylinder.
+    let mid_z = (NZ as f64 - 1.0) * SPACING / 2.0;
+    let ptv = Dvh::from_volume_masked(
+        &dose,
+        spherical_mask(grid, Point3::new(CENTRE_MM, CENTRE_MM, mid_z), 8.0),
+    );
+    let oar = Dvh::from_volume_masked(
+        &dose,
+        spherical_mask(grid, Point3::new(CENTRE_MM - 16.0, CENTRE_MM, mid_z), 6.0),
+    );
+    assert!(
+        ptv.count() > 0 && oar.count() > 0,
+        "masks must select voxels"
+    );
+
+    // Rotational convergence: the central target is hotter than the off-axis OAR.
+    assert!(
+        ptv.mean() > oar.mean(),
+        "PTV mean {} must exceed OAR mean {}",
+        ptv.mean(),
+        oar.mean()
+    );
+    assert!(
+        ptv.generalized_eud(1.0) > oar.generalized_eud(1.0),
+        "PTV gEUD must exceed OAR gEUD"
+    );
+
+    // Outcome models are well-formed probabilities. With TCD50 set below the PTV
+    // gEUD the target controls (TCP > 0.5); with TD50 above the OAR gEUD the OAR is
+    // spared (NTCP < 0.5) — both by ratio, independent of the absolute dose scale.
+    let (ptv_geud, oar_geud) = (ptv.generalized_eud(1.0), oar.generalized_eud(1.0));
+    assert!(oar_geud > 0.0, "OAR (in-water) must receive some dose");
+    let tcp = ptv.tcp_logistic(1.0, ptv_geud * 0.8, 2.0);
+    let ntcp = oar.ntcp_lkb(1.0, oar_geud * 2.0, 0.3);
+    assert!(
+        (0.0..=1.0).contains(&tcp) && tcp > 0.5,
+        "PTV TCP {tcp} should exceed 0.5"
+    );
+    assert!(
+        (0.0..=1.0).contains(&ntcp) && ntcp < 0.5,
+        "OAR NTCP {ntcp} should be below 0.5"
     );
 }
 
