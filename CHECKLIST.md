@@ -6,7 +6,17 @@
 
 ## Owner: claude-helios
 
-### H-031d done — generalized-EUD (Niemierko) biological objective on the coeus tape. Next: H-020k gaia per-leaf collimation / TCP-NTCP objectives / H-011b NIST μ/ρ — `todo`
+### H-033 done — radiobiology metrics (gEUD/TCP/NTCP) in helios-analysis; gEUD promoted to its correct crate. Next: H-020k gaia per-leaf collimation / H-011b NIST μ/ρ / TCP-NTCP as autodiff objectives — `todo`
+
+New `helios-analysis::radiobiology`: `generalized_eud` (**promoted from planning** — a dose
+metric, no longer gated behind the `autodiff` feature; now generic over Scalar),
+`tcp_logistic` (Niemierko), `ntcp_lkb` (Lyman–Kutcher–Burman, via eunomia `erfc`). Oracles:
+gEUD power-mean bounds/monotonicity, TCP [0,1]/0.5-at-TCD50/slope, **NTCP vs the normal CDF
+at published Φ(±1)=0.8413/0.1587**, f32. Architectural realignment: the metric now lives in
+analysis (SoC); planning's EUD objective is unchanged and its tests use an independent inline
+gEUD oracle, so planning keeps its lean core+math deps (no geometry-stack pull).
+
+### (prior) H-031d done — generalized-EUD biological objective on the coeus tape
 
 `generalized_eud` (gEUD = (mean(D^a))^(1/a)) + `EudPenalty`/`eud_objective_gradient_autodiff`
 — a one-sided gEUD hinge whose gradient w.r.t. beam weights flows by reverse-mode AD
@@ -326,7 +336,7 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-004b (ritk DICOM),
 H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-031d — generalized-EUD objective)
+## Gate status (last run, H-033 — radiobiology metrics)
 
 | Gate | Result |
 |------|--------|

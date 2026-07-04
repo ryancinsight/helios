@@ -154,7 +154,18 @@ under a Breaking subsection.
   exactly to `scatter_superposition`; a point source deposits strictly more energy
   downstream than upstream while lateral symmetry holds; interior energy conserved;
   f32 + beam-axis selectability. Rotated per-gantry cone axes = H-020i.
-- `helios-planning::{generalized_eud, EudPenalty, EudKind, eud_objective_gradient_autodiff}`
+- Radiobiology plan-evaluation metrics (H-033) in a new `helios-analysis::radiobiology`
+  module: `generalized_eud` (Niemierko gEUD, **promoted here from helios-planning** — a
+  dose metric belongs in analysis, not gated behind planning's `autodiff` feature; now
+  generic over `Scalar` and always available), plus the outcome models built on it —
+  `tcp_logistic` (Niemierko logistic TCP `1/(1+(TCD50/gEUD)^{4γ50})`) and `ntcp_lkb`
+  (Lyman–Kutcher–Burman NTCP `Φ((gEUD−TD50)/(m·TD50))` via eunomia's `erfc`). Verified:
+  gEUD power-mean bounds/monotonicity/uniform-invariance; TCP bounded [0,1], 0.5 at TCD50,
+  monotone, slope-sharpening; NTCP matches the normal CDF at the published Φ(±1)=0.8413/
+  0.1587 and Φ(0)=0.5, bounded/monotone; f32. helios-planning's EUD objective is unchanged
+  and its tests now use an independent inline gEUD oracle (a differential test must not
+  check code against itself), so planning keeps its lean core+math dep set.
+- `helios-planning::{EudPenalty, EudKind, eud_objective_gradient_autodiff}`
   (H-031d, feature `autodiff`): a **generalized-EUD (Niemierko)** biological planning
   objective. `generalized_eud` computes `gEUD = (mean(D^a))^(1/a)` (a=1→mean, a→+∞→max
   for serial/OAR control, a→−∞→min for parallel/target coverage). The gEUD of `A·x` is

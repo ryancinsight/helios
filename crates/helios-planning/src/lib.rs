@@ -21,7 +21,7 @@ mod optimize;
 
 #[cfg(feature = "autodiff")]
 pub use autodiff::{
-    dvh_objective_gradient_autodiff, eud_objective_gradient_autodiff, generalized_eud,
-    objective_gradient_autodiff, optimize_beam_weights_dvh, DvhPenalty, EudKind, EudPenalty,
+    dvh_objective_gradient_autodiff, eud_objective_gradient_autodiff, objective_gradient_autodiff,
+    optimize_beam_weights_dvh, DvhPenalty, EudKind, EudPenalty,
 };
 pub use optimize::{objective_value, optimize_beam_weights, DoseInfluence};

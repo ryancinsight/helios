@@ -203,31 +203,6 @@ pub fn optimize_beam_weights_dvh(
     Ok(x)
 }
 
-/// Niemierko generalized equivalent uniform dose (gEUD) of a dose sample:
-///
-/// ```text
-/// gEUD = ( (1/N) Σ_i D_i^a )^(1/a)
-/// ```
-///
-/// The volume-effect parameter `a` tunes the tissue response: `a = 1` gives the
-/// mean dose, `a → +∞` the maximum (serial organs / hot-spot control), and
-/// `a → −∞` the minimum (parallel targets / cold-spot control). A uniform dose
-/// yields that dose for any `a`. Doses must be non-negative (`a` non-integer
-/// requires `D_i > 0` for a finite result), and `a ≠ 0`.
-///
-/// # Panics
-/// Debug-asserts `a ≠ 0`; in release, `a = 0` yields a non-finite result.
-#[must_use]
-pub fn generalized_eud(doses: &[f64], a: f64) -> f64 {
-    debug_assert!(a != 0.0, "gEUD volume parameter a must be non-zero");
-    if doses.is_empty() {
-        return 0.0;
-    }
-    let n = doses.len() as f64;
-    let mean_pow = doses.iter().map(|&d| d.powf(a)).sum::<f64>() / n;
-    mean_pow.powf(1.0 / a)
-}
-
 /// Which side of the gEUD reference an [`EudPenalty`] penalizes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EudKind {
@@ -323,6 +298,14 @@ mod tests {
     use super::*;
     use approx::assert_relative_eq;
 
+    // Independent scalar gEUD oracle for the coeus-tape gEUD — deliberately a
+    // separate implementation from both the tape and helios-analysis's
+    // `generalized_eud` (a differential test must not check code against itself).
+    fn geud_ref(doses: &[f64], a: f64) -> f64 {
+        let n = doses.len() as f64;
+        (doses.iter().map(|&d| d.powf(a)).sum::<f64>() / n).powf(1.0 / a)
+    }
+
     /// 3×2 influence with distinct entries; the differential oracle is the exact
     /// hand gradient Aᵀ(A·x − d) from the projected-gradient solver.
     fn influence() -> DoseInfluence<f64> {
@@ -336,45 +319,9 @@ mod tests {
     }
 
     #[test]
-    fn generalized_eud_recovers_known_limits() {
-        // a = 1 is the arithmetic mean.
-        assert_relative_eq!(generalized_eud(&[1.0, 2.0, 3.0], 1.0), 2.0, epsilon = 1e-13);
-        // A uniform dose is its own gEUD for any a.
-        for a in [2.0, -4.0, 8.0, 0.5] {
-            assert_relative_eq!(
-                generalized_eud(&[5.0, 5.0, 5.0], a),
-                5.0,
-                max_relative = 1e-12
-            );
-        }
-        // gEUD is the Niemierko power mean: bounded in [min, max] for every a, and
-        // monotonically increasing in a (M_{−∞}=min, M_1=mean, M_{+∞}=max). It
-        // approaches the extremes only slowly — the (1/N)^{1/a} factor keeps large
-        // |a| a few % off, and larger a overflows f64 — so assert the rigorous
-        // power-mean bounds + ordering rather than a tight equality with max/min.
-        let d = [1.0, 2.0, 10.0]; // min 1, mean ≈ 4.333, max 10
-        let (lo, hi) = (generalized_eud(&d, -40.0), generalized_eud(&d, 40.0));
-        assert!(
-            (1.0..=10.0).contains(&lo),
-            "gEUD(a=−40) {lo} out of [min,max]"
-        );
-        assert!(
-            (1.0..=10.0).contains(&hi),
-            "gEUD(a=+40) {hi} out of [min,max]"
-        );
-        let mean = generalized_eud(&d, 1.0);
-        assert!(
-            lo < mean && mean < hi,
-            "gEUD must increase with a: {lo} < {mean} < {hi}"
-        );
-        assert!(lo < 1.5, "gEUD(a=−40) {lo} should be near min (1.0)");
-        assert!(hi > 9.0, "gEUD(a=+40) {hi} should be near max (10.0)");
-    }
-
-    #[test]
     fn tape_geud_value_matches_the_analytic_geud() {
         // UpperLimit with reference 0 makes the objective L = gEUD², so √L is the
-        // tape's gEUD — cross-check it against the analytic generalized_eud.
+        // tape's gEUD — cross-check it against the independent geud_ref oracle.
         let inf = positive_influence();
         let x = [0.8, 0.6];
         let a = 2.5;
@@ -385,7 +332,7 @@ mod tests {
             weight: 1.0,
         };
         let (value, _) = eud_objective_gradient_autodiff(&inf, &x, &penalty).unwrap();
-        let analytic = generalized_eud(&inf.apply(&x), a);
+        let analytic = geud_ref(&inf.apply(&x), a);
         assert_relative_eq!(value.sqrt(), analytic, max_relative = 1e-10);
     }
 
@@ -397,7 +344,7 @@ mod tests {
         let inf = positive_influence();
         let x = [0.8, 0.6];
         let a = 3.0;
-        let geud = generalized_eud(&inf.apply(&x), a);
+        let geud = geud_ref(&inf.apply(&x), a);
         let penalty = EudPenalty {
             a,
             reference: 0.5 * geud, // strictly below gEUD ⇒ hinge active
@@ -426,7 +373,7 @@ mod tests {
         let inf = positive_influence();
         let x = [0.8, 0.6];
         let a = 3.0;
-        let geud = generalized_eud(&inf.apply(&x), a);
+        let geud = geud_ref(&inf.apply(&x), a);
         let penalty = EudPenalty {
             a,
             reference: geud * 2.0, // well above ⇒ no violation
