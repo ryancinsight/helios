@@ -1,5 +1,6 @@
 //! Cumulative dose-volume histogram (DVH).
 
+use crate::radiobiology::{generalized_eud, ntcp_lkb, tcp_logistic};
 use helios_domain::Volume;
 use helios_math::{NumericElement, Scalar};
 
@@ -118,6 +119,39 @@ impl<T: Scalar> Dvh<T> {
         }
         (d2 - d98) * d50.recip()
     }
+
+    /// The structure's dose sample (ascending-sorted), borrowed zero-copy.
+    ///
+    /// The same voxel doses the histogram summarizes; the radiobiology metrics
+    /// below operate on this sample without re-scanning the dose volume.
+    #[must_use]
+    pub fn dose_sample(&self) -> &[T] {
+        &self.sorted
+    }
+
+    /// Generalized equivalent uniform dose (gEUD) of this structure's dose, with
+    /// volume-effect parameter `a` (see [`generalized_eud`](crate::generalized_eud)).
+    /// Computed from the already-sampled doses (no volume re-scan).
+    #[must_use]
+    pub fn generalized_eud(&self, a: T) -> T {
+        generalized_eud(&self.sorted, a)
+    }
+
+    /// Niemierko logistic tumour control probability of this structure's dose:
+    /// [`tcp_logistic`](crate::tcp_logistic) evaluated at this structure's gEUD
+    /// (volume parameter `a`, control midpoint `tcd50`, slope `gamma50`).
+    #[must_use]
+    pub fn tcp_logistic(&self, a: T, tcd50: T, gamma50: T) -> T {
+        tcp_logistic(self.generalized_eud(a), tcd50, gamma50)
+    }
+
+    /// Lyman–Kutcher–Burman normal-tissue complication probability of this
+    /// structure's dose: [`ntcp_lkb`](crate::ntcp_lkb) evaluated at this
+    /// structure's gEUD (volume parameter `a`, tolerance `td50`, slope `m`).
+    #[must_use]
+    pub fn ntcp_lkb(&self, a: T, td50: T, m: T) -> T {
+        ntcp_lkb(self.generalized_eud(a), td50, m)
+    }
 }
 
 #[cfg(test)]
@@ -211,5 +245,60 @@ mod tests {
         let dose = Volume::from_shape_fn(g, |_| 1.0_f32);
         let dvh = Dvh::from_volume(&dose);
         assert_relative_eq!(dvh.mean(), 1.0_f32, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn dvh_geud_reuses_the_sample_and_matches_the_free_function() {
+        // Heterogeneous dose; the DVH gEUD must equal the free-function gEUD over
+        // the same (order-independent) sample the histogram already holds.
+        let dose = Volume::from_shape_fn(grid([4, 4, 4]), |idx| {
+            1.0 + idx[0] as f64 + 0.5 * idx[1] as f64
+        });
+        let dvh = Dvh::from_volume(&dose);
+        assert_eq!(dvh.dose_sample().len(), 64);
+        for a in [1.0, 2.0, -3.0, 8.0] {
+            assert_relative_eq!(
+                dvh.generalized_eud(a),
+                generalized_eud(dvh.dose_sample(), a),
+                max_relative = 1e-13
+            );
+        }
+    }
+
+    #[test]
+    fn uniform_structure_outcome_equals_the_pointwise_model() {
+        // A uniform-dose structure has gEUD = that dose for any a, so its TCP/NTCP
+        // reduce to the pointwise outcome models at that dose.
+        let d = 62.0;
+        let dvh = Dvh::from_volume(&Volume::from_shape_fn(grid([3, 3, 3]), |_| d));
+        assert_relative_eq!(dvh.generalized_eud(-10.0), d, max_relative = 1e-12);
+        // NTCP with TD50 = d ⇒ t = 0 ⇒ 0.5; TCP with TCD50 = d ⇒ 0.5.
+        assert_relative_eq!(dvh.ntcp_lkb(1.0, d, 0.2), 0.5, epsilon = 1e-12);
+        assert_relative_eq!(dvh.tcp_logistic(1.0, d, 2.0), 0.5, epsilon = 1e-12);
+        // And they match the free functions evaluated at the gEUD.
+        let geud = dvh.generalized_eud(2.0);
+        assert_relative_eq!(
+            dvh.ntcp_lkb(2.0, 50.0, 0.2),
+            ntcp_lkb(geud, 50.0, 0.2),
+            epsilon = 1e-14
+        );
+        assert_relative_eq!(
+            dvh.tcp_logistic(2.0, 55.0, 2.0),
+            tcp_logistic(geud, 55.0, 2.0),
+            epsilon = 1e-14
+        );
+    }
+
+    #[test]
+    fn masked_structure_outcome_reflects_only_masked_voxels() {
+        // Two half-slabs at 20 and 80 Gy; masking the hot half gives gEUD ≈ 80,
+        // higher NTCP than masking the cold half — the per-structure evaluation.
+        let dose =
+            Volume::from_shape_fn(grid([4, 4, 4]), |idx| if idx[0] < 2 { 20.0 } else { 80.0 });
+        let hot = Dvh::from_volume_masked(&dose, |idx| idx[0] >= 2);
+        let cold = Dvh::from_volume_masked(&dose, |idx| idx[0] < 2);
+        assert_relative_eq!(hot.generalized_eud(1.0), 80.0, epsilon = 1e-12);
+        assert_relative_eq!(cold.generalized_eud(1.0), 20.0, epsilon = 1e-12);
+        assert!(hot.ntcp_lkb(1.0, 50.0, 0.2) > cold.ntcp_lkb(1.0, 50.0, 0.2));
     }
 }

@@ -154,6 +154,15 @@ under a Breaking subsection.
   exactly to `scatter_superposition`; a point source deposits strictly more energy
   downstream than upstream while lateral symmetry holds; interior energy conserved;
   f32 + beam-axis selectability. Rotated per-gantry cone axes = H-020i.
+- Per-structure outcome methods on the DVH (H-033b): `Dvh::dose_sample` (zero-copy view
+  of the structure's ascending-sorted doses) plus `Dvh::{generalized_eud, tcp_logistic,
+  ntcp_lkb}`, which evaluate the radiobiology models on the sample the histogram already
+  holds — **no dose-volume re-scan** — at the natural receiver (method form over free
+  function). So a masked (PTV/OAR) DVH now reports its own gEUD and TCP/NTCP directly.
+  Verified: `Dvh::generalized_eud` matches the free function on the reused sample across
+  a; a uniform-dose structure's TCP/NTCP reduce to the pointwise models (0.5 at
+  TCD50/TD50) and match the free functions at the structure gEUD; a masked hot-half
+  structure yields higher gEUD/NTCP than the cold half.
 - Radiobiology plan-evaluation metrics (H-033) in a new `helios-analysis::radiobiology`
   module: `generalized_eud` (Niemierko gEUD, **promoted here from helios-planning** — a
   dose metric belongs in analysis, not gated behind planning's `autodiff` feature; now
