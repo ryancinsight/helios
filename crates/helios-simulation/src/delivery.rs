@@ -8,8 +8,8 @@
 //! This is the integrated imaging/delivery-workflow layer that a dose
 //! accumulation (per-leaf beamlet ray-trace) builds on.
 
-use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel};
-use helios_math::{NumericElement, Scalar};
+use helios_domain::{FieldAperture, HelicalDelivery, LeafOpenTimeSinogram, MlcModel};
+use helios_math::{GeometryScalar, NumericElement, Point3, Scalar};
 
 /// The machine state and delivered fluence at one projection of a helical
 /// delivery.
@@ -58,6 +58,49 @@ pub fn total_delivered_fluence<T: Scalar>(frames: &[DeliveryFrame<T>]) -> T {
             .copied()
             .fold(<T as NumericElement>::ZERO, |a, x| a + x)
     })
+}
+
+/// Apply a secondary-collimator [`FieldAperture`] to a delivery: scale each leaf's
+/// fluence by the aperture transmission at that leaf's collimator coordinate
+/// `(lateral_offset, couch_mm, 0)`, where
+/// `lateral_offset = (leaf − centre_leaf)·leaf_width_mm`.
+///
+/// This is the jaw field-shaping + geometric edge penumbra, applied on top of the
+/// per-leaf MLC modulation already in `frames`: leaves outside the open field are
+/// blocked (fluence → 0), those inside pass unchanged (× 1), and those straddling
+/// the field edge are partially transmitted. Returns new frames; the machine state
+/// (gantry, couch) is preserved.
+#[must_use]
+pub fn collimate_frames<T: GeometryScalar>(
+    frames: &[DeliveryFrame<T>],
+    aperture: &FieldAperture<T>,
+    leaf_width_mm: T,
+) -> Vec<DeliveryFrame<T>> {
+    let zero = <T as NumericElement>::ZERO;
+    frames
+        .iter()
+        .map(|frame| {
+            let leaves = frame.leaf_fluence.len();
+            let centre = <T as GeometryScalar>::from_f64((leaves as f64 - 1.0) * 0.5);
+            let leaf_fluence = frame
+                .leaf_fluence
+                .iter()
+                .enumerate()
+                .map(|(leaf, &fluence)| {
+                    let offset =
+                        (<T as GeometryScalar>::from_f64(leaf as f64) - centre) * leaf_width_mm;
+                    let point = Point3::new(offset, frame.couch_mm, zero);
+                    fluence * aperture.transmission(&point)
+                })
+                .collect();
+            DeliveryFrame {
+                projection: frame.projection,
+                gantry_angle_rad: frame.gantry_angle_rad,
+                couch_mm: frame.couch_mm,
+                leaf_fluence,
+            }
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -135,5 +178,63 @@ mod tests {
         let del = HelicalDelivery::<f32>::new(51, 25.0, 0.4, 10.0, 0.0, 0.0).unwrap();
         let frames = simulate_helical_delivery(&del, &lot, &mlc);
         assert_relative_eq!(frames[0].leaf_fluence[0], 0.95_f32, epsilon = 1e-6);
+    }
+
+    fn open_frame() -> DeliveryFrame<f64> {
+        DeliveryFrame {
+            projection: 3,
+            gantry_angle_rad: 1.2,
+            couch_mm: 4.0,
+            leaf_fluence: vec![1.0; 9],
+        }
+    }
+
+    #[test]
+    fn wide_aperture_leaves_fluence_unchanged() {
+        // Aperture far larger than the leaf bank → every leaf fully open (× 1).
+        let ap = FieldAperture::rectangular(Point3::new(0.0, 4.0, 0.0), [500.0, 500.0, 500.0], 2.0)
+            .unwrap();
+        let out = collimate_frames(&[open_frame()], &ap, 5.0);
+        assert_eq!(out[0].leaf_fluence, vec![1.0; 9]);
+    }
+
+    #[test]
+    fn narrow_aperture_shapes_the_field_with_edge_penumbra() {
+        // 9 leaves, 5 mm pitch → lateral offsets −20..+20 mm. Field half-width
+        // 10 mm, 2 mm penumbra: the ±10 mm edge lands on leaves 2 and 6 (→ 50 %),
+        // interior leaves 3–5 fully open, and leaves 0–1 / 7–8 fully blocked.
+        let ap = FieldAperture::rectangular(Point3::new(0.0, 4.0, 0.0), [10.0, 500.0, 500.0], 2.0)
+            .unwrap();
+        let out = collimate_frames(&[open_frame()], &ap, 5.0);
+        let f = &out[0].leaf_fluence;
+        assert_relative_eq!(f[4], 1.0, epsilon = 1e-12); // centre, open
+        assert_relative_eq!(f[3], 1.0, epsilon = 1e-12);
+        assert_relative_eq!(f[2], 0.5, epsilon = 1e-12); // on the field edge
+        assert_relative_eq!(f[6], 0.5, epsilon = 1e-12);
+        assert_relative_eq!(f[0], 0.0, epsilon = 1e-12); // outside the field
+        assert_relative_eq!(f[8], 0.0, epsilon = 1e-12);
+        assert!(
+            f.iter().sum::<f64>() < 9.0,
+            "collimation must remove fluence"
+        );
+        // Machine state is preserved.
+        assert_eq!(out[0].projection, 3);
+        assert_relative_eq!(out[0].gantry_angle_rad, 1.2, epsilon = 1e-15);
+        assert_relative_eq!(out[0].couch_mm, 4.0, epsilon = 1e-15);
+    }
+
+    #[test]
+    fn collimation_never_increases_fluence() {
+        // Transmission ∈ [0,1], so each leaf's fluence can only be reduced.
+        let ap = FieldAperture::rectangular(Point3::new(3.0, 4.0, 0.0), [6.0, 500.0, 500.0], 1.5)
+            .unwrap();
+        let frame = DeliveryFrame {
+            leaf_fluence: vec![0.9, 0.3, 1.0, 0.7, 0.5, 0.8, 0.2, 1.0, 0.6],
+            ..open_frame()
+        };
+        let out = collimate_frames(std::slice::from_ref(&frame), &ap, 5.0);
+        for (before, after) in frame.leaf_fluence.iter().zip(&out[0].leaf_fluence) {
+            assert!(*after <= *before + 1e-12 && *after >= 0.0);
+        }
     }
 }

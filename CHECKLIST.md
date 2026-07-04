@@ -6,7 +6,17 @@
 
 ## Owner: claude-helios
 
-### H-033c done — per-structure plan evaluation demonstrated end-to-end (masked DVH→gEUD→TCP/NTCP over delivered dose). Next: H-020k gaia per-leaf collimation / H-011b NIST μ/ρ — `todo`
+### H-020k done — gaia-`Aabb` collimator field aperture + delivery collimation (jaw field-shaping + penumbra). Next: H-011b NIST μ/ρ / wire aperture into the dose pipeline / oriented-scatter perf — `todo`
+
+`helios-domain::FieldAperture` (open field = gaia `Aabb`, geometric edge penumbra via box
+SDF; `contains` → `Aabb::contains_point`) + `helios-simulation::collimate_frames` (scales
+per-leaf fluence by aperture transmission at `(lateral_offset, couch_mm, 0)`). Oracles:
+centre→1/far→0/edge→0.5/penumbra-ramp/monotone/typed-errors/f32; field-shaping consumer
+(narrow aperture → edge leaves 50%, outside 0, machine state preserved, never increases
+fluence). Deepens mandated gaia consumption; the last modelled delivery gap at fluence
+level. (Full per-beamlet geometric occlusion in the dose ray-trace remains a follow-on.)
+
+### (prior) H-033c done — per-structure plan evaluation demonstrated end-to-end
 
 Integration test `per_structure_plan_evaluation_over_delivered_dose`: helical delivery →
 beam-following collapsed-cone dose → central-PTV vs off-axis-OAR masked DVH → gEUD → TCP
@@ -343,7 +353,7 @@ then end-to-end dose→gamma/DVH validation.
 `Isometry3` gains transforms), H-011d (exact Siddon), H-004b (ritk DICOM),
 H-011b (NIST μ/ρ tables).
 
-## Gate status (last run, H-033c — per-structure evaluation E2E)
+## Gate status (last run, H-020k — collimator field aperture)
 
 | Gate | Result |
 |------|--------|

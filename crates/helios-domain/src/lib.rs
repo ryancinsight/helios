@@ -12,6 +12,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+mod collimation;
 #[cfg(feature = "dicom")]
 mod dicom;
 mod grid;
@@ -21,6 +22,7 @@ mod mlc;
 mod storage;
 mod volume;
 
+pub use collimation::FieldAperture;
 #[cfg(feature = "dicom")]
 pub use dicom::{load_ct_series, load_ct_slice};
 pub use grid::VoxelGrid;

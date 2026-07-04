@@ -112,7 +112,18 @@ under a Breaking subsection.
   anisotropic-poly-dose→DVH→gamma pipeline with analytical oracles: non-negativity,
   energy conservation (scattered dose ≤ deposited terma, >85% retained), positive DVH
   mean, and 3%/2 mm self-gamma 100%.
-- Poly-energetic collapsed-cone kernels (H-020j). **helios-solver**:
+- Collimator field aperture + delivery collimation (H-020k). **helios-domain**:
+  `FieldAperture` — the jaw-shaped open field as a gaia `Aabb` with a linear geometric
+  edge penumbra. `transmission(point)` is 1 deep inside, 0 deep outside, and 0.5 on the
+  geometric edge, ramping across a `±penumbra_mm` band (standard-box SDF; `contains`
+  delegates to gaia `Aabb::contains_point`). **helios-simulation**: `collimate_frames`
+  scales each leaf's fluence by the aperture transmission at that leaf's collimator
+  coordinate `(lateral_offset, couch_mm, 0)` — jaw field-shaping + penumbra on top of the
+  MLC modulation. Verified: centre→1 / far→0 / edge→0.5 / penumbra-band ramp / monotone /
+  typed errors / f32; and end-to-end a narrow aperture shapes the field (edge leaves →
+  50 %, outside leaves → 0, machine state preserved) while collimation never increases
+  fluence. Deepens the mandated gaia-geometry consumption. Poly-energetic collapsed-cone
+  kernels (H-020j). **helios-solver**:
   `poly_forward_peaked_kernel` + `SpectralComponent` — the deposition kernel is the
   energy-fluence-weighted convex combination of the monoenergetic `forward_peaked_kernel`s
   of a spectrum's components (each already Σ=1, so the sum renormalizes to Σ=1; weights
