@@ -326,8 +326,20 @@ version = "0.6.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23cdc57ce23ac53c931e88a43d06d070a6fd142f2617be5855eb75efc9beb1c2"
 dependencies = [
- "bytecheck_derive",
- "ptr_meta",
+ "bytecheck_derive 0.6.12",
+ "ptr_meta 0.1.4",
+ "simdutf8",
+]
+
+[[package]]
+name = "bytecheck"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0caa33a2c0edca0419d15ac723dff03f1956f7978329b1e3b5fdaaaed9d3ca8b"
+dependencies = [
+ "bytecheck_derive 0.8.2",
+ "ptr_meta 0.3.1",
+ "rancor",
  "simdutf8",
 ]
 
@@ -340,6 +352,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "bytecheck_derive"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89385e82b5d1821d2219e0b095efa2cc1f246cbf99080f3be46a1a85c0d392d9"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.118",
 ]
 
 [[package]]
@@ -495,7 +518,7 @@ dependencies = [
 
 [[package]]
 name = "coeus-autograd"
-version = "0.5.5"
+version = "0.8.0"
 dependencies = [
  "apollo-fft",
  "coeus-core",
@@ -509,7 +532,7 @@ dependencies = [
 
 [[package]]
 name = "coeus-core"
-version = "0.5.5"
+version = "0.8.0"
 dependencies = [
  "bytemuck",
  "eunomia",
@@ -523,7 +546,7 @@ dependencies = [
 
 [[package]]
 name = "coeus-leto"
-version = "0.5.5"
+version = "0.8.0"
 dependencies = [
  "coeus-core",
  "leto",
@@ -532,7 +555,7 @@ dependencies = [
 
 [[package]]
 name = "coeus-ops"
-version = "0.5.5"
+version = "0.8.0"
 dependencies = [
  "bytemuck",
  "coeus-core",
@@ -541,14 +564,14 @@ dependencies = [
  "coeus-tensor",
  "half",
  "leto-ops",
- "melinoe 0.7.0",
+ "melinoe 0.8.0",
  "smallvec",
  "thiserror 2.0.18",
 ]
 
 [[package]]
 name = "coeus-sparse"
-version = "0.5.5"
+version = "0.8.0"
 dependencies = [
  "coeus-core",
  "coeus-tensor",
@@ -558,11 +581,12 @@ dependencies = [
 
 [[package]]
 name = "coeus-tensor"
-version = "0.5.5"
+version = "0.8.0"
 dependencies = [
  "bytemuck",
  "coeus-core",
  "coeus-leto",
+ "rkyv 0.8.17",
  "smallvec",
  "thiserror 2.0.18",
 ]
@@ -981,7 +1005,8 @@ dependencies = [
  "bytemuck",
  "half",
  "libm",
- "rkyv",
+ "num-traits",
+ "rkyv 0.7.46",
 ]
 
 [[package]]
@@ -1174,14 +1199,13 @@ name = "gaia"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "approx",
  "aquamarine",
  "eunomia",
  "geometry-predicates",
  "hashbrown 0.15.5",
  "indexmap",
  "leto",
- "melinoe 0.7.0 (git+https://github.com/ryancinsight/melinoe.git)",
+ "melinoe 0.8.0 (git+https://github.com/ryancinsight/melinoe.git)",
  "rand 0.8.6",
  "serde",
  "serde_json",
@@ -1504,6 +1528,7 @@ name = "hephaestus-core"
 version = "0.11.0"
 dependencies = [
  "bytemuck",
+ "leto",
  "themis 0.6.0",
  "thiserror 2.0.18",
 ]
@@ -1537,6 +1562,7 @@ dependencies = [
  "hermes-simd-intrinsics",
  "hermes-simd-macros",
  "hermes-simd-types",
+ "themis 0.9.17",
 ]
 
 [[package]]
@@ -1547,7 +1573,7 @@ dependencies = [
  "eunomia",
  "half",
  "mnemosyne",
- "rkyv",
+ "rkyv 0.7.46",
  "themis 0.9.17",
 ]
 
@@ -1992,21 +2018,19 @@ checksum = "7a79a3332a6609480d7d0c9eab957bca6b455b91bb84e66d19f5ff66294b85b8"
 
 [[package]]
 name = "leto"
-version = "0.35.1"
+version = "0.36.0"
 dependencies = [
  "bytemuck",
  "eunomia",
  "half",
  "mnemosyne",
- "num-complex",
- "num-traits",
  "serde",
  "thiserror 2.0.18",
 ]
 
 [[package]]
 name = "leto-ops"
-version = "0.35.1"
+version = "0.36.0"
 dependencies = [
  "bytemuck",
  "eunomia",
@@ -2014,8 +2038,6 @@ dependencies = [
  "hermes-simd",
  "leto",
  "moirai",
- "num-complex",
- "num-traits",
  "themis 0.9.17",
  "thiserror 2.0.18",
 ]
@@ -2119,12 +2141,12 @@ dependencies = [
 
 [[package]]
 name = "melinoe"
-version = "0.7.0"
+version = "0.8.0"
 
 [[package]]
 name = "melinoe"
-version = "0.7.0"
-source = "git+https://github.com/ryancinsight/melinoe.git#f0139dd77e2c175aeea51687669ef5d5fdafd078"
+version = "0.8.0"
+source = "git+https://github.com/ryancinsight/melinoe.git#375108b6fe4386c2bffdb584460403c838ca35e8"
 
 [[package]]
 name = "memchr"
@@ -2226,7 +2248,7 @@ dependencies = [
 name = "mnemosyne-heap"
 version = "0.1.0"
 dependencies = [
- "melinoe 0.7.0 (git+https://github.com/ryancinsight/melinoe.git)",
+ "melinoe 0.8.0 (git+https://github.com/ryancinsight/melinoe.git)",
  "mnemosyne-arena",
  "mnemosyne-backend",
  "mnemosyne-core",
@@ -2239,7 +2261,7 @@ dependencies = [
 name = "mnemosyne-local"
 version = "0.1.0"
 dependencies = [
- "melinoe 0.7.0 (git+https://github.com/ryancinsight/melinoe.git)",
+ "melinoe 0.8.0 (git+https://github.com/ryancinsight/melinoe.git)",
  "mnemosyne-arena",
  "mnemosyne-backend",
  "mnemosyne-build-util",
@@ -2262,7 +2284,7 @@ dependencies = [
 name = "moirai"
 version = "0.2.0"
 dependencies = [
- "melinoe 0.7.0 (git+https://github.com/ryancinsight/melinoe.git)",
+ "melinoe 0.8.0 (git+https://github.com/ryancinsight/melinoe.git)",
  "mnemosyne",
  "moirai-async",
  "moirai-core",
@@ -2303,7 +2325,7 @@ dependencies = [
 name = "moirai-executor"
 version = "0.2.0"
 dependencies = [
- "melinoe 0.7.0 (git+https://github.com/ryancinsight/melinoe.git)",
+ "melinoe 0.8.0 (git+https://github.com/ryancinsight/melinoe.git)",
  "mnemosyne",
  "moirai-core",
  "moirai-pal",
@@ -2342,7 +2364,7 @@ version = "0.2.0"
 dependencies = [
  "js-sys",
  "libc",
- "melinoe 0.7.0 (git+https://github.com/ryancinsight/melinoe.git)",
+ "melinoe 0.8.0 (git+https://github.com/ryancinsight/melinoe.git)",
  "moirai-core",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -2354,7 +2376,7 @@ dependencies = [
 name = "moirai-parallel"
 version = "0.2.0"
 dependencies = [
- "melinoe 0.7.0 (git+https://github.com/ryancinsight/melinoe.git)",
+ "melinoe 0.8.0 (git+https://github.com/ryancinsight/melinoe.git)",
  "moirai-executor",
 ]
 
@@ -2400,6 +2422,26 @@ checksum = "bb85c154ba489f01b25c0d36ae69a87e4a1c73a72631fc6c0eb6dde34a73e44b"
 dependencies = [
  "num-traits",
  "pxfm",
+]
+
+[[package]]
+name = "munge"
+version = "0.4.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e17401f259eba956ca16491461b6e8f72913a0a114e39736ce404410f915a0c"
+dependencies = [
+ "munge_macro",
+]
+
+[[package]]
+name = "munge_macro"
+version = "0.4.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4568f25ccbd45ab5d5603dc34318c1ec56b117531781260002151b8530a9f931"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.118",
 ]
 
 [[package]]
@@ -2795,7 +2837,16 @@ version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0738ccf7ea06b608c10564b31debd4f5bc5e197fc8bfe088f68ae5ce81e7a4f1"
 dependencies = [
- "ptr_meta_derive",
+ "ptr_meta_derive 0.1.4",
+]
+
+[[package]]
+name = "ptr_meta"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b9a0cf95a1196af61d4f1cbdab967179516d9a4a4312af1f31948f8f6224a79"
+dependencies = [
+ "ptr_meta_derive 0.3.1",
 ]
 
 [[package]]
@@ -2807,6 +2858,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "ptr_meta_derive"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7347867d0a7e1208d93b46767be83e2b8f978c3dad35f775ac8d8847551d6fe1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.118",
 ]
 
 [[package]]
@@ -2916,6 +2978,15 @@ name = "radium"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
+
+[[package]]
+name = "rancor"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "daff8b7b3ccf5f7ba270b3e7a0a4d4c701c5797e38dec27c7e2c3dbb830fed1c"
+dependencies = [
+ "ptr_meta 0.3.1",
+]
 
 [[package]]
 name = "rand"
@@ -3117,7 +3188,16 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71fe3824f5629716b1589be05dacd749f6aa084c87e00e016714a8cdfccc997c"
 dependencies = [
- "bytecheck",
+ "bytecheck 0.6.12",
+]
+
+[[package]]
+name = "rend"
+version = "0.5.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "663ba70707f96e871406fe10d68128412e619b06d1d47cb91c3a4c6501176240"
+dependencies = [
+ "bytecheck 0.8.2",
 ]
 
 [[package]]
@@ -3158,13 +3238,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2297bf9c81a3f0dc96bc9521370b88f054168c29826a75e89c55ff196e7ed6a1"
 dependencies = [
  "bitvec",
- "bytecheck",
+ "bytecheck 0.6.12",
  "bytes",
  "hashbrown 0.12.3",
- "ptr_meta",
- "rend",
- "rkyv_derive",
+ "ptr_meta 0.1.4",
+ "rend 0.4.2",
+ "rkyv_derive 0.7.46",
  "seahash",
+ "tinyvec",
+ "uuid",
+]
+
+[[package]]
+name = "rkyv"
+version = "0.8.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "815cc8a37159a463064825246cadb07961e25cd9885908606f6d08a98d8f8874"
+dependencies = [
+ "bytecheck 0.8.2",
+ "bytes",
+ "hashbrown 0.17.1",
+ "indexmap",
+ "munge",
+ "ptr_meta 0.3.1",
+ "rancor",
+ "rend 0.5.4",
+ "rkyv_derive 0.8.17",
  "tinyvec",
  "uuid",
 ]
@@ -3178,6 +3277,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "rkyv_derive"
+version = "0.8.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0ed1a78a1b19d184b0daa629dd9a024573173ec7d485b287cb369fb3607cc1c"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.118",
 ]
 
 [[package]]
@@ -3490,15 +3600,15 @@ name = "themis"
 version = "0.6.0"
 source = "git+https://github.com/ryancinsight/themis?rev=bdcddfe294f941ef2f84fd4ce38537906b0fec23#bdcddfe294f941ef2f84fd4ce38537906b0fec23"
 dependencies = [
- "melinoe 0.7.0 (git+https://github.com/ryancinsight/melinoe.git)",
+ "melinoe 0.8.0 (git+https://github.com/ryancinsight/melinoe.git)",
 ]
 
 [[package]]
 name = "themis"
 version = "0.9.17"
-source = "git+https://github.com/ryancinsight/themis#e87618a241c69502302da296767a9e3c0acc4906"
+source = "git+https://github.com/ryancinsight/themis#2b6a3ace712acad0a3a5107f0e5a10cb290f22d0"
 dependencies = [
- "melinoe 0.7.0 (git+https://github.com/ryancinsight/melinoe.git)",
+ "melinoe 0.8.0 (git+https://github.com/ryancinsight/melinoe.git)",
 ]
 
 [[package]]
@@ -4155,10 +4265,6 @@ dependencies = [
 ]
 
 [[patch.unused]]
-name = "coeus-optim"
-version = "0.5.5"
-
-[[patch.unused]]
 name = "moirai-http"
 version = "0.2.0"
 
@@ -4173,3 +4279,7 @@ version = "0.2.0"
 [[patch.unused]]
 name = "moirai-tls"
 version = "0.2.0"
+
+[[patch.unused]]
+name = "coeus-optim"
+version = "0.8.0"
