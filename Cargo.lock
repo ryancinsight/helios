@@ -549,7 +549,7 @@ dependencies = [
  "coeus-ops",
  "coeus-sparse",
  "coeus-tensor",
- "leto-ops 0.36.0",
+ "leto-ops",
  "smallvec",
  "thiserror 2.0.18",
 ]
@@ -574,7 +574,7 @@ version = "0.8.0"
 dependencies = [
  "coeus-core",
  "leto",
- "leto-ops 0.36.0",
+ "leto-ops",
 ]
 
 [[package]]
@@ -587,7 +587,7 @@ dependencies = [
  "coeus-sparse",
  "coeus-tensor",
  "half",
- "leto-ops 0.36.0",
+ "leto-ops",
  "melinoe",
  "smallvec",
  "thiserror 2.0.18",
@@ -1476,7 +1476,7 @@ version = "0.13.0"
 dependencies = [
  "bytemuck",
  "leto",
- "themis",
+ "themis 0.10.0",
  "thiserror 2.0.18",
 ]
 
@@ -1487,13 +1487,13 @@ dependencies = [
  "bytemuck",
  "hephaestus-core",
  "leto",
- "leto-ops 0.36.0 (git+https://github.com/ryancinsight/leto.git?rev=8651dfc18c25b9cec0ff96ad90c61c4fc2132be9)",
+ "leto-ops",
  "mnemosyne-core",
  "moirai",
  "moirai-gpu",
  "moirai-sync",
  "num-complex",
- "themis",
+ "themis 0.10.0",
  "wgpu",
  "windows 0.62.2",
 ]
@@ -1508,7 +1508,7 @@ dependencies = [
  "hermes-simd-intrinsics",
  "hermes-simd-macros",
  "hermes-simd-types",
- "themis",
+ "themis 0.9.17",
 ]
 
 [[package]]
@@ -1520,7 +1520,7 @@ dependencies = [
  "half",
  "mnemosyne",
  "rkyv 0.7.46",
- "themis",
+ "themis 0.9.17",
 ]
 
 [[package]]
@@ -1933,22 +1933,7 @@ dependencies = [
  "hermes-simd",
  "leto",
  "moirai",
- "themis",
- "thiserror 2.0.18",
-]
-
-[[package]]
-name = "leto-ops"
-version = "0.36.0"
-source = "git+https://github.com/ryancinsight/leto.git?rev=8651dfc18c25b9cec0ff96ad90c61c4fc2132be9#8651dfc18c25b9cec0ff96ad90c61c4fc2132be9"
-dependencies = [
- "bytemuck",
- "eunomia",
- "half",
- "hermes-simd",
- "leto",
- "moirai",
- "themis",
+ "themis 0.10.0",
  "thiserror 2.0.18",
 ]
 
@@ -2081,7 +2066,7 @@ dependencies = [
  "eunomia",
  "mnemosyne-backend",
  "mnemosyne-core",
- "themis",
+ "themis 0.9.17",
 ]
 
 [[package]]
@@ -2125,7 +2110,7 @@ dependencies = [
  "mnemosyne-core",
  "mnemosyne-local",
  "mnemosyne-prof",
- "themis",
+ "themis 0.9.17",
 ]
 
 [[package]]
@@ -2139,7 +2124,7 @@ dependencies = [
  "mnemosyne-core",
  "mnemosyne-decay",
  "mnemosyne-prof",
- "themis",
+ "themis 0.9.17",
 ]
 
 [[package]]
@@ -2211,7 +2196,7 @@ dependencies = [
  "mnemosyne-core",
  "moirai-core",
  "moirai-utils",
- "themis",
+ "themis 0.10.0",
 ]
 
 [[package]]
@@ -2225,7 +2210,7 @@ dependencies = [
  "moirai-scheduler",
  "moirai-utils",
  "num_cpus",
- "themis",
+ "themis 0.10.0",
  "thiserror 1.0.69",
 ]
 
@@ -2259,7 +2244,7 @@ dependencies = [
  "moirai-core",
  "moirai-utils",
  "num_cpus",
- "themis",
+ "themis 0.10.0",
 ]
 
 [[package]]
@@ -2563,9 +2548,9 @@ checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
 
 [[package]]
 name = "ordered-float"
-version = "5.0.0"
+version = "5.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2c1f9f56e534ac6a9b8a4600bdf0f530fb393b5f393e7b4d03489c3cf0c3f01"
+checksum = "b7d950ca161dc355eaf28f82b11345ed76c6e1f6eb1f4f4479e0323b9e2fbd0e"
 dependencies = [
  "num-traits",
 ]
@@ -3576,6 +3561,14 @@ dependencies = [
 [[package]]
 name = "themis"
 version = "0.9.17"
+source = "git+https://github.com/ryancinsight/themis?rev=6140468c79279ec8f112641ea7422cef4688c7f6#6140468c79279ec8f112641ea7422cef4688c7f6"
+dependencies = [
+ "melinoe",
+]
+
+[[package]]
+name = "themis"
+version = "0.10.0"
 dependencies = [
  "melinoe",
 ]
