@@ -1476,7 +1476,7 @@ version = "0.13.0"
 dependencies = [
  "bytemuck",
  "leto",
- "themis 0.10.0",
+ "themis",
  "thiserror 2.0.18",
 ]
 
@@ -1493,7 +1493,7 @@ dependencies = [
  "moirai-gpu",
  "moirai-sync",
  "num-complex",
- "themis 0.10.0",
+ "themis",
  "wgpu",
  "windows 0.62.2",
 ]
@@ -1508,7 +1508,7 @@ dependencies = [
  "hermes-simd-intrinsics",
  "hermes-simd-macros",
  "hermes-simd-types",
- "themis 0.9.17",
+ "themis",
 ]
 
 [[package]]
@@ -1520,7 +1520,7 @@ dependencies = [
  "half",
  "mnemosyne",
  "rkyv 0.7.46",
- "themis 0.9.17",
+ "themis",
 ]
 
 [[package]]
@@ -1933,7 +1933,7 @@ dependencies = [
  "hermes-simd",
  "leto",
  "moirai",
- "themis 0.10.0",
+ "themis",
  "thiserror 2.0.18",
 ]
 
@@ -2066,7 +2066,7 @@ dependencies = [
  "eunomia",
  "mnemosyne-backend",
  "mnemosyne-core",
- "themis 0.9.17",
+ "themis",
 ]
 
 [[package]]
@@ -2110,7 +2110,7 @@ dependencies = [
  "mnemosyne-core",
  "mnemosyne-local",
  "mnemosyne-prof",
- "themis 0.9.17",
+ "themis",
 ]
 
 [[package]]
@@ -2124,7 +2124,7 @@ dependencies = [
  "mnemosyne-core",
  "mnemosyne-decay",
  "mnemosyne-prof",
- "themis 0.9.17",
+ "themis",
 ]
 
 [[package]]
@@ -2159,12 +2159,22 @@ version = "0.2.0"
 dependencies = [
  "futures",
  "libc",
+ "moirai-async-macros",
  "moirai-core",
  "moirai-executor",
  "moirai-pal",
  "moirai-transport",
  "moirai-utils",
  "socket2",
+]
+
+[[package]]
+name = "moirai-async-macros"
+version = "0.2.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.118",
 ]
 
 [[package]]
@@ -2196,7 +2206,7 @@ dependencies = [
  "mnemosyne-core",
  "moirai-core",
  "moirai-utils",
- "themis 0.10.0",
+ "themis",
 ]
 
 [[package]]
@@ -2210,7 +2220,7 @@ dependencies = [
  "moirai-scheduler",
  "moirai-utils",
  "num_cpus",
- "themis 0.10.0",
+ "themis",
  "thiserror 1.0.69",
 ]
 
@@ -2244,7 +2254,7 @@ dependencies = [
  "moirai-core",
  "moirai-utils",
  "num_cpus",
- "themis 0.10.0",
+ "themis",
 ]
 
 [[package]]
@@ -3390,9 +3400,9 @@ checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
 name = "simd-adler32"
-version = "0.3.9"
+version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "703d5c7ef118737c72f1af64ad2f6f8c5e1921f818cdcb97b8fe6fc69bf66214"
+checksum = "3a219298ac11a56ea9a6d2120044824d6f01aeb034955e7af7bc16858527deea"
 
 [[package]]
 name = "simd_helpers"
@@ -3556,14 +3566,6 @@ checksum = "230a1b821ccbd75b185820a1f1ff7b14d21da1e442e22c0863ea5f08771a8874"
 dependencies = [
  "rustix",
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "themis"
-version = "0.9.17"
-source = "git+https://github.com/ryancinsight/themis?rev=6140468c79279ec8f112641ea7422cef4688c7f6#6140468c79279ec8f112641ea7422cef4688c7f6"
-dependencies = [
- "melinoe",
 ]
 
 [[package]]
