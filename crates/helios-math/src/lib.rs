@@ -16,7 +16,7 @@
 //! ## Geometry
 //!
 //! The linear-algebra substrate — vectors, points, and rigid transforms — comes
-//! from [`leto`] ([`Vector3`], [`Point3`], [`Isometry3`], …) and is re-exported
+//! from [`leto`] ([`Vector3`], [`Point3`], [`leto::geometry::Isometry3`], …) and is re-exported
 //! here. Higher-level geometry *primitives* (axis-aligned boxes, rays and their
 //! intersection, meshes, CSG solids) are owned by the **gaia** geometry kernel,
 //! not by Helios: `gaia::Aabb`/`gaia::Ray` are the canonical types, consumed once

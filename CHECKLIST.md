@@ -6,6 +6,19 @@
 
 ## Owner: claude-helios
 
+### H-061 done — all runnable examples and DICOM graph audited (2026-07-14)
+
+The three existing examples (`validate_foundation_units`,
+`voxel_grid_construction`, and `tomotherapy_workflow`) compile with
+`cargo check --workspace --examples --all-features` and
+`cargo build --workspace --examples --all-features` against the synchronized
+Atlas graph. The mdBook relative-link audit passes for `docs/book/SUMMARY.md`.
+Helios now enables dicom-rs `pixeldata` without its optional `ndarray` feature;
+pixel decoding remains owned by `ritk-dicom`. `cargo metadata --locked` passes,
+and the lockfile contains no `ndarray` package entry. Evidence tier: compile-
+time/build verification plus manifest/lockfile inspection; mdBook rendering is
+not claimed because `mdbook` is not installed on this host.
+
 ### H-020k done — gaia-`Aabb` collimator field aperture + delivery collimation (jaw field-shaping + penumbra). Next: H-011b NIST μ/ρ / wire aperture into the dose pipeline / oriented-scatter perf — `todo`
 
 `helios-domain::FieldAperture` (open field = gaia `Aabb`, geometric edge penumbra via box

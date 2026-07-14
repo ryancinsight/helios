@@ -74,11 +74,11 @@ approx = "0.5"
 ritk-core = { git = "https://github.com/ryancinsight/ritk" }
 ritk-io = { git = "https://github.com/ryancinsight/ritk" }
 ritk-registration = { git = "https://github.com/ryancinsight/ritk" }
-# Native DICOM parse/decode (CT/MVCT real-input path). ritk-dicom is clean of the
-# Atlas numeric cluster (anyhow/arrayvec/dicom-rs/ritk-codecs only); `dicom` is
-# dicom-rs, used directly for attribute (Tag) reads on the parsed object.
+# Native DICOM parse/decode (CT/MVCT real-input path). ritk-dicom owns the pixel
+# decode boundary; Helios uses dicom-rs only for typed attribute reads and does
+# not enable dicom-rs's optional ndarray representation.
 ritk-dicom = { git = "https://github.com/ryancinsight/ritk" }
-dicom = { version = "0.8", default-features = false, features = ["pixeldata", "ndarray"] }
+dicom = { version = "0.8", default-features = false, features = ["pixeldata"] }
 # Geometry kernel (binary MLC, collimators, jaws, patient meshes).
 gaia = { git = "https://github.com/ryancinsight/gaia", default-features = false }
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.
@@ -143,7 +143,6 @@ consus-compression = { path = "../consus/crates/consus-compression" }
 coeus-core = { path = "../coeus/coeus-core" }
 coeus-tensor = { path = "../coeus/coeus-tensor" }
 coeus-autograd = { path = "../coeus/coeus-autograd" }
-coeus-optim = { path = "../coeus/coeus-optim" }
 
 [patch."https://github.com/ryancinsight/hephaestus"]
 hephaestus-core = { path = "../hephaestus/crates/hephaestus-core" }
@@ -173,14 +172,20 @@ moirai-executor = { path = "../moirai/moirai-executor" }
 moirai-transport = { path = "../moirai/moirai-transport" }
 moirai-iter = { path = "../moirai/moirai-iter" }
 moirai-pal = { path = "../moirai/moirai-pal" }
-moirai-tls = { path = "../moirai/moirai-tls" }
-moirai-http = { path = "../moirai/moirai-http" }
-moirai-python = { path = "../moirai/moirai-python" }
 moirai-utils = { path = "../moirai/moirai-utils" }
-moirai-metrics = { path = "../moirai/moirai-metrics" }
 
 [patch."https://github.com/ryancinsight/hermes.git"]
 hermes-simd = { path = "../hermes/crates/hermes-simd" }
+
+# themis/melinoe: hephaestus-core (patched to local path) depends on the git
+# themis which in turn requires melinoe ^0.7.0; redirect both to the local
+# synchronized checkouts so the whole graph resolves against ONE melinoe version
+# (0.9.x), and hephaestus/helios-gpu compile cleanly from this workspace root.
+[patch."https://github.com/ryancinsight/themis"]
+themis = { path = "../themis" }
+
+[patch."https://github.com/ryancinsight/melinoe.git"]
+melinoe = { path = "../melinoe" }
 
 [profile.dev]
 opt-level = 1

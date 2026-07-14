@@ -231,7 +231,7 @@ const GEOMETRY_TOL_MM: f64 = 1.0e-3;
 /// # Errors
 /// [`HeliosError::Dicom`] if `paths` is empty, any slice fails to load, the slices
 /// disagree in in-plane geometry, or the z spacing is non-uniform (beyond
-/// [`GEOMETRY_TOL_MM`]); [`HeliosError::InvalidDomainValue`] if the derived grid is
+/// `GEOMETRY_TOL_MM`); [`HeliosError::InvalidDomainValue`] if the derived grid is
 /// invalid (e.g. duplicate slice positions → zero spacing).
 pub fn load_ct_series<T: Scalar, P: AsRef<std::path::Path>>(
     paths: &[P],

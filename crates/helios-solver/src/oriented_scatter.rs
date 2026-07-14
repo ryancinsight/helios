@@ -29,7 +29,7 @@ use helios_math::{GeometryScalar, NumericElement, Point3, Vector3};
 /// matching the axis convolution). This is **convolution**, not correlation: a
 /// downstream-weighted tap (signed offset `t − center > 0`) gathers from the
 /// upstream source, carrying energy forward along `direction` — the same sign
-/// convention as [`scatter`](crate::scatter).
+/// convention as the axis-aligned scatter implementation.
 ///
 /// `direction` is assumed unit-length; pass the beam's forward unit vector.
 #[must_use]

@@ -7,6 +7,11 @@ under a Breaking subsection.
 
 ## [0.0.1] — Unreleased (Sprint 1: Foundation)
 
+### Changed
+- H-061: validated all three runnable examples against the synchronized Atlas
+  provider graph and removed Helios's direct dicom-rs `ndarray` feature
+  activation; `ritk-dicom` remains the pixel-decoding owner.
+
 ### Added
 - Cargo workspace skeleton (`edition = "2021"`, `resolver = "2"`) with
   `workspace.package`/`workspace.lints`/`workspace.dependencies` SSOT declaring the
