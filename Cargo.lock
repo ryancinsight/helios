@@ -549,7 +549,7 @@ dependencies = [
  "coeus-ops",
  "coeus-sparse",
  "coeus-tensor",
- "leto-ops 0.36.0",
+ "leto-ops",
  "smallvec",
  "thiserror 2.0.18",
 ]
@@ -574,7 +574,7 @@ version = "0.8.0"
 dependencies = [
  "coeus-core",
  "leto",
- "leto-ops 0.36.0",
+ "leto-ops",
 ]
 
 [[package]]
@@ -587,7 +587,7 @@ dependencies = [
  "coeus-sparse",
  "coeus-tensor",
  "half",
- "leto-ops 0.36.0",
+ "leto-ops",
  "melinoe",
  "smallvec",
  "thiserror 2.0.18",
@@ -1487,7 +1487,7 @@ dependencies = [
  "bytemuck",
  "hephaestus-core",
  "leto",
- "leto-ops 0.36.0 (git+https://github.com/ryancinsight/leto.git?rev=8651dfc18c25b9cec0ff96ad90c61c4fc2132be9)",
+ "leto-ops",
  "mnemosyne-core",
  "moirai",
  "moirai-gpu",
@@ -1938,21 +1938,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "leto-ops"
-version = "0.36.0"
-source = "git+https://github.com/ryancinsight/leto.git?rev=8651dfc18c25b9cec0ff96ad90c61c4fc2132be9#8651dfc18c25b9cec0ff96ad90c61c4fc2132be9"
-dependencies = [
- "bytemuck",
- "eunomia",
- "half",
- "hermes-simd",
- "leto",
- "moirai",
- "themis",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "libc"
 version = "0.2.186"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2174,12 +2159,22 @@ version = "0.2.0"
 dependencies = [
  "futures",
  "libc",
+ "moirai-async-macros",
  "moirai-core",
  "moirai-executor",
  "moirai-pal",
  "moirai-transport",
  "moirai-utils",
  "socket2",
+]
+
+[[package]]
+name = "moirai-async-macros"
+version = "0.2.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.118",
 ]
 
 [[package]]
@@ -2563,9 +2558,9 @@ checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
 
 [[package]]
 name = "ordered-float"
-version = "5.0.0"
+version = "5.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2c1f9f56e534ac6a9b8a4600bdf0f530fb393b5f393e7b4d03489c3cf0c3f01"
+checksum = "b7d950ca161dc355eaf28f82b11345ed76c6e1f6eb1f4f4479e0323b9e2fbd0e"
 dependencies = [
  "num-traits",
 ]
@@ -3405,9 +3400,9 @@ checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
 name = "simd-adler32"
-version = "0.3.9"
+version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "703d5c7ef118737c72f1af64ad2f6f8c5e1921f818cdcb97b8fe6fc69bf66214"
+checksum = "3a219298ac11a56ea9a6d2120044824d6f01aeb034955e7af7bc16858527deea"
 
 [[package]]
 name = "simd_helpers"
@@ -3575,7 +3570,7 @@ dependencies = [
 
 [[package]]
 name = "themis"
-version = "0.9.17"
+version = "0.10.0"
 dependencies = [
  "melinoe",
 ]

@@ -123,6 +123,11 @@ apollo = { git = "https://github.com/ryancinsight/apollo", package = "apollo-fft
 # breaking change also updating kwavers), these patches can be dropped.
 [patch."https://github.com/ryancinsight/leto"]
 leto = { path = "../leto/crates/leto" }
+leto-ops = { path = "../leto/crates/leto-ops" }
+
+[patch."https://github.com/ryancinsight/leto.git"]
+leto = { path = "../leto/crates/leto" }
+leto-ops = { path = "../leto/crates/leto-ops" }
 
 [patch."https://github.com/ryancinsight/eunomia"]
 eunomia = { path = "../eunomia/crates/eunomia" }
