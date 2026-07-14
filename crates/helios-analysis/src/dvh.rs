@@ -25,7 +25,7 @@ impl<T: Scalar> Dvh<T> {
 
     /// Build a **structure-masked** DVH from the voxels of `dose` for which
     /// `include(idx)` is true — the per-structure (PTV / OAR) DVH clinical plan
-    /// evaluation and DVH-agreement metrics operate on. [`from_volume`] is the
+    /// evaluation and DVH-agreement metrics operate on. [`Self::from_volume`] is the
     /// whole-volume case (`include ≡ true`).
     ///
     /// The mask predicate is the segmentation contour (an ROI binary mask, e.g.

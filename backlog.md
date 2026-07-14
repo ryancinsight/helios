@@ -6,6 +6,12 @@ gaps → architecture drift → missing tests → docs → PM cleanup.
 
 Status: `todo` · `in-progress` · `review` · `done`
 
+## Current integration slice — 2026-07-14
+
+| ID | Item | Class | Status | Owner | Scope |
+|----|------|-------|--------|-------|-------|
+| H-061 | Compile and audit the three runnable examples against the synchronized Atlas graph; keep the mdBook chapter layout forward-compatible; remove Helios's direct dicom-rs `ndarray` feature activation. | [patch] | done | Codex | `Cargo.toml`, `Cargo.lock`, `crates/*/examples/**`, `docs/book/**`, PM artifacts |
+
 ## Sprint 1 — Foundation
 
 | ID | Item | Class | Status | Owner | Scope |

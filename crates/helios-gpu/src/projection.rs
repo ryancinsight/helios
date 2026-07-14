@@ -17,8 +17,8 @@ use hephaestus_wgpu::{ray_line_integrals_into, FieldGeometry, WgpuBuffer, WgpuDe
 /// projection.
 ///
 /// The μ field (cm⁻¹ on a mm grid, matching the CPU projector's convention) is
-/// uploaded at construction and reused across every [`project_into`]
-/// (Self::project_into) call — the amortization that makes the GPU path pay.
+/// uploaded at construction and reused across every [`Self::project_into`]
+/// call — the amortization that makes the GPU path pay.
 pub struct GpuProjector {
     field: WgpuBuffer<f32>,
     geometry: FieldGeometry,
