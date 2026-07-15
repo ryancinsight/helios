@@ -31,6 +31,10 @@ geometry-independent physics lands first:
    (`μ=(μ/ρ)·ρ`, Beer–Lambert, calibration); concrete NIST XCOM μ/ρ *tables* are
    data loaded by H-011b. Tests assert the relations (analytical oracles), never a
    memorized cross-section digit — no fabricated reference values.
+3. **DICOM provider ownership (H-064).** `ritk-dicom` is the sole Helios-facing
+   DICOM boundary. Helios consumes its typed tags, attribute-read trait, parser,
+   and frame decoder; the dicom-rs implementation remains internal to the RITK
+   provider. Helios does not depend on dicom-rs directly, including its tests.
 
 ## Delivered (this increment)
 
