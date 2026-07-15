@@ -36,6 +36,13 @@ target closure.
   `ritk-dicom` public tags, attribute-read trait, parser, transfer-syntax, and
   decoder contracts. Production and test scans contain no direct `dicom::`
   imports; the focused provider-backed domain suite remains 41/41.
+
+- **G-22 — RESOLVED (H-065).** Helios's lockfile still selected Moirai 0.2.0
+  after the upstream 0.3.0 release retired its unowned NUMA iterator and
+  benchmark. The regenerated lockfile selects 0.3.0 for every Moirai package;
+  `cargo check --workspace --examples --all-features` compiles the complete
+  example graph. Evidence tier: compiler-checked dependency resolution and
+  example compilation.
   Evidence tier: dependency/identifier scan plus value-semantic nextest.
 
 - **G-14 — RESOLVED (H-003c).** The concurrent leto geometry rewrite settled: leto

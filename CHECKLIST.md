@@ -48,6 +48,15 @@
   workspace nextest tests, doctests, rustdoc, and provider-backed DICOM checks
   pass.
 
+## Codex — H-065 Moirai 0.3 provider-graph refresh [patch] — done 2026-07-15
+
+- [x] Regenerated `Cargo.lock` after Moirai 0.3.0 retired the unowned NUMA
+  iterator and benchmark. Helios does not consume that removed surface.
+- [x] `cargo check --workspace --examples --all-features` resolves every
+  Moirai package at 0.3.0 and compiles the complete example graph.
+- [x] Evidence tier: compiler-checked dependency resolution and example
+  compilation; this lock-only change adds no Helios behavior.
+
 ### H-061 done — all runnable examples and DICOM graph audited (2026-07-14)
 
 The three existing examples (`validate_foundation_units`,

@@ -8,6 +8,9 @@ under a Breaking subsection.
 ## [0.0.1] — Unreleased (Sprint 1: Foundation)
 
 ### Changed
+- H-065: refreshed the locked Moirai provider graph to 0.3.0 after the
+  provider-owned NUMA iterator retirement; all Helios examples compile against
+  the resolved release graph.
 - H-064: moved Helios DICOM parsing, typed attribute access, transfer-syntax
   selection, pixel decoding, and synthetic-input verification behind the
   `ritk-dicom` public API. Removed Helios's direct `dicom` dependency; the
