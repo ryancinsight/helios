@@ -17,10 +17,22 @@
   Focused nextest passes 34/34.
 - [x] Criterion evidence is recorded in
   `validation_reports/2026-07-15-dvh-query-optimization.md`; warning-denied
-  Clippy, doctest, and rustdoc pass for `helios-analysis`. Workspace-wide
-  examples remain blocked by the pre-existing peer-owned DICOM graph mismatch
-  recorded in `gap_audit.md`; `Cargo.lock` is intentionally excluded from this
-  increment.
+  Clippy, doctest, and rustdoc pass for `helios-analysis`. The workspace-wide
+  DICOM graph mismatch identified during this audit is resolved by H-063.
+
+## Codex — H-063 DICOM provider graph alignment [patch] — done 2026-07-15
+
+- [x] Changed the direct Helios `dicom` dependency from 0.8 to 0.10, matching
+  the `ritk-dicom` provider and eliminating duplicate `dicom-core` types at
+  `helios-domain`'s typed attribute boundary.
+- [x] Regenerated `Cargo.lock`; the resolved DICOM packages are all 0.10.0 and
+  the workspace no longer carries a DICOM 0.8 package.
+- [x] Locked workspace example check, all-target all-feature Clippy, workspace
+  nextest, doctests, and rustdoc pass. The DICOM-focused domain suite passes
+  41/41, including synthetic slice/series round trips and typed error paths.
+- [x] The former four E0308 errors in `crates/helios-domain/src/dicom.rs` are
+  absent after the provider graph alignment. Evidence tier: compile-time
+  dependency/type verification plus value-semantic nextest coverage.
 
 ### H-061 done — all runnable examples and DICOM graph audited (2026-07-14)
 

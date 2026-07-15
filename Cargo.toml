@@ -78,7 +78,7 @@ ritk-registration = { git = "https://github.com/ryancinsight/ritk" }
 # decode boundary; Helios uses dicom-rs only for typed attribute reads and does
 # not enable dicom-rs's optional ndarray representation.
 ritk-dicom = { git = "https://github.com/ryancinsight/ritk" }
-dicom = { version = "0.8", default-features = false, features = ["pixeldata"] }
+dicom = { version = "0.10", default-features = false, features = ["pixeldata"] }
 # Geometry kernel (binary MLC, collimators, jaws, patient meshes).
 gaia = { git = "https://github.com/ryancinsight/gaia", default-features = false }
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.

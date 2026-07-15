@@ -8,6 +8,10 @@ under a Breaking subsection.
 ## [0.0.1] — Unreleased (Sprint 1: Foundation)
 
 ### Changed
+- H-063: aligned Helios's direct DICOM dependency with the `ritk-dicom`
+  provider at version 0.10.0 and regenerated the lockfile. The workspace now
+  resolves one `dicom-core` type across the DICOM boundary; the four former
+  `helios-domain` E0308 errors are closed.
 - H-062: `helios-analysis::Dvh::volume_fraction_at_dose` now uses a
   zero-allocation binary lower bound over its sorted sample instead of scanning
   every voxel for each threshold query. NaN-containing samples retain the

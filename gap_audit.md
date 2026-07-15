@@ -21,6 +21,15 @@ target closure.
   Criterion comparison plus value-semantic/differential boundary tests; see
   `validation_reports/2026-07-15-dvh-query-optimization.md`.
 
+- **G-20 — RESOLVED (H-063).** Helios's direct DICOM dependency declared 0.8
+  while the local `ritk-dicom` provider supplied `dicom-object` 0.10. The
+  resulting duplicate `dicom_core::Tag` types caused four E0308 errors in
+  `helios-domain/src/dicom.rs` during the workspace example check. Helios now
+  declares DICOM 0.10, and the lockfile resolves one DICOM 0.10.0 graph across
+  Helios and `ritk-dicom`. Locked workspace examples, all-target all-feature
+  Clippy, 261/261 workspace nextest tests, doctests, and rustdoc pass. Evidence
+  tier: compile-time dependency/type verification plus value-semantic tests.
+
 - **G-14 — RESOLVED (H-003c).** The concurrent leto geometry rewrite settled: leto
   and gaia now build against the new `leto::geometry` API (Vector3/Point3 with
   `.x/.y/.z` fields; `Isometry3` reduced to `{rotation, translation}`). Helios was
@@ -235,18 +244,10 @@ target closure.
 
 ## Residual risk register
 
-- **Workspace DICOM graph blocker (peer-owned, reproduced 2026-07-15).** The
-  dirty `Cargo.lock` graph resolves Helios's direct `dicom` feature at 0.8 while
-  local `ritk-dicom` supplies `dicom-object` 0.10. `helios-domain/src/dicom.rs`
-  therefore passes a 0.8 `dicom_core::Tag` to a 0.10 `dicom-object::element`,
-  producing four E0308 errors under
-  `cargo check --workspace --examples --all-features`. The lockfile and DICOM
-  source are peer-owned and excluded from H-062; no workspace-wide green claim
-  is made until the peer aligns the single DICOM version at that boundary.
 - Atlas upstream APIs may drift (multi-repo co-evolution); Helios pins the local
   synchronized checkout via `[patch]` and commits `Cargo.lock`. `ritk-dicom` is now
   consumed (H-004b) and is **skew-free** (no leto/mnemosyne/themis/eunomia cluster —
-  only anyhow/arrayvec/dicom-rs 0.8/ritk-codecs), so it needed no patch-cluster work.
+  only anyhow/arrayvec/dicom-rs 0.10/ritk-codecs), so it needed no patch-cluster work.
   Remaining ritk surfaces (`ritk-registration`) pull the burn stack and are heavier
   (G-5); add cross-repo contract tests as each is consumed.
 - **G-18 — RESOLVED (H-043b).** The residency step landed: hephaestus gained a volume
