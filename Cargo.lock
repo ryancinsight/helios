@@ -1951,7 +1951,7 @@ dependencies = [
 
 [[package]]
 name = "moirai"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "melinoe",
  "mnemosyne",
@@ -1968,7 +1968,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-async"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "futures",
  "libc",
@@ -1983,7 +1983,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-async-macros"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1992,7 +1992,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-core"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bytemuck",
  "libc",
@@ -2002,7 +2002,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-executor"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "melinoe",
  "mnemosyne",
@@ -2014,7 +2014,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-gpu"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "mnemosyne-core",
  "moirai-core",
@@ -2024,7 +2024,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-iter"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "futures",
  "libc",
@@ -2039,7 +2039,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-pal"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "js-sys",
  "libc",
@@ -2053,7 +2053,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-parallel"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "melinoe",
  "moirai-executor",
@@ -2061,7 +2061,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-scheduler"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "mnemosyne",
  "moirai-core",
@@ -2072,7 +2072,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-sync"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "libc",
  "moirai-core",
@@ -2081,7 +2081,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-transport"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bytemuck",
  "moirai-core",
@@ -2091,7 +2091,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-utils"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "moxcms"
