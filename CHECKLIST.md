@@ -6,6 +6,18 @@
 
 ## Owner: claude-helios
 
+## Codex — H-062 DVH threshold-query audit [patch]
+
+- [ ] Confirm the sorted-sample invariant and establish a fixed-workload
+  Criterion comparison between the current full scan and the binary-bound
+  implementation.
+- [ ] Implement the query through the canonical sorted slice with no new
+  allocation or compatibility path; preserve exact threshold semantics.
+- [ ] Add positive, boundary, empty-admission, and generic scalar tests; run
+  format, warning-denied Clippy, nextest, doctest, rustdoc, and the benchmark.
+- [ ] Record measured evidence and residual risk in `gap_audit.md` and
+  `CHANGELOG.md`, then commit and push the verified increment.
+
 ### H-061 done — all runnable examples and DICOM graph audited (2026-07-14)
 
 The three existing examples (`validate_foundation_units`,

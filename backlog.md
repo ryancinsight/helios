@@ -11,6 +11,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 | ID | Item | Class | Status | Owner | Scope |
 |----|------|-------|--------|-------|-------|
 | H-061 | Compile and audit the three runnable examples against the synchronized Atlas graph; keep the mdBook chapter layout forward-compatible; remove Helios's direct dicom-rs `ndarray` feature activation. | [patch] | done | Codex | `Cargo.toml`, `Cargo.lock`, `crates/*/examples/**`, `docs/book/**`, PM artifacts |
+| H-062 | Reduce repeated DVH threshold-query work without changing the sorted-sample contract; compare linear and binary-bound query paths with value-semantic boundary coverage. | [patch] | in-progress | Codex | `crates/helios-analysis/src/dvh.rs`, `crates/helios-analysis/benches/**`, `CHECKLIST.md`, `gap_audit.md`, `CHANGELOG.md` |
 
 ## Sprint 1 — Foundation
 
