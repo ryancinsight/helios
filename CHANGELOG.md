@@ -8,6 +8,12 @@ under a Breaking subsection.
 ## [0.0.1] — Unreleased (Sprint 1: Foundation)
 
 ### Changed
+- H-062: `helios-analysis::Dvh::volume_fraction_at_dose` now uses a
+  zero-allocation binary lower bound over its sorted sample instead of scanning
+  every voxel for each threshold query. NaN-containing samples retain the
+  previous filter semantics through an explicit fallback. The fixed Criterion
+  comparison is recorded in
+  `validation_reports/2026-07-15-dvh-query-optimization.md`.
 - H-061: validated all three runnable examples against the synchronized Atlas
   provider graph and removed Helios's direct dicom-rs `ndarray` feature
   activation; `ritk-dicom` remains the pixel-decoding owner.

@@ -8,6 +8,19 @@ target closure.
 
 ### Recently closed
 
+- **G-19 — RESOLVED (H-062).** Repeated `Dvh::volume_fraction_at_dose` queries
+  previously scanned the complete sorted sample for every threshold, which made
+  a plan with `q` DVH queries O(q·n). The query now uses a zero-allocation
+  `partition_point` lower bound over the existing sorted slice, reducing the
+  finite/infinite path to O(q·log n). A `contains_nan` marker preserves the
+  previous `>=` filter semantics for unordered samples, and a NaN threshold
+  returns zero as before. The fixed 64³/1,024-query Criterion workload measured
+  30.090 ms [29.717, 30.472] for the scan reference and 29.229 μs [28.426,
+  30.023] for production after the change; the paired median ratio is 1,029×.
+  Value-semantic focused nextest passes 34/34. Evidence tier: empirical
+  Criterion comparison plus value-semantic/differential boundary tests; see
+  `validation_reports/2026-07-15-dvh-query-optimization.md`.
+
 - **G-14 — RESOLVED (H-003c).** The concurrent leto geometry rewrite settled: leto
   and gaia now build against the new `leto::geometry` API (Vector3/Point3 with
   `.x/.y/.z` fields; `Isometry3` reduced to `{rotation, translation}`). Helios was
@@ -222,6 +235,14 @@ target closure.
 
 ## Residual risk register
 
+- **Workspace DICOM graph blocker (peer-owned, reproduced 2026-07-15).** The
+  dirty `Cargo.lock` graph resolves Helios's direct `dicom` feature at 0.8 while
+  local `ritk-dicom` supplies `dicom-object` 0.10. `helios-domain/src/dicom.rs`
+  therefore passes a 0.8 `dicom_core::Tag` to a 0.10 `dicom-object::element`,
+  producing four E0308 errors under
+  `cargo check --workspace --examples --all-features`. The lockfile and DICOM
+  source are peer-owned and excluded from H-062; no workspace-wide green claim
+  is made until the peer aligns the single DICOM version at that boundary.
 - Atlas upstream APIs may drift (multi-repo co-evolution); Helios pins the local
   synchronized checkout via `[patch]` and commits `Cargo.lock`. `ritk-dicom` is now
   consumed (H-004b) and is **skew-free** (no leto/mnemosyne/themis/eunomia cluster —

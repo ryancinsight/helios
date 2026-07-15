@@ -18,3 +18,8 @@ helios-domain = { workspace = true }
 
 [dev-dependencies]
 approx = { workspace = true }
+criterion = { workspace = true }
+
+[[bench]]
+name = "dvh_queries"
+harness = false

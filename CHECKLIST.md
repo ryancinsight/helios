@@ -6,17 +6,21 @@
 
 ## Owner: claude-helios
 
-## Codex — H-062 DVH threshold-query audit [patch]
+## Codex — H-062 DVH threshold-query audit [patch] — done 2026-07-15
 
-- [ ] Confirm the sorted-sample invariant and establish a fixed-workload
-  Criterion comparison between the current full scan and the binary-bound
-  implementation.
-- [ ] Implement the query through the canonical sorted slice with no new
-  allocation or compatibility path; preserve exact threshold semantics.
-- [ ] Add positive, boundary, empty-admission, and generic scalar tests; run
-  format, warning-denied Clippy, nextest, doctest, rustdoc, and the benchmark.
-- [ ] Record measured evidence and residual risk in `gap_audit.md` and
-  `CHANGELOG.md`, then commit and push the verified increment.
+- [x] Confirmed the sorted-sample invariant and established the fixed-workload
+  Criterion comparison in `crates/helios-analysis/benches/dvh_queries.rs`.
+- [x] Replaced repeated full scans with the standard-library binary partition
+  over the canonical sorted slice; the query path allocates nothing. Samples
+  containing NaN retain the prior filter semantics through an explicit fallback.
+- [x] Added finite threshold boundary, NaN, and existing f32 genericity tests.
+  Focused nextest passes 34/34.
+- [x] Criterion evidence is recorded in
+  `validation_reports/2026-07-15-dvh-query-optimization.md`; warning-denied
+  Clippy, doctest, and rustdoc pass for `helios-analysis`. Workspace-wide
+  examples remain blocked by the pre-existing peer-owned DICOM graph mismatch
+  recorded in `gap_audit.md`; `Cargo.lock` is intentionally excluded from this
+  increment.
 
 ### H-061 done — all runnable examples and DICOM graph audited (2026-07-14)
 

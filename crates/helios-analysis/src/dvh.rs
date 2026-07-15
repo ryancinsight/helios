@@ -14,6 +14,8 @@ use helios_math::{NumericElement, Scalar};
 pub struct Dvh<T: Scalar> {
     /// Voxel doses, sorted ascending.
     sorted: Vec<T>,
+    /// Whether the sample contains NaN values that are not ordered by `<`.
+    contains_nan: bool,
 }
 
 impl<T: Scalar> Dvh<T> {
@@ -41,17 +43,23 @@ impl<T: Scalar> Dvh<T> {
     {
         let [nx, ny, nz] = dose.grid().dims();
         let mut sorted = Vec::new();
+        let mut contains_nan = false;
         for i in 0..nx {
             for j in 0..ny {
                 for k in 0..nz {
                     if include([i, j, k]) {
-                        sorted.push(dose.get(i, j, k).expect("index within grid"));
+                        let value = dose.get(i, j, k).expect("index within grid");
+                        contains_nan |= value.to_f64().is_nan();
+                        sorted.push(value);
                     }
                 }
             }
         }
         sorted.sort_by(|a, b| a.to_f64().total_cmp(&b.to_f64()));
-        Self { sorted }
+        Self {
+            sorted,
+            contains_nan,
+        }
     }
 
     /// Number of voxels contributing to the histogram.
@@ -86,7 +94,18 @@ impl<T: Scalar> Dvh<T> {
     /// Volume fraction (in `[0, 1]`) receiving **at least** `dose`.
     #[must_use]
     pub fn volume_fraction_at_dose(&self, dose: T) -> T {
-        let at_least = self.sorted.iter().filter(|&&d| d >= dose).count();
+        // NaN is unordered, so preserve the pre-indexed filter semantics for
+        // invalid samples instead of treating a NaN suffix as qualifying. For
+        // finite and infinite samples, the sorted invariant makes the lower
+        // bound exact and reduces repeated queries from O(n) to O(log n) with
+        // no allocation.
+        let at_least = if dose.to_f64().is_nan() {
+            0
+        } else if self.contains_nan {
+            self.sorted.iter().filter(|&&value| value >= dose).count()
+        } else {
+            self.sorted.len() - self.sorted.partition_point(|&value| value < dose)
+        };
         T::from_f64(at_least as f64) * T::from_f64(self.sorted.len() as f64).recip()
     }
 
@@ -263,6 +282,28 @@ mod tests {
                 max_relative = 1e-13
             );
         }
+    }
+
+    #[test]
+    fn threshold_query_preserves_boundary_and_nan_semantics() {
+        let g = VoxelGrid::axis_aligned([4, 1, 1], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
+            .expect("grid");
+        let finite = Volume::from_shape_fn(g, |[i, _, _]| i as f64);
+        let finite_dvh = Dvh::from_volume(&finite);
+        assert_eq!(finite_dvh.volume_fraction_at_dose(-1.0), 1.0);
+        assert_eq!(finite_dvh.volume_fraction_at_dose(0.0), 1.0);
+        assert_eq!(finite_dvh.volume_fraction_at_dose(3.0), 0.25);
+        assert_eq!(finite_dvh.volume_fraction_at_dose(4.0), 0.0);
+        assert_eq!(finite_dvh.volume_fraction_at_dose(f64::NAN), 0.0);
+
+        let with_nan = Volume::from_shape_fn(
+            VoxelGrid::axis_aligned([3, 1, 1], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
+                .expect("grid"),
+            |[i, _, _]| [1.0, f64::NAN, 3.0][i],
+        );
+        let nan_dvh = Dvh::from_volume(&with_nan);
+        assert_eq!(nan_dvh.volume_fraction_at_dose(1.0), 2.0 / 3.0);
+        assert_eq!(nan_dvh.volume_fraction_at_dose(2.0), 1.0 / 3.0);
     }
 
     #[test]
