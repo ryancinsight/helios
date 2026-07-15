@@ -8,6 +8,10 @@ under a Breaking subsection.
 ## [0.0.1] — Unreleased (Sprint 1: Foundation)
 
 ### Changed
+- H-064: moved Helios DICOM parsing, typed attribute access, transfer-syntax
+  selection, pixel decoding, and synthetic-input verification behind the
+  `ritk-dicom` public API. Removed Helios's direct `dicom` dependency; the
+  dicom-rs implementation is now an internal RITK provider detail.
 - H-063: aligned Helios's direct DICOM dependency with the `ritk-dicom`
   provider at version 0.10.0 and regenerated the lockfile. The workspace now
   resolves one `dicom-core` type across the DICOM boundary; the four former
@@ -401,12 +405,12 @@ under a Breaking subsection.
   single-path==single-slice equivalence and empty/non-uniform error paths. A real CT
   series can now drive the full pipeline.
 - `helios-domain::load_ct_slice` (H-004b, feature `dicom`): the real-input DICOM
-  boundary — parses a CT/MVCT slice with `ritk-dicom` (dicom-rs backend), decodes the
+  boundary — parses a CT/MVCT slice with the `ritk-dicom` provider, decodes the
   pixel frame with its `RescaleSlope`/`RescaleIntercept` calibration to Hounsfield
   units, and maps Rows/Columns/PixelSpacing/SliceThickness/ImagePositionPatient into a
   typed HU `Volume` on an axis-aligned `VoxelGrid`. **First consumption of the mandatory
-  `ritk` Atlas component.** Feature-gated so the dicom-rs parser stays out of the core
-  build (a complete impl, not a stub). Adds `HeliosError::Dicom`. Verified by a
+  `ritk` Atlas component.** Feature-gated so the RITK DICOM provider stays out of the
+  core build (a complete impl, not a stub). Adds `HeliosError::Dicom`. Verified by a
   deterministic synthetic-DICOM round-trip through the real parser (2×2 slice, raw
   [10,20,30,40] · slope 2 − 10 → HU [10,30,50,70], spacing/origin exact) and a
   missing-file error-path test. Multi-slice series stacking = H-004c.

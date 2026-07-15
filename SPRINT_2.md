@@ -18,8 +18,9 @@ geometry-independent physics lands first:
 - **Blocked on gaia geometry (G-11):** ray-marched line integral ∫μ dl (H-011c) and
   the GPU MVCT forward projector (H-012), which need `gaia::Ray` + voxel DDA once
   gaia's leto geometry reaches its default branch.
-- **Blocked on heavy build:** ritk-io DICOM (H-004b) — sequenced as its own
-  increment (ritk pulls burn wgpu+autodiff + dicom).
+- **Landed:** `ritk-dicom` DICOM CT/MVCT ingest (H-004b/H-004c) and the H-064
+  provider-boundary correction. `ritk-io` remains a separate higher-level I/O
+  surface and is not a Helios dependency for this path.
 
 ## Decisions (ADR-lite)
 

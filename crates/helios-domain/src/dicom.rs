@@ -11,30 +11,17 @@
 //! Multi-slice series stacking (sort by `ImagePositionPatient`, derive the z
 //! spacing) is a follow-up; this loads one slice (`nz = 1`).
 //!
-//! Feature-gated behind `dicom` so the heavy `dicom-rs` parser stays out of the
-//! core build. The feature gates a complete implementation, not a stub.
+//! Feature-gated behind `dicom` so the RITK DICOM provider stays out of the core
+//! build. The feature gates a complete implementation, not a stub.
 
 use crate::grid::VoxelGrid;
 use crate::volume::Volume;
-use dicom::core::Tag;
 use helios_core::HeliosError;
 use helios_math::{Point3, Scalar};
 use ritk_dicom::{
-    decode_frame_with, parse_file_with, DecodeFrameRequest, DicomRsBackend, PixelLayout,
-    PixelSignedness, TransferSyntaxKind,
+    decode_frame_with, parse_file_with, tags, DecodeFrameRequest, DicomAttributeRead,
+    DicomRsBackend, DicomTag, PixelLayout, PixelSignedness, TransferSyntaxKind,
 };
-
-// DICOM tags (group, element).
-const ROWS: Tag = Tag(0x0028, 0x0010);
-const COLUMNS: Tag = Tag(0x0028, 0x0011);
-const SAMPLES_PER_PIXEL: Tag = Tag(0x0028, 0x0002);
-const BITS_ALLOCATED: Tag = Tag(0x0028, 0x0100);
-const PIXEL_REPRESENTATION: Tag = Tag(0x0028, 0x0103);
-const RESCALE_INTERCEPT: Tag = Tag(0x0028, 0x1052);
-const RESCALE_SLOPE: Tag = Tag(0x0028, 0x1053);
-const PIXEL_SPACING: Tag = Tag(0x0028, 0x0030);
-const SLICE_THICKNESS: Tag = Tag(0x0018, 0x0050);
-const IMAGE_POSITION_PATIENT: Tag = Tag(0x0020, 0x0032);
 
 type Object = <DicomRsBackend as ritk_dicom::DicomParseBackend>::Object;
 
@@ -45,37 +32,44 @@ fn dicom_err(step: &str, e: impl core::fmt::Display) -> HeliosError {
 }
 
 /// Required unsigned-short attribute.
-fn req_usize(obj: &Object, tag: Tag, name: &'static str) -> Result<usize, HeliosError> {
-    let v: u16 = obj
-        .element(tag)
-        .map_err(|e| dicom_err(name, e))?
-        .value()
-        .to_int::<u16>()
-        .map_err(|e| dicom_err(name, e))?;
-    Ok(v as usize)
+fn req_usize(obj: &Object, tag: DicomTag, name: &'static str) -> Result<usize, HeliosError> {
+    obj.required_unsigned(tag, name)
+        .map(usize::from)
+        .map_err(|e| dicom_err(name, e))
 }
 
 /// Optional unsigned-short attribute with a default.
-fn opt_u16(obj: &Object, tag: Tag, default: u16) -> u16 {
-    obj.element(tag)
-        .ok()
-        .and_then(|e| e.value().to_int::<u16>().ok())
-        .unwrap_or(default)
+fn opt_u16(
+    obj: &Object,
+    tag: DicomTag,
+    name: &'static str,
+    default: u16,
+) -> Result<u16, HeliosError> {
+    obj.optional_unsigned(tag, name)
+        .map(|value| value.unwrap_or(default))
+        .map_err(|e| dicom_err(name, e))
 }
 
 /// Optional decimal-string scalar with a default.
-fn opt_f64(obj: &Object, tag: Tag, default: f64) -> f64 {
-    obj.element(tag)
-        .ok()
-        .and_then(|e| e.value().to_float64().ok())
-        .unwrap_or(default)
+fn opt_f64(
+    obj: &Object,
+    tag: DicomTag,
+    name: &'static str,
+    default: f64,
+) -> Result<f64, HeliosError> {
+    obj.optional_decimal(tag, name)
+        .map(|value| value.unwrap_or(default))
+        .map_err(|e| dicom_err(name, e))
 }
 
 /// Optional multi-valued decimal string.
-fn multi_f64(obj: &Object, tag: Tag) -> Option<Vec<f64>> {
-    obj.element(tag)
-        .ok()
-        .and_then(|e| e.value().to_multi_float64().ok())
+fn multi_f64(
+    obj: &Object,
+    tag: DicomTag,
+    name: &'static str,
+) -> Result<Option<Vec<f64>>, HeliosError> {
+    obj.optional_decimal_vec(tag, name)
+        .map_err(|e| dicom_err(name, e))
 }
 
 /// One parsed+decoded DICOM slice in native (f64/mm/HU) form, before it is mapped
@@ -98,31 +92,37 @@ struct SliceRaw {
 fn read_slice(path: &std::path::Path) -> Result<SliceRaw, HeliosError> {
     let obj = parse_file_with::<DicomRsBackend, _>(path).map_err(|e| dicom_err("parse", e))?;
 
-    let rows = req_usize(&obj, ROWS, "Rows")?;
-    let cols = req_usize(&obj, COLUMNS, "Columns")?;
-    let samples_per_pixel = opt_u16(&obj, SAMPLES_PER_PIXEL, 1) as usize;
-    let bits_allocated = opt_u16(&obj, BITS_ALLOCATED, 16);
-    let pixel_representation = if opt_u16(&obj, PIXEL_REPRESENTATION, 0) == 1 {
-        PixelSignedness::Signed
-    } else {
-        PixelSignedness::Unsigned
-    };
-    let rescale_slope = opt_f64(&obj, RESCALE_SLOPE, 1.0) as f32;
-    let rescale_intercept = opt_f64(&obj, RESCALE_INTERCEPT, 0.0) as f32;
+    let rows = req_usize(&obj, tags::ROWS, "Rows")?;
+    let cols = req_usize(&obj, tags::COLUMNS, "Columns")?;
+    let samples_per_pixel = usize::from(opt_u16(
+        &obj,
+        tags::SAMPLES_PER_PIXEL,
+        "SamplesPerPixel",
+        1,
+    )?);
+    let bits_allocated = opt_u16(&obj, tags::BITS_ALLOCATED, "BitsAllocated", 16)?;
+    let pixel_representation =
+        if opt_u16(&obj, tags::PIXEL_REPRESENTATION, "PixelRepresentation", 0)? == 1 {
+            PixelSignedness::Signed
+        } else {
+            PixelSignedness::Unsigned
+        };
+    let rescale_slope = opt_f64(&obj, tags::RESCALE_SLOPE, "RescaleSlope", 1.0)? as f32;
+    let rescale_intercept = opt_f64(&obj, tags::RESCALE_INTERCEPT, "RescaleIntercept", 0.0)? as f32;
 
     // PixelSpacing is [row_spacing, col_spacing] (mm); default to 1 mm isotropic.
-    let spacing = multi_f64(&obj, PIXEL_SPACING).unwrap_or_default();
+    let spacing = multi_f64(&obj, tags::PIXEL_SPACING, "PixelSpacing")?.unwrap_or_default();
     let row_spacing = spacing.first().copied().unwrap_or(1.0);
     let col_spacing = spacing.get(1).copied().unwrap_or(row_spacing);
-    let thickness = opt_f64(&obj, SLICE_THICKNESS, 1.0);
+    let thickness = opt_f64(&obj, tags::SLICE_THICKNESS, "SliceThickness", 1.0)?;
 
-    let ipp = multi_f64(&obj, IMAGE_POSITION_PATIENT).unwrap_or_default();
+    let ipp =
+        multi_f64(&obj, tags::IMAGE_POSITION_PATIENT, "ImagePositionPatient")?.unwrap_or_default();
     let origin_x = ipp.first().copied().unwrap_or(0.0);
     let origin_y = ipp.get(1).copied().unwrap_or(0.0);
     let z = ipp.get(2).copied().unwrap_or(0.0);
 
-    let transfer_syntax =
-        TransferSyntaxKind::from_uid(obj.meta().transfer_syntax.trim_end_matches('\0'));
+    let transfer_syntax = TransferSyntaxKind::from_uid(obj.transfer_syntax_uid());
     let frame = decode_frame_with::<DicomRsBackend>(
         &obj,
         DecodeFrameRequest {
@@ -300,71 +300,197 @@ pub fn load_ct_series<T: Scalar, P: AsRef<std::path::Path>>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use dicom::core::smallvec::SmallVec;
-    use dicom::core::{DataElement, PrimitiveValue, VR};
-    use dicom::object::{FileMetaTableBuilder, InMemDicomObject};
+    use ritk_dicom::{tags, DicomTag};
+
+    fn append_element(output: &mut Vec<u8>, tag: DicomTag, vr: [u8; 2], value: &[u8]) {
+        output.extend_from_slice(&tag.group.to_le_bytes());
+        output.extend_from_slice(&tag.element.to_le_bytes());
+        output.extend_from_slice(&vr);
+        if matches!(
+            vr,
+            [b'O', b'B'] | [b'O', b'W'] | [b'O', b'F'] | [b'S', b'Q'] | [b'U', b'T'] | [b'U', b'N']
+        ) {
+            output.extend_from_slice(&[0, 0]);
+            output.extend_from_slice(
+                &u32::try_from(value.len())
+                    .expect("synthetic DICOM element length fits u32")
+                    .to_le_bytes(),
+            );
+        } else {
+            output.extend_from_slice(
+                &u16::try_from(value.len())
+                    .expect("synthetic DICOM element length fits u16")
+                    .to_le_bytes(),
+            );
+        }
+        output.extend_from_slice(value);
+    }
+
+    fn text_value(vr: [u8; 2], value: &str) -> Vec<u8> {
+        let mut bytes = value.as_bytes().to_vec();
+        if bytes.len() % 2 != 0 {
+            bytes.push(if vr == [b'U', b'I'] { 0 } else { b' ' });
+        }
+        bytes
+    }
+
+    fn unsigned_value(value: u16) -> [u8; 2] {
+        value.to_le_bytes()
+    }
 
     // Write a synthetic 2×2 unsigned-16 CT slice at position `z_mm` with a known
     // HU pattern and geometry (no external fixture). Slope 2, intercept −10;
     // PixelSpacing 0.8 (row) / 1.25 (col) mm; in-plane origin (5,7); a unique SOP
     // instance UID per file.
     fn write_slice_at(path: &std::path::Path, pixels: [u16; 4], z_mm: f64, uid: &str) {
-        let mut obj = InMemDicomObject::new_empty();
-        let put = |obj: &mut InMemDicomObject, tag, vr, val: PrimitiveValue| {
-            obj.put(DataElement::new(tag, vr, val));
-        };
-        put(
-            &mut obj,
-            Tag(0x0008, 0x0016),
-            VR::UI,
-            "1.2.840.10008.5.1.4.1.1.2".into(),
+        let sop_class = "1.2.840.10008.5.1.4.1.1.2";
+        let transfer_syntax = "1.2.840.10008.1.2.1";
+
+        // This test-only fixture uses the explicit-VR little-endian Part 10
+        // wire format. Parsing and pixel decoding remain exclusively owned by
+        // ritk-dicom; no consumer-side DICOM object model is constructed.
+        let mut meta_body = Vec::new();
+        append_element(
+            &mut meta_body,
+            DicomTag::new(0x0002, 0x0001),
+            *b"OB",
+            &[0, 1],
         );
-        put(&mut obj, Tag(0x0008, 0x0018), VR::UI, uid.into());
-        put(&mut obj, ROWS, VR::US, PrimitiveValue::from(2_u16));
-        put(&mut obj, COLUMNS, VR::US, PrimitiveValue::from(2_u16));
-        put(
-            &mut obj,
-            SAMPLES_PER_PIXEL,
-            VR::US,
-            PrimitiveValue::from(1_u16),
+        append_element(
+            &mut meta_body,
+            DicomTag::new(0x0002, 0x0002),
+            *b"UI",
+            &text_value(*b"UI", sop_class),
         );
-        put(
-            &mut obj,
-            BITS_ALLOCATED,
-            VR::US,
-            PrimitiveValue::from(16_u16),
+        append_element(
+            &mut meta_body,
+            DicomTag::new(0x0002, 0x0003),
+            *b"UI",
+            &text_value(*b"UI", uid),
         );
-        put(
-            &mut obj,
-            PIXEL_REPRESENTATION,
-            VR::US,
-            PrimitiveValue::from(0_u16),
+        append_element(
+            &mut meta_body,
+            DicomTag::new(0x0002, 0x0010),
+            *b"UI",
+            &text_value(*b"UI", transfer_syntax),
         );
-        put(&mut obj, RESCALE_SLOPE, VR::DS, "2".into());
-        put(&mut obj, RESCALE_INTERCEPT, VR::DS, "-10".into());
-        put(&mut obj, PIXEL_SPACING, VR::DS, "0.8\\1.25".into());
-        put(&mut obj, SLICE_THICKNESS, VR::DS, "3".into());
-        put(
-            &mut obj,
-            IMAGE_POSITION_PATIENT,
-            VR::DS,
-            format!("5\\7\\{z_mm}").into(),
+        append_element(
+            &mut meta_body,
+            DicomTag::new(0x0002, 0x0012),
+            *b"UI",
+            &text_value(*b"UI", "2.25.4242.1"),
         );
-        put(
-            &mut obj,
-            Tag(0x7FE0, 0x0010),
-            VR::OW,
-            PrimitiveValue::U16(SmallVec::from_vec(pixels.to_vec())),
+
+        let mut bytes = vec![0; 128];
+        bytes.extend_from_slice(b"DICM");
+        append_element(
+            &mut bytes,
+            DicomTag::new(0x0002, 0x0000),
+            *b"UL",
+            &u32::try_from(meta_body.len())
+                .expect("synthetic DICOM meta length fits u32")
+                .to_le_bytes(),
         );
-        obj.with_meta(
-            FileMetaTableBuilder::new()
-                .media_storage_sop_class_uid("1.2.840.10008.5.1.4.1.1.2")
-                .media_storage_sop_instance_uid(uid)
-                .transfer_syntax("1.2.840.10008.1.2.1"),
-        )
-        .expect("valid meta")
-        .write_to_file(path)
-        .expect("write dicom");
+        bytes.extend_from_slice(&meta_body);
+
+        append_element(
+            &mut bytes,
+            DicomTag::new(0x0008, 0x0016),
+            *b"UI",
+            &text_value(*b"UI", sop_class),
+        );
+        append_element(
+            &mut bytes,
+            DicomTag::new(0x0008, 0x0018),
+            *b"UI",
+            &text_value(*b"UI", uid),
+        );
+        append_element(
+            &mut bytes,
+            DicomTag::new(0x0008, 0x0008),
+            *b"CS",
+            &text_value(*b"CS", "ORIGINAL\\PRIMARY\\AXIAL"),
+        );
+        append_element(&mut bytes, tags::ROWS, *b"US", &unsigned_value(2));
+        append_element(&mut bytes, tags::COLUMNS, *b"US", &unsigned_value(2));
+        append_element(
+            &mut bytes,
+            tags::SAMPLES_PER_PIXEL,
+            *b"US",
+            &unsigned_value(1),
+        );
+        append_element(
+            &mut bytes,
+            tags::BITS_ALLOCATED,
+            *b"US",
+            &unsigned_value(16),
+        );
+        append_element(
+            &mut bytes,
+            DicomTag::new(0x0028, 0x0101),
+            *b"US",
+            &unsigned_value(16),
+        );
+        append_element(
+            &mut bytes,
+            DicomTag::new(0x0028, 0x0102),
+            *b"US",
+            &unsigned_value(15),
+        );
+        append_element(
+            &mut bytes,
+            tags::PIXEL_REPRESENTATION,
+            *b"US",
+            &unsigned_value(0),
+        );
+        append_element(
+            &mut bytes,
+            DicomTag::new(0x0028, 0x0004),
+            *b"CS",
+            &text_value(*b"CS", "MONOCHROME2"),
+        );
+        append_element(
+            &mut bytes,
+            tags::RESCALE_SLOPE,
+            *b"DS",
+            &text_value(*b"DS", "2"),
+        );
+        append_element(
+            &mut bytes,
+            tags::RESCALE_INTERCEPT,
+            *b"DS",
+            &text_value(*b"DS", "-10"),
+        );
+        append_element(
+            &mut bytes,
+            tags::PIXEL_SPACING,
+            *b"DS",
+            &text_value(*b"DS", "0.8\\1.25"),
+        );
+        append_element(
+            &mut bytes,
+            tags::SLICE_THICKNESS,
+            *b"DS",
+            &text_value(*b"DS", "3"),
+        );
+        append_element(
+            &mut bytes,
+            tags::IMAGE_POSITION_PATIENT,
+            *b"DS",
+            &text_value(*b"DS", &format!("5\\7\\{z_mm}")),
+        );
+
+        let mut pixel_bytes = Vec::with_capacity(pixels.len() * 2);
+        for pixel in pixels {
+            pixel_bytes.extend_from_slice(&pixel.to_le_bytes());
+        }
+        append_element(
+            &mut bytes,
+            DicomTag::new(0x7FE0, 0x0010),
+            *b"OW",
+            &pixel_bytes,
+        );
+        std::fs::write(path, bytes).expect("write synthetic DICOM");
     }
 
     #[test]

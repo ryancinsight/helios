@@ -58,7 +58,7 @@ the SSOT in the root `Cargo.toml` `[workspace.dependencies]`.
 
 | Atlas component | Crates (packages) | Consumed by | Purpose in Helios |
 |-----------------|-------------------|-------------|-------------------|
-| **ritk** | `ritk-dicom` (**consumed**, feature `dicom`), `ritk-core`, `ritk-registration` | domain, analysis, imaging | DICOM I/O (CT/MVCT via `ritk-dicom` — parse + rescale-calibrated decode); RT struct/plan/dose, registration, VTK pending. |
+| **ritk** | `ritk-dicom` (**consumed**, feature `dicom`), `ritk-core`, `ritk-registration` | domain, analysis, imaging | Sole Helios-facing DICOM boundary (CT/MVCT parse, typed attributes, transfer-syntax dispatch, and rescale-calibrated decode); Helios has no direct dicom-rs dependency. RT struct/plan/dose, registration, VTK pending. |
 | **gaia** | `gaia` (`Aabb`/`Ray` **consumed**) | math, domain | Geometry kernel: `Ray`/`Aabb` for projection + the `FieldAperture` collimator; binary MLC, patient surface/mesh pending. |
 | **hephaestus** | `hephaestus-core`, `hephaestus-wgpu` (`-cuda`, `-metal` optional) | gpu, solver | GPU compute dispatch, WGSL pipelines, kernel caching. |
 | **moirai** | `moirai`, `moirai-parallel` (`-async`, `-gpu`, `-iter`) | simulation, solver | Orchestration of time-dependent helical delivery + imaging; execution policies. |

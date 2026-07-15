@@ -74,11 +74,9 @@ approx = "0.5"
 ritk-core = { git = "https://github.com/ryancinsight/ritk" }
 ritk-io = { git = "https://github.com/ryancinsight/ritk" }
 ritk-registration = { git = "https://github.com/ryancinsight/ritk" }
-# Native DICOM parse/decode (CT/MVCT real-input path). ritk-dicom owns the pixel
-# decode boundary; Helios uses dicom-rs only for typed attribute reads and does
-# not enable dicom-rs's optional ndarray representation.
+# Native DICOM parse/decode (CT/MVCT real-input path). ritk-dicom owns parsing,
+# typed attribute access, transfer-syntax dispatch, and pixel decoding.
 ritk-dicom = { git = "https://github.com/ryancinsight/ritk" }
-dicom = { version = "0.10", default-features = false, features = ["pixeldata"] }
 # Geometry kernel (binary MLC, collimators, jaws, patient meshes).
 gaia = { git = "https://github.com/ryancinsight/gaia", default-features = false }
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.

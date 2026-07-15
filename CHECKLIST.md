@@ -34,6 +34,20 @@
   absent after the provider graph alignment. Evidence tier: compile-time
   dependency/type verification plus value-semantic nextest coverage.
 
+## Codex — H-064 ritk-dicom provider-boundary correction [arch] — done 2026-07-15
+
+- [x] Removed Helios's direct `dicom` dependency and direct `dicom::core` /
+  `dicom::object` imports from production and test code.
+- [x] Production reads now use `ritk-dicom` canonical tags,
+  `DicomAttributeRead`, parser, transfer-syntax, and frame-decoder contracts.
+- [x] Synthetic slice/series tests now write a minimal Part 10 fixture from
+  bytes and exercise the real `ritk-dicom` parser/decoder path without a
+  consumer-side DICOM object model.
+- [x] Re-ran the locked workspace gates and verified the documentation and
+  lockfile: workspace examples, all-target all-feature Clippy, 261/261
+  workspace nextest tests, doctests, rustdoc, and provider-backed DICOM checks
+  pass.
+
 ### H-061 done — all runnable examples and DICOM graph audited (2026-07-14)
 
 The three existing examples (`validate_foundation_units`,
@@ -41,8 +55,9 @@ The three existing examples (`validate_foundation_units`,
 `cargo check --workspace --examples --all-features` and
 `cargo build --workspace --examples --all-features` against the synchronized
 Atlas graph. The mdBook relative-link audit passes for `docs/book/SUMMARY.md`.
-Helios now enables dicom-rs `pixeldata` without its optional `ndarray` feature;
-pixel decoding remains owned by `ritk-dicom`. `cargo metadata --locked` passes,
+Helios consumes `ritk-dicom` for parsing, typed attributes, transfer-syntax
+selection, and pixel decoding; Helios has no direct DICOM dependency.
+`cargo metadata --locked` passes,
 and the lockfile contains no `ndarray` package entry. Evidence tier: compile-
 time/build verification plus manifest/lockfile inspection; mdBook rendering is
 not claimed because `mdbook` is not installed on this host.
@@ -323,7 +338,7 @@ oriented pose (H-004d), RT-struct/registration (ritk-registration, needs burn).
 
 ### (prior) H-004b done — DICOM single-slice path (mandatory ritk consumed)
 
-`load_ct_slice` via `ritk-dicom` (dicom-rs, skew-free). First consumption of the
+`load_ct_slice` via the `ritk-dicom` provider boundary. First consumption of the
 mandatory ritk Atlas component.
 
 ### (prior) H-033b done — MVCT quantum-noise model (imaging noise/CNR sub-gate)

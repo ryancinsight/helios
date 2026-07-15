@@ -30,6 +30,14 @@ target closure.
   Clippy, 261/261 workspace nextest tests, doctests, and rustdoc pass. Evidence
   tier: compile-time dependency/type verification plus value-semantic tests.
 
+- **G-21 — RESOLVED (H-064).** Helios previously used `dicom::core` and
+  `dicom::object` directly for typed attributes and synthetic test fixtures,
+  despite `ritk-dicom` owning the DICOM boundary. Helios now consumes only the
+  `ritk-dicom` public tags, attribute-read trait, parser, transfer-syntax, and
+  decoder contracts. Production and test scans contain no direct `dicom::`
+  imports; the focused provider-backed domain suite remains 41/41.
+  Evidence tier: dependency/identifier scan plus value-semantic nextest.
+
 - **G-14 — RESOLVED (H-003c).** The concurrent leto geometry rewrite settled: leto
   and gaia now build against the new `leto::geometry` API (Vector3/Point3 with
   `.x/.y/.z` fields; `Isometry3` reduced to `{rotation, translation}`). Helios was
@@ -85,7 +93,7 @@ target closure.
   (H-004b) and a full multi-slice **series** → 3-D HU `Volume` (H-004c:
   `load_ct_series` via `ritk-dicom`), so a real CT/MVCT study can drive the pipeline —
   clinical *dataset* validation still needs a licensed reference dataset. *Evidence tier: analytical/round-trip + synthetic-phantom
-  metrics + real DICOM parse (synthetic round-trip through dicom-rs) — published-data
+  metrics + real DICOM parse (synthetic round-trip through the ritk-dicom provider) — published-data
   comparison pending.*
 
 ### Physics / numerics
@@ -247,7 +255,9 @@ target closure.
 - Atlas upstream APIs may drift (multi-repo co-evolution); Helios pins the local
   synchronized checkout via `[patch]` and commits `Cargo.lock`. `ritk-dicom` is now
   consumed (H-004b) and is **skew-free** (no leto/mnemosyne/themis/eunomia cluster —
-  only anyhow/arrayvec/dicom-rs 0.10/ritk-codecs), so it needed no patch-cluster work.
+  only anyhow/arrayvec plus the RITK DICOM provider and `ritk-codecs`), so it needed no
+  patch-cluster work. Helios has no direct dicom-rs dependency; the provider's
+  parser implementation remains upstream-owned.
   Remaining ritk surfaces (`ritk-registration`) pull the burn stack and are heavier
   (G-5); add cross-repo contract tests as each is consumed.
 - **G-18 — RESOLVED (H-043b).** The residency step landed: hephaestus gained a volume
