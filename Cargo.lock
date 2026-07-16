@@ -87,9 +87,10 @@ checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
 
 [[package]]
 name = "apollo-fft"
-version = "0.15.0"
+version = "0.20.0"
 dependencies = [
  "apollo-fft-macros",
+ "apollo-leto-interop",
  "bytemuck",
  "eunomia",
  "half",
@@ -112,6 +113,13 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.118",
+]
+
+[[package]]
+name = "apollo-leto-interop"
+version = "0.16.0"
+dependencies = [
+ "leto",
 ]
 
 [[package]]
@@ -1343,7 +1351,7 @@ dependencies = [
 
 [[package]]
 name = "hephaestus-core"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "bytemuck",
  "leto",
@@ -1353,7 +1361,7 @@ dependencies = [
 
 [[package]]
 name = "hephaestus-wgpu"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "bytemuck",
  "hephaestus-core",
@@ -1755,7 +1763,7 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "leto"
-version = "0.36.0"
+version = "0.38.0"
 dependencies = [
  "bytemuck",
  "eunomia",
@@ -1767,7 +1775,7 @@ dependencies = [
 
 [[package]]
 name = "leto-ops"
-version = "0.36.0"
+version = "0.38.0"
 dependencies = [
  "bytemuck",
  "eunomia",
@@ -1859,7 +1867,7 @@ dependencies = [
 
 [[package]]
 name = "mnemosyne"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "eunomia",
  "mnemosyne-arena",
@@ -1874,7 +1882,7 @@ dependencies = [
 
 [[package]]
 name = "mnemosyne-arena"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "eunomia",
  "mnemosyne-backend",
@@ -1884,22 +1892,22 @@ dependencies = [
 
 [[package]]
 name = "mnemosyne-backend"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "mnemosyne-core",
 ]
 
 [[package]]
 name = "mnemosyne-build-util"
-version = "0.1.0"
+version = "0.2.0"
 
 [[package]]
 name = "mnemosyne-core"
-version = "0.1.0"
+version = "0.2.0"
 
 [[package]]
 name = "mnemosyne-decay"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "mnemosyne-arena",
  "mnemosyne-backend",
@@ -1908,14 +1916,14 @@ dependencies = [
 
 [[package]]
 name = "mnemosyne-hardened"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "mnemosyne-core",
 ]
 
 [[package]]
 name = "mnemosyne-heap"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "melinoe",
  "mnemosyne-arena",
@@ -1928,7 +1936,7 @@ dependencies = [
 
 [[package]]
 name = "mnemosyne-local"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "melinoe",
  "mnemosyne-arena",
@@ -1942,7 +1950,7 @@ dependencies = [
 
 [[package]]
 name = "mnemosyne-prof"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "backtrace",
  "mnemosyne-build-util",
@@ -1951,7 +1959,7 @@ dependencies = [
 
 [[package]]
 name = "moirai"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "melinoe",
  "mnemosyne",
@@ -1968,7 +1976,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-async"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "futures",
  "libc",
@@ -1983,7 +1991,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-async-macros"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1992,7 +2000,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-core"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bytemuck",
  "libc",
@@ -2002,7 +2010,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-executor"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "melinoe",
  "mnemosyne",
@@ -2014,7 +2022,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-gpu"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "mnemosyne-core",
  "moirai-core",
@@ -2024,7 +2032,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-iter"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "futures",
  "libc",
@@ -2039,7 +2047,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-pal"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "js-sys",
  "libc",
@@ -2053,7 +2061,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-parallel"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "melinoe",
  "moirai-executor",
@@ -2061,7 +2069,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-scheduler"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "mnemosyne",
  "moirai-core",
@@ -2072,7 +2080,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-sync"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "libc",
  "moirai-core",
@@ -2081,7 +2089,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-transport"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bytemuck",
  "moirai-core",
@@ -2091,7 +2099,7 @@ dependencies = [
 
 [[package]]
 name = "moirai-utils"
-version = "0.3.0"
+version = "0.4.0"
 
 [[package]]
 name = "moxcms"
@@ -3172,7 +3180,7 @@ dependencies = [
 
 [[package]]
 name = "themis"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "melinoe",
 ]
