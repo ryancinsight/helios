@@ -7,8 +7,11 @@
 //!
 //! - `volume`: the 3-D scalar field, shape `[nx, ny, nz]`, IEEE-754 f64 LE, in
 //!   the same C-contiguous `(i, j, k)` order the in-memory [`Volume`] uses.
-//! - `geometry`: `[spacing_x, spacing_y, spacing_z, origin_x, origin_y, origin_z]`
-//!   (mm), f64 LE — enough to reconstruct the axis-aligned [`VoxelGrid`].
+//! - `geometry`: `[spacing_x, spacing_y, spacing_z, origin_x, origin_y,
+//!   origin_z, x_axis.xyz, y_axis.xyz, z_axis.xyz]` (mm and dimensionless
+//!   direction cosines), f64 LE. The final nine values are the world-space
+//!   columns of the grid rotation, so the archive reconstructs the full rigid
+//!   [`VoxelGrid`] pose without losing DICOM orientation.
 //!
 //! Values are serialized as `f64` at this boundary (the archive's fixed on-disk
 //! precision, like the DICOM boundary's HU semantics); the in-memory `T: Scalar`
@@ -21,7 +24,7 @@ use crate::grid::VoxelGrid;
 use crate::volume::Volume;
 use core::num::NonZeroUsize;
 use helios_core::HeliosError;
-use helios_math::{Point3, Scalar};
+use helios_math::{Point3, Scalar, Vector3};
 
 use consus_core::{ByteOrder, Datatype, Shape};
 use consus_hdf5::file::writer::{DatasetCreationProps, FileCreationProps, Hdf5FileBuilder};
@@ -30,8 +33,10 @@ use consus_io::MemCursor;
 
 /// Root dataset name for the scalar field.
 const VOLUME_DATASET: &str = "volume";
-/// Root dataset name for the grid geometry (spacing + origin).
+/// Root dataset name for the grid geometry (spacing, origin, and rotation).
 const GEOMETRY_DATASET: &str = "geometry";
+/// Geometry values: spacing, origin, then three rotation-matrix columns.
+const GEOMETRY_VALUE_COUNT: usize = 15;
 
 fn storage_err(step: &str, e: impl core::fmt::Display) -> HeliosError {
     HeliosError::Storage {
@@ -58,7 +63,7 @@ fn to_le_bytes(values: impl Iterator<Item = f64>) -> Vec<u8> {
 
 /// Parse little-endian f64 bytes; errors if the length is not a multiple of 8.
 fn from_le_bytes(bytes: &[u8]) -> Result<Vec<f64>, HeliosError> {
-    if bytes.len() % 8 != 0 {
+    if !bytes.len().is_multiple_of(8) {
         return Err(HeliosError::Storage {
             reason: format!("dataset byte length {} is not a multiple of 8", bytes.len()),
         });
@@ -69,7 +74,7 @@ fn from_le_bytes(bytes: &[u8]) -> Result<Vec<f64>, HeliosError> {
         .collect())
 }
 
-/// Archive `volume` (data + axis-aligned grid geometry) as an HDF5 file at `path`.
+/// Archive `volume` (data + rigid grid geometry) as an HDF5 file at `path`.
 ///
 /// # Errors
 /// [`HeliosError::Storage`] if HDF5 encoding or the filesystem write fails.
@@ -85,6 +90,12 @@ pub fn save_volume_hdf5<T: Scalar>(
     let field: Vec<f64> = volume.as_slice().iter().map(|v| v.to_f64()).collect();
     let spacing = grid.spacing();
     let origin = grid.origin();
+    let rotation = grid.pose().rotation;
+    let zero = T::ZERO;
+    let one = T::ONE;
+    let x_axis = rotation.transform_vector(Vector3::new(one, zero, zero));
+    let y_axis = rotation.transform_vector(Vector3::new(zero, one, zero));
+    let z_axis = rotation.transform_vector(Vector3::new(zero, zero, one));
     let geometry = [
         spacing[0].to_f64(),
         spacing[1].to_f64(),
@@ -92,6 +103,15 @@ pub fn save_volume_hdf5<T: Scalar>(
         origin.x.to_f64(),
         origin.y.to_f64(),
         origin.z.to_f64(),
+        x_axis.x.to_f64(),
+        x_axis.y.to_f64(),
+        x_axis.z.to_f64(),
+        y_axis.x.to_f64(),
+        y_axis.y.to_f64(),
+        y_axis.z.to_f64(),
+        z_axis.x.to_f64(),
+        z_axis.y.to_f64(),
+        z_axis.z.to_f64(),
     ];
 
     let mut builder = Hdf5FileBuilder::new(FileCreationProps::default());
@@ -109,7 +129,7 @@ pub fn save_volume_hdf5<T: Scalar>(
         .add_dataset(
             GEOMETRY_DATASET,
             &f64_le(),
-            &Shape::fixed(&[6]),
+            &Shape::fixed(&[GEOMETRY_VALUE_COUNT]),
             &to_le_bytes(geometry.into_iter()),
             &dcpl,
         )
@@ -167,12 +187,22 @@ pub fn load_volume_hdf5<T: Scalar>(
         Hdf5File::open(MemCursor::from_bytes(bytes)).map_err(|e| storage_err("open HDF5", e))?;
 
     let (geom_bytes, geom_dims) = read_root_dataset(&file, GEOMETRY_DATASET)?;
-    if geom_dims != [6] {
+    if geom_dims != [GEOMETRY_VALUE_COUNT] {
         return Err(HeliosError::Storage {
-            reason: format!("geometry dataset has shape {geom_dims:?}, expected [6]"),
+            reason: format!(
+                "geometry dataset has shape {geom_dims:?}, expected [{GEOMETRY_VALUE_COUNT}]"
+            ),
         });
     }
     let geom = from_le_bytes(&geom_bytes)?;
+    if geom.len() != GEOMETRY_VALUE_COUNT {
+        return Err(HeliosError::Storage {
+            reason: format!(
+                "geometry dataset has {} values, expected {GEOMETRY_VALUE_COUNT}",
+                geom.len()
+            ),
+        });
+    }
 
     let (field_bytes, field_dims) = read_root_dataset(&file, VOLUME_DATASET)?;
     if field_dims.len() != 3 {
@@ -182,7 +212,28 @@ pub fn load_volume_hdf5<T: Scalar>(
     }
     let field = from_le_bytes(&field_bytes)?;
 
-    let grid = VoxelGrid::axis_aligned(
+    let rotation = helios_math::UnitQuaternion::try_from_rotation_columns(
+        Vector3::new(
+            T::from_f64(geom[6]),
+            T::from_f64(geom[7]),
+            T::from_f64(geom[8]),
+        ),
+        Vector3::new(
+            T::from_f64(geom[9]),
+            T::from_f64(geom[10]),
+            T::from_f64(geom[11]),
+        ),
+        Vector3::new(
+            T::from_f64(geom[12]),
+            T::from_f64(geom[13]),
+            T::from_f64(geom[14]),
+        ),
+        T::EPSILON.sqrt(),
+    )
+    .map_err(|error| HeliosError::Storage {
+        reason: format!("geometry rotation is not a rigid right-handed basis: {error}"),
+    })?;
+    let grid = VoxelGrid::oriented(
         [field_dims[0], field_dims[1], field_dims[2]],
         [
             T::from_f64(geom[0]),
@@ -194,6 +245,7 @@ pub fn load_volume_hdf5<T: Scalar>(
             T::from_f64(geom[4]),
             T::from_f64(geom[5]),
         ),
+        rotation,
     )?;
     Volume::from_shape_vec(grid, field.into_iter().map(T::from_f64).collect())
 }
@@ -266,6 +318,38 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn oriented_grid_pose_round_trips_through_hdf5() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("oriented.h5");
+        let rotation = helios_math::UnitQuaternion::try_from_rotation_columns(
+            Vector3::new(0.0, 1.0, 0.0),
+            Vector3::new(-1.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            1.0e-12,
+        )
+        .expect("right-handed quarter-turn basis");
+        let grid = VoxelGrid::oriented(
+            [4, 3, 2],
+            [1.25, 2.0, 3.5],
+            Point3::new(-5.0, 7.5, 11.0),
+            rotation,
+        )
+        .expect("grid");
+        let original = Volume::from_shape_fn(grid, |idx| {
+            100.0 * idx[0] as f64 + 10.0 * idx[1] as f64 + idx[2] as f64
+        });
+        save_volume_hdf5(&original, &path).expect("save");
+
+        let loaded: Volume<f64> = load_volume_hdf5(&path).expect("load");
+        let expected = original.grid().index_to_world(Point3::new(2.0, 1.0, 1.0));
+        let actual = loaded.grid().index_to_world(Point3::new(2.0, 1.0, 1.0));
+        assert!((actual.x - expected.x).abs() <= 1.0e-12);
+        assert!((actual.y - expected.y).abs() <= 1.0e-12);
+        assert!((actual.z - expected.z).abs() <= 1.0e-12);
+        assert_eq!(loaded.get(2, 1, 1), original.get(2, 1, 1));
     }
 
     #[test]

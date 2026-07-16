@@ -25,8 +25,7 @@ fn gaussian_dose(
     shift_mm: [f64; 3],
 ) -> Volume<f64> {
     let origin = Point3::new(0.0, 0.0, 0.0);
-    let grid =
-        VoxelGrid::axis_aligned(dims, [spacing_mm; 3], origin).expect("valid dose grid");
+    let grid = VoxelGrid::axis_aligned(dims, [spacing_mm; 3], origin).expect("valid dose grid");
     let centre = [
         (dims[0] as f64 - 1.0) * spacing_mm / 2.0 + shift_mm[0],
         (dims[1] as f64 - 1.0) * spacing_mm / 2.0 + shift_mm[1],
@@ -50,7 +49,7 @@ fn main() {
     const SIGMA_MM: f64 = 10.0;
     const NORM_DOSE: f64 = PEAK_GY; // global normalization = max dose
     const DOSE_THRESHOLD: f64 = PEAK_GY * 0.10; // 10% low-dose cutoff
-    // 3%/2 mm clinical criterion
+                                                // 3%/2 mm clinical criterion
     const DOSE_DIFF: f64 = 0.03;
     const DTA_MM: f64 = 2.0;
     const SEARCH_MM: f64 = 6.0; // 3× DTA
@@ -60,9 +59,10 @@ fn main() {
 
     // --- Case 1: identical plan (γ should be ≈ 0, pass rate = 100%) ---
     let identical = gaussian_dose(DIMS, SPACING_MM, PEAK_GY, SIGMA_MM, [0.0; 3]);
-    let gamma_identical =
-        gamma_index_3d(&reference, &identical, DOSE_DIFF, DTA_MM, NORM_DOSE, SEARCH_MM)
-            .expect("gamma computation succeeded");
+    let gamma_identical = gamma_index_3d(
+        &reference, &identical, DOSE_DIFF, DTA_MM, NORM_DOSE, SEARCH_MM,
+    )
+    .expect("gamma computation succeeded");
     let pass_identical = gamma_pass_rate(&gamma_identical, &reference, DOSE_THRESHOLD);
     println!(
         "Identical plan:  pass rate = {:.1}%  (expect 100%)",
@@ -74,28 +74,34 @@ fn main() {
     );
 
     // --- Case 2: shifted plan (1.5 mm shift, within 2 mm DTA — expect high pass) ---
-    let shifted_small =
-        gaussian_dose(DIMS, SPACING_MM, PEAK_GY, SIGMA_MM, [1.5, 0.0, 0.0]);
+    let shifted_small = gaussian_dose(DIMS, SPACING_MM, PEAK_GY, SIGMA_MM, [1.5, 0.0, 0.0]);
     let gamma_shifted_small = gamma_index_3d(
-        &reference, &shifted_small, DOSE_DIFF, DTA_MM, NORM_DOSE, SEARCH_MM,
+        &reference,
+        &shifted_small,
+        DOSE_DIFF,
+        DTA_MM,
+        NORM_DOSE,
+        SEARCH_MM,
     )
     .expect("gamma computation succeeded");
-    let pass_shifted_small =
-        gamma_pass_rate(&gamma_shifted_small, &reference, DOSE_THRESHOLD);
+    let pass_shifted_small = gamma_pass_rate(&gamma_shifted_small, &reference, DOSE_THRESHOLD);
     println!(
         "1.5 mm shift:    pass rate = {:.1}%  (expect high)",
         pass_shifted_small * 100.0
     );
 
     // --- Case 3: large shift (4 mm — exceeds DTA, expect lower pass rate) ---
-    let shifted_large =
-        gaussian_dose(DIMS, SPACING_MM, PEAK_GY, SIGMA_MM, [4.0, 0.0, 0.0]);
+    let shifted_large = gaussian_dose(DIMS, SPACING_MM, PEAK_GY, SIGMA_MM, [4.0, 0.0, 0.0]);
     let gamma_shifted_large = gamma_index_3d(
-        &reference, &shifted_large, DOSE_DIFF, DTA_MM, NORM_DOSE, SEARCH_MM,
+        &reference,
+        &shifted_large,
+        DOSE_DIFF,
+        DTA_MM,
+        NORM_DOSE,
+        SEARCH_MM,
     )
     .expect("gamma computation succeeded");
-    let pass_shifted_large =
-        gamma_pass_rate(&gamma_shifted_large, &reference, DOSE_THRESHOLD);
+    let pass_shifted_large = gamma_pass_rate(&gamma_shifted_large, &reference, DOSE_THRESHOLD);
     println!(
         "4.0 mm shift:    pass rate = {:.1}%  (expect <100%)",
         pass_shifted_large * 100.0

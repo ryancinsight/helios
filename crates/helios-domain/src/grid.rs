@@ -1,27 +1,27 @@
 //! Voxel-grid geometry: the discrete-index ↔ world/patient coordinate map.
 
 use helios_core::HeliosError;
-use helios_math::{NumericElement, Point3, Scalar};
+use helios_math::{Isometry3, NumericElement, Point3, Scalar, Translation3, UnitQuaternion};
 
-/// A regular, axis-aligned 3-D voxel grid with anisotropic spacing.
+/// A regular, oriented 3-D voxel grid with anisotropic spacing.
 ///
 /// The grid maps **continuous voxel-index coordinates** `(i, j, k)` — integer
 /// indices land on voxel-center sample nodes — to **world/patient coordinates**
 /// in millimetres:
 ///
 /// ```text
-/// world = origin + (i·sx, j·sy, k·sz)
+/// world = pose · (i·sx, j·sy, k·sz)
 /// ```
 ///
-/// The grid axes coincide with the world axes (axis-aligned patient-frame layout,
-/// the common CT/MVCT case). Oriented grids (arbitrary DICOM
-/// `ImageOrientationPatient` direction cosines) are a follow-up pending a rigid-
-/// transform primitive with `transform`/`inverse` in the geometry kernel.
+/// `pose` is an [`Isometry3`] from local scaled-index space to world/patient
+/// space. [`Self::axis_aligned`] uses the identity rotation; [`Self::oriented`]
+/// preserves a validated DICOM or other acquisition orientation without copying
+/// volume data.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct VoxelGrid<T: Scalar> {
     dims: [usize; 3],
     spacing: [T; 3],
-    origin: Point3<T>,
+    pose: Isometry3<T>,
 }
 
 const AXIS_FIELD: [&str; 3] = [
@@ -48,6 +48,37 @@ impl<T: Scalar> VoxelGrid<T> {
         spacing: [T; 3],
         origin: Point3<T>,
     ) -> Result<Self, HeliosError> {
+        Self::oriented(dims, spacing, origin, UnitQuaternion::identity())
+    }
+
+    /// Construct an oriented grid whose voxel `(0,0,0)` center sits at
+    /// `origin` (world/patient mm), with local-axis `spacing` (mm) rotated by
+    /// `rotation` into world/patient space.
+    ///
+    /// The rotation is a Leto [`UnitQuaternion`], so affine scales, reflections,
+    /// and non-orthogonal bases cannot enter a grid pose. External direction
+    /// cosines are validated at their input boundary with
+    /// [`UnitQuaternion::try_from_rotation_columns`].
+    ///
+    /// # Errors
+    /// Returns [`HeliosError::InvalidDomainValue`] if any dimension is zero, the
+    /// total voxel count overflows `usize`, or any spacing is non-finite or not
+    /// strictly positive.
+    pub fn oriented(
+        dims: [usize; 3],
+        spacing: [T; 3],
+        origin: Point3<T>,
+        rotation: UnitQuaternion<T>,
+    ) -> Result<Self, HeliosError> {
+        Self::validate_layout(dims, spacing)?;
+        Ok(Self {
+            dims,
+            spacing,
+            pose: Isometry3::from_parts(Translation3::from_vector(origin.coords), rotation),
+        })
+    }
+
+    fn validate_layout(dims: [usize; 3], spacing: [T; 3]) -> Result<(), HeliosError> {
         for (axis, &d) in dims.iter().enumerate() {
             if d == 0 {
                 return Err(HeliosError::InvalidDomainValue {
@@ -82,11 +113,7 @@ impl<T: Scalar> VoxelGrid<T> {
                 });
             }
         }
-        Ok(Self {
-            dims,
-            spacing,
-            origin,
-        })
+        Ok(())
     }
 
     /// Grid dimensions `(nx, ny, nz)`.
@@ -110,26 +137,33 @@ impl<T: Scalar> VoxelGrid<T> {
     /// World/patient position of voxel `(0,0,0)`'s center.
     #[must_use]
     pub fn origin(&self) -> Point3<T> {
-        self.origin
+        Point3::from_coords(self.pose.translation)
+    }
+
+    /// Local-index-to-world/patient rigid pose.
+    #[must_use]
+    pub fn pose(&self) -> Isometry3<T> {
+        self.pose
     }
 
     /// Map continuous voxel-index coordinates to world/patient coordinates (mm).
     #[must_use]
     pub fn index_to_world(&self, index: Point3<T>) -> Point3<T> {
-        Point3::new(
-            self.origin.x + index.x * self.spacing[0],
-            self.origin.y + index.y * self.spacing[1],
-            self.origin.z + index.z * self.spacing[2],
-        )
+        self.pose.transform_point(Point3::new(
+            index.x * self.spacing[0],
+            index.y * self.spacing[1],
+            index.z * self.spacing[2],
+        ))
     }
 
     /// Map world/patient coordinates (mm) to continuous voxel-index coordinates.
     #[must_use]
     pub fn world_to_index(&self, world: Point3<T>) -> Point3<T> {
+        let local = self.pose.inverse().transform_point(world);
         Point3::new(
-            (world.x - self.origin.x) * self.spacing[0].recip(),
-            (world.y - self.origin.y) * self.spacing[1].recip(),
-            (world.z - self.origin.z) * self.spacing[2].recip(),
+            local.x * self.spacing[0].recip(),
+            local.y * self.spacing[1].recip(),
+            local.z * self.spacing[2].recip(),
         )
     }
 
@@ -148,6 +182,7 @@ impl<T: Scalar> VoxelGrid<T> {
 mod tests {
     use super::*;
     use approx::assert_relative_eq;
+    use helios_math::Vector3;
 
     fn grid() -> VoxelGrid<f64> {
         VoxelGrid::axis_aligned([4, 5, 6], [2.0, 3.0, 4.0], Point3::new(10.0, 20.0, 30.0))
@@ -189,6 +224,47 @@ mod tests {
         assert_eq!(w, Point3::new(12.0, 23.0, 34.0));
         // Origin voxel maps to the origin.
         assert_eq!(g.voxel_center(0, 0, 0), Point3::new(10.0, 20.0, 30.0));
+    }
+
+    fn oriented_grid_preserves_index_world_contract<T: Scalar>(tolerance: T) {
+        let zero = T::from_f64(0.0);
+        let one = T::from_f64(1.0);
+        let rotation = UnitQuaternion::try_from_rotation_columns(
+            Vector3::new(zero, one, zero),
+            Vector3::new(-one, zero, zero),
+            Vector3::new(zero, zero, one),
+            tolerance,
+        )
+        .expect("a right-handed quarter-turn basis is a valid grid pose");
+        let grid = VoxelGrid::oriented(
+            [4, 5, 6],
+            [T::from_f64(2.0), T::from_f64(3.0), T::from_f64(4.0)],
+            Point3::new(T::from_f64(10.0), T::from_f64(20.0), T::from_f64(30.0)),
+            rotation,
+        )
+        .expect("valid oriented grid");
+
+        let world = grid.voxel_center(1, 1, 1);
+        let expected = [T::from_f64(7.0), T::from_f64(22.0), T::from_f64(34.0)];
+        for (&actual, expected) in world.coords.data.iter().zip(expected) {
+            assert!((actual - expected).abs() <= tolerance);
+        }
+
+        let index = Point3::new(T::from_f64(1.5), T::from_f64(0.75), T::from_f64(2.25));
+        let round_trip = grid.world_to_index(grid.index_to_world(index));
+        for (&actual, &expected) in round_trip.coords.data.iter().zip(index.coords.data.iter()) {
+            assert!((actual - expected).abs() <= tolerance);
+        }
+    }
+
+    #[test]
+    fn oriented_grid_preserves_f32_index_world_contract() {
+        oriented_grid_preserves_index_world_contract(1.0e-5_f32);
+    }
+
+    #[test]
+    fn oriented_grid_preserves_f64_index_world_contract() {
+        oriented_grid_preserves_index_world_contract(1.0e-12_f64);
     }
 
     #[test]

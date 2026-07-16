@@ -10,6 +10,7 @@
 
 use helios_core::constants::MM_PER_CM;
 use helios_domain::Volume;
+use helios_math::UnitQuaternion;
 use hephaestus_core::{BlockWidth, ComputeDevice, HephaestusError, Result};
 use hephaestus_wgpu::{ray_line_integrals_into, FieldGeometry, WgpuBuffer, WgpuDevice, RAY_STRIDE};
 
@@ -29,9 +30,25 @@ impl GpuProjector {
     ///
     /// # Errors
     /// [`HephaestusError`] on upload failure or if a grid dimension exceeds the
-    /// kernel's exact-`f32` count limit (2²⁴).
+    /// kernel's exact-`f32` count limit (2²⁴). The current Hephaestus field
+    /// kernel accepts axis-aligned geometry only, so a non-identity grid pose is
+    /// rejected before upload rather than projected with discarded orientation.
     pub fn new(device: &WgpuDevice, mu: &Volume<f32>) -> Result<Self> {
+        let geometry = Self::field_geometry(mu)?;
+        let field = device.upload(mu.as_slice())?;
+        Ok(Self { field, geometry })
+    }
+
+    /// Build the complete field metadata accepted by the current Hephaestus
+    /// volume kernel.
+    fn field_geometry(mu: &Volume<f32>) -> Result<FieldGeometry> {
         let grid = mu.grid();
+        if grid.pose().rotation != UnitQuaternion::identity() {
+            return Err(HephaestusError::DispatchFailed {
+                message: "oriented voxel grids require a Hephaestus field-geometry pose kernel"
+                    .into(),
+            });
+        }
         let [nx, ny, nz] = grid.dims();
         let dims_u32 = |n: usize, label: &str| -> Result<u32> {
             u32::try_from(n).map_err(|_| HephaestusError::DispatchFailed {
@@ -40,7 +57,7 @@ impl GpuProjector {
         };
         let spacing = grid.spacing();
         let origin = grid.origin();
-        let geometry = FieldGeometry {
+        Ok(FieldGeometry {
             dims: [
                 dims_u32(nx, "dims.x")?,
                 dims_u32(ny, "dims.y")?,
@@ -48,9 +65,7 @@ impl GpuProjector {
             ],
             origin: [origin.x, origin.y, origin.z],
             spacing,
-        };
-        let field = device.upload(mu.as_slice())?;
-        Ok(Self { field, geometry })
+        })
     }
 
     /// Forward-project a packed ray batch, writing one optical depth `τ = ∫μ dl`
@@ -120,6 +135,32 @@ mod tests {
         Volume::from_shape_fn(grid, |idx| {
             0.002 * idx[0] as f32 + 0.0015 * idx[1] as f32 + 0.001 * idx[2] as f32 + 0.02
         })
+    }
+
+    #[test]
+    fn oriented_grid_is_rejected_before_gpu_upload() {
+        let rotation = UnitQuaternion::try_from_rotation_columns(
+            Vector3::new(0.0, 1.0, 0.0),
+            Vector3::new(-1.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            1.0e-5,
+        )
+        .expect("right-handed quarter-turn basis");
+        let grid = VoxelGrid::oriented(
+            [2, 2, 2],
+            [1.0, 1.0, 1.0],
+            Point3::new(0.0, 0.0, 0.0),
+            rotation,
+        )
+        .expect("grid");
+        let mu = Volume::from_shape_fn(grid, |_| 0.02);
+
+        let error = GpuProjector::field_geometry(&mu).expect_err("pose must be represented");
+        assert!(matches!(
+            error,
+            HephaestusError::DispatchFailed { ref message }
+                if message == "oriented voxel grids require a Hephaestus field-geometry pose kernel"
+        ));
     }
 
     #[test]

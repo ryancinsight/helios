@@ -10,24 +10,52 @@
 //! analytical oracle in the tests); for a homogeneous slab it reproduces
 //! `τ = μ·L` exactly.
 //!
-//! # Scope
-//! This first projector supports **axis-aligned** voxel grids (identity pose
-//! rotation) — the common CT/MVCT patient-frame layout. Oriented grids (non-
-//! trivial `ImageOrientationPatient` cosines) return [`None`] rather than a
-//! silently-wrong result; general-pose clipping is a tracked follow-up.
+//! The ray is transformed into the grid's scaled-index frame for clipping, then
+//! sampled along its original world-space parameter. Consequently the same
+//! integration contract holds for every rigid [`VoxelGrid`] pose, including
+//! DICOM orientation-cosine grids.
 
 use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
-use helios_math::{Aabb, GeometryScalar, Point3, Ray};
+use helios_math::{Aabb, GeometryScalar, Point3, Ray, UnitVector3, Vector3};
 
-/// World bounding box of a grid's sample region (node centres). `VoxelGrid` is
-/// axis-aligned, so the min/max corners are the `(0,0,0)` and `(nx-1,ny-1,nz-1)`
-/// voxel centres.
-pub(crate) fn world_aabb<T: GeometryScalar>(grid: &VoxelGrid<T>) -> Aabb<T> {
+/// Intersect a world-space unit ray with the grid's node-centre box.
+///
+/// Clipping occurs in continuous index coordinates, where the node-centre box
+/// is axis-aligned. `local_speed` converts the normalized local-ray parameter
+/// back to the original world-space millimetre parameter, so midpoint samples
+/// preserve the physical path-length convention of [`forward_project_ray`].
+pub(crate) fn ray_grid_interval<T: GeometryScalar>(
+    grid: &VoxelGrid<T>,
+    ray: &Ray<T>,
+) -> Option<(T, T)> {
     let [nx, ny, nz] = grid.dims();
-    let min = grid.voxel_center(0, 0, 0);
-    let max = grid.voxel_center(nx - 1, ny - 1, nz - 1);
-    Aabb::new(min, max)
+    let local_origin = grid.world_to_index(ray.origin);
+    let local_direction_mm = grid
+        .pose()
+        .inverse()
+        .transform_vector(*ray.direction.as_vector());
+    let spacing = grid.spacing();
+    let local_direction = Vector3::new(
+        local_direction_mm.x * spacing[0].recip(),
+        local_direction_mm.y * spacing[1].recip(),
+        local_direction_mm.z * spacing[2].recip(),
+    );
+    let local_speed = local_direction.norm();
+    if !local_speed.is_finite() || local_speed <= T::ZERO {
+        return None;
+    }
+    let local_ray = Ray::new(local_origin, UnitVector3::new_normalize(local_direction));
+    let local_aabb = Aabb::new(
+        Point3::new(T::ZERO, T::ZERO, T::ZERO),
+        Point3::new(
+            <T as GeometryScalar>::from_f64((nx - 1) as f64),
+            <T as GeometryScalar>::from_f64((ny - 1) as f64),
+            <T as GeometryScalar>::from_f64((nz - 1) as f64),
+        ),
+    );
+    let (enter, exit) = local_ray.intersect_aabb(&local_aabb)?;
+    Some((enter * local_speed.recip(), exit * local_speed.recip()))
 }
 
 /// Ray-march the optical depth `τ = ∫ μ dl` of `ray` through the `mu` volume.
@@ -47,8 +75,7 @@ pub fn forward_project_ray<T: GeometryScalar>(
     step_mm: T,
 ) -> Option<T> {
     let grid = *mu.grid();
-    let aabb = world_aabb(&grid);
-    let (t_enter, t_exit) = ray.intersect_aabb(&aabb)?;
+    let (t_enter, t_exit) = ray_grid_interval(&grid, ray)?;
 
     let length = t_exit - t_enter;
     if length <= T::ZERO {
@@ -90,6 +117,23 @@ mod tests {
             .expect("unit +x ray")
     }
 
+    fn oriented_grid() -> VoxelGrid<f64> {
+        let rotation = helios_math::UnitQuaternion::try_from_rotation_columns(
+            Vector3::new(0.0, 1.0, 0.0),
+            Vector3::new(-1.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            1.0e-12,
+        )
+        .expect("right-handed quarter-turn basis");
+        VoxelGrid::oriented(
+            [11, 3, 3],
+            [2.0, 2.0, 2.0],
+            Point3::new(10.0, 20.0, 30.0),
+            rotation,
+        )
+        .expect("grid")
+    }
+
     #[test]
     fn homogeneous_slab_gives_mu_times_length() {
         // Uniform μ=0.06 cm⁻¹ over a 20 mm = 2 cm crossing → τ = 0.06·2 = 0.12.
@@ -125,6 +169,18 @@ mod tests {
         let coarse = forward_project_ray(&mu, &ray_along_x(-5.0), 5.0).expect("hit");
         let fine = forward_project_ray(&mu, &ray_along_x(-5.0), 0.1).expect("hit");
         assert_relative_eq!(coarse, fine, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn oriented_homogeneous_slab_gives_mu_times_length() {
+        // The local +x node span is 20 mm. The grid rotates it onto world +y,
+        // so this world-space ray must still integrate τ = 0.06 cm⁻¹ · 2 cm.
+        let mu = Volume::from_shape_fn(oriented_grid(), |_| 0.06);
+        let ray =
+            Ray::try_from_direction(Point3::new(10.0, 15.0, 30.0), Vector3::new(0.0, 1.0, 0.0))
+                .expect("unit +y ray");
+        let tau = forward_project_ray(&mu, &ray, 0.5).expect("hit");
+        assert_relative_eq!(tau, 0.12, epsilon = 1e-12);
     }
 
     #[test]
