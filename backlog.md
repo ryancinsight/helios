@@ -27,7 +27,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-004 | `helios-domain`: `VoxelGrid` (index↔world via leto `Isometry3`) + `Volume<T>` trilinear sampling over leto `Array3` | [minor] | done | claude-helios | `crates/helios-domain/**` |
 | H-004b | `helios-domain::load_ct_slice` (feature `dicom`): single-slice DICOM CT/MVCT → HU `Volume` via `ritk-dicom` (parse + rescale-calibrated decode) + geometry (Rows/Columns/PixelSpacing/ImagePositionPatient). Validated by a synthetic-DICOM round-trip through the real dicom-rs parser. **Mandatory ritk integration now consumed.** | [minor] | done | claude-helios | `crates/helios-domain/**`, `crates/helios-core/**` |
 | H-004c | `helios-domain::load_ct_series`: multi-slice DICOM **series** stacking → 3-D HU `Volume` (parse+decode each slice, validate identical in-plane geometry, sort by `ImagePositionPatient` z, derive uniform Δz). Shared `read_slice`/`scatter_slice` with `load_ct_slice`. Verified by a shuffled 3-slice synthetic round-trip + empty/non-uniform error paths. | [minor] | done | claude-helios | `crates/helios-domain/**` |
-| H-004d | `helios-domain`: `CtVolume`/`MvctVolume` HU-semantic newtypes + `ImageOrientationPatient` → oriented grid pose (pairs with H-003d oriented `VoxelGrid`) | [minor] | todo | — | `crates/helios-domain/**` |
+| H-004d | `helios-domain`: `CtVolume`/`MvctVolume` HU-semantic newtypes + `ImageOrientationPatient` → oriented grid pose (pairs with H-003d oriented `VoxelGrid`). Blocked until the RITK DICOM provider exposes its named `ImageOrientationPatient` tag from an available provider lane. | [minor] | blocked | — | `crates/helios-domain/**` |
 | H-005 | `helios-domain`: gaia-backed binary-MLC + collimator/jaw geometry model | [minor] | todo | — | `crates/helios-domain/**` |
 | H-006 | ~~Shared `CARGO_TARGET_DIR`~~ — resolved: inherited from `repos/.cargo/config.toml` (shared `D:/atlas/target`) | [patch] | done | claude-helios | — |
 
@@ -63,7 +63,7 @@ for kwavers) requiring consumer coordination.
 | H-013a | `helios-solver::primary_fluence_parallel_x`: primary-transport stage — Beer–Lambert attenuated fluence Ψ=Ψ₀·exp(−∫μ dl), +x parallel beam. Also fixed projector optical-depth units (mm→cm). | [minor] | done | claude-helios | `crates/helios-solver/**` |
 | H-013b | `helios-solver`: dose = TERMA ⊛ kernel (collapsed-cone). `dose_convolution_x` + `exponential_deposition_kernel` — exact oracles (delta identity, normalized-kernel interior conservation, physical build-up). **Verified** (G-14 resolved). | [minor] | done | claude-helios | `crates/helios-solver/**` |
 | H-003c | `helios-math` re-exports adapted to the new `leto::geometry` API (Point2/Point3/Vector3/UnitVector3) + gaia Aabb/Ray; `VoxelGrid` simplified to axis-aligned. Restored full-workspace build. | [minor] | done | claude-helios | `crates/helios-math/**`, `crates/helios-domain/**` |
-| H-003d | `helios-domain`: oriented `VoxelGrid` (DICOM `ImageOrientationPatient` cosines) once a rigid-transform primitive with `transform`/`inverse` exists upstream. | [minor] | todo | — | `crates/helios-domain/**` |
+| H-003d | Oriented `VoxelGrid` over the merged Leto `Isometry3` and checked `UnitQuaternion` rotation columns. The CPU projector/deposition clip in local index space; HDF5 persists rotation columns; GPU rejects unsupported poses before upload. DICOM parsing remains H-004d after RITK publishes its named orientation tag. | [minor] | done | Codex | `crates/helios-{domain,math,solver,gpu}/**`, workspace release metadata |
 
 ## Sprint 3 — Delivery
 

@@ -5,9 +5,12 @@ All notable changes to Helios are documented here. Format follows
 [SemVer 2.0.0](https://semver.org/). Pre-1.0: minor bumps may break, documented
 under a Breaking subsection.
 
-## [0.0.1] — Unreleased (Sprint 1: Foundation)
+## [0.1.0] — Unreleased
 
 ### Changed
+- Helios 0.1.0 declares Rust 1.95, matching its merged Mnemosyne 0.5 and
+  Leto 0.38 provider graph. The lockfile is the reproducibility pin; no
+  revision-qualified first-party source quarantine is introduced.
 - H-065: refreshed the locked Moirai provider graph to 0.3.0 after the
   provider-owned NUMA iterator retirement; all Helios examples compile against
   the resolved release graph.
@@ -28,8 +31,30 @@ under a Breaking subsection.
 - H-061: validated all three runnable examples against the synchronized Atlas
   provider graph and removed Helios's direct dicom-rs `ndarray` feature
   activation; `ritk-dicom` remains the pixel-decoding owner.
+- Normalized the five remaining runnable-example source files with the pinned
+  Rust formatter; `cargo fmt --all --check` is clean across the workspace.
 
 ### Added
+- H-003d: `VoxelGrid` now owns a Leto `Isometry3` pose and exposes
+  `VoxelGrid::oriented`; its index/world transforms apply anisotropic spacing
+  in local index space and the rigid pose exactly once. Axis-aligned grids use
+  the identity rotation. The CPU projector and terma deposition clip in that
+  local index frame, preserving world-space millimetre path length for an
+  oriented volume. HDF5 geometry now carries the three rotation columns in its
+  15-value dataset and validates them on load, so storage cannot discard pose.
+  The present Hephaestus field kernel has no pose metadata and rejects a
+  non-identity grid before upload; it does not silently project an oriented
+  volume as axis-aligned. Generic f32/f64 index/world mapping and value-semantic
+  projector/storage tests cover the rigid-pose contract. DICOM
+  `ImageOrientationPatient` ingestion remains blocked on RITK's named provider
+  tag (H-004d), so no raw DICOM tag is duplicated in Helios.
+
+### Breaking
+
+- The pre-0.1 HDF5 `geometry` dataset had six values (spacing plus origin). It
+  now has fifteen, appending three world-space rotation columns. Regenerate
+  archived volumes with 0.1.0 so their rigid grid pose is explicit and
+  validated on load.
 - Cargo workspace skeleton (`edition = "2021"`, `resolver = "2"`) with
   `workspace.package`/`workspace.lints`/`workspace.dependencies` SSOT declaring the
   Atlas stack as remote git dependencies (ritk, gaia, hephaestus, moirai, coeus,

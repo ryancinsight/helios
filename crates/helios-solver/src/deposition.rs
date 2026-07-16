@@ -6,7 +6,7 @@
 //! voxel, producing the terma (total energy released per unit mass) that a
 //! collapsed-cone/convolution dose engine spreads with a scatter kernel.
 
-use crate::projector::world_aabb;
+use crate::projector::ray_grid_interval;
 use helios_core::constants::MM_PER_CM;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray};
@@ -89,8 +89,7 @@ fn deposit_terma_impl<T: GeometryScalar>(
         dose.grid().dims(),
         "dose and mu must share the same grid"
     );
-    let aabb = world_aabb(&grid);
-    let (t_enter, t_exit) = match ray.intersect_aabb(&aabb) {
+    let (t_enter, t_exit) = match ray_grid_interval(&grid, ray) {
         Some(v) => v,
         None => return T::ZERO,
     };
@@ -158,6 +157,24 @@ mod tests {
             .expect("unit +x ray")
     }
 
+    fn oriented_cube(mu_val: f64) -> Volume<f64> {
+        let rotation = helios_math::UnitQuaternion::try_from_rotation_columns(
+            Vector3::new(0.0, 1.0, 0.0),
+            Vector3::new(-1.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            1.0e-12,
+        )
+        .expect("right-handed quarter-turn basis");
+        let grid = VoxelGrid::oriented(
+            [9, 9, 9],
+            [2.0, 2.0, 2.0],
+            Point3::new(10.0, 20.0, 30.0),
+            rotation,
+        )
+        .expect("grid");
+        Volume::from_shape_fn(grid, move |_| mu_val)
+    }
+
     #[test]
     fn total_deposited_equals_primary_energy_lost() {
         // Uniform μ = 0.05 cm⁻¹, chord 1.6 cm → τ = 0.08. Energy removed from a
@@ -167,6 +184,21 @@ mod tests {
         let total = deposit_ray_terma(&mut dose, &mu, &central_x_ray(), 1.0, 0.5);
         let expected = 1.0 - (-0.05 * 1.6_f64).exp();
         assert_relative_eq!(total, expected, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn oriented_grid_deposition_preserves_primary_energy_loss() {
+        // The local x-span is 16 mm; rotation maps it to world +y. The same
+        // Beer–Lambert oracle must hold after index-space clipping.
+        let mu = oriented_cube(0.05);
+        let mut dose = Volume::zeros(*mu.grid());
+        let ray =
+            Ray::try_from_direction(Point3::new(2.0, -20.0, 38.0), Vector3::new(0.0, 1.0, 0.0))
+                .expect("unit +y ray");
+        let total = deposit_ray_terma(&mut dose, &mu, &ray, 1.0, 0.5);
+        let expected = 1.0 - (-0.05 * 1.6_f64).exp();
+        assert_relative_eq!(total, expected, epsilon = 1e-12);
+        assert_relative_eq!(dose.sum(), expected, epsilon = 1e-12);
     }
 
     #[test]

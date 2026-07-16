@@ -53,8 +53,11 @@ fn main() {
     let mu_tissue = mu_rho_tissue
         .to_linear(density_tissue)
         .expect("valid density");
-    println!("\nSoft tissue  μ/ρ = {:.4} cm²/g  ρ = {density_tissue} g/cm³  → μ = {:.4} cm⁻¹",
-        mu_rho_tissue.get(), mu_tissue.get());
+    println!(
+        "\nSoft tissue  μ/ρ = {:.4} cm²/g  ρ = {density_tissue} g/cm³  → μ = {:.4} cm⁻¹",
+        mu_rho_tissue.get(),
+        mu_tissue.get()
+    );
     assert!(
         (mu_tissue.get() - 0.169 * 1.06).abs() < 1e-6,
         "μ = (μ/ρ)ρ identity failed"
@@ -65,22 +68,28 @@ fn main() {
     println!("\nCT calibration (HU → relative electron density → mass density):");
     let water_density = 1.0_f64; // g/cm³
     let test_materials: &[(&str, f64)] = &[
-        ("Air",        -1000.0),
-        ("Lung",        -800.0),
-        ("Adipose",     -100.0),
-        ("Water",          0.0),
-        ("Soft tissue",   50.0),
+        ("Air", -1000.0),
+        ("Lung", -800.0),
+        ("Adipose", -100.0),
+        ("Water", 0.0),
+        ("Soft tissue", 50.0),
         ("Compact bone", 700.0),
     ];
     for &(name, hu) in test_materials {
         let rho_rel = relative_electron_density_from_hu(hu);
         let rho = mass_density_from_hu(hu, water_density);
-        println!("  {:<16}  HU={:>6.0}  ρ_rel={:.3}  ρ={:.3} g/cm³", name, hu, rho_rel, rho);
+        println!(
+            "  {:<16}  HU={:>6.0}  ρ_rel={:.3}  ρ={:.3} g/cm³",
+            name, hu, rho_rel, rho
+        );
     }
 
     // Water at 0 HU → ρ_rel = 1.0
     let water_rho = relative_electron_density_from_hu(0.0_f64);
-    assert!((water_rho - 1.0).abs() < 1e-10, "Water HU→ρ should be exactly 1");
+    assert!(
+        (water_rho - 1.0).abs() < 1e-10,
+        "Water HU→ρ should be exactly 1"
+    );
 
     // Air at -1000 HU → ρ_rel = 0.0
     let air_rho = relative_electron_density_from_hu(-1000.0_f64);

@@ -328,7 +328,7 @@ mod tests {
 
     fn text_value(vr: [u8; 2], value: &str) -> Vec<u8> {
         let mut bytes = value.as_bytes().to_vec();
-        if bytes.len() % 2 != 0 {
+        if !bytes.len().is_multiple_of(2) {
             bytes.push(if vr == [b'U', b'I'] { 0 } else { b' ' });
         }
         bytes
