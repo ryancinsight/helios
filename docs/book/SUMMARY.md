@@ -18,8 +18,11 @@
 # Part II — CT Imaging and Attenuation
 
 - [Hounsfield Units and Attenuation Maps](imaging_ct.md)
+  - [Example: Photon Attenuation Physics](examples/photon_attenuation.md)
 - [Parallel-Beam Radon Transform](imaging_radon.md)
+  - [Example: Radon Sinogram](examples/radon_sinogram.md)
 - [Filtered Back Projection](imaging_fbp.md)
+  - [Example: FBP Reconstruction](examples/fbp_reconstruction.md)
 - [MVCT and Correction Workflows](imaging_mvct.md)
 
 ---
@@ -38,7 +41,9 @@
 - [MLC Models and Leaf Sequencing](planning_mlc.md)
 - [Helical Delivery and Sinogram](planning_helical.md)
 - [Dose-Volume Histograms](planning_dvh.md)
+  - [Example: DVH Analysis](examples/dvh_analysis.md)
 - [Gamma Index and Plan Verification](planning_gamma.md)
+  - [Example: Gamma Index Comparison](examples/gamma_index.md)
 
 ---
 
