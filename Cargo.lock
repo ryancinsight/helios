@@ -87,7 +87,11 @@ checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
 
 [[package]]
 name = "apollo-fft"
+<<<<<<< HEAD
 version = "0.20.0"
+=======
+version = "0.19.0"
+>>>>>>> 85b26d3e9da4ead8db3f3c651762af1500e0c38c
 dependencies = [
  "apollo-fft-macros",
  "apollo-leto-interop",
@@ -1217,7 +1221,7 @@ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
 name = "helios-analysis"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "approx",
  "criterion",
@@ -1228,7 +1232,7 @@ dependencies = [
 
 [[package]]
 name = "helios-core"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "approx",
  "proptest",
@@ -1238,7 +1242,7 @@ dependencies = [
 
 [[package]]
 name = "helios-domain"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "approx",
  "consus-core",
@@ -1253,7 +1257,7 @@ dependencies = [
 
 [[package]]
 name = "helios-gpu"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "approx",
  "bytemuck",
@@ -1270,7 +1274,7 @@ dependencies = [
 
 [[package]]
 name = "helios-imaging"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "approx",
  "helios-analysis",
@@ -1282,7 +1286,7 @@ dependencies = [
 
 [[package]]
 name = "helios-math"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "eunomia",
  "gaia",
@@ -1292,7 +1296,7 @@ dependencies = [
 
 [[package]]
 name = "helios-physics"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "approx",
  "helios-core",
@@ -1302,7 +1306,7 @@ dependencies = [
 
 [[package]]
 name = "helios-planning"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "approx",
  "coeus-autograd",
@@ -1314,7 +1318,7 @@ dependencies = [
 
 [[package]]
 name = "helios-python"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "helios-physics",
  "helios-planning",
@@ -1323,7 +1327,7 @@ dependencies = [
 
 [[package]]
 name = "helios-simulation"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "approx",
  "helios-analysis",
@@ -1339,7 +1343,7 @@ dependencies = [
 
 [[package]]
 name = "helios-solver"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "approx",
  "criterion",

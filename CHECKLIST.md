@@ -1,10 +1,29 @@
 # Helios Checklist (tactical)
 
-**Sprint target version:** `0.0.1` (Foundation → Sprint 2 physics/GPU)
+**Sprint target version:** `0.1.0` (oriented-grid provider convergence)
 **Current phase:** Phase 2 (Execution). Sprint 1 domain core complete
 (`helios-core`/`math`/`domain`); Sprint 2 opened with `helios-physics`.
 
 ## Owner: claude-helios
+
+## Owner: Codex
+
+### H-003d [minor] done — oriented `VoxelGrid`
+
+- [x] Consume Leto 0.38's checked rotation-column contract through
+  `helios-math`; store one local-index-to-world `Isometry3` in `VoxelGrid`.
+- [x] Preserve the axis-aligned constructor as the identity-pose case; verify
+  rotated f32/f64 index/world mapping and inverse round trips.
+- [x] Transform CPU projector/deposition clipping into scaled-index space;
+  serialize and validate the full pose through HDF5; reject the unsupported GPU
+  pose before upload rather than dropping rotation.
+- [x] Regenerate the locked 0.1.0 provider graph under Rust 1.95. Package
+  `fmt`, warning-denied Clippy, doctests, rustdoc, and nextest pass; nextest
+  runs 104/104 domain/solver/GPU tests, including live-GPU differentials.
+  Workspace example compilation and `cargo fmt --all --check` pass. Semver
+  checks pass 196/196 each for `helios-domain`, `helios-math`,
+  `helios-solver`, and `helios-gpu`. H-004d remains blocked on RITK's named
+  `ImageOrientationPatient` attribute provider.
 
 ## Codex — H-062 DVH threshold-query audit [patch] — done 2026-07-15
 

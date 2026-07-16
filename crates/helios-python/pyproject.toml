@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "helios"
-version = "0.0.1"
+version = "0.1.0"
 description = "Thin PyO3 bindings for the Helios radiation-therapy simulation/imaging stack"
 requires-python = ">=3.9"
 license = { text = "MIT OR Apache-2.0" }

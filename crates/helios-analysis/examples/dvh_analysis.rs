@@ -26,8 +26,7 @@ fn gaussian_dose_phantom(
     sigma_mm: f64,
 ) -> Volume<f64> {
     let origin = Point3::new(0.0, 0.0, 0.0);
-    let grid =
-        VoxelGrid::axis_aligned(dims, [spacing_mm; 3], origin).expect("valid phantom grid");
+    let grid = VoxelGrid::axis_aligned(dims, [spacing_mm; 3], origin).expect("valid phantom grid");
     let centre = [
         (dims[0] as f64 - 1.0) * spacing_mm / 2.0,
         (dims[1] as f64 - 1.0) * spacing_mm / 2.0,
@@ -62,8 +61,14 @@ fn main() {
     // Clinical coverage: V_95 and D_95 relative to prescription
     let d95 = dvh.dose_at_volume_fraction(0.95);
     let v95_pct = dvh.volume_fraction_at_dose(PRESCRIPTION_GY * 0.95) * 100.0;
-    println!("\n  D₉₅  = {d95:.2} Gy  ({:.1}% of Rx)", d95 / PRESCRIPTION_GY * 100.0);
-    println!("  V₉₅%  = {v95_pct:.1}%  (volume receiving ≥ 95% Rx = {:.1} Gy)", PRESCRIPTION_GY * 0.95);
+    println!(
+        "\n  D₉₅  = {d95:.2} Gy  ({:.1}% of Rx)",
+        d95 / PRESCRIPTION_GY * 100.0
+    );
+    println!(
+        "  V₉₅%  = {v95_pct:.1}%  (volume receiving ≥ 95% Rx = {:.1} Gy)",
+        PRESCRIPTION_GY * 0.95
+    );
 
     // ICRU-83 homogeneity index (lower = better)
     let hi = dvh.homogeneity_index();
@@ -80,7 +85,11 @@ fn main() {
     });
     let ptv_d95 = ptv_dvh.dose_at_volume_fraction(0.95);
     let ptv_mean = ptv_dvh.mean();
-    println!("\nPTV-masked DVH  ({} voxels inside r≤{} voxel radius)", ptv_dvh.count(), ptv_mask_radius);
+    println!(
+        "\nPTV-masked DVH  ({} voxels inside r≤{} voxel radius)",
+        ptv_dvh.count(),
+        ptv_mask_radius
+    );
     println!("  PTV D_mean = {ptv_mean:.2} Gy");
     println!("  PTV D₉₅   = {ptv_d95:.2} Gy");
 

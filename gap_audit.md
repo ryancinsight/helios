@@ -4,6 +4,29 @@ Physics, numerics, accuracy, architecture, and integration gaps. Closed by
 evidence, not silence. Each gap: ID, description, class, current evidence tier,
 target closure.
 
+## H-003d oriented-grid provider convergence (closed)
+
+- Leto 0.38 now owns checked conversion from world-space rotation columns to a
+  `UnitQuaternion`; Helios uses that provider contract to restore the
+  local-index-to-world `Isometry3` grid pose. CPU ray clipping and terma
+  deposition run in scaled-index space and retain the world-space millimetre
+  parameter; the HDF5 boundary records three validated rotation columns. The
+  grid core does not duplicate DICOM tags or matrix-to-quaternion logic.
+- The current Hephaestus `FieldGeometry` has no rigid pose. `GpuProjector`
+  therefore returns a typed dispatch error for a non-identity rotation before
+  data upload (correctness evidence: type/contract plus a value-semantic test),
+  rather than silently omitting orientation. A pose-bearing GPU field geometry
+  remains an upstream Hephaestus capability gap.
+- Evidence tier: type-level rigid pose and checked Leto basis construction;
+  analytical/differential validation through the 104/104 focused nextest run
+  (including oriented Beer–Lambert and HDF5 pose round trips, live GPU checks);
+  warning-denied Clippy, doctest/rustdoc, workspace example build, workspace
+  format check, and four 196/196-package SemVer checks are clean.
+- H-004d remains externally sequenced: RITK's public DICOM tags currently omit
+  `ImageOrientationPatient`, and both permitted RITK worktree lanes carry
+  active peer migrations. Helios will consume the named provider tag once that
+  owner lane is available.
+
 ## Open gaps
 
 ### Recently closed
@@ -169,9 +192,9 @@ target closure.
   walking up from the package dir. Verified: `cargo doc` emitted to
   `D:/atlas/target/doc` and no per-`helios` `target/` exists. No action needed;
   backlog H-006 closed.
-- **G-7 (toolchain):** `rust-toolchain.toml` pins `channel = "stable"` (currently
-  1.95) but does not pin an exact version; MSRV floor declared as 1.85 in
-  `Cargo.toml` (`rust-version`) but not yet CI-verified. → revisit at first CI.
+- **G-7 (toolchain):** Helios 0.1.0 declares Rust 1.95, matching the merged
+  provider graph. `rust-toolchain.toml` remains `stable` rather than an exact
+  channel pin; the configured Rust 1.95 package gates are the current evidence.
 
 - **G-11 (integration, geometry ownership):** Geometry primitives (`Aabb`, `Ray`,
   intersection, meshes, CSG) are owned by **gaia**, not Helios. gaia already has

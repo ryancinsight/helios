@@ -38,7 +38,10 @@ pub use eunomia::{CastFrom, CastTo, FloatElement, NumericElement};
 /// Gated on the `geometry` feature (numeric/physics layers do not need it).
 /// leto's geometry types live in the `leto::geometry` module.
 #[cfg(feature = "geometry")]
-pub use leto::geometry::{Point2, Point3, UnitVector3, Vector3};
+pub use leto::geometry::{
+    Isometry3, Point2, Point3, RotationBasisError, Translation3, UnitQuaternion, UnitVector3,
+    Vector3,
+};
 
 /// Geometry *primitives* from the gaia geometry kernel, re-exported as the Helios
 /// geometry vocabulary (upstream ownership — Helios never re-implements these).

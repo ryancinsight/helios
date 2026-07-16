@@ -17,8 +17,8 @@ fn disk_phantom(mu0: f64, radius_mm: f64) -> Volume<f64> {
     let n = 161;
     let spacing = 0.5;
     let origin = Point3::new(0.0, 0.0, 0.0);
-    let grid = VoxelGrid::axis_aligned([n, n, 1], [spacing; 3], origin)
-        .expect("valid phantom grid");
+    let grid =
+        VoxelGrid::axis_aligned([n, n, 1], [spacing; 3], origin).expect("valid phantom grid");
     let centre = (n as f64 - 1.0) * spacing / 2.0;
     Volume::from_shape_fn(grid, move |[i, j, _k]| {
         let dx = i as f64 * spacing - centre;
@@ -60,12 +60,8 @@ fn main() {
     let sino = parallel_beam_radon(&phantom, &angles, &offsets, 400.0, 0.25);
 
     // Reconstruction grid: 41×41×1 at 2 mm.
-    let recon_grid = VoxelGrid::axis_aligned(
-        [41, 41, 1],
-        [2.0; 3],
-        Point3::new(0.0, 0.0, 0.0),
-    )
-    .expect("valid reconstruction grid");
+    let recon_grid = VoxelGrid::axis_aligned([41, 41, 1], [2.0; 3], Point3::new(0.0, 0.0, 0.0))
+        .expect("valid reconstruction grid");
 
     println!("Running FBP reconstruction  (41×41×1 at 2 mm)");
     let recon = filtered_back_projection(&sino, &recon_grid);
