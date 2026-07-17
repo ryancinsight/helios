@@ -9,11 +9,16 @@
 //!
 //! where `μ` is the **linear attenuation coefficient** (cm⁻¹). `μ = (μ/ρ)·ρ`
 //! relates it to the material-specific **mass attenuation coefficient** `μ/ρ`
-//! (cm²/g) and mass density `ρ` (g/cm³); tabulated `μ/ρ` (e.g. NIST XCOM) is data
-//! that later increments load into these types.
+//! (cm²/g) and mass density `ρ` (g/cm³). Tabulated material data is exposed
+//! through the [`tables`] module and constructs these validated types directly.
 
 use helios_core::HeliosError;
 use helios_math::{NumericElement, Scalar};
+
+/// Tabulated material mass-attenuation data.
+pub mod tables;
+
+pub use tables::NistMaterial;
 
 /// Linear attenuation coefficient `μ` in cm⁻¹.
 ///

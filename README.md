@@ -56,8 +56,8 @@ performance defect to profile and optimize, never a limit to raise.
    DICOM ingest. *(implemented)*
 2. **Sprint 2 — Physics & GPU foundation:** photon attenuation, hephaestus/Moirai
    execution, deterministic CPU dose and baseline imaging projection kernels,
-   and GPU HU→μ conversion. *(implemented baseline; XCOM data plus exact and
-   GPU projection remain tracked)*
+   and GPU HU→μ conversion. *(implemented baseline; exact and GPU projection
+   remain tracked)*
 3. **Sprint 3 — Delivery:** binary-MLC modeling, collimator aperture, helical
    TomoTherapy delivery, and beam-following collapsed-cone dose. *(implemented)*
 4. **Sprint 4 — Planning & imaging:** Coeus planning objectives and dedicated

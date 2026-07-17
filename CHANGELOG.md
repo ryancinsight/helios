@@ -42,6 +42,11 @@ under a Breaking subsection.
   Rust formatter; `cargo fmt --all --check` is clean across the workspace.
 
 ### Added
+- H-011b: embedded the selected NIST X-ray `μ/ρ` tables for dry air, liquid
+  water, and cortical bone over 10 keV–20 MeV. `NistMaterial` returns a
+  validated generic `MassAttenuation` with allocation-free, native-precision
+  log-linear interpolation between edge-free table knots; it explicitly does
+  not claim to reproduce XCOM's cubic-spline output.
 - H-003d: `VoxelGrid` now owns a Leto `Isometry3` pose and exposes
   `VoxelGrid::oriented`; its index/world transforms apply anisotropic spacing
   in local index space and the rigid pose exactly once. Axis-aligned grids use
