@@ -292,6 +292,18 @@ target closure.
 
 ## Residual risk register
 
+- **G-20 (H-011b table interpolation).** The embedded dry-air, liquid-water,
+  and cortical-bone `μ/ρ` values are transcribed from the NIST X-Ray Mass
+  Attenuation Coefficients tables at their common 10 keV–20 MeV knots. The
+  range excludes the selected tables' absorption-edge rows, and Helios defines
+  between-knot behavior as native-precision log-linear interpolation. This is
+  deliberately not represented as XCOM output: NIST documents log-log cubic
+  spline fitting and explicit edge handling for XCOM. Exact table knots,
+  boundaries, and the interpolation identity are value-semantic tests; an
+  independent clinical-spectrum or Monte-Carlo validation remains outside this
+  data-loading slice. *Evidence tier: source-value and analytical-contract
+  tests.*
+
 - Atlas upstream APIs may drift (multi-repo co-evolution); Helios pins the local
   synchronized checkout via `[patch]` and commits `Cargo.lock`. `ritk-dicom` is now
   consumed (H-004b) and is **skew-free** (no leto/mnemosyne/themis/eunomia cluster —

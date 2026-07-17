@@ -8,6 +8,17 @@
 
 ## Owner: Codex
 
+## Codex — H-011b NIST X-ray mass-attenuation data [minor] — done 2026-07-17
+
+- [x] Pin the authoritative NIST X-ray source, supported material set, energy
+  grid, and absorption-edge interpolation contract in Rustdoc and the audit.
+- [x] Add one typed, allocation-free material/energy lookup API that returns
+  validated `MassAttenuation` values without a consumer-side table copy.
+- [x] Add source-value, boundary, interpolation, and `f32`/`f64` tests; run
+  package formatting, warning-denied Clippy, nextest, doctests, and rustdoc.
+  `helios-physics`: fmt and Clippy clean; nextest 37/37; doctests 0/0;
+  rustdoc clean; semver checks 196/196 (baseline `origin/main`, assumed minor).
+
 ### H-003d [minor] done — oriented `VoxelGrid`
 
 - [x] Consume Leto 0.38's checked rotation-column contract through
