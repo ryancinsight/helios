@@ -12,3 +12,19 @@ retries = 0
 fail-fast = true
 slow-timeout = { period = "30s", terminate-after = 2, grace-period = "10s" }
 global-timeout = "15m"
+
+# GPU tests each initialize a wgpu device; running several concurrently in
+# separate nextest processes contends on the single physical device and crashes
+# the driver (STATUS_ACCESS_VIOLATION 0xC0000005). Each test is correct in
+# isolation — the fault is concurrent device access, not logic — so serialize
+# every GPU-backed test through a single-slot group across all profiles.
+[test-groups]
+gpu = { max-threads = 1 }
+
+[[profile.default.overrides]]
+filter = "package(helios-gpu)"
+test-group = "gpu"
+
+[[profile.ci.overrides]]
+filter = "package(helios-gpu)"
+test-group = "gpu"
