@@ -6,6 +6,11 @@ This document outlines the planned book structure for the Helios radiation thera
 simulation suite, following the kwavers model. The book will document the physics, 
 mathematics, and implementation of Helios using the Atlas stack.
 
+> **Authoritative TOC:** [`SUMMARY.md`](SUMMARY.md) is the single source of truth for
+> the *current* book (the file mdBook renders). This document is the *forward roadmap*
+> — its Parts/Chapters describe intended future expansion and may run ahead of the
+> chapters and examples that exist today.
+
 ---
 
 ## Book Title
@@ -184,7 +189,7 @@ crates/helios/examples/
 - **Coeus**: COMPLETE - Tensors and autodiff use Coeus
 - **Mnemosyne**: COMPLETE - Memory uses Mnemosyne
 - **Themis**: COMPLETE - Placement uses Themis
-- **Herres**: COMPLETE - SIMD uses Hermes
+- **Hermes**: COMPLETE - SIMD uses Hermes
 
 ---
 
@@ -219,10 +224,10 @@ mdbook serve docs/book
 - [x] Unit tests and benchmarks
 
 ### Phase 2: Documentation
-- [ ] Create book structure (this document)
-- [ ] Write chapter content
-- [ ] Create executable examples
-- [ ] Validate all examples compile
+- [x] Create book structure (authoritative TOC in `SUMMARY.md`; this document is the forward roadmap)
+- [~] Write chapter content (Parts I–VII drafted; Advanced Applications chapters pending)
+- [x] Create executable examples (8 chapter-mapped examples in `crates/*/examples/`)
+- [x] Validate all examples compile *and run* (each passes its analytical oracle)
 
 ### Phase 3: Validation
 - [ ] Clinical validation studies
