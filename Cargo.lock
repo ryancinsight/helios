@@ -87,7 +87,7 @@ checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
 
 [[package]]
 name = "apollo-fft"
-version = "0.23.0"
+version = "0.24.0"
 dependencies = [
  "apollo-fft-macros",
  "apollo-leto-interop",
@@ -1352,7 +1352,7 @@ dependencies = [
 
 [[package]]
 name = "hephaestus-core"
-version = "0.15.0"
+version = "0.16.1"
 dependencies = [
  "bytemuck",
  "leto",
@@ -1362,7 +1362,7 @@ dependencies = [
 
 [[package]]
 name = "hephaestus-wgpu"
-version = "0.15.0"
+version = "0.16.1"
 dependencies = [
  "bytemuck",
  "hephaestus-core",
