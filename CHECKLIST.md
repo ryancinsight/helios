@@ -8,6 +8,15 @@
 
 ## Owner: Codex
 
+## Codex — H-011b NIST XCOM mass-attenuation data [minor] — in progress 2026-07-17
+
+- [ ] Pin the authoritative NIST XCOM version, supported material set, energy
+  grid, and absorption-edge interpolation contract in Rustdoc and the audit.
+- [ ] Add one typed, allocation-free material/energy lookup API that returns
+  validated `MassAttenuation` values without a consumer-side table copy.
+- [ ] Add source-value, boundary, interpolation, and `f32`/`f64` tests; run
+  package formatting, warning-denied Clippy, nextest, doctests, and rustdoc.
+
 ### H-003d [minor] done — oriented `VoxelGrid`
 
 - [x] Consume Leto 0.38's checked rotation-column contract through
