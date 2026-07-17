@@ -31,6 +31,14 @@ target closure.
 
 ### Recently closed
 
+- **G-24 — RESOLVED (H-066).** The workspace declared `num-traits` directly
+  even though no Helios manifest or source consumed it. The direct declaration
+  is removed. `cargo check --workspace --locked` passes, and
+  `cargo tree -i num-traits --locked --edges normal` shows only transitive
+  provider paths through Eunomia, Gaia, Half, WGPU, and their dependencies.
+  Evidence tier: compiler-checked dependency resolution plus an inverse
+  dependency-tree ownership audit.
+
 - **G-23 — RESOLVED (H-005 reconciliation).** The foundation roadmap still
   listed a binary-MLC plus collimator/jaw model as todo after H-020b delivered
   `LeafOpenTimeSinogram`/`MlcModel` and H-020k delivered gaia-backed

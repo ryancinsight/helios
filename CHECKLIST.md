@@ -8,6 +8,15 @@
 
 ## Owner: Codex
 
+## Codex — H-066 direct dependency ownership [patch] — done 2026-07-17
+
+- [x] Preserve the stale peer's removal of the unused workspace
+  `num-traits` declaration; no Helios manifest or source imports it directly.
+- [x] Verify the complete workspace with `cargo check --workspace --locked`.
+- [x] Audit the inverse dependency tree: remaining `num-traits` paths are
+  provider-owned transitive requirements through Eunomia, Gaia, Half, WGPU,
+  and their dependencies, not a Helios-owned edge.
+
 ## Codex — H-011b NIST X-ray mass-attenuation data [minor] — done 2026-07-17
 
 - [x] Pin the authoritative NIST X-ray source, supported material set, energy
