@@ -8,10 +8,10 @@ binary-MLC modulation, couch translation, and MVCT guidance — alongside
 high-fidelity radiation-imaging simulation (MVCT forward projection,
 reconstruction, on-board kV/MV imaging, and IGRT workflows).
 
-> **Status:** Sprint 1 (Foundation). `helios-core` is implemented and verified; the
-> higher layers are being built out per the sprint roadmap. See
-> [`CHECKLIST.md`](CHECKLIST.md), [`backlog.md`](backlog.md), and
-> [`gap_audit.md`](gap_audit.md).
+> **Status:** The foundation, physics/GPU, delivery, planning/imaging, and
+> end-to-end workflow slices are implemented. The active work is limited to
+> explicitly tracked provider integrations and validation gaps in
+> [`backlog.md`](backlog.md) and [`gap_audit.md`](gap_audit.md).
 
 ## Architecture at a glance
 
@@ -52,17 +52,17 @@ performance defect to profile and optimize, never a limit to raise.
 ## Sprint roadmap
 
 1. **Sprint 1 — Foundation:** workspace skeleton, `helios-core`, `helios-math`
-   seam, `helios-domain` (`VoxelGrid` + `Volume`). *(core done; CT/MVCT DICOM
-   ingest via `ritk-dicom` landed in H-004b/H-004c/H-064)*
-2. **Sprint 2 — Physics & GPU foundation:** `helios-physics` photon attenuation
-   *(landed)*; then hephaestus+moirai and the first deterministic dose + imaging
-   projection kernels in `helios-solver`/`helios-gpu`. *(in progress)*
-3. **Sprint 3 — Delivery:** binary-MLC modeling + full helical TomoTherapy delivery
-   kinematics in `helios-simulation` with basic MVCT.
-4. **Sprint 4 — Planning & imaging:** `helios-planning` (coeus) + dedicated
-   `helios-imaging`.
-5. **Sprint 5 — End-to-end:** workflow validation, Python bindings, performance
-   benchmarking.
+   seam, `helios-domain` (`VoxelGrid` + `Volume`), and provider-owned CT/MVCT
+   DICOM ingest. *(implemented)*
+2. **Sprint 2 — Physics & GPU foundation:** photon attenuation, hephaestus/Moirai
+   execution, deterministic CPU/GPU dose and imaging projection kernels.
+   *(implemented; XCOM data and exact Siddon projection remain tracked)*
+3. **Sprint 3 — Delivery:** binary-MLC modeling, collimator aperture, helical
+   TomoTherapy delivery, and beam-following collapsed-cone dose. *(implemented)*
+4. **Sprint 4 — Planning & imaging:** Coeus planning objectives and dedicated
+   imaging/reconstruction/registration. *(implemented baseline)*
+5. **Sprint 5 — End-to-end:** workflow validation, PyO3 bindings, and GPU
+   throughput study. *(implemented; clinical-reference validation remains tracked)*
 
 ## Validation targets
 

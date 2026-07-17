@@ -7,7 +7,7 @@
 //! The pure domain types depend only on `helios-core` (errors, validated units)
 //! and `helios-math` (the `Scalar` seam and leto substrate). DICOM I/O
 //! (`ritk-dicom`) is wired in at the boundary behind the `dicom` feature
-//! ([`load_ct_slice`]): external file bytes become validated typed [`Volume`]s
+//! (`load_ct_slice`): external file bytes become validated typed [`Volume`]s
 //! there, keeping the core types infrastructure-agnostic.
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
