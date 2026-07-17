@@ -195,10 +195,11 @@ mod tests {
             .expect("project");
 
         for (i, (o, d)) in dirs.iter().enumerate() {
-            let cpu = Ray::try_from_direction(
+            let cpu = Ray::try_new(
                 Point3::new(o[0], o[1], o[2]),
                 Vector3::new(d[0], d[1], d[2]),
             )
+            .ok()
             .and_then(|ray| forward_project_ray(&mu, &ray, step))
             .unwrap_or(0.0);
             // f32 GPU fma/mix vs CPU mul-add over ~10² steps: bound the relative

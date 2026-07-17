@@ -153,7 +153,7 @@ mod tests {
 
     // +x ray through the cube centre (y = z = 8 mm), starting outside the box.
     fn central_x_ray() -> Ray<f64> {
-        Ray::try_from_direction(Point3::new(-50.0, 8.0, 8.0), Vector3::new(1.0, 0.0, 0.0))
+        Ray::try_new(Point3::new(-50.0, 8.0, 8.0), Vector3::new(1.0, 0.0, 0.0))
             .expect("unit +x ray")
     }
 
@@ -193,7 +193,7 @@ mod tests {
         let mu = oriented_cube(0.05);
         let mut dose = Volume::zeros(*mu.grid());
         let ray =
-            Ray::try_from_direction(Point3::new(2.0, -20.0, 38.0), Vector3::new(0.0, 1.0, 0.0))
+            Ray::try_new(Point3::new(2.0, -20.0, 38.0), Vector3::new(0.0, 1.0, 0.0))
                 .expect("unit +y ray");
         let total = deposit_ray_terma(&mut dose, &mu, &ray, 1.0, 0.5);
         let expected = 1.0 - (-0.05 * 1.6_f64).exp();
@@ -257,7 +257,7 @@ mod tests {
         let mu = uniform_cube(0.05);
         let mut dose = Volume::zeros(*mu.grid());
         let miss =
-            Ray::try_from_direction(Point3::new(-50.0, 500.0, 8.0), Vector3::new(1.0, 0.0, 0.0))
+            Ray::try_new(Point3::new(-50.0, 500.0, 8.0), Vector3::new(1.0, 0.0, 0.0))
                 .unwrap();
         assert_relative_eq!(
             deposit_ray_terma(&mut dose, &mu, &miss, 1.0, 0.5),
@@ -274,7 +274,7 @@ mod tests {
                 .unwrap();
         let mu = Volume::from_shape_fn(grid, |_| 0.05_f32);
         let mut dose = Volume::zeros(*mu.grid());
-        let ray = Ray::try_from_direction(
+        let ray = Ray::try_new(
             Point3::new(-50.0_f32, 8.0, 8.0),
             Vector3::new(1.0_f32, 0.0, 0.0),
         )

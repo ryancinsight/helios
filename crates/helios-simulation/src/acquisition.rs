@@ -65,7 +65,8 @@ pub fn simulate_helical_sinogram<T: GeometryScalar + Send + Sync>(
             couch_mm - direction.z * source_distance_mm,
         );
 
-        let optical_depth = Ray::try_from_direction(origin, direction)
+        let optical_depth = Ray::try_new(origin, direction)
+            .ok()
             .and_then(|ray| forward_project_ray(mu, &ray, step_mm))
             .unwrap_or(zero);
         let transmission = (-optical_depth).exp();

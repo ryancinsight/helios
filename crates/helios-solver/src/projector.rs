@@ -17,7 +17,7 @@
 
 use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
-use helios_math::{Aabb, GeometryScalar, Point3, Ray, UnitVector3, Vector3};
+use helios_math::{Aabb, GeometryScalar, Point3, Ray, Vector3};
 
 /// Intersect a world-space unit ray with the grid's node-centre box.
 ///
@@ -30,11 +30,11 @@ pub(crate) fn ray_grid_interval<T: GeometryScalar>(
     ray: &Ray<T>,
 ) -> Option<(T, T)> {
     let [nx, ny, nz] = grid.dims();
-    let local_origin = grid.world_to_index(ray.origin);
+    let local_origin = grid.world_to_index(ray.origin());
     let local_direction_mm = grid
         .pose()
         .inverse()
-        .transform_vector(*ray.direction.as_vector());
+        .transform_vector(ray.direction());
     let spacing = grid.spacing();
     let local_direction = Vector3::new(
         local_direction_mm.x * spacing[0].recip(),
@@ -45,7 +45,7 @@ pub(crate) fn ray_grid_interval<T: GeometryScalar>(
     if !local_speed.is_finite() || local_speed <= T::ZERO {
         return None;
     }
-    let local_ray = Ray::new(local_origin, UnitVector3::new_normalize(local_direction));
+    let local_ray = Ray::try_new(local_origin, local_direction).ok()?;
     let local_aabb = Aabb::new(
         Point3::new(T::ZERO, T::ZERO, T::ZERO),
         Point3::new(
@@ -113,7 +113,7 @@ mod tests {
     }
 
     fn ray_along_x(origin_x: f64) -> Ray<f64> {
-        Ray::try_from_direction(Point3::new(origin_x, 2.0, 2.0), Vector3::new(1.0, 0.0, 0.0))
+        Ray::try_new(Point3::new(origin_x, 2.0, 2.0), Vector3::new(1.0, 0.0, 0.0))
             .expect("unit +x ray")
     }
 
@@ -158,7 +158,7 @@ mod tests {
         let mu = Volume::from_shape_fn(axis_grid(), |_| 0.06);
         // Offset in y beyond [0,4].
         let miss =
-            Ray::try_from_direction(Point3::new(-5.0, 100.0, 2.0), Vector3::new(1.0, 0.0, 0.0))
+            Ray::try_new(Point3::new(-5.0, 100.0, 2.0), Vector3::new(1.0, 0.0, 0.0))
                 .unwrap();
         assert_eq!(forward_project_ray(&mu, &miss, 0.5), None);
     }
@@ -177,7 +177,7 @@ mod tests {
         // so this world-space ray must still integrate τ = 0.06 cm⁻¹ · 2 cm.
         let mu = Volume::from_shape_fn(oriented_grid(), |_| 0.06);
         let ray =
-            Ray::try_from_direction(Point3::new(10.0, 15.0, 30.0), Vector3::new(0.0, 1.0, 0.0))
+            Ray::try_new(Point3::new(10.0, 15.0, 30.0), Vector3::new(0.0, 1.0, 0.0))
                 .expect("unit +y ray");
         let tau = forward_project_ray(&mu, &ray, 0.5).expect("hit");
         assert_relative_eq!(tau, 0.12, epsilon = 1e-12);
@@ -189,7 +189,7 @@ mod tests {
             VoxelGrid::<f32>::axis_aligned([11, 3, 3], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
                 .unwrap();
         let mu = Volume::from_shape_fn(g, |_| 0.06_f32);
-        let ray = Ray::try_from_direction(
+        let ray = Ray::try_new(
             Point3::new(-5.0_f32, 2.0, 2.0),
             Vector3::new(1.0_f32, 0.0, 0.0),
         )

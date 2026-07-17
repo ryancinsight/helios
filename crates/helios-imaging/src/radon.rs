@@ -113,7 +113,8 @@ pub fn parallel_beam_radon<T: GeometryScalar>(
                 py - dir.y * source_distance_mm,
                 centre.z,
             );
-            let integral = Ray::try_from_direction(origin, dir)
+            let integral = Ray::try_new(origin, dir)
+                .ok()
                 .and_then(|ray| forward_project_ray(mu, &ray, step_mm))
                 .unwrap_or(zero);
             data.push(integral);

@@ -62,10 +62,11 @@ fn bench_projection(c: &mut Criterion) {
                 b.iter(|| {
                     let mut acc = 0.0f32;
                     for r in rays.chunks_exact(6) {
-                        let tau = Ray::try_from_direction(
+                        let tau = Ray::try_new(
                             Point3::new(r[0], r[1], r[2]),
                             Vector3::new(r[3], r[4], r[5]),
                         )
+                        .ok()
                         .and_then(|ray| forward_project_ray(black_box(&mu), &ray, STEP_MM))
                         .unwrap_or(0.0);
                         acc += tau;

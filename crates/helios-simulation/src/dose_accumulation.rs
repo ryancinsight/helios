@@ -302,7 +302,9 @@ pub(crate) fn beamlet_ray<T: GeometryScalar>(
             (focal, aim, Some((focal, source_axis_mm)))
         }
     };
-    Ray::try_from_direction(origin, direction).map(|ray| Beamlet { ray, falloff })
+    Ray::try_new(origin, direction)
+        .ok()
+        .map(|ray| Beamlet { ray, falloff })
 }
 
 /// The gantry basis `(centre, dir, perp)` for a frame's gantry angle over `grid`.
