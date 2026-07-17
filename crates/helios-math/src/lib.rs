@@ -67,9 +67,8 @@ mod gaia_geometry_bridge_tests {
 
     #[test]
     fn gaia_ray_intersects_gaia_aabb_through_helios() {
-        let ray =
-            Ray::try_new(Point3::new(-2.0_f64, 0.5, 0.5), Vector3::new(1.0, 0.0, 0.0))
-                .expect("non-zero direction");
+        let ray = Ray::try_new(Point3::new(-2.0_f64, 0.5, 0.5), Vector3::new(1.0, 0.0, 0.0))
+            .expect("non-zero direction");
         let aabb = Aabb::new(Point3::new(0.0_f64, 0.0, 0.0), Point3::new(1.0, 1.0, 1.0));
         // Unit +x ray from x=-2 enters the unit box at t=2, exits at t=3.
         let (t_enter, t_exit) = ray.intersect_aabb(&aabb).expect("ray hits the box");

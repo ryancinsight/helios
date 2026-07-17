@@ -192,9 +192,8 @@ mod tests {
         // Beer–Lambert oracle must hold after index-space clipping.
         let mu = oriented_cube(0.05);
         let mut dose = Volume::zeros(*mu.grid());
-        let ray =
-            Ray::try_new(Point3::new(2.0, -20.0, 38.0), Vector3::new(0.0, 1.0, 0.0))
-                .expect("unit +y ray");
+        let ray = Ray::try_new(Point3::new(2.0, -20.0, 38.0), Vector3::new(0.0, 1.0, 0.0))
+            .expect("unit +y ray");
         let total = deposit_ray_terma(&mut dose, &mu, &ray, 1.0, 0.5);
         let expected = 1.0 - (-0.05 * 1.6_f64).exp();
         assert_relative_eq!(total, expected, epsilon = 1e-12);
@@ -257,8 +256,7 @@ mod tests {
         let mu = uniform_cube(0.05);
         let mut dose = Volume::zeros(*mu.grid());
         let miss =
-            Ray::try_new(Point3::new(-50.0, 500.0, 8.0), Vector3::new(1.0, 0.0, 0.0))
-                .unwrap();
+            Ray::try_new(Point3::new(-50.0, 500.0, 8.0), Vector3::new(1.0, 0.0, 0.0)).unwrap();
         assert_relative_eq!(
             deposit_ray_terma(&mut dose, &mu, &miss, 1.0, 0.5),
             0.0,

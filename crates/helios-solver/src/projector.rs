@@ -31,10 +31,7 @@ pub(crate) fn ray_grid_interval<T: GeometryScalar>(
 ) -> Option<(T, T)> {
     let [nx, ny, nz] = grid.dims();
     let local_origin = grid.world_to_index(ray.origin());
-    let local_direction_mm = grid
-        .pose()
-        .inverse()
-        .transform_vector(ray.direction());
+    let local_direction_mm = grid.pose().inverse().transform_vector(ray.direction());
     let spacing = grid.spacing();
     let local_direction = Vector3::new(
         local_direction_mm.x * spacing[0].recip(),
@@ -158,8 +155,7 @@ mod tests {
         let mu = Volume::from_shape_fn(axis_grid(), |_| 0.06);
         // Offset in y beyond [0,4].
         let miss =
-            Ray::try_new(Point3::new(-5.0, 100.0, 2.0), Vector3::new(1.0, 0.0, 0.0))
-                .unwrap();
+            Ray::try_new(Point3::new(-5.0, 100.0, 2.0), Vector3::new(1.0, 0.0, 0.0)).unwrap();
         assert_eq!(forward_project_ray(&mu, &miss, 0.5), None);
     }
 
@@ -176,9 +172,8 @@ mod tests {
         // The local +x node span is 20 mm. The grid rotates it onto world +y,
         // so this world-space ray must still integrate τ = 0.06 cm⁻¹ · 2 cm.
         let mu = Volume::from_shape_fn(oriented_grid(), |_| 0.06);
-        let ray =
-            Ray::try_new(Point3::new(10.0, 15.0, 30.0), Vector3::new(0.0, 1.0, 0.0))
-                .expect("unit +y ray");
+        let ray = Ray::try_new(Point3::new(10.0, 15.0, 30.0), Vector3::new(0.0, 1.0, 0.0))
+            .expect("unit +y ray");
         let tau = forward_project_ray(&mu, &ray, 0.5).expect("hit");
         assert_relative_eq!(tau, 0.12, epsilon = 1e-12);
     }
