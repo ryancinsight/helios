@@ -12,8 +12,9 @@ under a Breaking subsection.
   `apollo-leto-interop` 0.17.0 from the merged Apollo provider release.
 - H-005: reconciled the stale binary-MLC/collimator roadmap item with the
   delivered H-020b `LeafOpenTimeSinogram`/`MlcModel` and H-020k
-  gaia-backed `FieldAperture`/delivery-collimation contracts; restored the
-  workspace formatter gate for the affected math and solver sources.
+  gaia-backed `FieldAperture`/delivery-collimation contracts; marked duplicate
+  H-022 done; restored the workspace formatter gate for the affected math and
+  solver sources.
 - Helios 0.1.0 declares Rust 1.95, matching its merged Mnemosyne 0.5 and
   Leto 0.38 provider graph. The lockfile is the reproducibility pin; no
   revision-qualified first-party source quarantine is introduced.

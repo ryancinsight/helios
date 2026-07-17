@@ -8,9 +8,9 @@ binary-MLC modulation, couch translation, and MVCT guidance — alongside
 high-fidelity radiation-imaging simulation (MVCT forward projection,
 reconstruction, on-board kV/MV imaging, and IGRT workflows).
 
-> **Status:** The foundation, physics/GPU, delivery, planning/imaging, and
-> end-to-end workflow slices are implemented. The active work is limited to
-> explicitly tracked provider integrations and validation gaps in
+> **Status:** Foundation, delivery, and planning/imaging baselines are
+> implemented. Active work spans the explicitly tracked physics, projection,
+> reconstruction, PyO3, provider-integration, and clinical-validation gaps in
 > [`backlog.md`](backlog.md) and [`gap_audit.md`](gap_audit.md).
 
 ## Architecture at a glance
@@ -55,14 +55,17 @@ performance defect to profile and optimize, never a limit to raise.
    seam, `helios-domain` (`VoxelGrid` + `Volume`), and provider-owned CT/MVCT
    DICOM ingest. *(implemented)*
 2. **Sprint 2 — Physics & GPU foundation:** photon attenuation, hephaestus/Moirai
-   execution, deterministic CPU/GPU dose and imaging projection kernels.
-   *(implemented; XCOM data and exact Siddon projection remain tracked)*
+   execution, deterministic CPU dose and baseline imaging projection kernels,
+   and GPU HU→μ conversion. *(implemented baseline; XCOM data plus exact and
+   GPU projection remain tracked)*
 3. **Sprint 3 — Delivery:** binary-MLC modeling, collimator aperture, helical
    TomoTherapy delivery, and beam-following collapsed-cone dose. *(implemented)*
 4. **Sprint 4 — Planning & imaging:** Coeus planning objectives and dedicated
-   imaging/reconstruction/registration. *(implemented baseline)*
-5. **Sprint 5 — End-to-end:** workflow validation, PyO3 bindings, and GPU
-   throughput study. *(implemented; clinical-reference validation remains tracked)*
+   imaging/reconstruction/registration. *(FBP/SIRT/registration baseline
+   implemented; OS-SEM/MLEM remains tracked)*
+5. **Sprint 5 — End-to-end:** workflow validation and basic PyO3 exposure.
+   *(implemented baseline; NumPy zero-copy, real-DICOM Python exposure, GPU
+   throughput study, and clinical-reference validation remain tracked)*
 
 ## Validation targets
 

@@ -34,8 +34,9 @@ target closure.
 - **G-23 — RESOLVED (H-005 reconciliation).** The foundation roadmap still
   listed a binary-MLC plus collimator/jaw model as todo after H-020b delivered
   `LeafOpenTimeSinogram`/`MlcModel` and H-020k delivered gaia-backed
-  `FieldAperture` plus `collimate_frames`. The board and README now state
-  the delivered ownership without creating a duplicate implementation track.
+  `FieldAperture` plus `collimate_frames`. The board marks duplicate H-022
+  done and the README states the delivered ownership without creating a
+  duplicate implementation track.
   The same reconciliation check found and restored the exact workspace formatter
   output in `helios-math::lib` and the solver deposition/projector tests.
   Evidence tier: source/API and board reconciliation plus formatter verification.
