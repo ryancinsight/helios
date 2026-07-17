@@ -8,6 +8,9 @@ under a Breaking subsection.
 ## [0.1.0] — Unreleased
 
 ### Changed
+- H-066: removed Helios's unused direct `num-traits` workspace dependency.
+  Provider-owned transitive requirements remain resolved through the locked
+  Eunomia, Gaia, Half, and WGPU graph.
 - Updated the reproducibility pin to `apollo-fft` 0.23.0 and
   `apollo-leto-interop` 0.17.0 from the merged Apollo provider release.
 - H-005: reconciled the stale binary-MLC/collimator roadmap item with the
