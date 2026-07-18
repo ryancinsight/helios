@@ -8,6 +8,21 @@
 
 ## Owner: Codex
 
+## Codex — H-067 Apollo lock refresh [patch] — done 2026-07-18
+
+- [x] Replace the invalid stale one-line Apollo edit with a complete Cargo
+      resolution selecting `apollo-fft` 0.25.0, Eunomia 0.4.0, Leto 0.38.2,
+      and Hephaestus 0.17.0 while deleting the transitive `num-complex` package.
+- [x] Run locked metadata, formatting, warning-denied workspace Clippy,
+      configured workspace Nextest, doctests, and warning-clean rustdoc.
+- [x] Merge the verified lock-only change and advance the Atlas Helios gitlink
+      without staging fresh RITK, Themis, or root package-manager work.
+
+**Evidence:** locked metadata and format pass; warning-denied
+all-target/all-feature workspace Clippy passes; configured Nextest is 272/272;
+all ten Rust library doctest targets pass with zero examples; workspace
+rustdoc is warning-clean.
+
 ## Codex — H-066 direct dependency ownership [patch] — done 2026-07-17
 
 - [x] Preserve the stale peer's removal of the unused workspace

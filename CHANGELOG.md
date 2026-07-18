@@ -8,6 +8,9 @@ under a Breaking subsection.
 ## [0.1.0] — Unreleased
 
 ### Changed
+- H-067: refreshed the reproducibility lock to `apollo-fft` 0.25.0, Eunomia
+  0.4.0, Leto 0.38.2, and Hephaestus 0.17.0 without changing Helios source or
+  manifests. The lock graph no longer contains `num-complex`.
 - H-066: removed Helios's unused direct `num-traits` workspace dependency.
   Provider-owned transitive requirements remain resolved through the locked
   Eunomia, Gaia, Half, and WGPU graph.

@@ -31,6 +31,20 @@ target closure.
 
 ### Recently closed
 
+- **G-25 — RESOLVED (H-067).** The stale local lock changed only the
+  `apollo-fft` version field, which was not a complete Cargo resolution and
+  failed the warning-denied locked gate. Regenerating the Apollo package
+  closure selects `apollo-fft` 0.25.0, Eunomia 0.4.0, Leto 0.38.2, and
+  Hephaestus 0.17.0, removes Eunomia's obsolete `num-traits` edge, and removes
+  Hephaestus WGPU's `num-complex` edge plus the package itself. The root
+  manifest already follows the Apollo default branch; no source, manifest,
+  compatibility wrapper, or fallback change is required. Locked metadata and
+  format pass; warning-denied all-target/all-feature workspace Clippy passes;
+  configured Nextest is 272/272; all ten Rust library doctest targets pass
+  with zero examples; workspace rustdoc is warning-clean. Evidence tier:
+  compiler-checked dependency resolution, warning-denied diagnostics, and
+  value-semantic workspace regression execution.
+
 - **G-24 — RESOLVED (H-066).** The workspace declared `num-traits` directly
   even though no Helios manifest or source consumed it. The direct declaration
   is removed. `cargo check --workspace --locked` passes, and
