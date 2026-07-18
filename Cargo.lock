@@ -87,7 +87,7 @@ checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
 
 [[package]]
 name = "apollo-fft"
-version = "0.24.0"
+version = "0.25.0"
 dependencies = [
  "apollo-fft-macros",
  "apollo-leto-interop",
@@ -923,12 +923,11 @@ dependencies = [
 
 [[package]]
 name = "eunomia"
-version = "0.1.0"
+version = "0.4.0"
 dependencies = [
  "bytemuck",
  "half",
  "libm",
- "num-traits",
  "rkyv 0.7.46",
 ]
 
@@ -1352,7 +1351,7 @@ dependencies = [
 
 [[package]]
 name = "hephaestus-core"
-version = "0.16.1"
+version = "0.17.0"
 dependencies = [
  "bytemuck",
  "leto",
@@ -1362,9 +1361,10 @@ dependencies = [
 
 [[package]]
 name = "hephaestus-wgpu"
-version = "0.16.1"
+version = "0.17.0"
 dependencies = [
  "bytemuck",
+ "eunomia",
  "hephaestus-core",
  "leto",
  "leto-ops",
@@ -1372,7 +1372,6 @@ dependencies = [
  "moirai",
  "moirai-gpu",
  "moirai-sync",
- "num-complex",
  "themis",
  "wgpu",
  "windows 0.62.2",
@@ -1764,7 +1763,7 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "leto"
-version = "0.38.0"
+version = "0.38.2"
 dependencies = [
  "bytemuck",
  "eunomia",
@@ -1776,7 +1775,7 @@ dependencies = [
 
 [[package]]
 name = "leto-ops"
-version = "0.38.0"
+version = "0.38.2"
 dependencies = [
  "bytemuck",
  "eunomia",
@@ -2168,16 +2167,6 @@ dependencies = [
  "indexmap",
  "rustc-hash 1.1.0",
  "thiserror 2.0.18",
-]
-
-[[package]]
-name = "num-complex"
-version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73f88a1307638156682bada9d7604135552957b7818057dcef22705b4d509495"
-dependencies = [
- "bytemuck",
- "num-traits",
 ]
 
 [[package]]

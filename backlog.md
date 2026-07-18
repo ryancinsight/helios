@@ -16,6 +16,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-064 | Move all Helios DICOM parsing, attribute access, decoding, and synthetic-input verification behind `ritk-dicom`; remove the direct `dicom-rs` consumer dependency and preserve the real slice/series value contracts. | [arch] | done | Codex | `Cargo.toml`, `crates/helios-domain/**`, `ARCHITECTURE.md`, `README.md`, `SPRINT_2.md`, PM artifacts |
 | H-065 | Advance Helios's reproducible provider graph to Moirai 0.3.0 after the upstream retirement of the unowned NUMA iterator; compile every example against the resolved graph. | [patch] | done | Codex | `Cargo.lock`, `CHECKLIST.md`, `gap_audit.md`, `CHANGELOG.md` |
 | H-066 | Remove Helios's unused direct `num-traits` dependency while preserving provider-owned transitive requirements; verify the locked workspace graph. | [patch] | done | Codex `/root` stale-peer takeover | `Cargo.toml`, `backlog.md`, `CHECKLIST.md`, `gap_audit.md`, `CHANGELOG.md` |
+| H-067 | Refresh the reproducibility lock to merged `apollo-fft` 0.25.0, Eunomia 0.4.0, Leto 0.38.2, and Hephaestus 0.17.0; remove the obsolete transitive `num-complex` package; verify the complete locked workspace without source or manifest compatibility changes. | [patch] | done | Codex `/root` stale-peer takeover | `Cargo.lock`, `backlog.md`, `CHECKLIST.md`, `gap_audit.md`, `CHANGELOG.md` |
 
 ## Sprint 1 — Foundation
 
