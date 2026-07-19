@@ -18,6 +18,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
+name = "aequitas"
+version = "0.1.0"
+source = "git+https://github.com/ryancinsight/aequitas?rev=bfeb3264f1d704204c524f7804f75e726acaf06d#bfeb3264f1d704204c524f7804f75e726acaf06d"
+dependencies = [
+ "eunomia",
+ "typenum",
+]
+
+[[package]]
 name = "ahash"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -483,7 +492,6 @@ version = "0.9.0"
 dependencies = [
  "bytemuck",
  "eunomia",
- "half",
  "hermes-simd",
  "mnemosyne",
  "moirai",
@@ -509,7 +517,7 @@ dependencies = [
  "coeus-leto",
  "coeus-sparse",
  "coeus-tensor",
- "half",
+ "eunomia",
  "leto-ops",
  "melinoe",
  "smallvec",
@@ -923,10 +931,9 @@ dependencies = [
 
 [[package]]
 name = "eunomia"
-version = "0.4.0"
+version = "0.6.0"
 dependencies = [
  "bytemuck",
- "half",
  "libm",
  "rkyv 0.7.46",
 ]
@@ -1161,7 +1168,6 @@ version = "2.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ea2d84b969582b4b1864a92dc5d27cd2b77b622a8d79306834f1be5ba20d84b"
 dependencies = [
- "bytemuck",
  "cfg-if",
  "crunchy",
  "num-traits",
@@ -1351,7 +1357,7 @@ dependencies = [
 
 [[package]]
 name = "hephaestus-core"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "bytemuck",
  "leto",
@@ -1361,8 +1367,9 @@ dependencies = [
 
 [[package]]
 name = "hephaestus-wgpu"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
+ "aequitas",
  "bytemuck",
  "eunomia",
  "hephaestus-core",
@@ -1379,10 +1386,9 @@ dependencies = [
 
 [[package]]
 name = "hermes-simd"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "eunomia",
- "half",
  "hermes-simd-core",
  "hermes-simd-intrinsics",
  "hermes-simd-macros",
@@ -1392,11 +1398,10 @@ dependencies = [
 
 [[package]]
 name = "hermes-simd-core"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bytemuck",
  "eunomia",
- "half",
  "mnemosyne",
  "rkyv 0.7.46",
  "themis",
@@ -1404,16 +1409,15 @@ dependencies = [
 
 [[package]]
 name = "hermes-simd-intrinsics"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "eunomia",
- "half",
  "hermes-simd-core",
 ]
 
 [[package]]
 name = "hermes-simd-macros"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1422,9 +1426,8 @@ dependencies = [
 
 [[package]]
 name = "hermes-simd-types"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
- "half",
  "hermes-simd-core",
  "hermes-simd-intrinsics",
 ]
@@ -1763,11 +1766,10 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "leto"
-version = "0.38.2"
+version = "0.39.0"
 dependencies = [
  "bytemuck",
  "eunomia",
- "half",
  "mnemosyne",
  "serde",
  "thiserror 2.0.18",
@@ -1775,11 +1777,10 @@ dependencies = [
 
 [[package]]
 name = "leto-ops"
-version = "0.38.2"
+version = "0.39.0"
 dependencies = [
  "bytemuck",
  "eunomia",
- "half",
  "hermes-simd",
  "leto",
  "moirai",
@@ -3270,6 +3271,12 @@ checksum = "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a"
 dependencies = [
  "once_cell",
 ]
+
+[[package]]
+name = "typenum"
+version = "1.20.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20"
 
 [[package]]
 name = "unarray"
