@@ -31,6 +31,16 @@ target closure.
 
 ### Recently closed
 
+- **G-26 — RESOLVED (H-068).** `EnergyMeV` and `VoxelSpacingMm` previously
+  stored dimensionless `f64` values despite representing physical quantities.
+  Their validated newtypes now store Aequitas `Energy<f64>` and `Length<f64>`,
+  preserve MeV and millimetre at the public boundary, and retain their
+  zero-overhead scalar layout through compile-time size/alignment assertions.
+  Round-trip properties use a bound derived from four machine-epsilon
+  roundings. `HounsfieldUnit` remains Helios-owned because it is a calibrated
+  non-SI scale. Evidence: warning-denied all-target Clippy, 17/17 configured
+  Nextest tests, doctests, and warning-clean rustdoc for `helios-core`.
+
 - **G-25 — RESOLVED (H-067).** The stale local lock changed only the
   `apollo-fft` version field, which was not a complete Cargo resolution and
   failed the warning-denied locked gate. Regenerating the Apollo package

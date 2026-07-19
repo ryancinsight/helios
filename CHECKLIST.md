@@ -8,6 +8,18 @@
 
 ## Owner: Codex
 
+## Codex — H-068 Aequitas domain units [arch] — done 2026-07-19
+
+- [x] Store `EnergyMeV` and `VoxelSpacingMm` with Aequitas `Energy<f64>` and
+      `Length<f64>` while retaining Helios validation at construction.
+- [x] Preserve the MeV and millimetre public contracts through explicit unit
+      conversion, compile-time layout assertions, and bounded round-trip
+      properties derived from machine epsilon.
+- [x] Keep `HounsfieldUnit` Helios-owned because its calibrated scale is not a
+      linear SI quantity, and record the ownership decision in ADR 0001.
+- [x] Verify formatting, warning-denied all-target Clippy, 17/17 configured
+      Nextest tests, doctests, and warning-clean rustdoc for `helios-core`.
+
 ## Codex — H-067 Apollo lock refresh [patch] — done 2026-07-18
 
 - [x] Replace the invalid stale one-line Apollo edit with a complete Cargo
