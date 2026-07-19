@@ -7,7 +7,17 @@ under a Breaking subsection.
 
 ## [0.1.0] — Unreleased
 
+### Breaking
+
+- H-068: `EnergyMeV` and `VoxelSpacingMm` retain their Helios validation
+  contracts while storing Aequitas `Energy<f64>` and `Length<f64>`. Compile-time
+  layout assertions preserve their one-word transparent representation.
+  Their `get` methods are no longer `const` because unit conversion is
+  trait-driven. `HounsfieldUnit` remains Helios-owned because HU is a
+  calibrated imaging scale rather than an SI linear unit.
+
 ### Changed
+
 - H-067: refreshed the reproducibility lock to `apollo-fft` 0.25.0, Eunomia
   0.4.0, Leto 0.38.2, and Hephaestus 0.17.0 without changing Helios source or
   manifests. The lock graph no longer contains `num-complex`.

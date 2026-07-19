@@ -20,7 +20,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 [[package]]
 name = "aequitas"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/aequitas?rev=bfeb3264f1d704204c524f7804f75e726acaf06d#bfeb3264f1d704204c524f7804f75e726acaf06d"
+source = "git+https://github.com/ryancinsight/aequitas?rev=49ee8004e008a480ac871c3782d00d921ba41c01#49ee8004e008a480ac871c3782d00d921ba41c01"
 dependencies = [
  "eunomia",
  "typenum",
@@ -1236,6 +1236,7 @@ dependencies = [
 name = "helios-core"
 version = "0.1.0"
 dependencies = [
+ "aequitas",
  "approx",
  "proptest",
  "thiserror 2.0.18",

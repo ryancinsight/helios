@@ -12,6 +12,7 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+aequitas = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 

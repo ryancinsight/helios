@@ -7,6 +7,10 @@
 //! for later FFI/PyO3 exposure — and implement `Display` for diagnostics.
 
 use crate::error::HeliosError;
+use aequitas::systems::si::{
+    quantities::{Energy, Length},
+    units::{MegaElectronVolt, Millimeter},
+};
 use core::fmt;
 
 /// Beam energy in megaelectronvolts (MeV).
@@ -16,13 +20,13 @@ use core::fmt;
 /// definition; zero and non-finite values are rejected at construction.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 #[repr(transparent)]
-pub struct EnergyMeV(f64);
+pub struct EnergyMeV(Energy<f64>);
 
 impl EnergyMeV {
     /// Returns the underlying value in MeV.
     #[must_use]
-    pub const fn get(self) -> f64 {
-        self.0
+    pub fn get(self) -> f64 {
+        self.0.in_unit::<MegaElectronVolt>()
     }
 }
 
@@ -44,13 +48,13 @@ impl TryFrom<f64> for EnergyMeV {
                 reason: "energy must be strictly positive",
             });
         }
-        Ok(Self(value))
+        Ok(Self(Energy::from_unit::<MegaElectronVolt>(value)))
     }
 }
 
 impl fmt::Display for EnergyMeV {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} MeV", self.0)
+        write!(f, "{} MeV", self.get())
     }
 }
 
@@ -112,13 +116,13 @@ impl fmt::Display for HounsfieldUnit {
 /// projectors, so it is rejected at construction.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 #[repr(transparent)]
-pub struct VoxelSpacingMm(f64);
+pub struct VoxelSpacingMm(Length<f64>);
 
 impl VoxelSpacingMm {
     /// Returns the underlying spacing in millimetres.
     #[must_use]
-    pub const fn get(self) -> f64 {
-        self.0
+    pub fn get(self) -> f64 {
+        self.0.in_unit::<Millimeter>()
     }
 }
 
@@ -140,19 +144,30 @@ impl TryFrom<f64> for VoxelSpacingMm {
                 reason: "spacing must be strictly positive",
             });
         }
-        Ok(Self(value))
+        Ok(Self(Length::from_unit::<Millimeter>(value)))
     }
 }
 
 impl fmt::Display for VoxelSpacingMm {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} mm", self.0)
+        write!(f, "{} mm", self.get())
     }
 }
+
+const _: () = assert!(core::mem::size_of::<EnergyMeV>() == core::mem::size_of::<f64>());
+const _: () = assert!(core::mem::align_of::<EnergyMeV>() == core::mem::align_of::<f64>());
+const _: () = assert!(core::mem::size_of::<VoxelSpacingMm>() == core::mem::size_of::<f64>());
+const _: () = assert!(core::mem::align_of::<VoxelSpacingMm>() == core::mem::align_of::<f64>());
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn conversion_round_trip_bound(value: f64) -> f64 {
+        // One multiplication into SI storage plus one division back to the
+        // display unit. Four epsilons conservatively cover both roundings.
+        4.0 * f64::EPSILON * value.abs().max(1.0)
+    }
 
     #[test]
     fn energy_accepts_positive_and_preserves_value() {
@@ -234,7 +249,7 @@ mod tests {
         #[test]
         fn energy_roundtrips_finite_positive(v in 1e-6_f64..1e4_f64) {
             let e = EnergyMeV::try_from(v).expect("finite positive is valid");
-            proptest::prop_assert_eq!(e.get(), v);
+            proptest::prop_assert!((e.get() - v).abs() <= conversion_round_trip_bound(v));
         }
 
         /// Every in-range HU value is accepted and preserved; the newtype never
@@ -277,7 +292,7 @@ mod tests {
         #[test]
         fn spacing_roundtrips_finite_positive(v in 1e-6_f64..1e3_f64) {
             let s = VoxelSpacingMm::try_from(v).expect("finite positive is valid");
-            proptest::prop_assert_eq!(s.get(), v);
+            proptest::prop_assert!((s.get() - v).abs() <= conversion_round_trip_bound(v));
         }
     }
 }
