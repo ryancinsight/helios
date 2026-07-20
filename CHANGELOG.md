@@ -21,6 +21,10 @@ under a Breaking subsection.
 
 ### Changed
 
+- H-075: benchmark CI now resolves the historical baseline lock once against
+  the exact Ubuntu and Atlas path-dependency graph before measurement. All
+  baseline and candidate benchmark runs remain `--locked`; the delivered
+  candidate lock remains immutable.
 - H-072: upgraded the thin Python binding boundary to PyO3 0.29, closing
   RUSTSEC-2025-0020 and RUSTSEC-2026-0177. Compute now uses `Python::detach`
   under PyO3's corrected thread-safety contract; CI builds the abi3 wheel and

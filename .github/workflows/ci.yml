@@ -168,6 +168,14 @@ jobs:
             ~/.cargo/git
           key: ${{ runner.os }}-helios-bench-${{ hashFiles('helios-candidate/Cargo.lock') }}
 
+      - name: Normalize historical baseline lock
+        run: >-
+          cargo metadata
+          --manifest-path helios-baseline/Cargo.toml
+          --format-version 1
+          --all-features
+          > /dev/null
+
       - name: Hold the candidate benchmark instrument constant
         shell: bash
         run: |
