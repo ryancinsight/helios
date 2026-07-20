@@ -21,6 +21,13 @@ under a Breaking subsection.
 
 ### Changed
 
+- H-073: upgraded the thin Python binding boundary to PyO3 0.29, closing
+  RUSTSEC-2025-0020 and RUSTSEC-2026-0177. Compute now uses `Python::detach`
+  under PyO3's corrected thread-safety contract.
+- H-072: aligned the direct Aequitas and Proteus revisions with the merged
+  temperature-response provider graph. Helios and Hephaestus now resolve one
+  Aequitas source identity, while the radiation material contract remains
+  unchanged.
 - H-071: replaced the copied same-run Python benchmark check with the
   Atlas-owned phase-replicated Criterion gate pinned to merge `9bfb722`.
   Pull-request CI now compares baseline and candidate production revisions on

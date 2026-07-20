@@ -5,7 +5,7 @@
 //! typed Rust values, calls the corresponding `helios-*` core function, maps
 //! [`helios_physics`]/[`helios_planning`] failures to a Python `ValueError`, and
 //! converts the result back. Compute-heavy calls release the GIL via
-//! [`Python::allow_threads`] so Python threads run concurrently with the Rust
+//! [`Python::detach`] so Python threads run concurrently with the Rust
 //! core. Concrete `f64` is used at this FFI boundary (the sanctioned place for a
 //! concrete numeric type); the underlying kernels remain generic over `Scalar`.
 #![forbid(unsafe_code)]
@@ -85,7 +85,7 @@ fn optimize_beam_weights(
             prescription.len()
         )));
     }
-    let weights = py.allow_threads(|| {
+    let weights = py.detach(|| {
         helios_planning::optimize_beam_weights(&dose_influence, &prescription, iterations, step)
     });
     Ok(weights)
