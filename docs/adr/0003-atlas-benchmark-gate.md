@@ -24,9 +24,11 @@ Helios pins Atlas merge `9bfb722` for both path-dependency checkout and
 2. copies the candidate benchmark sources into the baseline checkout so both
    revisions use one measurement instrument;
 3. runs ABBA followed by its BAAB phase reversal;
-4. retains the four Criterion comparison roots;
-5. derives the per-case confidence from the complete benchmark family; and
-6. delegates classification to Atlas
+4. invokes the four declared Criterion binaries directly so benchmark-only
+   arguments never reach Rust's library test harnesses;
+5. retains the four Criterion comparison roots;
+6. derives the per-case confidence from the complete benchmark family; and
+7. delegates classification to Atlas
    `check-replicated-counterbalanced`.
 
 The complete schedule is `A B B A B A A B`. Baseline and candidate each occupy
@@ -75,6 +77,9 @@ uses `--locked`, and the delivered candidate lock is never regenerated.
   producing a mixed-instrument claim.
 - Static and synthetic evidence verifies classifier integration; only the
   hosted base/candidate lane supplies performance evidence.
+- Each measured revision runs only the declared `harness = false` benchmark
+  binaries. Workspace library targets remain part of the Rust correctness job
+  and do not receive Criterion command-line arguments.
 
 ## Verification
 

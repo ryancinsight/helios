@@ -27,6 +27,8 @@
 - [x] Hold the candidate benchmark harness constant across baseline and
       candidate revisions, run ABBA followed by BAAB on one runner, and fail
       closed across all four report universes.
+- [x] Invoke each declared Criterion binary directly so measurement arguments
+      cannot be consumed by workspace library test harnesses.
 - [x] Route native tests through the committed Nextest profile, retain
       doctests separately, and enforce RustSec/license/source policy.
 - [ ] Pass exact-head hosted CI.

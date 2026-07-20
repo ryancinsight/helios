@@ -202,19 +202,35 @@ jobs:
           confidence=""
           gate_manifest="atlas-tool/tools/criterion-regression/Cargo.toml"
 
+          run_benches() {
+            local revision="$1"
+            shift
+
+            while IFS=: read -r package benchmark; do
+              cargo bench \
+                --manifest-path "$revision/Cargo.toml" \
+                --locked \
+                --all-features \
+                --package "$package" \
+                --bench "$benchmark" \
+                -- \
+                "$@"
+            done <<'BENCHMARKS'
+          helios-analysis:dvh_queries
+          helios-gpu:projection_throughput
+          helios-gpu:transmission_throughput
+          helios-solver:scatter_superposition
+          BENCHMARKS
+          }
+
           compare_pair() {
             local report_root="$1"
             local first_revision="$2"
             local second_revision="$3"
 
             rm -rf "$CARGO_TARGET_DIR/criterion"
-            cargo bench \
-              --manifest-path "$first_revision/Cargo.toml" \
-              --locked \
-              --workspace \
-              --all-features \
-              --benches \
-              -- \
+            run_benches \
+              "$first_revision" \
               --save-baseline atlas-base
 
             if [[ -z "$confidence" ]]; then
@@ -229,13 +245,8 @@ jobs:
               )"
             fi
 
-            cargo bench \
-              --manifest-path "$second_revision/Cargo.toml" \
-              --locked \
-              --workspace \
-              --all-features \
-              --benches \
-              -- \
+            run_benches \
+              "$second_revision" \
               --baseline atlas-base \
               --confidence-level "$confidence"
 
