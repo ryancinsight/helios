@@ -418,8 +418,9 @@ mandatory ritk Atlas component.
 
 ### (prior) H-033b done — MVCT quantum-noise model (imaging noise/CNR sub-gate)
 
-`add_quantum_noise` (SplitMix64 photon statistics) — the H-033 metrics now run on
-genuinely noisy reconstructions (MVCT accuracy+noise+contrast quantified on synthetic).
+`add_quantum_noise` (Tyche counter-addressed normal sampling over photon statistics)
+— the H-033 metrics now run on genuinely noisy reconstructions (MVCT
+accuracy+noise+contrast quantified on synthetic).
 
 ### (prior) H-043 done — GPU-vs-CPU scaling study (performance instrument)
 

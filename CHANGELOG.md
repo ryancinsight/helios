@@ -21,6 +21,10 @@ under a Breaking subsection.
 
 ### Changed
 
+- H-070: routed deterministic MVCT normal sampling through Tyche's
+  counter-addressed `StandardNormal` provider, removed Helios's duplicate
+  mutable SplitMix64/Box-Muller implementation, and pinned the seed-to-reading
+  mapping with an exact regression vector.
 - H-067: refreshed the reproducibility lock to `apollo-fft` 0.25.0, Eunomia
   0.4.0, Leto 0.38.2, and Hephaestus 0.17.0 without changing Helios source or
   manifests. The lock graph no longer contains `num-complex`.
