@@ -22,14 +22,14 @@ jobs:
         with:
           manifest: Cargo.toml
           destination: ..
-          atlas_ref: 250add4b43eb258851825fdbc660a4f628bf0037
+          atlas_ref: 05b7f5def95e81497321a12c4bd26ef50d723e30
 
       - name: Checkout Coeus path dependencies
         uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9bfb722367a6c3911409d6b4619701c549b6d415
         with:
           manifest: ../coeus/Cargo.toml
           destination: ..
-          atlas_ref: 250add4b43eb258851825fdbc660a4f628bf0037
+          atlas_ref: 05b7f5def95e81497321a12c4bd26ef50d723e30
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -86,14 +86,14 @@ jobs:
         with:
           manifest: Cargo.toml
           destination: ..
-          atlas_ref: 250add4b43eb258851825fdbc660a4f628bf0037
+          atlas_ref: 05b7f5def95e81497321a12c4bd26ef50d723e30
 
       - name: Checkout Coeus path dependencies
         uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9bfb722367a6c3911409d6b4619701c549b6d415
         with:
           manifest: ../coeus/Cargo.toml
           destination: ..
-          atlas_ref: 250add4b43eb258851825fdbc660a4f628bf0037
+          atlas_ref: 05b7f5def95e81497321a12c4bd26ef50d723e30
 
       - uses: actions/setup-python@v6
         with:
@@ -148,14 +148,14 @@ jobs:
         with:
           manifest: helios-candidate/Cargo.toml
           destination: .
-          atlas_ref: 250add4b43eb258851825fdbc660a4f628bf0037
+          atlas_ref: 05b7f5def95e81497321a12c4bd26ef50d723e30
 
       - name: Checkout Coeus path dependencies
         uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9bfb722367a6c3911409d6b4619701c549b6d415
         with:
           manifest: coeus/Cargo.toml
           destination: .
-          atlas_ref: 250add4b43eb258851825fdbc660a4f628bf0037
+          atlas_ref: 05b7f5def95e81497321a12c4bd26ef50d723e30
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
