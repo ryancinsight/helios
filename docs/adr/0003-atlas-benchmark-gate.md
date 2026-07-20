@@ -52,6 +52,9 @@ gitlinks match the Aequitas, Proteus, Hephaestus, Gaia, and Leto manifests
 represented by `Cargo.lock`. The checkout action and Criterion implementation
 remain pinned to their originating Atlas merge `9bfb722`; separating the graph
 argument prevents tool provenance from becoming an obsolete provider snapshot.
+Before measurement, CI resolves the historical baseline lock once against that
+exact Ubuntu provider graph. Every measured baseline and candidate run then
+uses `--locked`, and the delivered candidate lock is never regenerated.
 
 ## Rejected alternatives
 
