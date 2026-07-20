@@ -42,7 +42,7 @@ pub fn add_quantum_noise<T: GeometryScalar>(
     sinogram.map_readings(|tau_t| {
         let tau = tau_t.to_f64();
         let expected = photons_per_ray * (-tau).exp();
-        let gaussian = StandardNormal::at(seed, sample_index, 0);
+        let gaussian = StandardNormal::<f64>::at(seed, sample_index, 0);
         sample_index = sample_index.wrapping_add(1);
         let noisy = expected + expected.sqrt() * gaussian;
         let counts = noisy.max(1.0);

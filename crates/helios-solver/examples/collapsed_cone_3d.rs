@@ -38,8 +38,8 @@ use helios_domain::{Volume, VoxelGrid};
 use helios_math::Point3;
 use helios_physics::MassAttenuation;
 use helios_solver::{
-    attenuation_map, dose_convolution_x, exponential_deposition_kernel,
-    primary_fluence_parallel_x, scatter_superposition, symmetric_deposition_kernel,
+    attenuation_map, dose_convolution_x, exponential_deposition_kernel, primary_fluence_parallel_x,
+    scatter_superposition, symmetric_deposition_kernel,
 };
 
 fn main() {
@@ -53,15 +53,19 @@ fn main() {
     let nz = 10_usize;
     let spacing_mm = 3.0_f64;
 
-    let grid = VoxelGrid::axis_aligned(
-        [nx, ny, nz],
-        [spacing_mm; 3],
-        Point3::new(0.0, 0.0, 0.0),
-    )
-    .expect("valid phantom grid");
+    let grid = VoxelGrid::axis_aligned([nx, ny, nz], [spacing_mm; 3], Point3::new(0.0, 0.0, 0.0))
+        .expect("valid phantom grid");
 
-    println!("Phantom: {}×{}×{} voxels, {:.1} mm isotropic spacing", nx, ny, nz, spacing_mm);
-    println!("Volume: {:.0}×{:.0}×{:.0} mm³\n", nx as f64 * spacing_mm, ny as f64 * spacing_mm, nz as f64 * spacing_mm);
+    println!(
+        "Phantom: {}×{}×{} voxels, {:.1} mm isotropic spacing",
+        nx, ny, nz, spacing_mm
+    );
+    println!(
+        "Volume: {:.0}×{:.0}×{:.0} mm³\n",
+        nx as f64 * spacing_mm,
+        ny as f64 * spacing_mm,
+        nz as f64 * spacing_mm
+    );
 
     // ── 2. CT → μ map ─────────────────────────────────────────────────────────
     //
@@ -92,8 +96,10 @@ fn main() {
     println!("  Ψ(x=0)  = {surface_psi:.6}  (expected {expected_surface:.6})");
     println!("  Ψ(x=5)  = {depth5_psi:.6}");
     let depth5_expected = (-mu_center * 5.0 * voxel_cm).exp();
-    println!("  Ψ analytic  = {depth5_expected:.6}  (error {:.2e})\n",
-        (depth5_psi - depth5_expected).abs());
+    println!(
+        "  Ψ analytic  = {depth5_expected:.6}  (error {:.2e})\n",
+        (depth5_psi - depth5_expected).abs()
+    );
 
     // ── 4. TERMA — energy released per voxel ─────────────────────────────────
     //
@@ -118,7 +124,10 @@ fn main() {
     let kernel = exponential_deposition_kernel(range_cm, voxel_cm, 8);
 
     println!("Stage 4 — 1-D dose convolution");
-    println!("  Deposition kernel: {} taps, range = {range_cm:.2} cm", kernel.len());
+    println!(
+        "  Deposition kernel: {} taps, range = {range_cm:.2} cm",
+        kernel.len()
+    );
 
     let dose_1d = dose_convolution_x(&terma, &kernel);
 
@@ -153,11 +162,15 @@ fn main() {
     // Lateral profile at mid-depth (i=5), comparing 1-D vs 3-D dose.
     let mid_depth = nx / 2;
     println!("Stage 5 — 3-D scatter superposition");
-    println!("  Lateral profile at x={mid_depth} (j varies, k={}): 1-D vs 3-D", nz / 2);
+    println!(
+        "  Lateral profile at x={mid_depth} (j varies, k={}): 1-D vs 3-D",
+        nz / 2
+    );
     for j in 0..ny {
         let d1 = dose_1d.get(mid_depth, j, nz / 2).unwrap();
         let d3 = dose_3d.get(mid_depth, j, nz / 2).unwrap();
-        let bar_len = (d3 * 40.0 / dose_3d.get(mid_depth, ny / 2, nz / 2).unwrap()).round() as usize;
+        let bar_len =
+            (d3 * 40.0 / dose_3d.get(mid_depth, ny / 2, nz / 2).unwrap()).round() as usize;
         let bar = "#".repeat(bar_len.min(40));
         println!("    j={j:2}: 1-D {d1:.5}  3-D {d3:.5}  |{bar}");
     }
@@ -170,8 +183,10 @@ fn main() {
     let conservation_error = ((dose_3d_total - terma_total) / terma_total).abs();
     println!("\n  3-D dose total  = {dose_3d_total:.6}");
     println!("  TERMA total     = {terma_total:.6}");
-    println!("  Energy conservation error = {conservation_error:.4} ({:.2}%)\n",
-        conservation_error * 100.0);
+    println!(
+        "  Energy conservation error = {conservation_error:.4} ({:.2}%)\n",
+        conservation_error * 100.0
+    );
 
     // ── Self-validation ───────────────────────────────────────────────────────
     assert!(

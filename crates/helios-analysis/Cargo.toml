@@ -12,6 +12,8 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+aequitas = { workspace = true }
+asclepius = { workspace = true }
 helios-core = { workspace = true }
 helios-math = { workspace = true }
 helios-domain = { workspace = true }

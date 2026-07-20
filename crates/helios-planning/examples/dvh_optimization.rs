@@ -53,10 +53,13 @@ fn main() {
 
     let n_voxels = 6;
     let n_beamlets = 3;
-    let influence = DoseInfluence::from_rows(n_voxels, n_beamlets, matrix)
-        .expect("matrix dimensions match");
+    let influence =
+        DoseInfluence::from_rows(n_voxels, n_beamlets, matrix).expect("matrix dimensions match");
 
-    println!("Dose influence matrix: {} voxels × {} beamlets", n_voxels, n_beamlets);
+    println!(
+        "Dose influence matrix: {} voxels × {} beamlets",
+        n_voxels, n_beamlets
+    );
     println!("  PTV voxels: 0–3 (prescription = 2.0 Gy)");
     println!("  OAR voxels: 4–5 (prescription = 0.0 Gy)\n");
 
@@ -80,7 +83,10 @@ fn main() {
     println!("  step size     : {step}");
     println!("  initial obj   : {init_obj:.6}");
     println!("  final obj     : {final_obj:.6}");
-    println!("  obj reduction : {:.1}%\n", (1.0 - final_obj / init_obj) * 100.0);
+    println!(
+        "  obj reduction : {:.1}%\n",
+        (1.0 - final_obj / init_obj) * 100.0
+    );
 
     // ── Resulting beam weights ────────────────────────────────────────────────
     println!("Optimized beam weights (Gy/MU·MU):");
@@ -108,7 +114,10 @@ fn main() {
     let mut sorted_ptv = ptv_doses.clone();
     sorted_ptv.sort_by(|a, b| a.partial_cmp(b).unwrap());
     let d95_idx = ((1.0 - 0.95) * sorted_ptv.len() as f64).ceil() as usize;
-    let d95 = sorted_ptv.get(d95_idx.min(sorted_ptv.len() - 1)).copied().unwrap_or(0.0);
+    let d95 = sorted_ptv
+        .get(d95_idx.min(sorted_ptv.len() - 1))
+        .copied()
+        .unwrap_or(0.0);
 
     // D_mean: mean PTV dose.
     let ptv_mean = ptv_doses.iter().sum::<f64>() / ptv_doses.len() as f64;
@@ -127,10 +136,7 @@ fn main() {
         d95 >= 1.5,
         "D95 {d95:.4} Gy is below acceptable coverage threshold"
     );
-    assert!(
-        ptv_mean >= 1.7,
-        "PTV mean dose {ptv_mean:.4} Gy is too low"
-    );
+    assert!(ptv_mean >= 1.7, "PTV mean dose {ptv_mean:.4} Gy is too low");
     assert!(
         final_obj < init_obj,
         "Optimizer did not reduce the objective"

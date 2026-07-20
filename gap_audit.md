@@ -29,7 +29,7 @@ target closure.
 
 ## Open gaps
 
-### G-27 — benchmark gate and native test runner (in progress)
+### G-27 — benchmark gate and native test runner (review)
 
 - CI saves a benchmark baseline from one candidate run and immediately checks
   that same Criterion tree through a copied Python script and an empirical
@@ -39,7 +39,27 @@ target closure.
 - H-071 replaces both paths with the exact Atlas `9bfb722` benchmark gate,
   phase-reversed ABBA/BAAB execution, and separate Nextest/doctest commands.
 
+### G-29 — DICOM charset dependency (externally blocked)
+
+- `dicom-encoding` 0.10.0 declares `encoding` 0.2.33 unconditionally and uses
+  it for the DICOM Specific Character Set codecs. The current release exposes
+  no feature that can remove the dependency, and no maintained release is
+  available.
+- RUSTSEC-2021-0153 reports maintenance status, not a known vulnerability.
+  CI quarantines only that advisory ID while continuing to deny every other
+  warning and vulnerability. Reopen H-073 when `dicom-rs` publishes a release
+  backed by a maintained charset implementation; a consumer fork or reduced
+  character-set implementation would duplicate provider ownership.
+
 ### Recently closed
+
+- **G-28 — RESOLVED (H-072).** The isolated Python binding crate previously
+  resolved PyO3 0.23.5, which is affected by RUSTSEC-2025-0020 and
+  RUSTSEC-2026-0177. PyO3 0.29.0 closes both vulnerabilities; the thin boundary
+  uses `Python::detach` around the existing Rust planning call and retains no
+  domain logic. The built extension is covered by the value-semantic Python
+  contract suite. G-29 records the sole exact unmaintained dependency
+  quarantine.
 
 - **G-26 — RESOLVED (H-068).** `EnergyMeV` and `VoxelSpacingMm` previously
   stored dimensionless `f64` values despite representing physical quantities.

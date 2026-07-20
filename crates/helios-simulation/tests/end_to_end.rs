@@ -257,18 +257,20 @@ fn per_structure_plan_evaluation_over_delivered_dose() {
         ptv.mean(),
         oar.mean()
     );
-    assert!(
-        ptv.generalized_eud(1.0) > oar.generalized_eud(1.0),
-        "PTV gEUD must exceed OAR gEUD"
-    );
+    let ptv_geud = ptv.generalized_eud(1.0).expect("valid PTV response");
+    let oar_geud = oar.generalized_eud(1.0).expect("valid OAR response");
+    assert!(ptv_geud > oar_geud, "PTV gEUD must exceed OAR gEUD");
 
     // Outcome models are well-formed probabilities. With TCD50 set below the PTV
     // gEUD the target controls (TCP > 0.5); with TD50 above the OAR gEUD the OAR is
     // spared (NTCP < 0.5) — both by ratio, independent of the absolute dose scale.
-    let (ptv_geud, oar_geud) = (ptv.generalized_eud(1.0), oar.generalized_eud(1.0));
     assert!(oar_geud > 0.0, "OAR (in-water) must receive some dose");
-    let tcp = ptv.tcp_logistic(1.0, ptv_geud * 0.8, 2.0);
-    let ntcp = oar.ntcp_lkb(1.0, oar_geud * 2.0, 0.3);
+    let tcp = ptv
+        .tcp_logistic(1.0, ptv_geud * 0.8, 2.0)
+        .expect("valid tumour-control response");
+    let ntcp = oar
+        .ntcp_lkb(1.0, oar_geud * 2.0, 0.3)
+        .expect("valid complication response");
     assert!(
         (0.0..=1.0).contains(&tcp) && tcp > 0.5,
         "PTV TCP {tcp} should exceed 0.5"
