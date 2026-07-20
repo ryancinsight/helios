@@ -8,7 +8,7 @@
 
 ## Owner: Codex
 
-## Codex — H-072 Python binding security [patch] — review
+## Codex — H-072 Python binding security [patch] — done 2026-07-20
 
 - [x] Upgrade the isolated Python binding boundary to PyO3 0.29.0, the first
       release closing both applicable RustSec advisories.
@@ -16,11 +16,12 @@
       preserving the existing Rust-core call and value-semantic Python API.
 - [x] Add a hosted job that builds the abi3 extension and runs the Python
       contract suite against the installed wheel.
-- [x] Pass exact-head local binding verification: warning-denied all-feature
+- [x] Pass implementation-head local binding verification: warning-denied all-feature
       Clippy, 273/273 Nextest cases, doctests, rustdoc, and 13/13 Pytest cases.
-- [ ] Pass exact-head hosted binding verification.
+- [x] Pass implementation-head hosted binding verification at `44fb2768d`: the built
+      abi3 wheel passes all 13 Python value-semantic tests.
 
-## Codex — H-071 benchmark gate repair [arch] [patch] — review
+## Codex — H-071 benchmark gate repair [arch] [patch] — done 2026-07-20
 
 - [x] Replace the copied same-run Python comparison with the exact Atlas
       `9bfb722` phase-replicated Criterion gate.
@@ -36,7 +37,9 @@
       doctests separately, and enforce RustSec/license/source policy.
 - [x] Pin CI provider materialization to Atlas `05b7f5d`, whose registered
       graph contains Proteus, Asclepius, and the reconciled Hephaestus revision.
-- [ ] Pass exact-head hosted CI.
+- [x] Pass implementation-head hosted CI at `44fb2768d`: Rust workspace and Python
+      binding jobs pass, and the phase-reversed benchmark gate passes all four
+      report universes in run `29784712768`.
 
 ## Codex — H-068 Aequitas domain units [arch] — done 2026-07-19
 
@@ -167,7 +170,7 @@ and the lockfile contains no `ndarray` package entry. Evidence tier: compile-
 time/build verification plus manifest/lockfile inspection; mdBook rendering is
 not claimed because `mdbook` is not installed on this host.
 
-### H-020k done — gaia-`Aabb` collimator field aperture + delivery collimation (jaw field-shaping + penumbra). Next: H-011b NIST μ/ρ / wire aperture into the dose pipeline / oriented-scatter perf — `todo`
+### H-020k done — gaia-`Aabb` collimator field aperture + delivery collimation (jaw field-shaping + penumbra). Next: wire aperture into the dose pipeline / oriented-scatter perf — `todo`
 
 `helios-domain::FieldAperture` (open field = gaia `Aabb`, geometric edge penumbra via box
 SDF; `contains` → `Aabb::contains_point`) + `helios-simulation::collimate_frames` (scales
@@ -517,8 +520,7 @@ Next: H-021 (moirai-orchestrated helical delivery simulation combining
 then end-to-end dose→gamma/DVH validation.
 
 *Also queued:* H-020b (binary-MLC sinogram), H-003d (oriented grids when leto
-`Isometry3` gains transforms), H-011d (exact Siddon), H-004b (ritk DICOM),
-H-011b (NIST μ/ρ tables).
+`Isometry3` gains transforms), H-011d (exact Siddon), H-004b (ritk DICOM).
 
 ## Gate status (last run, H-020k — collimator field aperture)
 
@@ -597,8 +599,8 @@ Unblocked (timing/modulation model, not spatial MLC geometry which needs gaia).
 4. [ ] clippy `-D warnings`, fmt, nextest, doctests green; sync artifacts.
 
 *Blocked:* H-010 GPU kernel (G-12), H-011c segment-generation + spatial MLC
-geometry (gaia G-11), H-004b ritk DICOM (heavy build). *Unblocked queue:* H-011b
-NIST μ/ρ tables, H-021 delivery simulation stepping.
+geometry (gaia G-11), H-004b ritk DICOM (heavy build). *Unblocked queue:*
+H-021 delivery simulation stepping.
 
 ### Completed
 
@@ -692,7 +694,7 @@ NIST μ/ρ tables, H-021 delivery simulation stepping.
   remaining 10 crates are added when their layer is built (architecture_scoping
   growth triggers). `workspace.dependencies` declares the full Atlas set now as the
   integration SSOT.
-# H-076 review — Asclepius response ownership
+## H-076 done 2026-07-20 — Asclepius response ownership
 
 - [x] Delete Helios's duplicate gEUD, logistic TCP, and Lyman NTCP functions.
 - [x] Store the DVH response sample as Aequitas absorbed-dose quantities and
@@ -715,4 +717,5 @@ NIST μ/ρ tables, H-021 delivery simulation stepping.
 - [x] Pin public Asclepius merge `ceb8b6d`, patch both workspace packages to
   the Atlas sibling checkout, and use Atlas merge `05b7f5d` for both checkout
   action provenance and provider-graph resolution.
-- [ ] Pass exact-head hosted Rust, Python-binding, and benchmark verification.
+- [x] Pass implementation-head hosted Rust, Python-binding, and benchmark verification
+  at `44fb2768d` in run `29784712768`.

@@ -29,22 +29,13 @@ target closure.
 
 ## Open gaps
 
-### G-27 — benchmark gate and native test runner (review)
-
-- CI saves a benchmark baseline from one candidate run and immediately checks
-  that same Criterion tree through a copied Python script and an empirical
-  15% threshold. The comparison is tautological and cannot detect a
-  regression. The Rust job also bypasses the committed Nextest timeout budget
-  with bare `cargo test`.
-- H-071 replaces both paths with the exact Atlas `9bfb722` benchmark gate,
-  phase-reversed ABBA/BAAB execution, and separate Nextest/doctest commands.
-
 ### G-29 — DICOM charset dependency (externally blocked)
 
 - `dicom-encoding` 0.10.0 declares `encoding` 0.2.33 unconditionally and uses
   it for the DICOM Specific Character Set codecs. The current release exposes
-  no feature that can remove the dependency, and no maintained release is
-  available.
+  no feature that can remove the dependency. A 2026-07-20 registry and resolved
+  manifest audit confirms 0.10.0 remains the latest release and still carries
+  the unconditional edge.
 - RUSTSEC-2021-0153 reports maintenance status, not a known vulnerability.
   CI quarantines only that advisory ID while continuing to deny every other
   warning and vulnerability. Reopen H-073 when `dicom-rs` publishes a release
@@ -52,6 +43,13 @@ target closure.
   character-set implementation would duplicate provider ownership.
 
 ### Recently closed
+
+- **G-27 — RESOLVED (H-071).** The copied same-run classifier and bare native
+  test invocation are deleted. Implementation head `44fb2768d` uses Atlas gate
+  `9bfb722`, holds the candidate Criterion harness constant, measures
+  phase-reversed ABBA and BAAB replications, runs native tests through the
+  committed Nextest budget, and passes Rust, Python, and benchmark jobs in
+  hosted run `29784712768`.
 
 - **G-28 — RESOLVED (H-072).** The isolated Python binding crate previously
   resolved PyO3 0.23.5, which is affected by RUSTSEC-2025-0020 and
@@ -200,14 +198,17 @@ target closure.
 
 ### Physics / numerics
 
-- **G-1 (physics):** *Partially closed (H-011).* Photon attenuation **relations**
+- **G-1 (physics):** *Closed through H-011 and H-011b.* Photon attenuation **relations**
   implemented and analytically verified in `helios-physics`: Beer–Lambert
   transmission, half-value layer, `μ = (μ/ρ)·ρ`, and first-order HU→density CT
-  calibration (property/value-semantic tests: `T(HVL)=½`, `T(0)=1`, water/air/bone
-  calibration points, f32 genericity). **Still open:** concrete NIST XCOM μ/ρ data
-  tables (H-011b) and an electron-transport model; these are data/algorithm gaps,
-  not framework gaps. *Evidence tier: analytical (relations) — reference cross
-  sections pending.*
+  calibration (property/value-semantic tests: `T(HVL)=½`, `T(0)=1`,
+  water/air/bone calibration points, f32 genericity). H-011b adds the selected
+  NIST dry-air, liquid-water, and cortical-bone mass-attenuation knots over
+  10 keV–20 MeV with an explicitly bounded log-linear interpolation contract.
+  The five table value, boundary, interpolation, and invalid-domain tests pass
+  on the final head. An electron-transport model remains a separate algorithm
+  item, not a mass-attenuation table residual. *Evidence tier: analytical
+  relations plus primary-source table-value tests.*
 - **G-2 (numerics):** ~~No `Scalar` seam.~~ **CLOSED (H-003).** `helios-math`
   establishes `Scalar = eunomia::RealField` (the Atlas numeric SSOT) as the Helios
   compute seam and re-exports the leto linear-algebra substrate. `helios-core`
