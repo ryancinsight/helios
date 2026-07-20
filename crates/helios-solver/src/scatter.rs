@@ -55,12 +55,12 @@ pub fn symmetric_deposition_kernel<T: Scalar>(range_cm: T, voxel_cm: T, radius: 
 /// exact while the boundary layer loses the truncated tail.
 ///
 /// Iterates the volume's zero-copy [`as_slice`](Volume::as_slice) view with a
-/// precomputed axis stride: per tap this is one strided slice read instead of a
-/// three-axis bounds check + flat-index recomputation through `get`. The tap
-/// summation order is unchanged, so results are bitwise-identical to the previous
-/// per-voxel form (the differential guarantee for this optimization).
-fn convolve_axis<T: Scalar>(vol: &Volume<T>, kernel: &[T], axis: usize) -> Volume<T> {
-    convolve_axis_at(vol, kernel, kernel.len() / 2, axis)
+/// compile-time axis and precomputed stride. Each voxel derives its contiguous
+/// valid tap interval once, eliminating per-tap boundary branches while retaining
+/// the original tap summation order. Results are therefore bitwise-identical to
+/// the bounds-checked reference form.
+fn convolve_axis<T: Scalar, const AXIS: usize>(vol: &Volume<T>, kernel: &[T]) -> Volume<T> {
+    convolve_axis_at_const::<T, AXIS>(vol, kernel, kernel.len() / 2)
 }
 
 /// [`convolve_axis`] with an explicit zero-offset index `center` — the general
@@ -72,12 +72,25 @@ fn convolve_axis_at<T: Scalar>(
     center: usize,
     axis: usize,
 ) -> Volume<T> {
+    match axis {
+        0 => convolve_axis_at_const::<T, 0>(vol, kernel, center),
+        1 => convolve_axis_at_const::<T, 1>(vol, kernel, center),
+        2 => convolve_axis_at_const::<T, 2>(vol, kernel, center),
+        _ => panic!("axis must be 0, 1, or 2; got {axis}"),
+    }
+}
+
+fn convolve_axis_at_const<T: Scalar, const AXIS: usize>(
+    vol: &Volume<T>,
+    kernel: &[T],
+    center: usize,
+) -> Volume<T> {
+    const { assert!(AXIS < 3, "axis must be 0, 1, or 2") };
     let grid: VoxelGrid<T> = *vol.grid();
     let [nx, ny, nz] = grid.dims();
-    let center = center as isize;
-    let extent = [nx, ny, nz][axis] as isize;
+    let extent = [nx, ny, nz][AXIS];
     // C-contiguous (i, j, k) strides — the Volume layout contract.
-    let axis_stride = [ny * nz, nz, 1][axis] as isize;
+    let axis_stride = [ny * nz, nz, 1][AXIS] as isize;
 
     let src = vol.as_slice();
     let mut out = vec![<T as NumericElement>::ZERO; src.len()];
@@ -85,18 +98,18 @@ fn convolve_axis_at<T: Scalar>(
     for i in 0..nx {
         for j in 0..ny {
             for k in 0..nz {
-                let pos = [i, j, k][axis] as isize;
+                let pos = [i, j, k][AXIS];
+                let centered_pos = pos + center;
+                let first_tap = centered_pos.saturating_add(1).saturating_sub(extent);
+                let past_last_tap = centered_pos.saturating_add(1).min(kernel.len());
                 let mut acc = <T as NumericElement>::ZERO;
-                for (t, &weight) in kernel.iter().enumerate() {
+                for (relative_tap, &weight) in kernel[first_tap..past_last_tap].iter().enumerate() {
                     // True convolution: dose(pos) gathers src(pos − offset), so a
                     // downstream-weighted (offset > 0) tap carries energy FROM the
                     // upstream source TO pos. (Correlation — pos + offset — would
                     // invert asymmetric kernels; symmetric ones cannot tell.)
-                    let s = pos - (t as isize - center);
-                    if s < 0 || s >= extent {
-                        continue;
-                    }
-                    let offset = base as isize + (s - pos) * axis_stride;
+                    let source_pos = centered_pos - (first_tap + relative_tap);
+                    let offset = base as isize + (source_pos as isize - pos as isize) * axis_stride;
                     acc += src[offset as usize] * weight;
                 }
                 out[base] = acc;
@@ -121,9 +134,9 @@ pub fn scatter_superposition<T: Scalar>(
     ky: &[T],
     kz: &[T],
 ) -> Volume<T> {
-    let after_x = convolve_axis(terma, kx, 0);
-    let after_y = convolve_axis(&after_x, ky, 1);
-    convolve_axis(&after_y, kz, 2)
+    let after_x = convolve_axis::<T, 0>(terma, kx);
+    let after_y = convolve_axis::<T, 1>(&after_x, ky);
+    convolve_axis::<T, 2>(&after_y, kz)
 }
 
 /// Forward-peaked (anisotropic) deposition kernel along the beam axis:
@@ -254,7 +267,7 @@ pub fn anisotropic_scatter_superposition<T: Scalar>(
     let mut vol = convolve_axis_at(terma, beam_kernel, beam_center, beam_axis);
     for axis in 0..3 {
         if axis != beam_axis {
-            vol = convolve_axis(&vol, lateral, axis);
+            vol = convolve_axis_at(&vol, lateral, lateral.len() / 2, axis);
         }
     }
     vol
@@ -265,6 +278,30 @@ mod tests {
     use super::*;
     use approx::assert_relative_eq;
     use helios_math::Point3;
+
+    fn reference_convolve_axis(
+        vol: &Volume<f64>,
+        kernel: &[f64],
+        center: usize,
+        axis: usize,
+    ) -> Volume<f64> {
+        Volume::from_shape_fn(*vol.grid(), |mut index| {
+            let pos = index[axis] as isize;
+            kernel
+                .iter()
+                .enumerate()
+                .filter_map(|(tap, &weight)| {
+                    let source = pos - (tap as isize - center as isize);
+                    (source >= 0 && source < vol.grid().dims()[axis] as isize).then(|| {
+                        index[axis] = source as usize;
+                        vol.get(index[0], index[1], index[2])
+                            .expect("reference index is inside the validated grid")
+                            * weight
+                    })
+                })
+                .sum()
+        })
+    }
 
     fn grid() -> VoxelGrid<f64> {
         VoxelGrid::axis_aligned([7, 7, 7], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
@@ -441,6 +478,26 @@ mod tests {
             dose.get(4, 3, 3).unwrap(),
             epsilon = 1e-6
         );
+    }
+
+    #[test]
+    fn const_axis_matches_bounds_checked_reference_bitwise() {
+        let terma = Volume::from_shape_fn(grid(), |[i, j, k]| {
+            (i * 49 + j * 7 + k) as f64 * 0.125 - 3.0
+        });
+        let kernel = [0.125, 0.25, 0.375, 0.25];
+        let center = 1;
+
+        for axis in 0..3 {
+            let expected = reference_convolve_axis(&terma, &kernel, center, axis);
+            let actual = match axis {
+                0 => convolve_axis_at_const::<f64, 0>(&terma, &kernel, center),
+                1 => convolve_axis_at_const::<f64, 1>(&terma, &kernel, center),
+                2 => convolve_axis_at_const::<f64, 2>(&terma, &kernel, center),
+                _ => unreachable!("invariant: loop range contains only the three axes"),
+            };
+            assert_eq!(actual.as_slice(), expected.as_slice());
+        }
     }
 
     #[test]

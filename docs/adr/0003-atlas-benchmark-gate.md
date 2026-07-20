@@ -80,6 +80,10 @@ uses `--locked`, and the delivered candidate lock is never regenerated.
 - Each measured revision runs only the declared `harness = false` benchmark
   binaries. Workspace library targets remain part of the Rust correctness job
   and do not receive Criterion command-line arguments.
+- A dependency-only candidate can change linked-code layout and therefore
+  throughput even when the measured Rust source is unchanged. A replicated
+  regression remains a production defect; the response is to optimize the hot
+  path, never to weaken the instrument or statistical classifier.
 
 ## Verification
 
@@ -87,6 +91,10 @@ uses `--locked`, and the delivered candidate lock is never regenerated.
   roots, Nextest, doctests, and absence of the Python classifier.
 - Run workspace format, warning-denied Clippy, configured Nextest, doctests,
   and warning-clean rustdoc locally.
+- Pin the scatter-convolution rewrite against the unchanged Criterion
+  instrument. Local paired evidence on the development host reports
+  50.46% lower median time at 32³ and 51.02% at 64³; a bitwise differential
+  test covers every axis and asymmetric boundary truncation.
 - Require the exact pull-request head's Rust and benchmark jobs to pass.
 
 ## References

@@ -27,6 +27,11 @@ under a Breaking subsection.
 
 ### Changed
 
+- H-077: specialized the three scatter-convolution axes with const generics and
+  computed each voxel's valid tap interval once, removing per-tap boundary
+  branches without changing summation order. A bitwise differential oracle
+  covers all axes and asymmetric boundaries; unchanged local Criterion
+  instruments report 50.46% and 51.02% lower median time at 32³ and 64³.
 - H-076: `helios-planning` delegates differentiable gEUD tape construction to
   `asclepius-coeus`; Helios retains the dose-influence matrix and one-sided
   planning objective. The Proteus pin advances with Asclepius to the merged

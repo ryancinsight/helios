@@ -29,6 +29,9 @@
       closed across all four report universes.
 - [x] Invoke each declared Criterion binary directly so measurement arguments
       cannot be consumed by workspace library test harnesses.
+- [x] Recover the linked candidate's replicated scatter regression in the
+      production loop: const-generic axis specialization is bitwise-equivalent
+      and lowers local 32³/64³ medians by 50.46%/51.02%.
 - [x] Route native tests through the committed Nextest profile, retain
       doctests separately, and enforce RustSec/license/source policy.
 - [ ] Pass exact-head hosted CI.
