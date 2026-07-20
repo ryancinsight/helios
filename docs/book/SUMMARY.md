@@ -32,6 +32,7 @@
 - [Mass Attenuation and Photon Cross Sections](dose_attenuation.md)
 - [Terma and Energy Deposition](dose_terma.md)
 - [Collapsed-Cone Convolution](dose_collapsed_cone.md)
+  - [Example: Collapsed-Cone 3-D Dose Engine](examples/collapsed_cone_3d.md)
 - [Beam Hardening and Poly-Energetic Spectra](dose_spectra.md)
 
 ---
@@ -42,6 +43,7 @@
 - [Helical Delivery and Sinogram](planning_helical.md)
 - [Dose-Volume Histograms](planning_dvh.md)
   - [Example: DVH Analysis](examples/dvh_analysis.md)
+  - [Example: DVH-Constrained Beam-Weight Optimization](examples/dvh_optimization.md)
 - [Gamma Index and Plan Verification](planning_gamma.md)
   - [Example: Gamma Index Comparison](examples/gamma_index.md)
 

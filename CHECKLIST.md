@@ -8,6 +8,16 @@
 
 ## Owner: Codex
 
+## Codex — H-071 benchmark gate repair [arch] [patch] — in progress
+
+- [ ] Replace the copied same-run Python comparison with the exact Atlas
+      `9bfb722` phase-replicated Criterion gate.
+- [ ] Hold the candidate benchmark harness constant across baseline and
+      candidate revisions, run ABBA followed by BAAB on one runner, and fail
+      closed across all four report universes.
+- [ ] Route native tests through the committed Nextest profile, retain
+      doctests separately, and pass exact-head hosted CI.
+
 ## Codex — H-068 Aequitas domain units [arch] — done 2026-07-19
 
 - [x] Store `EnergyMeV` and `VoxelSpacingMm` with Aequitas `Energy<f64>` and
