@@ -9,6 +9,9 @@ under a Breaking subsection.
 
 ### Breaking
 
+- H-069: `MassAttenuation::to_linear` now accepts Proteus `MassDensity<T>`
+  instead of an unvalidated raw scalar. Proteus owns the shared material-density
+  validity boundary; Helios retains mass-attenuation and CT-calibration laws.
 - H-068: `EnergyMeV` and `VoxelSpacingMm` retain their Helios validation
   contracts while storing Aequitas `Energy<f64>` and `Length<f64>`. Compile-time
   layout assertions preserve their one-word transparent representation.

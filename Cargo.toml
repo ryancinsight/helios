@@ -94,7 +94,8 @@ consus-hdf5 = { git = "https://github.com/ryancinsight/consus", features = ["std
 consus-io = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
 consus-compression = { git = "https://github.com/ryancinsight/consus", features = ["std", "deflate"] }
 # Numeric datatype SSOT (Scalar seam: RealField/FloatElement/NumericElement).
-aequitas = { git = "https://github.com/ryancinsight/aequitas", rev = "49ee8004e008a480ac871c3782d00d921ba41c01" }
+aequitas = { git = "https://github.com/ryancinsight/aequitas", rev = "14a29eda31d312b3254b88cd1d5b48da2a21e59f" }
+proteus = { git = "https://github.com/ryancinsight/proteus", rev = "2b06be323c712e6643f266c49ad5caa7583c2066" }
 eunomia = { git = "https://github.com/ryancinsight/eunomia" }
 # Array substrate + geometry primitives, and portable SIMD.
 # default-features disabled: leto's default `mnemosyne-memory` feature pulls an

@@ -10,9 +10,13 @@
 //!
 //! Run with: cargo run --example photon_attenuation -p helios-physics
 
+use aequitas::systems::si::{
+    quantities::MassDensity as DensityQuantity, units::GramPerCubicCentimeter,
+};
 use helios_physics::{
     mass_density_from_hu, relative_electron_density_from_hu, LinearAttenuation, MassAttenuation,
 };
+use proteus::MassDensity;
 
 fn main() {
     // ── 1. Beer–Lambert transmission ─────────────────────────────────────────
@@ -49,12 +53,15 @@ fn main() {
 
     // Soft tissue at 100 keV: μ/ρ ≈ 0.169 cm²/g, ρ ≈ 1.06 g/cm³
     let mu_rho_tissue = MassAttenuation::new(0.169_f64).expect("valid μ/ρ");
-    let density_tissue = 1.06_f64; // g/cm³
+    let density_tissue = MassDensity::new(DensityQuantity::from_unit::<GramPerCubicCentimeter>(
+        1.06_f64,
+    ))
+    .expect("valid tissue density");
     let mu_tissue = mu_rho_tissue
         .to_linear(density_tissue)
         .expect("valid density");
     println!(
-        "\nSoft tissue  μ/ρ = {:.4} cm²/g  ρ = {density_tissue} g/cm³  → μ = {:.4} cm⁻¹",
+        "\nSoft tissue  μ/ρ = {:.4} cm²/g  ρ = 1.06 g/cm³  → μ = {:.4} cm⁻¹",
         mu_rho_tissue.get(),
         mu_tissue.get()
     );

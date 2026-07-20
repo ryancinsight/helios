@@ -12,8 +12,10 @@
 //! (cm²/g) and mass density `ρ` (g/cm³). Tabulated material data is exposed
 //! through the [`tables`] module and constructs these validated types directly.
 
+use aequitas::systems::si::units::GramPerCubicCentimeter;
 use helios_core::HeliosError;
 use helios_math::{NumericElement, Scalar};
+use proteus::MassDensity;
 
 /// Tabulated material mass-attenuation data.
 pub mod tables;
@@ -116,19 +118,12 @@ impl<T: Scalar> MassAttenuation<T> {
         self.0
     }
 
-    /// Linear attenuation `μ = (μ/ρ)·ρ` for mass density `density_g_cm3` (g/cm³).
+    /// Linear attenuation `μ = (μ/ρ)·ρ` for a validated mass density.
     ///
     /// # Errors
-    /// Returns [`HeliosError::InvalidDomainValue`] if `density_g_cm3` is non-finite
-    /// or negative.
-    pub fn to_linear(self, density_g_cm3: T) -> Result<LinearAttenuation<T>, HeliosError> {
-        if !density_g_cm3.is_finite() || density_g_cm3 < <T as NumericElement>::ZERO {
-            return Err(HeliosError::InvalidDomainValue {
-                field: "MassAttenuation::to_linear::density",
-                value: density_g_cm3.to_f64(),
-                reason: "mass density must be finite and non-negative",
-            });
-        }
+    /// Returns [`HeliosError::InvalidDomainValue`] if the product is non-finite.
+    pub fn to_linear(self, density: MassDensity<T>) -> Result<LinearAttenuation<T>, HeliosError> {
+        let density_g_cm3 = density.into_quantity().in_unit::<GramPerCubicCentimeter>();
         LinearAttenuation::new(self.0 * density_g_cm3)
     }
 }
@@ -155,7 +150,16 @@ pub fn mass_density_from_hu<T: Scalar>(hu: T, water_density_g_cm3: T) -> T {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use aequitas::systems::si::quantities::MassDensity as DensityQuantity;
     use approx::assert_relative_eq;
+    use proteus::{PropertyConstraint, PropertyKind};
+
+    fn density(value_g_cm3: f64) -> MassDensity<f64> {
+        MassDensity::new(DensityQuantity::from_unit::<GramPerCubicCentimeter>(
+            value_g_cm3,
+        ))
+        .expect("fixture density is finite and non-negative")
+    }
 
     #[test]
     fn linear_attenuation_rejects_negative_and_nonfinite() {
@@ -193,11 +197,11 @@ mod tests {
         // μ = (μ/ρ)·ρ; value-semantic on the defining relation (not a memorized
         // NIST digit): 0.06 cm²/g at ρ = 1 g/cm³ → μ = 0.06 cm⁻¹.
         let mu_over_rho = MassAttenuation::new(0.06_f64).unwrap();
-        let mu = mu_over_rho.to_linear(1.0).unwrap();
+        let mu = mu_over_rho.to_linear(density(1.0)).unwrap();
         assert_relative_eq!(mu.get(), 0.06, epsilon = 1e-15);
         // Doubling density doubles μ.
         assert_relative_eq!(
-            mu_over_rho.to_linear(2.0).unwrap().get(),
+            mu_over_rho.to_linear(density(2.0)).unwrap().get(),
             0.12,
             epsilon = 1e-15
         );
@@ -206,10 +210,13 @@ mod tests {
     }
 
     #[test]
-    fn mass_to_linear_rejects_bad_density() {
-        let m = MassAttenuation::new(0.06_f64).unwrap();
-        assert!(m.to_linear(-1.0).is_err());
-        assert!(m.to_linear(f64::NAN).is_err());
+    fn proteus_rejects_bad_density_before_attenuation() {
+        let error = MassDensity::new(DensityQuantity::from_unit::<GramPerCubicCentimeter>(
+            -1.0_f64,
+        ))
+        .expect_err("negative density is outside the material domain");
+        assert_eq!(error.kind(), PropertyKind::MassDensity);
+        assert_eq!(error.constraint(), PropertyConstraint::FiniteNonNegative);
     }
 
     #[test]
