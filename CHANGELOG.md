@@ -21,7 +21,7 @@ under a Breaking subsection.
 
 ### Changed
 
-- H-074: aligned CI path-dependency checkout with Atlas commit `3a1d5e9`,
+- H-074: aligned CI path-dependency checkout with Atlas commit `afd5e16`,
   whose gitlinks contain the merged Aequitas, Proteus, and Hephaestus provider
   graph. The checkout action implementation remains immutably pinned to
   `9bfb722`.

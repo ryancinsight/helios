@@ -22,14 +22,14 @@ jobs:
         with:
           manifest: Cargo.toml
           destination: ..
-          atlas_ref: 3a1d5e9fd45173a2f0889530f50fef57644f5795
+          atlas_ref: afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
 
       - name: Checkout Coeus path dependencies
         uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9bfb722367a6c3911409d6b4619701c549b6d415
         with:
           manifest: ../coeus/Cargo.toml
           destination: ..
-          atlas_ref: 3a1d5e9fd45173a2f0889530f50fef57644f5795
+          atlas_ref: afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -104,14 +104,14 @@ jobs:
         with:
           manifest: helios-candidate/Cargo.toml
           destination: .
-          atlas_ref: 3a1d5e9fd45173a2f0889530f50fef57644f5795
+          atlas_ref: afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
 
       - name: Checkout Coeus path dependencies
         uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9bfb722367a6c3911409d6b4619701c549b6d415
         with:
           manifest: coeus/Cargo.toml
           destination: .
-          atlas_ref: 3a1d5e9fd45173a2f0889530f50fef57644f5795
+          atlas_ref: afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
