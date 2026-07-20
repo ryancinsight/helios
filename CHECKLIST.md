@@ -34,8 +34,8 @@
       and lowers local 32³/64³ medians by 50.46%/51.02%.
 - [x] Route native tests through the committed Nextest profile, retain
       doctests separately, and enforce RustSec/license/source policy.
-- [x] Pin CI provider materialization to Atlas `250add4`, the first registered
-      graph containing the Proteus and Asclepius revisions in `Cargo.lock`.
+- [x] Pin CI provider materialization to Atlas `05b7f5d`, whose registered
+      graph contains Proteus, Asclepius, and the reconciled Hephaestus revision.
 - [ ] Pass exact-head hosted CI.
 
 ## Codex — H-068 Aequitas domain units [arch] — done 2026-07-19
@@ -712,3 +712,7 @@ NIST μ/ρ tables, H-021 delivery simulation stepping.
   270 workspace nextest tests, doctests, Rustdoc, examples, and supply-chain
   gates. Semver analysis classifies the intentionally removed public functions
   and fallible response signatures as the declared breaking migration.
+- [x] Pin public Asclepius merge `ceb8b6d`, patch both workspace packages to
+  the Atlas sibling checkout, use Atlas merge `05b7f5d` for provider-graph
+  resolution, and retain the audited checkout action at `9bfb722`.
+- [ ] Pass exact-head hosted Rust, Python-binding, and benchmark verification.
