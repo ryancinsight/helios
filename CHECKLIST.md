@@ -34,6 +34,8 @@
       and lowers local 32³/64³ medians by 50.46%/51.02%.
 - [x] Route native tests through the committed Nextest profile, retain
       doctests separately, and enforce RustSec/license/source policy.
+- [x] Pin CI provider materialization to Atlas `250add4`, the first registered
+      graph containing the Proteus and Asclepius revisions in `Cargo.lock`.
 - [ ] Pass exact-head hosted CI.
 
 ## Codex — H-068 Aequitas domain units [arch] — done 2026-07-19

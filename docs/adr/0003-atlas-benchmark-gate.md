@@ -49,11 +49,12 @@ value-semantic Pytest suite against the installed wheel. This keeps Python as a
 tested FFI boundary over the Rust cores rather than an unverified packaging
 artifact.
 
-The provider graph argument is independently pinned to Atlas `afd5e16`, whose
-gitlinks match the Aequitas, Proteus, Hephaestus, Gaia, and Leto manifests
-represented by `Cargo.lock`. The checkout action and Criterion implementation
-remain pinned to their originating Atlas merge `9bfb722`; separating the graph
-argument prevents tool provenance from becoming an obsolete provider snapshot.
+The provider graph argument is independently pinned to Atlas `250add4`, whose
+gitlinks include the Aequitas, Proteus, Asclepius, Hephaestus, Gaia, and Leto
+manifests represented by `Cargo.lock`. The checkout action and Criterion
+implementation remain pinned to their originating Atlas merge `9bfb722`;
+separating the graph argument prevents tool provenance from becoming an
+obsolete provider snapshot.
 Before measurement, CI resolves the historical baseline lock once against that
 exact Ubuntu provider graph. Every measured baseline and candidate run then
 uses `--locked`, and the delivered candidate lock is never regenerated.
