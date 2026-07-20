@@ -29,6 +29,16 @@ target closure.
 
 ## Open gaps
 
+### G-27 — benchmark gate and native test runner (in progress)
+
+- CI saves a benchmark baseline from one candidate run and immediately checks
+  that same Criterion tree through a copied Python script and an empirical
+  15% threshold. The comparison is tautological and cannot detect a
+  regression. The Rust job also bypasses the committed Nextest timeout budget
+  with bare `cargo test`.
+- H-069 replaces both paths with the exact Atlas `9bfb722` benchmark gate,
+  phase-reversed ABBA/BAAB execution, and separate Nextest/doctest commands.
+
 ### Recently closed
 
 - **G-26 — RESOLVED (H-068).** `EnergyMeV` and `VoxelSpacingMm` previously
