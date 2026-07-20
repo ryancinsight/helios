@@ -31,7 +31,9 @@ under a Breaking subsection.
   `asclepius-coeus`; Helios retains the dose-influence matrix and one-sided
   planning objective. The Proteus pin advances with Asclepius to the merged
   Aequitas response-quantity revision, preserving one dimensional type
-  identity across the consumer graph.
+  identity across the consumer graph. The DVH query benchmark keeps its scalar
+  reference sample independent of the changed typed storage API, so the
+  candidate instrument also compiles against the historical baseline.
 - H-075: benchmark CI now resolves the historical baseline lock once against
   the exact Ubuntu and Atlas path-dependency graph before measurement. All
   baseline and candidate benchmark runs remain `--locked`; the delivered

@@ -698,6 +698,8 @@ NIST μ/ρ tables, H-021 delivery simulation stepping.
   Helios planning objective.
 - [x] Advance Proteus and Helios to the merged Aequitas response-quantity
   identity and confirm the focused dependency graph has no duplicate Aequitas.
+- [x] Keep the DVH benchmark instrument source-compatible with the historical
+  scalar sample and the candidate's typed Aequitas storage.
 - [x] Verify 84 focused analysis, planning, and simulation tests, including the
   analytical gEUD value, finite-difference planning gradient, typed failures,
   and masked PTV/OAR outcome workflow.
