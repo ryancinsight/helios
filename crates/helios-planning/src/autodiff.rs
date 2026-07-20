@@ -12,7 +12,9 @@
 //! core build. The feature gates a complete implementation, not a stub.
 
 use crate::optimize::DoseInfluence;
-use coeus_autograd::{add, matmul, mean, mul, pow, relu, sub, sum, Var};
+use asclepius::VolumeEffect;
+use asclepius_coeus::response::radiation::generalized_equivalent_uniform_dose;
+use coeus_autograd::{add, matmul, mul, relu, sub, sum, Var};
 use coeus_core::MoiraiBackend;
 use coeus_tensor::Tensor;
 use helios_core::HeliosError;
@@ -231,12 +233,10 @@ pub struct EudPenalty {
 /// `weight · relu(±(gEUD(A·x) − reference))²` with respect to the beam weights
 /// `x`, computed on the coeus tape.
 ///
-/// The gEUD `(mean((A·x)^a))^(1/a)` is built from differentiable `matmul` / `pow`
-/// / `mean` ops, so its gradient through the dose-influence matrix has **no**
-/// closed form yet flows by reverse-mode AD — the capability the mandated coeus
-/// component provides. The tests pin the returned gradient against a central
-/// finite-difference of the objective (the differential oracle). Dose must be
-/// positive where `a` is non-integer.
+/// The dose field is passed directly to the differentiable Asclepius gEUD law,
+/// so Helios owns only the planning objective while Asclepius owns its response
+/// equation and stabilized tape construction. The tests pin the returned
+/// gradient against a central finite-difference of the objective.
 ///
 /// # Errors
 /// [`HeliosError::InvalidDomainValue`] if `x`'s length differs from the beamlet
@@ -254,13 +254,12 @@ pub fn eud_objective_gradient_autodiff(
             reason: "weight count must equal the beamlet count",
         });
     }
-    if penalty.a == 0.0 {
-        return Err(HeliosError::InvalidDomainValue {
+    let volume_effect =
+        VolumeEffect::new(penalty.a).map_err(|_| HeliosError::InvalidDomainValue {
             field: "eud_objective_gradient_autodiff::a",
-            value: 0.0,
-            reason: "gEUD volume parameter a must be non-zero",
-        });
-    }
+            value: penalty.a,
+            reason: "gEUD volume parameter must be finite and non-zero",
+        })?;
 
     let backend = MoiraiBackend::new();
     let a = Var::<f64, MoiraiBackend>::new(
@@ -269,9 +268,18 @@ pub fn eud_objective_gradient_autodiff(
     );
     let xv = Var::new(Tensor::from_slice_on(vec![beamlets, 1], x, &backend), true);
 
-    // gEUD = ( mean( (A·x)^a ) )^(1/a).
     let dose = matmul(&a, &xv);
-    let geud = pow(&mean(&pow(&dose, penalty.a)), 1.0 / penalty.a);
+    let geud = generalized_equivalent_uniform_dose(&dose, volume_effect).map_err(|error| {
+        let value = match error {
+            asclepius_coeus::AutodiffResponseError::InvalidDose { value, .. } => value,
+            _ => f64::NAN,
+        };
+        HeliosError::InvalidDomainValue {
+            field: "eud_objective_gradient_autodiff::dose",
+            value,
+            reason: "dose observation violates the Asclepius gEUD domain",
+        }
+    })?;
 
     // One-sided hinge: violation = ±(gEUD − reference), penalized when > 0.
     let reference = scalar_const(penalty.reference, &backend);
@@ -396,14 +404,28 @@ mod tests {
             kind: EudKind::UpperLimit,
             weight: 1.0,
         };
-        assert!(eud_objective_gradient_autodiff(&inf, &[0.8, 0.6], &bad_a).is_err());
+        assert_eq!(
+            eud_objective_gradient_autodiff(&inf, &[0.8, 0.6], &bad_a),
+            Err(HeliosError::InvalidDomainValue {
+                field: "eud_objective_gradient_autodiff::a",
+                value: 0.0,
+                reason: "gEUD volume parameter must be finite and non-zero",
+            })
+        );
         let ok = EudPenalty {
             a: 2.0,
             reference: 1.0,
             kind: EudKind::UpperLimit,
             weight: 1.0,
         };
-        assert!(eud_objective_gradient_autodiff(&inf, &[0.8], &ok).is_err());
+        assert_eq!(
+            eud_objective_gradient_autodiff(&inf, &[0.8], &ok),
+            Err(HeliosError::InvalidDomainValue {
+                field: "eud_objective_gradient_autodiff::x",
+                value: 1.0,
+                reason: "weight count must equal the beamlet count",
+            })
+        );
     }
 
     #[test]

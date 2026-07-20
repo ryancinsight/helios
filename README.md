@@ -32,8 +32,9 @@ helios-core                                             foundation
 ```
 
 Strictly unidirectional layering; Atlas crates (ritk, gaia, hephaestus, moirai,
-coeus, consus, leto, hermes, mnemosyne, themis, apollo) are consumed as remote git
-dependencies. Full crate responsibilities and the Atlas dependency map are in
+coeus, asclepius, proteus, consus, leto, hermes, mnemosyne, themis, apollo) are
+consumed as remote git dependencies. Full crate responsibilities and the Atlas
+dependency map are in
 [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Building

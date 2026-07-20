@@ -88,14 +88,17 @@ coeus-core = { git = "https://github.com/ryancinsight/Coeus.git" }
 coeus-tensor = { git = "https://github.com/ryancinsight/Coeus.git" }
 coeus-autograd = { git = "https://github.com/ryancinsight/Coeus.git" }
 coeus-optim = { git = "https://github.com/ryancinsight/Coeus.git" }
+# Biological-response laws and their Coeus tape construction.
+asclepius = { git = "https://github.com/ryancinsight/asclepius", rev = "12f4f54b0010fe9eaeae91bd7116b976b55bd61e" }
+asclepius-coeus = { git = "https://github.com/ryancinsight/asclepius", rev = "12f4f54b0010fe9eaeae91bd7116b976b55bd61e" }
 # Volumetric storage (HDF5/Zarr, compression).
 consus-core = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
 consus-hdf5 = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
 consus-io = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
 consus-compression = { git = "https://github.com/ryancinsight/consus", features = ["std", "deflate"] }
 # Numeric datatype SSOT (Scalar seam: RealField/FloatElement/NumericElement).
-aequitas = { git = "https://github.com/ryancinsight/aequitas", rev = "0f9d77ab00eacf4225c0c4a54c0de3c9f41999a9" }
-proteus = { git = "https://github.com/ryancinsight/proteus", rev = "335e5297b28c334987bd18bd85a09393a90dfe5f" }
+aequitas = { git = "https://github.com/ryancinsight/aequitas", rev = "be3a1ac91286a17aecf18f0065d2aa6b385eb67b" }
+proteus = { git = "https://github.com/ryancinsight/proteus", rev = "f6dec722788f215c6c9ef1d1e76c3be11ae28918" }
 eunomia = { git = "https://github.com/ryancinsight/eunomia" }
 tyche-core = { git = "https://github.com/ryancinsight/tyche", rev = "87923da922ec7bd17f12324c40d1da026be6b04e" }
 # Array substrate + geometry primitives, and portable SIMD.
@@ -151,6 +154,7 @@ consus-compression = { path = "../consus/crates/consus-compression" }
 coeus-core = { path = "../coeus/coeus-core" }
 coeus-tensor = { path = "../coeus/coeus-tensor" }
 coeus-autograd = { path = "../coeus/coeus-autograd" }
+coeus-ops = { path = "../coeus/coeus-ops" }
 
 [patch."https://github.com/ryancinsight/hephaestus"]
 hephaestus-core = { path = "../hephaestus/crates/hephaestus-core" }

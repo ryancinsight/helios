@@ -20,7 +20,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 [[package]]
 name = "aequitas"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/aequitas?rev=0f9d77ab00eacf4225c0c4a54c0de3c9f41999a9#0f9d77ab00eacf4225c0c4a54c0de3c9f41999a9"
+source = "git+https://github.com/ryancinsight/aequitas?rev=be3a1ac91286a17aecf18f0065d2aa6b385eb67b#be3a1ac91286a17aecf18f0065d2aa6b385eb67b"
 dependencies = [
  "eunomia",
  "typenum",
@@ -145,6 +145,27 @@ name = "arrayvec"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56"
+
+[[package]]
+name = "asclepius"
+version = "0.1.0"
+source = "git+https://github.com/ryancinsight/asclepius?rev=12f4f54b0010fe9eaeae91bd7116b976b55bd61e#12f4f54b0010fe9eaeae91bd7116b976b55bd61e"
+dependencies = [
+ "aequitas",
+ "eunomia",
+]
+
+[[package]]
+name = "asclepius-coeus"
+version = "0.1.0"
+source = "git+https://github.com/ryancinsight/asclepius?rev=12f4f54b0010fe9eaeae91bd7116b976b55bd61e#12f4f54b0010fe9eaeae91bd7116b976b55bd61e"
+dependencies = [
+ "asclepius",
+ "coeus-autograd",
+ "coeus-core",
+ "coeus-ops",
+ "coeus-tensor",
+]
 
 [[package]]
 name = "ash"
@@ -1210,7 +1231,9 @@ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 name = "helios-analysis"
 version = "0.1.0"
 dependencies = [
+ "aequitas",
  "approx",
+ "asclepius",
  "criterion",
  "helios-core",
  "helios-domain",
@@ -1300,6 +1323,8 @@ name = "helios-planning"
 version = "0.1.0"
 dependencies = [
  "approx",
+ "asclepius",
+ "asclepius-coeus",
  "coeus-autograd",
  "coeus-core",
  "coeus-tensor",
@@ -2405,7 +2430,7 @@ dependencies = [
 [[package]]
 name = "proteus"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/proteus?rev=335e5297b28c334987bd18bd85a09393a90dfe5f#335e5297b28c334987bd18bd85a09393a90dfe5f"
+source = "git+https://github.com/ryancinsight/proteus?rev=f6dec722788f215c6c9ef1d1e76c3be11ae28918#f6dec722788f215c6c9ef1d1e76c3be11ae28918"
 dependencies = [
  "aequitas",
  "eunomia",
@@ -3084,7 +3109,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.4.3",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix",
  "windows-sys 0.61.2",

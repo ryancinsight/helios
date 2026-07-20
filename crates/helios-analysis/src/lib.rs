@@ -7,8 +7,8 @@
 //! against reference Monte Carlo / measurement (e.g. 3%/2 mm gamma, DVH metrics).
 //! The `image_quality` metrics (reconstruction accuracy, noise, contrast/CNR)
 //! are the analogous instruments for the MVCT imaging gate, and the
-//! `radiobiology` metrics ([`generalized_eud`], [`tcp_logistic`],
-//! [`ntcp_lkb`]) collapse a dose distribution to outcome-probability predictions.
+//! Biological-response laws are supplied by `asclepius`; [`Dvh`] retains the
+//! structure-specific dose sample and evaluates those laws without copying it.
 //!
 //! All metrics are generic over the [`Scalar`](helios_math::Scalar) seam and
 //! operate on the CPU; they are authored independently of the dose engines so the
@@ -19,7 +19,6 @@
 mod dvh;
 mod gamma;
 mod image_quality;
-mod radiobiology;
 mod roi;
 
 pub use dvh::Dvh;
@@ -28,5 +27,4 @@ pub use image_quality::{
     contrast_to_noise_ratio, michelson_contrast, roi_statistics, volume_relative_l2_error,
     volume_rmse, RoiStats,
 };
-pub use radiobiology::{generalized_eud, ntcp_lkb, tcp_logistic};
 pub use roi::{box_mask, spherical_mask};

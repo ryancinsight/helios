@@ -9,6 +9,12 @@ under a Breaking subsection.
 
 ### Breaking
 
+- H-076: removed the duplicate `helios_analysis::{generalized_eud,
+  tcp_logistic, ntcp_lkb}` free functions. `Dvh` now stores its sorted sample as
+  Aequitas `AbsorbedDose` quantities and evaluates the canonical Asclepius laws
+  without copying. Its three response methods return typed `ResponseError`
+  results so invalid observations and parameters cannot silently produce
+  non-finite values.
 - H-069: `MassAttenuation::to_linear` now accepts Proteus `MassDensity<T>`
   instead of an unvalidated raw scalar. Proteus owns the shared material-density
   validity boundary; Helios retains mass-attenuation and CT-calibration laws.
@@ -21,6 +27,11 @@ under a Breaking subsection.
 
 ### Changed
 
+- H-076: `helios-planning` delegates differentiable gEUD tape construction to
+  `asclepius-coeus`; Helios retains the dose-influence matrix and one-sided
+  planning objective. The Proteus pin advances with Asclepius to the merged
+  Aequitas response-quantity revision, preserving one dimensional type
+  identity across the consumer graph.
 - H-075: benchmark CI now resolves the historical baseline lock once against
   the exact Ubuntu and Atlas path-dependency graph before measurement. All
   baseline and candidate benchmark runs remain `--locked`; the delivered
@@ -280,37 +291,19 @@ under a Breaking subsection.
   gEUD), OAR NTCP < 0.5 (TD50 above the OAR gEUD) — proving the masks + DVH + radiobiology
   metrics compose over real delivered dose.
 - Per-structure outcome methods on the DVH (H-033b): `Dvh::dose_sample` (zero-copy view
-  of the structure's ascending-sorted doses) plus `Dvh::{generalized_eud, tcp_logistic,
-  ntcp_lkb}`, which evaluate the radiobiology models on the sample the histogram already
-  holds — **no dose-volume re-scan** — at the natural receiver (method form over free
-  function). So a masked (PTV/OAR) DVH now reports its own gEUD and TCP/NTCP directly.
-  Verified: `Dvh::generalized_eud` matches the free function on the reused sample across
-  a; a uniform-dose structure's TCP/NTCP reduce to the pointwise models (0.5 at
-  TCD50/TD50) and match the free functions at the structure gEUD; a masked hot-half
-  structure yields higher gEUD/NTCP than the cold half.
-- Radiobiology plan-evaluation metrics (H-033) in a new `helios-analysis::radiobiology`
-  module: `generalized_eud` (Niemierko gEUD, **promoted here from helios-planning** — a
-  dose metric belongs in analysis, not gated behind planning's `autodiff` feature; now
-  generic over `Scalar` and always available), plus the outcome models built on it —
-  `tcp_logistic` (Niemierko logistic TCP `1/(1+(TCD50/gEUD)^{4γ50})`) and `ntcp_lkb`
-  (Lyman–Kutcher–Burman NTCP `Φ((gEUD−TD50)/(m·TD50))` via eunomia's `erfc`). Verified:
-  gEUD power-mean bounds/monotonicity/uniform-invariance; TCP bounded [0,1], 0.5 at TCD50,
-  monotone, slope-sharpening; NTCP matches the normal CDF at the published Φ(±1)=0.8413/
-  0.1587 and Φ(0)=0.5, bounded/monotone; f32. helios-planning's EUD objective is unchanged
-  and its tests now use an independent inline gEUD oracle (a differential test must not
-  check code against itself), so planning keeps its lean core+math dep set.
+  of the structure's ascending-sorted Aequitas doses) plus
+  `Dvh::{generalized_eud, tcp_logistic, ntcp_lkb}`. The methods evaluate
+  Asclepius laws on the stored sample with no conversion allocation or
+  dose-volume re-scan. Verified: direct Asclepius equality over the identical
+  sample, typed invalid-parameter and invalid-observation failures, uniform-dose
+  midpoint cases, and masked hot/cold structure ordering.
 - `helios-planning::{EudPenalty, EudKind, eud_objective_gradient_autodiff}`
   (H-031d, feature `autodiff`): a **generalized-EUD (Niemierko)** biological planning
-  objective. `generalized_eud` computes `gEUD = (mean(D^a))^(1/a)` (a=1→mean, a→+∞→max
-  for serial/OAR control, a→−∞→min for parallel/target coverage). The gEUD of `A·x` is
-  built from differentiable `matmul`/`pow`/`mean` ops on the coeus tape, so a one-sided
-  quadratic gEUD penalty (`EudPenalty` — OAR upper limit / target lower limit) has its
-  gradient w.r.t. beam weights by reverse-mode AD — a gradient with **no closed form**,
-  the capability the mandated coeus component exists for. Verified: gEUD power-mean bounds
-  + monotonicity in a + uniform-dose invariance; the tape gEUD value matches the analytic
-  `generalized_eud`; the objective gradient matches a central finite difference (the
-  differential oracle over the whole gEUD-plus-penalty tape); zero gradient when the hinge
-  is inactive; typed errors for a=0 / shape mismatch.
+  objective. `asclepius-coeus` constructs the stabilized gEUD tape over `A·x`;
+  Helios applies the target-floor or OAR-ceiling hinge. Verified: tape value
+  matches an independent analytical power mean, the objective gradient matches
+  a central finite difference, the inactive hinge has zero gradient, and domain
+  plus shape failures remain typed.
 - `helios-planning::{DvhPenalty, dvh_objective_gradient_autodiff, optimize_beam_weights_dvh}`
   (H-031c, feature `autodiff`): the **non-quadratic** clinical planning objective —
   one-sided DVH-style penalties `L(x) = w_u·Σ relu(floor − A·x)² + w_o·Σ relu(A·x −

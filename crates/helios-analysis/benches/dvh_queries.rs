@@ -6,6 +6,7 @@
 //! workload and retain the accumulated value so Criterion cannot elide it.
 #![allow(missing_docs)]
 
+use aequitas::systems::si::quantities::AbsorbedDose;
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use helios_analysis::Dvh;
 use helios_domain::{Volume, VoxelGrid};
@@ -14,8 +15,11 @@ use helios_math::Point3;
 const SAMPLE_EDGE: usize = 64;
 const QUERY_COUNT: usize = 1_024;
 
-fn scan_volume_fraction(sample: &[f64], dose: f64) -> f64 {
-    let at_least = sample.iter().filter(|&&value| value >= dose).count();
+fn scan_volume_fraction(sample: &[AbsorbedDose<f64>], dose: f64) -> f64 {
+    let at_least = sample
+        .iter()
+        .filter(|value| *value.as_base() >= dose)
+        .count();
     at_least as f64 / sample.len() as f64
 }
 

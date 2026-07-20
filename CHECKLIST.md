@@ -181,6 +181,9 @@ convergence), PTV gEUD > OAR gEUD, PTV TCP>0.5, OAR NTCP<0.5, all well-formed.
 
 ### (prior) H-033/H-033b done — radiobiology metrics + per-structure DVH outcome methods
 
+Superseded by H-076: Asclepius now owns these laws, and Helios retains only the
+zero-copy DVH receiver boundary.
+
 New `helios-analysis::radiobiology`: `generalized_eud` (**promoted from planning** — a dose
 metric, no longer gated behind the `autodiff` feature; now generic over Scalar),
 `tcp_logistic` (Niemierko), `ntcp_lkb` (Lyman–Kutcher–Burman, via eunomia `erfc`). Oracles:
@@ -190,6 +193,8 @@ analysis (SoC); planning's EUD objective is unchanged and its tests use an indep
 gEUD oracle, so planning keeps its lean core+math deps (no geometry-stack pull).
 
 ### (prior) H-031d done — generalized-EUD biological objective on the coeus tape
+
+Updated by H-076: `asclepius-coeus` now owns the gEUD tape construction.
 
 `generalized_eud` (gEUD = (mean(D^a))^(1/a)) + `EudPenalty`/`eud_objective_gradient_autodiff`
 — a one-sided gEUD hinge whose gradient w.r.t. beam weights flows by reverse-mode AD
@@ -682,3 +687,21 @@ NIST μ/ρ tables, H-021 delivery simulation stepping.
   remaining 10 crates are added when their layer is built (architecture_scoping
   growth triggers). `workspace.dependencies` declares the full Atlas set now as the
   integration SSOT.
+# H-076 review — Asclepius response ownership
+
+- [x] Delete Helios's duplicate gEUD, logistic TCP, and Lyman NTCP functions.
+- [x] Store the DVH response sample as Aequitas absorbed-dose quantities and
+  borrow it directly into Asclepius without a conversion allocation.
+- [x] Return Asclepius typed domain failures from all DVH response methods and
+  migrate the end-to-end delivered-dose caller.
+- [x] Delegate the Coeus gEUD tape to `asclepius-coeus` while retaining the
+  Helios planning objective.
+- [x] Advance Proteus and Helios to the merged Aequitas response-quantity
+  identity and confirm the focused dependency graph has no duplicate Aequitas.
+- [x] Verify 84 focused analysis, planning, and simulation tests, including the
+  analytical gEUD value, finite-difference planning gradient, typed failures,
+  and masked PTV/OAR outcome workflow.
+- [x] Complete exact locked all-target/all-feature check, warning-denied Clippy,
+  270 workspace nextest tests, doctests, Rustdoc, examples, and supply-chain
+  gates. Semver analysis classifies the intentionally removed public functions
+  and fallible response signatures as the declared breaking migration.
