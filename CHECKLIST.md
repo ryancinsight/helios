@@ -8,7 +8,7 @@
 
 ## Owner: Codex
 
-## Codex — H-069 benchmark gate repair [arch] [patch] — in progress
+## Codex — H-071 benchmark gate repair [arch] [patch] — in progress
 
 - [ ] Replace the copied same-run Python comparison with the exact Atlas
       `9bfb722` phase-replicated Criterion gate.

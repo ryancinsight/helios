@@ -36,7 +36,7 @@ target closure.
   15% threshold. The comparison is tautological and cannot detect a
   regression. The Rust job also bypasses the committed Nextest timeout budget
   with bare `cargo test`.
-- H-069 replaces both paths with the exact Atlas `9bfb722` benchmark gate,
+- H-071 replaces both paths with the exact Atlas `9bfb722` benchmark gate,
   phase-reversed ABBA/BAAB execution, and separate Nextest/doctest commands.
 
 ### Recently closed
