@@ -21,6 +21,9 @@ under a Breaking subsection.
 
 ### Changed
 
+- CI now materializes external Atlas path dependencies through the exact,
+  Atlas-owned provider-checkout action instead of a consumer-owned provider
+  list.
 - H-070: routed deterministic MVCT normal sampling through Tyche's
   counter-addressed `StandardNormal` provider, removed Helios's duplicate
   mutable SplitMix64/Box-Muller implementation, and pinned the seed-to-reading
