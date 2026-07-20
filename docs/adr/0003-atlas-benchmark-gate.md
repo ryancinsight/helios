@@ -47,11 +47,11 @@ value-semantic Pytest suite against the installed wheel. This keeps Python as a
 tested FFI boundary over the Rust cores rather than an unverified packaging
 artifact.
 
-Provider checkout is independently pinned to Atlas `afd5e16`, whose gitlinks
-match the Aequitas, Proteus, Hephaestus, Gaia, and Leto manifests represented
-by `Cargo.lock`. The Criterion implementation remains pinned to its originating
-Atlas merge `9bfb722`; separating these revisions prevents benchmark-tool
-provenance from becoming an obsolete provider snapshot.
+The provider graph argument is independently pinned to Atlas `afd5e16`, whose
+gitlinks match the Aequitas, Proteus, Hephaestus, Gaia, and Leto manifests
+represented by `Cargo.lock`. The checkout action and Criterion implementation
+remain pinned to their originating Atlas merge `9bfb722`; separating the graph
+argument prevents tool provenance from becoming an obsolete provider snapshot.
 
 ## Rejected alternatives
 

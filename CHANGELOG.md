@@ -27,8 +27,9 @@ under a Breaking subsection.
   runs the value-semantic Python contract suite.
 - H-074: aligned the direct Aequitas and Proteus revisions with the merged
   temperature-response provider graph. Helios and Hephaestus now resolve one
-  Aequitas source identity, while the radiation material contract remains
-  unchanged.
+  Aequitas source identity. CI materializes the coherent graph from Atlas
+  `afd5e16` while the checkout action implementation remains pinned to
+  `9bfb722`; the radiation material contract remains unchanged.
 - H-071: replaced the copied same-run Python benchmark check with the
   Atlas-owned phase-replicated Criterion gate pinned to merge `9bfb722`.
   Pull-request CI now compares baseline and candidate production revisions on
