@@ -14,30 +14,35 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9a651ff539e314ff26c4a5b69fe89448c1770859
+      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9bfb722367a6c3911409d6b4619701c549b6d415
         with:
           manifest: Cargo.toml
           destination: ..
-          atlas_ref: 9a651ff539e314ff26c4a5b69fe89448c1770859
+          atlas_ref: 9bfb722367a6c3911409d6b4619701c549b6d415
 
       - name: Checkout Coeus path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9a651ff539e314ff26c4a5b69fe89448c1770859
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9bfb722367a6c3911409d6b4619701c549b6d415
         with:
           manifest: ../coeus/Cargo.toml
           destination: ..
-          atlas_ref: 9a651ff539e314ff26c4a5b69fe89448c1770859
+          atlas_ref: 9bfb722367a6c3911409d6b4619701c549b6d415
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
 
+      - name: Install Rust verification tools
+        uses: taiki-e/install-action@f47c9687269207d6b374de4134cb8b1fa5b49649
+        with:
+          tool: cargo-nextest@0.9.140,cargo-audit@0.22.2,cargo-deny@0.20.2
+
       - name: Cache cargo dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -52,57 +57,166 @@ jobs:
         run: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
 
       - name: Tests
-        run: cargo test --locked --workspace --all-features
+        run: cargo nextest run --locked --workspace --all-features --profile ci
+
+      - name: Doctests
+        run: cargo test --locked --workspace --all-features --doc
 
       - name: Documentation
+        env:
+          RUSTDOCFLAGS: -D warnings
         run: cargo doc --locked --workspace --no-deps
+
+      - name: RustSec audit
+        run: cargo audit --deny warnings
+
+      - name: Dependency policy
+        run: cargo deny check
 
   benchmark-regression:
     name: benchmark regression check
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout baseline
+        uses: actions/checkout@v6
         with:
-          fetch-depth: 0
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: helios-baseline
 
-      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9a651ff539e314ff26c4a5b69fe89448c1770859
+      - name: Checkout candidate
+        uses: actions/checkout@v6
         with:
-          manifest: Cargo.toml
-          destination: ..
-          atlas_ref: 9a651ff539e314ff26c4a5b69fe89448c1770859
+          path: helios-candidate
+
+      - name: Checkout Atlas benchmark gate
+        uses: actions/checkout@v6
+        with:
+          repository: ryancinsight/atlas
+          ref: 9bfb722367a6c3911409d6b4619701c549b6d415
+          path: atlas-tool
+
+      - name: Checkout candidate path dependencies
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9bfb722367a6c3911409d6b4619701c549b6d415
+        with:
+          manifest: helios-candidate/Cargo.toml
+          destination: .
+          atlas_ref: 9bfb722367a6c3911409d6b4619701c549b6d415
 
       - name: Checkout Coeus path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9a651ff539e314ff26c4a5b69fe89448c1770859
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9bfb722367a6c3911409d6b4619701c549b6d415
         with:
-          manifest: ../coeus/Cargo.toml
-          destination: ..
-          atlas_ref: 9a651ff539e314ff26c4a5b69fe89448c1770859
+          manifest: coeus/Cargo.toml
+          destination: .
+          atlas_ref: 9bfb722367a6c3911409d6b4619701c549b6d415
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cache cargo dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target/
-          key: ${{ runner.os }}-bench-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-helios-bench-${{ hashFiles('helios-candidate/Cargo.lock') }}
 
-      - name: Run Criterion benchmarks
-        run: cargo bench --locked --workspace --all-features
-
-      - name: Save benchmark baseline
+      - name: Hold the candidate benchmark instrument constant
+        shell: bash
         run: |
-          python3 .github/scripts/check_regressions.py save \
-            --workspace . \
-            --output .benchmarks/baseline.json
+          set -euo pipefail
+          rm -rf \
+            helios-baseline/crates/helios-analysis/benches \
+            helios-baseline/crates/helios-gpu/benches \
+            helios-baseline/crates/helios-solver/benches
+          git -C helios-candidate archive HEAD \
+            crates/helios-analysis/benches \
+            crates/helios-gpu/benches \
+            crates/helios-solver/benches \
+            | tar -x -C helios-baseline
+          for crate in helios-analysis helios-gpu helios-solver; do
+            diff --recursive --unified \
+              "helios-baseline/crates/$crate/benches" \
+              "helios-candidate/crates/$crate/benches"
+          done
 
-      - name: Check benchmark regressions
+      - name: Measure phase-reversed replications
+        shell: bash
         run: |
-          python3 .github/scripts/check_regressions.py check \
-            --workspace . \
-            --baseline .benchmarks/baseline.json \
-            --threshold-pct 15
+          set -euo pipefail
+          confidence=""
+          gate_manifest="atlas-tool/tools/criterion-regression/Cargo.toml"
+
+          compare_pair() {
+            local report_root="$1"
+            local first_revision="$2"
+            local second_revision="$3"
+
+            rm -rf "$CARGO_TARGET_DIR/criterion"
+            cargo bench \
+              --manifest-path "$first_revision/Cargo.toml" \
+              --locked \
+              --workspace \
+              --all-features \
+              --benches \
+              -- \
+              --save-baseline atlas-base
+
+            if [[ -z "$confidence" ]]; then
+              confidence="$(
+                cargo run \
+                  --manifest-path "$gate_manifest" \
+                  --locked \
+                  -- \
+                  required-confidence \
+                  --criterion-root "$CARGO_TARGET_DIR/criterion" \
+                  --baseline atlas-base
+              )"
+            fi
+
+            cargo bench \
+              --manifest-path "$second_revision/Cargo.toml" \
+              --locked \
+              --workspace \
+              --all-features \
+              --benches \
+              -- \
+              --baseline atlas-base \
+              --confidence-level "$confidence"
+
+            mkdir -p "$(dirname "$report_root")"
+            mv "$CARGO_TARGET_DIR/criterion" "$report_root"
+          }
+
+          compare_pair \
+            reports/first/baseline-first \
+            helios-baseline \
+            helios-candidate
+          compare_pair \
+            reports/first/candidate-first \
+            helios-candidate \
+            helios-baseline
+          compare_pair \
+            reports/second/candidate-first \
+            helios-candidate \
+            helios-baseline
+          compare_pair \
+            reports/second/baseline-first \
+            helios-baseline \
+            helios-candidate
+
+      - name: Classify replicated comparisons
+        run: >-
+          cargo run
+          --manifest-path atlas-tool/tools/criterion-regression/Cargo.toml
+          --locked
+          --
+          check-replicated-counterbalanced
+          --first-baseline-first-root reports/first/baseline-first
+          --first-candidate-first-root reports/first/candidate-first
+          --second-baseline-first-root reports/second/baseline-first
+          --second-candidate-first-root reports/second/candidate-first
+          --baseline atlas-base

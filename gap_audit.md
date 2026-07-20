@@ -304,11 +304,13 @@ target closure.
 
 - **G-8 (coverage):** No `cargo-llvm-cov` run yet; >80% core-logic coverage target
   unmeasured. Applies from first `[minor]`. → measure after H-003.
-- **G-9 (CI):** No CI pipeline wired (fmt/clippy/nextest/doc/audit/deny). Gates are
-  run locally only. → file when the workspace has ≥2 crates.
 
 ## Closed gaps
 
+- **G-9 (CI):** CI now runs format, warning-denied Clippy, configured Nextest,
+  doctests, warning-clean rustdoc, RustSec audit, and cargo-deny
+  license/source policy. Benchmark classification is separately owned by the
+  exact Atlas gate recorded under G-27.
 - **G-6 (build hygiene):** Helios inherits the shared `D:/atlas/target` build dir
   via `repos/.cargo/config.toml`; no per-repo target. Verified this session.
 

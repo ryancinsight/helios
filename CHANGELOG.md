@@ -21,6 +21,12 @@ under a Breaking subsection.
 
 ### Changed
 
+- H-071: replaced the copied same-run Python benchmark check with the
+  Atlas-owned phase-replicated Criterion gate pinned to merge `9bfb722`.
+  Pull-request CI now compares baseline and candidate production revisions on
+  one runner through ABBA and BAAB blocks, while native tests use the committed
+  Nextest budget, doctests run separately, and RustSec/license/source policy is
+  enforced with pinned verification tools.
 - CI now materializes root and Coeus-transitive external path dependencies
   through the exact Atlas-owned provider-checkout action instead of a
   consumer-owned provider list.

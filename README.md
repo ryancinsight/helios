@@ -49,6 +49,12 @@ cargo test --doc           # doctests (nextest does not run these)
 The workspace uses the shared Atlas test-time budget: a test that crosses 30 s is a
 performance defect to profile and optimize, never a limit to raise.
 
+Pull-request CI compares baseline and candidate Criterion reports through the
+Atlas-owned phase-replicated gate pinned in
+[ADR 0003](docs/adr/0003-atlas-benchmark-gate.md). It executes ABBA followed
+by BAAB on one runner, holds the candidate benchmark instrument constant, and
+fails closed on a reproduced family-wise regression or incomplete evidence.
+
 ## Sprint roadmap
 
 1. **Sprint 1 — Foundation:** workspace skeleton, `helios-core`, `helios-math`
