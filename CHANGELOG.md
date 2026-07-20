@@ -21,10 +21,11 @@ under a Breaking subsection.
 
 ### Changed
 
-- H-073: upgraded the thin Python binding boundary to PyO3 0.29, closing
+- H-072: upgraded the thin Python binding boundary to PyO3 0.29, closing
   RUSTSEC-2025-0020 and RUSTSEC-2026-0177. Compute now uses `Python::detach`
-  under PyO3's corrected thread-safety contract.
-- H-072: aligned the direct Aequitas and Proteus revisions with the merged
+  under PyO3's corrected thread-safety contract; CI builds the abi3 wheel and
+  runs the value-semantic Python contract suite.
+- H-074: aligned the direct Aequitas and Proteus revisions with the merged
   temperature-response provider graph. Helios and Hephaestus now resolve one
   Aequitas source identity, while the radiation material contract remains
   unchanged.
@@ -554,7 +555,7 @@ under a Breaking subsection.
   11th and final crate, completing the workspace roster. Geometry-free `f64`
   wrappers over the physics/planning cores: `thomson_cross_section`,
   `klein_nishina_cross_section`, `compton_mass_attenuation`, `mass_density_from_hu`,
-  `optimize_beam_weights` (GIL released via `Python::allow_threads` around the
+  `optimize_beam_weights` (interpreter detached via `Python::detach` around the
   iterative solve). Untrusted-input hardening at the boundary: non-finite/non-positive
   energies and shape mismatches map to Python `ValueError`. abi3-py39 cdylib
   (`maturin`); no domain logic and no other Helios crate depends on `pyo3`. Verified

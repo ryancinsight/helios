@@ -8,16 +8,28 @@
 
 ## Owner: Codex
 
-## Codex — H-071 benchmark gate repair [arch] [patch] — in progress
+## Codex — H-072 Python binding security [patch] — review
+
+- [x] Upgrade the isolated Python binding boundary to PyO3 0.29.0, the first
+      release closing both applicable RustSec advisories.
+- [x] Replace the removed GIL-release API with `Python::detach` while
+      preserving the existing Rust-core call and value-semantic Python API.
+- [x] Add a hosted job that builds the abi3 extension and runs the Python
+      contract suite against the installed wheel.
+- [x] Pass exact-head local binding verification: warning-denied all-feature
+      Clippy, 273/273 Nextest cases, doctests, rustdoc, and 13/13 Pytest cases.
+- [ ] Pass exact-head hosted binding verification.
+
+## Codex — H-071 benchmark gate repair [arch] [patch] — review
 
 - [x] Replace the copied same-run Python comparison with the exact Atlas
       `9bfb722` phase-replicated Criterion gate.
 - [x] Hold the candidate benchmark harness constant across baseline and
       candidate revisions, run ABBA followed by BAAB on one runner, and fail
       closed across all four report universes.
-- [ ] Route native tests through the committed Nextest profile, retain
-      doctests separately, enforce RustSec/license/source policy, and pass
-      exact-head hosted CI.
+- [x] Route native tests through the committed Nextest profile, retain
+      doctests separately, and enforce RustSec/license/source policy.
+- [ ] Pass exact-head hosted CI.
 
 ## Codex — H-068 Aequitas domain units [arch] — done 2026-07-19
 

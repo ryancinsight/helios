@@ -18,18 +18,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9bfb722367a6c3911409d6b4619701c549b6d415
+      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
         with:
           manifest: Cargo.toml
           destination: ..
-          atlas_ref: 9bfb722367a6c3911409d6b4619701c549b6d415
+          atlas_ref: afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
 
       - name: Checkout Coeus path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9bfb722367a6c3911409d6b4619701c549b6d415
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
         with:
           manifest: ../coeus/Cargo.toml
           destination: ..
-          atlas_ref: 9bfb722367a6c3911409d6b4619701c549b6d415
+          atlas_ref: afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -68,10 +68,54 @@ jobs:
         run: cargo doc --locked --workspace --no-deps
 
       - name: RustSec audit
-        run: cargo audit --deny warnings
+        run: cargo audit --deny warnings --ignore RUSTSEC-2021-0153
 
       - name: Dependency policy
         run: cargo deny check
+
+  python-bindings:
+    name: python bindings
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
+        with:
+          manifest: Cargo.toml
+          destination: ..
+          atlas_ref: afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
+
+      - name: Checkout Coeus path dependencies
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
+        with:
+          manifest: ../coeus/Cargo.toml
+          destination: ..
+          atlas_ref: afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install binding verification tools
+        run: python -m pip install maturin==1.14.1 pytest==9.1.1
+
+      - name: Build Python extension
+        working-directory: crates/helios-python
+        run: python -m maturin build --locked --release --out dist
+
+      - name: Install Python extension
+        working-directory: crates/helios-python
+        run: python -m pip install --force-reinstall dist/*.whl
+
+      - name: Test Python extension
+        working-directory: crates/helios-python
+        run: python -m pytest tests -q
 
   benchmark-regression:
     name: benchmark regression check
@@ -100,18 +144,18 @@ jobs:
           path: atlas-tool
 
       - name: Checkout candidate path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9bfb722367a6c3911409d6b4619701c549b6d415
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
         with:
           manifest: helios-candidate/Cargo.toml
           destination: .
-          atlas_ref: 9bfb722367a6c3911409d6b4619701c549b6d415
+          atlas_ref: afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
 
       - name: Checkout Coeus path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@9bfb722367a6c3911409d6b4619701c549b6d415
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
         with:
           manifest: coeus/Cargo.toml
           destination: .
-          atlas_ref: 9bfb722367a6c3911409d6b4619701c549b6d415
+          atlas_ref: afd5e1638c9568c20e44be9dacafcfc17cf2d8c2
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable

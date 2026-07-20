@@ -37,8 +37,21 @@ and fails closed on incomplete or mismatched evidence.
 
 The Rust job installs pinned cargo-nextest, cargo-audit, and cargo-deny
 versions; runs the committed `ci` profile; runs doctests separately; and
-enforces RustSec, license, and dependency-source policy. The copied Python
-classifier is deleted.
+enforces RustSec, license, and dependency-source policy. Only
+RUSTSEC-2021-0153 is quarantined: current `dicom-encoding` requires the
+unmaintained charset crate unconditionally, and the advisory reports no known
+vulnerability. The copied Python classifier is deleted.
+
+The binding job builds the abi3 extension with pinned Maturin and executes the
+value-semantic Pytest suite against the installed wheel. This keeps Python as a
+tested FFI boundary over the Rust cores rather than an unverified packaging
+artifact.
+
+Provider checkout is independently pinned to Atlas `afd5e16`, whose gitlinks
+match the Aequitas, Proteus, Hephaestus, Gaia, and Leto manifests represented
+by `Cargo.lock`. The Criterion implementation remains pinned to its originating
+Atlas merge `9bfb722`; separating these revisions prevents benchmark-tool
+provenance from becoming an obsolete provider snapshot.
 
 ## Rejected alternatives
 
