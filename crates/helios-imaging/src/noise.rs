@@ -16,40 +16,7 @@
 
 use crate::radon::Sinogram;
 use helios_math::GeometryScalar;
-
-/// Deterministic SplitMix64 PRNG (Steele et al.) — a self-contained, committed
-/// generator so noise is exactly reproducible from a seed (no external crate,
-/// no global state).
-struct SplitMix64 {
-    state: u64,
-}
-
-impl SplitMix64 {
-    fn new(seed: u64) -> Self {
-        Self { state: seed }
-    }
-
-    fn next_u64(&mut self) -> u64 {
-        self.state = self.state.wrapping_add(0x9E37_79B9_7F4A_7C15);
-        let mut z = self.state;
-        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-        z ^ (z >> 31)
-    }
-
-    /// Uniform in the open interval `(0, 1)` (never 0, so `ln` in Box–Muller is
-    /// finite). 53-bit mantissa resolution.
-    fn next_open_unit(&mut self) -> f64 {
-        ((self.next_u64() >> 11) as f64 + 0.5) * (1.0 / (1u64 << 53) as f64)
-    }
-
-    /// Standard-normal sample via the Box–Muller transform.
-    fn next_gaussian(&mut self) -> f64 {
-        let u1 = self.next_open_unit();
-        let u2 = self.next_open_unit();
-        (-2.0 * u1.ln()).sqrt() * (std::f64::consts::TAU * u2).cos()
-    }
-}
+use tyche_core::{Seed, StandardNormal};
 
 /// Add MVCT quantum noise to a sinogram of line integrals `τ`, returning the
 /// noise-perturbed sinogram.
@@ -58,7 +25,8 @@ impl SplitMix64 {
 /// (`z ~ 𝒩(0,1)`), clamp to `≥ 1` photon, and return `τ' = −ln(N'/photons_per_ray)`.
 /// By error propagation the per-reading noise variance is `Var(τ') ≈ exp(τ)/N₀`,
 /// so noise rises with attenuation and falls as `1/N₀` — the analytical oracle in
-/// the tests. Deterministic in `seed` (row-major `[angle][offset]` draw order).
+/// the tests. Deterministic in `seed`; row-major `[angle][offset]` order maps
+/// directly to Tyche's logical sample index.
 ///
 /// # Panics
 /// Does not panic; `photons_per_ray` should be positive (a non-positive value
@@ -69,11 +37,14 @@ pub fn add_quantum_noise<T: GeometryScalar>(
     photons_per_ray: f64,
     seed: u64,
 ) -> Sinogram<T> {
-    let mut rng = SplitMix64::new(seed);
+    let seed = Seed::new(seed);
+    let mut sample_index = 0_u64;
     sinogram.map_readings(|tau_t| {
         let tau = tau_t.to_f64();
         let expected = photons_per_ray * (-tau).exp();
-        let noisy = expected + expected.sqrt() * rng.next_gaussian();
+        let gaussian = StandardNormal::at(seed, sample_index, 0);
+        sample_index = sample_index.wrapping_add(1);
+        let noisy = expected + expected.sqrt() * gaussian;
         let counts = noisy.max(1.0);
         <T as GeometryScalar>::from_f64(-(counts / photons_per_ray).ln())
     })
@@ -106,6 +77,13 @@ mod tests {
         let c = add_quantum_noise(&clean, 1.0e4, 43);
         assert_eq!(a, b, "same seed must reproduce exactly");
         assert_ne!(a, c, "different seed must differ");
+    }
+
+    #[test]
+    fn tyche_seed_mapping_is_pinned() {
+        let clean = constant_sinogram(0.5, 1);
+        let noisy = add_quantum_noise(&clean, 1.0e4, 42);
+        assert_eq!(noisy.get(0, 0).to_bits(), 0x3FDF_467D_FB82_DEC9);
     }
 
     #[test]
