@@ -713,6 +713,6 @@ NIST μ/ρ tables, H-021 delivery simulation stepping.
   gates. Semver analysis classifies the intentionally removed public functions
   and fallible response signatures as the declared breaking migration.
 - [x] Pin public Asclepius merge `ceb8b6d`, patch both workspace packages to
-  the Atlas sibling checkout, use Atlas merge `05b7f5d` for provider-graph
-  resolution, and retain the audited checkout action at `9bfb722`.
+  the Atlas sibling checkout, and use Atlas merge `05b7f5d` for both checkout
+  action provenance and provider-graph resolution.
 - [ ] Pass exact-head hosted Rust, Python-binding, and benchmark verification.

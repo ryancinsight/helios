@@ -37,11 +37,11 @@ under a Breaking subsection.
   planning objective. The Proteus pin advances with Asclepius to the merged
   Aequitas response-quantity revision, preserving one dimensional type
   identity across the consumer graph. The public Asclepius pin advances to
-  `ceb8b6d`; local and hosted path materialization uses the provider graph at
-  Atlas merge `05b7f5d` while retaining the audited checkout action at
-  `9bfb722`. The DVH query benchmark keeps its scalar reference sample
-  independent of the changed typed storage API, so the candidate instrument
-  also compiles against the historical baseline.
+  `ceb8b6d`; local and hosted path materialization uses Atlas merge `05b7f5d`
+  for both the checkout action and provider graph. The DVH query benchmark
+  keeps its scalar reference sample independent of the changed typed storage
+  API, so the candidate instrument also compiles against the historical
+  baseline.
 - H-075: benchmark CI now resolves the historical baseline lock once against
   the exact Ubuntu and Atlas path-dependency graph before measurement. All
   baseline and candidate benchmark runs remain `--locked`; the delivered
@@ -54,9 +54,9 @@ under a Breaking subsection.
   runs the value-semantic Python contract suite.
 - H-074: aligned the direct Aequitas and Proteus revisions with the merged
   temperature-response provider graph. Helios and Hephaestus now resolve one
-  Aequitas source identity. CI materializes the coherent graph from Atlas
-  `05b7f5d` while the checkout action implementation remains pinned to
-  `9bfb722`; the radiation material contract remains unchanged.
+  Aequitas source identity. CI materializes the coherent graph and its checkout
+  action from Atlas `05b7f5d`; the radiation material contract remains
+  unchanged.
 - H-071: replaced the copied same-run Python benchmark check with the
   Atlas-owned phase-replicated Criterion gate pinned to merge `9bfb722`.
   Pull-request CI now compares baseline and candidate production revisions on

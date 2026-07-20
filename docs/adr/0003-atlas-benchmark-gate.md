@@ -17,8 +17,8 @@ only the consumer orchestration for its four Criterion benchmark targets.
 
 ## Decision
 
-Helios pins Atlas merge `9bfb722` for the path-dependency checkout action and
-`tools/criterion-regression`. Pull-request CI:
+Helios pins Atlas merge `9bfb722` for `tools/criterion-regression`.
+Pull-request CI:
 
 1. checks out the pull-request base and candidate revisions on one runner;
 2. copies the candidate benchmark sources into the baseline checkout so both
@@ -49,15 +49,15 @@ value-semantic Pytest suite against the installed wheel. This keeps Python as a
 tested FFI boundary over the Rust cores rather than an unverified packaging
 artifact.
 
-The provider graph is independently pinned to Atlas merge `05b7f5d`. Its
-gitlinks include public Asclepius `ceb8b6d` and the Hephaestus revision that
-shares Helios's Aequitas identity, matching the Proteus, Gaia, and Leto
-manifests represented by `Cargo.lock`. The checkout action and Criterion
-implementation remain pinned to their audited Atlas merge `9bfb722`; separating
-the graph argument advances providers without changing the measurement
-instrument. Before measurement, CI resolves the historical baseline lock once
-against that exact Ubuntu provider graph. Every measured baseline and candidate
-run then uses `--locked`, and the delivered candidate lock is never regenerated.
+The provider graph and checkout action are pinned together at Atlas merge
+`05b7f5d`. Its gitlinks include public Asclepius `ceb8b6d` and the Hephaestus
+revision that shares Helios's Aequitas identity, matching the Proteus, Gaia,
+and Leto manifests represented by `Cargo.lock`. The Criterion implementation
+remains pinned to its audited Atlas merge `9bfb722`; provider advancement does
+not change the measurement instrument. Before measurement, CI resolves the
+historical baseline lock once against that exact Ubuntu provider graph. Every
+measured baseline and candidate run then uses `--locked`, and the delivered
+candidate lock is never regenerated.
 
 ## Rejected alternatives
 
