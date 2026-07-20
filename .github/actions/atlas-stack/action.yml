@@ -16,7 +16,7 @@ runs:
       run: |
         set -euo pipefail
         providers=(
-          leto eunomia tyche gaia ritk consus coeus hephaestus
+          apollo leto eunomia tyche gaia ritk consus coeus hephaestus
           mnemosyne moirai hermes themis melinoe
         )
         paths=()
