@@ -8,6 +8,14 @@
 
 ## Owner: Codex
 
+## Codex — H-079 Tyche stream CI correction [patch] — in progress
+
+- [x] Format the GPU example exposed by the full-workspace formatter.
+- [x] Align all hosted provider materialization with Atlas `97f9b7e`.
+- [x] Materialize Tyche for the historical benchmark baseline before lock
+      normalization.
+- [ ] Pass the exact merged-head hosted Rust, Python, and benchmark gates.
+
 ## Codex — H-078 Tyche stream integration [arch] [major] — done 2026-07-21
 
 - [x] Pin the merged Tyche revision and remove its local patch override.

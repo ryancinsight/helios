@@ -25,6 +25,12 @@ under a Breaking subsection.
   trait-driven. `HounsfieldUnit` remains Helios-owned because HU is a
   calibrated imaging scale rather than an SI linear unit.
 
+### Fixed
+
+- H-079: aligned hosted provider materialization with the lock's Atlas graph,
+  restored the historical benchmark baseline's Tyche path dependency, and
+  formatted the GPU attenuation example required by the workspace gate.
+
 ### Changed
 
 - H-077: specialized the three scatter-convolution axes with const generics and

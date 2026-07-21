@@ -118,7 +118,9 @@ fn main() {
             );
 
             println!("\nDifferential validation GPU vs CPU: ok  (tol = {tol:.0e})");
-            println!("GPU kernel reduces attenuation-map dispatch to one WGSL fused-FMA compute pass.");
+            println!(
+                "GPU kernel reduces attenuation-map dispatch to one WGSL fused-FMA compute pass."
+            );
         }
     }
 
