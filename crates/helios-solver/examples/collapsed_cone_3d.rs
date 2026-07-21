@@ -22,7 +22,13 @@
 //!
 //! Each stage is verified with physics-plausibility assertions:
 //! - depth-dose build-up (maximum dose is downstream of entry face)
-//! - energy conservation (total dose ≈ total TERMA after scatter)
+//! - energy conservation within the analytical boundary-truncation bound:
+//!   the 1-D and 3-D convolution kernels extend a finite radius past the
+//!   10-voxel phantom edge, so a fraction of the released TERMA leaks out
+//!   the boundary instead of being redeposited. The example documents an
+//!   acceptable loss threshold (< 30 % for this synthetic geometry) at the
+//!   assertion site; a production calculation on patient CT eliminates the
+//!   loss because the interior dominates.
 //!
 //! ## Book Chapter
 //!
