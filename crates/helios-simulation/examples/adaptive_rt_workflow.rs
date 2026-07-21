@@ -41,7 +41,7 @@ use helios_solver::attenuation_map;
 const N: usize = 32;
 const SPACING_MM: f64 = 2.0;
 const MU_WATER_CM: f64 = 0.0636;
-const MU_BONE_CM: f64 = 0.24;
+const _MU_BONE_CM: f64 = 0.24;
 const N_LEAVES: usize = 16;
 const LEAF_WIDTH_MM: f64 = 2.0;
 

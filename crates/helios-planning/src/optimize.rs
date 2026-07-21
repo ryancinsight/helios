@@ -116,7 +116,7 @@ pub fn optimize_beam_weights<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
 
     /// Identity influence: `n` voxels, `n` beamlets, `A = I`.
     fn identity(n: usize) -> DoseInfluence<f64> {

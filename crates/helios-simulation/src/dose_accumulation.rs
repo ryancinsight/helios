@@ -326,7 +326,7 @@ pub(crate) fn gantry_basis<T: GeometryScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
 
     // Uniform-μ cube: 9³ voxels, 2 mm spacing → node box [0,16] mm, centre 8 mm,

@@ -181,7 +181,7 @@ impl<T: Scalar> VoxelGrid<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
     use helios_math::Vector3;
 
     fn grid() -> VoxelGrid<f64> {

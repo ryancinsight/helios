@@ -18,7 +18,7 @@ helios-domain = { workspace = true }
 helios-physics = { workspace = true }
 
 [dev-dependencies]
-approx = { workspace = true }
+eunomia = { workspace = true }
 criterion = { workspace = true }
 
 [[bench]]

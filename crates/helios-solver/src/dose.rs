@@ -110,7 +110,7 @@ pub fn dose_convolution_x<T: Scalar>(terma: &Volume<T>, kernel: &[T]) -> Volume<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
     use helios_math::Point3;
 
     fn grid() -> VoxelGrid<f64> {

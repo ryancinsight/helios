@@ -160,7 +160,7 @@ pub fn compton_mass_energy_transfer<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
 
     // CODATA Thomson cross-section: 6.6524587321e-29 m². Independent numeric check
     // of the (8/3)π r_e² formula against the published value.

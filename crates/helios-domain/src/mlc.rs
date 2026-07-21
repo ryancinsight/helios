@@ -166,7 +166,7 @@ impl<T: Scalar> MlcModel<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
 
     #[test]
     fn sinogram_validates_length_and_range() {

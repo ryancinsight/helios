@@ -50,7 +50,7 @@ pub fn frame_portal_fluence<T: GeometryScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
 

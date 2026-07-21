@@ -100,7 +100,7 @@ pub fn forward_project_ray<T: GeometryScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
     use helios_math::{Ray, Vector3};
 
     fn axis_grid() -> VoxelGrid<f64> {

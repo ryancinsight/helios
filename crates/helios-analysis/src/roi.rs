@@ -44,7 +44,7 @@ pub fn box_mask<T: Scalar>(
 mod tests {
     use super::*;
     use crate::Dvh;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
     use helios_domain::Volume;
 
     fn grid() -> VoxelGrid<f64> {

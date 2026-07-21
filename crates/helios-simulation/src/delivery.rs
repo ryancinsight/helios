@@ -106,7 +106,7 @@ pub fn collimate_frames<T: GeometryScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
 
     fn delivery() -> HelicalDelivery<f64> {
         HelicalDelivery::new(51, 25.0, 0.4, 10.0, 0.0, 0.0).expect("delivery")

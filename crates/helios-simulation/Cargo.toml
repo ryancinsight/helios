@@ -22,7 +22,7 @@ helios-solver = { workspace = true }
 moirai-parallel = { workspace = true }
 
 [dev-dependencies]
-approx = { workspace = true }
+eunomia = { workspace = true }
 # End-to-end workflow test only: the higher application layers (imaging recon /
 # registration, dosimetric analysis) are pulled as dev-deps so the integrated
 # imaging+delivery pipeline can be validated across seams. Test-only, so no

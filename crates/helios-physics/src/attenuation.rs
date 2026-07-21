@@ -151,7 +151,7 @@ pub fn mass_density_from_hu<T: Scalar>(hu: T, water_density_g_cm3: T) -> T {
 mod tests {
     use super::*;
     use aequitas::systems::si::quantities::MassDensity as DensityQuantity;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
     use proteus::{PropertyConstraint, PropertyKind};
 
     fn density(value_g_cm3: f64) -> MassDensity<f64> {

@@ -129,7 +129,7 @@ mod tests {
     use crate::{
         anisotropic_scatter_superposition, forward_peaked_kernel, symmetric_deposition_kernel,
     };
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
     use helios_math::Point3 as P3;
 
     fn grid() -> VoxelGrid<f64> {

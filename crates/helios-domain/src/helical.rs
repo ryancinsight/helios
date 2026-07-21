@@ -182,7 +182,7 @@ impl<T: Scalar> HelicalDelivery<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
 
     fn delivery() -> HelicalDelivery<f64> {
         // 51 projections/rotation, 25 mm field, pitch 0.4, 10 s/rotation.

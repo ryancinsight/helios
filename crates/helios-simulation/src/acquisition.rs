@@ -84,7 +84,7 @@ pub fn simulate_helical_sinogram<T: GeometryScalar + Send + Sync>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
 

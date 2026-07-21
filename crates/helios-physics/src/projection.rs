@@ -58,7 +58,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
 
     fn mu(v: f64) -> LinearAttenuation<f64> {
         LinearAttenuation::new(v).expect("valid coefficient")

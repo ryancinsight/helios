@@ -86,7 +86,7 @@ pub fn filtered_back_projection<T: GeometryScalar>(
 mod tests {
     use super::*;
     use crate::radon::parallel_beam_radon;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
     use helios_math::Point3;
 
     fn disk_phantom(mu0: f64, radius_mm: f64) -> Volume<f64> {

@@ -304,7 +304,7 @@ pub fn eud_objective_gradient_autodiff(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use approx::assert_relative_eq;
+    use eunomia::assert_relative_eq;
 
     // Independent scalar gEUD oracle for the coeus-tape gEUD — deliberately a
     // separate implementation from both the tape and helios-analysis's

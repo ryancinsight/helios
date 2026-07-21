@@ -179,15 +179,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "approx"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cab112f0a86d568ea0e627cc1d6be74a1e9cd55214684db5561995f6dad897c6"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
 name = "arrayvec"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1159,7 +1150,6 @@ name = "gaia"
 version = "0.3.0"
 dependencies = [
  "anyhow",
- "approx",
  "eunomia",
  "geometry-predicates",
  "hashbrown 0.15.5",
@@ -1298,9 +1288,9 @@ name = "helios-analysis"
 version = "0.1.0"
 dependencies = [
  "aequitas",
- "approx",
  "asclepius",
  "criterion",
+ "eunomia",
  "helios-core",
  "helios-domain",
  "helios-imaging",
@@ -1312,7 +1302,7 @@ name = "helios-core"
 version = "0.1.0"
 dependencies = [
  "aequitas",
- "approx",
+ "eunomia",
  "proptest",
  "thiserror 2.0.18",
  "tracing",
@@ -1322,10 +1312,10 @@ dependencies = [
 name = "helios-domain"
 version = "0.1.0"
 dependencies = [
- "approx",
  "consus-core",
  "consus-hdf5",
  "consus-io",
+ "eunomia",
  "helios-core",
  "helios-math",
  "leto",
@@ -1337,9 +1327,9 @@ dependencies = [
 name = "helios-gpu"
 version = "0.1.0"
 dependencies = [
- "approx",
  "bytemuck",
  "criterion",
+ "eunomia",
  "helios-core",
  "helios-domain",
  "helios-math",
@@ -1354,7 +1344,7 @@ dependencies = [
 name = "helios-imaging"
 version = "0.1.0"
 dependencies = [
- "approx",
+ "eunomia",
  "helios-analysis",
  "helios-core",
  "helios-domain",
@@ -1378,7 +1368,7 @@ name = "helios-physics"
 version = "0.1.0"
 dependencies = [
  "aequitas",
- "approx",
+ "eunomia",
  "helios-core",
  "helios-math",
  "proptest",
@@ -1389,12 +1379,12 @@ dependencies = [
 name = "helios-planning"
 version = "0.1.0"
 dependencies = [
- "approx",
  "asclepius",
  "asclepius-coeus",
  "coeus-autograd",
  "coeus-core",
  "coeus-tensor",
+ "eunomia",
  "helios-core",
  "helios-math",
 ]
@@ -1412,7 +1402,7 @@ dependencies = [
 name = "helios-simulation"
 version = "0.1.0"
 dependencies = [
- "approx",
+ "eunomia",
  "helios-analysis",
  "helios-core",
  "helios-domain",
@@ -1428,8 +1418,8 @@ dependencies = [
 name = "helios-solver"
 version = "0.1.0"
 dependencies = [
- "approx",
  "criterion",
+ "eunomia",
  "helios-core",
  "helios-domain",
  "helios-math",

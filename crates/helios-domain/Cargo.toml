@@ -31,5 +31,5 @@ dicom = ["dep:ritk-dicom"]
 storage = ["dep:consus-core", "dep:consus-hdf5", "dep:consus-io"]
 
 [dev-dependencies]
-approx = { workspace = true }
+eunomia = { workspace = true }
 tempfile = "3"
