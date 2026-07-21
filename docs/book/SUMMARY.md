@@ -32,6 +32,7 @@
 # Part III — Dose Calculation
 
 - [Mass Attenuation and Photon Cross Sections](dose_attenuation.md)
+  - [Example: Compton Scattering Physics](examples/compton_physics.md)
 - [Terma and Energy Deposition](dose_terma.md)
 - [Collapsed-Cone Convolution](dose_collapsed_cone.md)
   - [Example: Collapsed-Cone 3-D Dose Engine](examples/collapsed_cone_3d.md)
@@ -56,6 +57,7 @@
 - [TomoTherapy End-to-End Workflow](workflow_tomotherapy.md)
   - [Example: Tomotherapy Workflow](examples/tomotherapy_workflow.md)
 - [LINAC-Based Step-and-Shoot Delivery](workflow_linac.md)
+  - [Example: LINAC Dose Accumulation](examples/linac_dose_accumulation.md)
 - [Adaptive Radiotherapy with MVCT](workflow_adaptive.md)
 
 ---
