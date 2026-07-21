@@ -8,6 +8,14 @@
 
 ## Owner: Codex
 
+## Codex — H-077 Tyche stream integration [arch] [major] — in progress
+
+- [ ] Pin the merged Tyche revision and remove its local patch override.
+- [ ] Select `SplitMix64` explicitly for `StandardNormal` and update the
+      consumer known-answer replay vector.
+- [ ] Verify the affected package with formatting, warning-denied Clippy,
+      configured Nextest, doctests, and direct Git-source resolution.
+
 ## Codex — H-072 Python binding security [patch] — done 2026-07-20
 
 - [x] Upgrade the isolated Python binding boundary to PyO3 0.29.0, the first
