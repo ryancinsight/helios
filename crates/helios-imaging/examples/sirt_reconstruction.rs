@@ -42,9 +42,7 @@
 //! [← MVCT and Correction Workflows](../../docs/book/imaging_mvct.md)
 
 use helios_domain::{Volume, VoxelGrid};
-use helios_imaging::{
-    filtered_back_projection, parallel_beam_radon, sirt_reconstruction,
-};
+use helios_imaging::{filtered_back_projection, parallel_beam_radon, sirt_reconstruction};
 use helios_math::Point3;
 
 fn main() {
@@ -58,12 +56,8 @@ fn main() {
     let nz = 1usize;
     let voxel_mm = 2.0_f64;
 
-    let grid = VoxelGrid::axis_aligned(
-        [nx, ny, nz],
-        [voxel_mm; 3],
-        Point3::new(0.0, 0.0, 0.0),
-    )
-    .expect("valid phantom grid");
+    let grid = VoxelGrid::axis_aligned([nx, ny, nz], [voxel_mm; 3], Point3::new(0.0, 0.0, 0.0))
+        .expect("valid phantom grid");
 
     // Water: μ ≈ 0.02 cm⁻¹ (6 MV Compton regime, density ≈ 1.0 g/cm³)
     // Bone insert (20×20 centre block): μ ≈ 0.04 cm⁻¹
@@ -76,7 +70,11 @@ fn main() {
             && i < centre_x + bone_half
             && j >= centre_y.saturating_sub(bone_half)
             && j < centre_y + bone_half;
-        if in_bone { 0.04_f64 } else { 0.02_f64 }
+        if in_bone {
+            0.04_f64
+        } else {
+            0.02_f64
+        }
     });
 
     let phantom_max = 0.04_f64;
@@ -109,8 +107,10 @@ fn main() {
     let fbp = filtered_back_projection(&sinogram, &grid);
     let fbp_rmse = rmse(&phantom, &fbp);
     println!("\nFBP (1 pass, analytic):");
-    println!("  RMSE vs phantom = {fbp_rmse:.5} cm⁻¹  ({:.1}% of peak)",
-        fbp_rmse / phantom_max * 100.0);
+    println!(
+        "  RMSE vs phantom = {fbp_rmse:.5} cm⁻¹  ({:.1}% of peak)",
+        fbp_rmse / phantom_max * 100.0
+    );
 
     // ── 4. SIRT iterative reconstruction ──────────────────────────────────────
     let iterations = 10;
@@ -119,16 +119,20 @@ fn main() {
     let sirt = sirt_reconstruction(&sinogram, &grid, source_mm, step_mm, iterations, relaxation);
     let sirt_rmse = rmse(&phantom, &sirt);
     println!("\nSIRT ({iterations} iterations, λ={relaxation}):");
-    println!("  RMSE vs phantom = {sirt_rmse:.5} cm⁻¹  ({:.1}% of peak)",
-        sirt_rmse / phantom_max * 100.0);
+    println!(
+        "  RMSE vs phantom = {sirt_rmse:.5} cm⁻¹  ({:.1}% of peak)",
+        sirt_rmse / phantom_max * 100.0
+    );
 
     // ── 5. Convergence comparison ─────────────────────────────────────────────
     println!("\nRMSE comparison:");
     println!("  FBP  : {fbp_rmse:.5} cm⁻¹");
     println!("  SIRT : {sirt_rmse:.5} cm⁻¹");
     if sirt_rmse < fbp_rmse {
-        println!("  → SIRT improves on FBP by {:.1}% for this undersampled geometry",
-            (fbp_rmse - sirt_rmse) / fbp_rmse * 100.0);
+        println!(
+            "  → SIRT improves on FBP by {:.1}% for this undersampled geometry",
+            (fbp_rmse - sirt_rmse) / fbp_rmse * 100.0
+        );
     } else {
         println!("  → FBP is competitive for uniform-angle full sampling");
     }
@@ -150,10 +154,7 @@ fn main() {
         bone_val > water_val,
         "Bone must have higher attenuation than water; bone={bone_val:.5} water={water_val:.5}"
     );
-    assert!(
-        sirt_rmse.is_finite(),
-        "SIRT RMSE must be finite"
-    );
+    assert!(sirt_rmse.is_finite(), "SIRT RMSE must be finite");
 
     println!("\nAll physics checks passed ✓");
     println!("\nBook chapter: Part II — CT Imaging and Attenuation (MVCT Workflows)");
@@ -177,6 +178,8 @@ fn rmse(reference: &Volume<f64>, reconstruction: &Volume<f64>) -> f64 {
             }
         }
     }
-    if n == 0 { return 0.0; }
+    if n == 0 {
+        return 0.0;
+    }
     (sum_sq / n as f64).sqrt()
 }
