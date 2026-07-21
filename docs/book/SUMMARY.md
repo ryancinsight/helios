@@ -24,6 +24,8 @@
 - [Filtered Back Projection](imaging_fbp.md)
   - [Example: FBP Reconstruction](examples/fbp_reconstruction.md)
 - [MVCT and Correction Workflows](imaging_mvct.md)
+  - [Example: SIRT Iterative Reconstruction](examples/sirt_reconstruction.md)
+  - [Example: IGRT Setup Correction via Registration](examples/mvct_registration.md)
 
 ---
 
