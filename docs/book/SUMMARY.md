@@ -73,7 +73,9 @@
 
 - [Reference Phantoms and Ground Truth](validation_phantoms.md)
 - [Analytical Solutions and Regression Tests](validation_regression.md)
+  - [Example: Regression and Analytical Validation](examples/validation_regression.md)
 - [Clinical Protocol Compliance](validation_clinical.md)
+  - [Example: Clinical Protocol Validation](examples/validation_clinical.md)
 
 ---
 

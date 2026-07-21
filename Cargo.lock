@@ -1238,6 +1238,7 @@ dependencies = [
  "criterion",
  "helios-core",
  "helios-domain",
+ "helios-imaging",
  "helios-math",
 ]
 

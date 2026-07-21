@@ -21,6 +21,7 @@ helios-domain = { workspace = true }
 [dev-dependencies]
 approx = { workspace = true }
 criterion = { workspace = true }
+helios-imaging = { workspace = true }
 
 [[bench]]
 name = "dvh_queries"
