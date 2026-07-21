@@ -8,6 +8,19 @@
 
 ## Owner: Codex
 
+## Codex — H-078 Tyche stream integration [arch] [major] — done 2026-07-21
+
+- [x] Pin the merged Tyche revision and remove its local patch override.
+- [x] Select `SplitMix64` explicitly for `StandardNormal` and update the
+      consumer known-answer replay vector.
+- [x] Verify the affected package with formatting, warning-denied Clippy,
+      configured Nextest, doctests, and direct Git-source resolution.
+
+Exact shared-target evidence: package formatting, `cargo check`, warning-denied
+all-target/all-feature Clippy, 27/27 configured Nextest cases (run
+`16673a64-6410-4c59-9521-697a81dffa6d`), doctests, warning-denied Rustdoc, and
+the inverse dependency tree passed with Tyche at merge `0fc810b`.
+
 ## Codex — H-072 Python binding security [patch] — done 2026-07-20
 
 - [x] Upgrade the isolated Python binding boundary to PyO3 0.29.0, the first

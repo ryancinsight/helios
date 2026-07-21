@@ -13,10 +13,12 @@
 //! draw uses the Gaussian approximation `N' = N + √N·z`, `z ~ 𝒩(0,1)` (exact in
 //! the large-count limit; error `O(1/√N)`). Sampling is done in `f64` — the noise
 //! model's natural precision — and cast back to the sinogram's scalar type.
+//! Replay fixes Tyche's stream version and the `SplitMix64` algorithm in the
+//! sampler type; changing either deliberately selects a different noise field.
 
 use crate::radon::Sinogram;
 use helios_math::GeometryScalar;
-use tyche_core::{Seed, StandardNormal};
+use tyche_core::{Seed, SplitMix64, StandardNormal};
 
 /// Add MVCT quantum noise to a sinogram of line integrals `τ`, returning the
 /// noise-perturbed sinogram.
@@ -42,7 +44,7 @@ pub fn add_quantum_noise<T: GeometryScalar>(
     sinogram.map_readings(|tau_t| {
         let tau = tau_t.to_f64();
         let expected = photons_per_ray * (-tau).exp();
-        let gaussian = StandardNormal::<f64>::at(seed, sample_index, 0);
+        let gaussian = StandardNormal::<f64, SplitMix64>::at(seed, sample_index, 0);
         sample_index = sample_index.wrapping_add(1);
         let noisy = expected + expected.sqrt() * gaussian;
         let counts = noisy.max(1.0);
@@ -83,7 +85,8 @@ mod tests {
     fn tyche_seed_mapping_is_pinned() {
         let clean = constant_sinogram(0.5, 1);
         let noisy = add_quantum_noise(&clean, 1.0e4, 42);
-        assert_eq!(noisy.get(0, 0).to_bits(), 0x3FDF_467D_FB82_DEC9);
+        assert_eq!(SplitMix64::VERSION.get(), 1);
+        assert_eq!(noisy.get(0, 0).to_bits(), 0x3FDE_CF39_220D_DC6B);
     }
 
     #[test]

@@ -62,7 +62,11 @@ fn main() {
             && j < cy + bone_half
             && k >= cz.saturating_sub(bone_half)
             && k < cz + bone_half;
-        if in_bone { 0.04_f64 } else { 0.02_f64 }
+        if in_bone {
+            0.04_f64
+        } else {
+            0.02_f64
+        }
     });
 
     println!("Planning CT: {n}×{n}×{n} voxels, {voxel_mm:.0} mm isotropic");
@@ -87,8 +91,10 @@ fn main() {
             .unwrap_or(0.0)
     });
 
-    println!("Daily MVCT simulated with setup error: [{}, {}, {}] voxels",
-        true_shift[0], true_shift[1], true_shift[2]);
+    println!(
+        "Daily MVCT simulated with setup error: [{}, {}, {}] voxels",
+        true_shift[0], true_shift[1], true_shift[2]
+    );
 
     // ── 3. Registration ────────────────────────────────────────────────────────
     //
@@ -97,10 +103,14 @@ fn main() {
     let detected_shift = register_translation(&reference, &daily, max_shift);
 
     println!("\nRegistration result:");
-    println!("  True shift:     [{}, {}, {}] voxels",
-        true_shift[0], true_shift[1], true_shift[2]);
-    println!("  Detected shift: [{}, {}, {}] voxels",
-        detected_shift[0], detected_shift[1], detected_shift[2]);
+    println!(
+        "  True shift:     [{}, {}, {}] voxels",
+        true_shift[0], true_shift[1], true_shift[2]
+    );
+    println!(
+        "  Detected shift: [{}, {}, {}] voxels",
+        detected_shift[0], detected_shift[1], detected_shift[2]
+    );
 
     // ── 4. Validate exact recovery ────────────────────────────────────────────
     for axis in 0..3 {
@@ -140,8 +150,10 @@ fn main() {
         .iter()
         .map(|&s| s as f64 * voxel_mm)
         .collect();
-    println!("\nCouch correction (mm): [{:.1}, {:.1}, {:.1}]",
-        couch_shift_mm[0], couch_shift_mm[1], couch_shift_mm[2]);
+    println!(
+        "\nCouch correction (mm): [{:.1}, {:.1}, {:.1}]",
+        couch_shift_mm[0], couch_shift_mm[1], couch_shift_mm[2]
+    );
 
     assert!(
         residual < 1e-6,
@@ -169,6 +181,8 @@ fn alignment_rmse(reference: &Volume<f64>, corrected: &Volume<f64>, n: usize) ->
             }
         }
     }
-    if count == 0 { return 0.0; }
+    if count == 0 {
+        return 0.0;
+    }
     (sum_sq / count as f64).sqrt()
 }

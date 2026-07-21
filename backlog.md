@@ -23,6 +23,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-073 | Replace the unmaintained `encoding` charset implementation when `dicom-encoding` publishes a maintained dependency; current 0.10.0 requires it unconditionally for DICOM Specific Character Set coverage. | [patch] | blocked | — | external `dicom-rs` provider; reopen on a release that removes RUSTSEC-2021-0153 |
 | H-074 | Align the direct Aequitas and Proteus revisions with the merged temperature-response provider graph so Helios and Hephaestus resolve one Aequitas source identity. | [patch] | done | Codex | `Cargo.toml`, `Cargo.lock`, PM artifacts |
 | H-076 | Replace Helios-owned gEUD/TCP/NTCP equations and the duplicate Coeus gEUD tape with Asclepius-owned laws; store the DVH response sample as Aequitas doses, preserve zero-copy evaluation, migrate callers to typed failures, and verify the planning gradient plus delivered-dose workflow. | [arch] [major] | done | Codex `/root` | `Cargo.toml`, `crates/helios-analysis/**`, `crates/helios-planning/**`, `crates/helios-simulation/tests/**`, architecture and PM artifacts |
+| H-078 | Adopt Tyche's versioned normal-sampling stream, remove local patch masking, and pin the quantum-noise replay vector to an explicit algorithm. | [arch] [major] | done | Codex `/root` | `Cargo.toml`, `Cargo.lock`, `crates/helios-imaging/src/noise.rs`, ADR and PM artifacts |
 
 ## Sprint 1 — Foundation
 

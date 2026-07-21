@@ -70,6 +70,9 @@ under a Breaking subsection.
   counter-addressed `StandardNormal` provider, removed Helios's duplicate
   mutable SplitMix64/Box-Muller implementation, and pinned the seed-to-reading
   mapping with an exact regression vector.
+- **Breaking / architecture (H-078)**: advanced quantum-noise replay to
+  Tyche's versioned stream schedule, selected `SplitMix64` explicitly in the
+  sampler type, and removed the local patch that masked the declared Git pin.
 - H-067: refreshed the reproducibility lock to `apollo-fft` 0.25.0, Eunomia
   0.4.0, Leto 0.38.2, and Hephaestus 0.17.0 without changing Helios source or
   manifests. The lock graph no longer contains `num-complex`.

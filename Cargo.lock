@@ -3233,6 +3233,7 @@ dependencies = [
 [[package]]
 name = "tyche-core"
 version = "0.1.0"
+source = "git+https://github.com/ryancinsight/tyche?rev=0fc810befc6df43a5e24139080489313d31b0f87#0fc810befc6df43a5e24139080489313d31b0f87"
 dependencies = [
  "eunomia",
 ]
