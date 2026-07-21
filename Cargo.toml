@@ -100,7 +100,7 @@ consus-compression = { git = "https://github.com/ryancinsight/consus", features 
 aequitas = { git = "https://github.com/ryancinsight/aequitas", rev = "be3a1ac91286a17aecf18f0065d2aa6b385eb67b" }
 proteus = { git = "https://github.com/ryancinsight/proteus", rev = "f6dec722788f215c6c9ef1d1e76c3be11ae28918" }
 eunomia = { git = "https://github.com/ryancinsight/eunomia" }
-tyche-core = { git = "https://github.com/ryancinsight/tyche", rev = "87923da922ec7bd17f12324c40d1da026be6b04e" }
+tyche-core = { git = "https://github.com/ryancinsight/tyche", rev = "0fc810befc6df43a5e24139080489313d31b0f87" }
 # Array substrate + geometry primitives, and portable SIMD.
 # default-features disabled: leto's default `mnemosyne-memory` feature pulls an
 # mnemosyne rev pinned to themis ^0.8 (skewed against themis HEAD 0.9.x). Helios
@@ -134,9 +134,6 @@ leto-ops = { path = "../leto/crates/leto-ops" }
 
 [patch."https://github.com/ryancinsight/eunomia"]
 eunomia = { path = "../eunomia/crates/eunomia" }
-
-[patch."https://github.com/ryancinsight/tyche"]
-tyche-core = { path = "../tyche/crates/tyche-core" }
 
 [patch."https://github.com/ryancinsight/gaia"]
 gaia = { path = "../gaia" }
