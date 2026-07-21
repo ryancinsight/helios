@@ -64,6 +64,7 @@
 
 - [GPU Backend Overview: Hephaestus Integration](gpu_overview.md)
 - [GPU-Accelerated Dose Kernels](gpu_dose.md)
+  - [Example: GPU Attenuation Map and Forward Projection](examples/gpu_attenuation_projection.md)
 - [Coeus Tensor Operations for Dose Grids](gpu_coeus.md)
 
 ---
