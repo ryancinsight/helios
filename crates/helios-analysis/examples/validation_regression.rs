@@ -42,14 +42,10 @@ fn main() {
 
     // ── Case 1: Gamma self-consistency ────────────────────────────────────────
     println!("Case 1: Gamma self-consistency");
-    let dose = Volume::from_shape_fn(make_grid(N, SPACING_MM), |[i, j, _]| {
-        (i + j) as f64 * 0.05
-    });
+    let dose = Volume::from_shape_fn(make_grid(N, SPACING_MM), |[i, j, _]| (i + j) as f64 * 0.05);
 
     let gamma = gamma_index_3d(
-        &dose,
-        &dose,
-        0.03_f64, // 3% dose criterion
+        &dose, &dose, 0.03_f64, // 3% dose criterion
         2.0_f64,  // 2 mm DTA
         1.0_f64,  // normalization = 1 Gy
         6.0_f64,  // search radius
@@ -63,7 +59,10 @@ fn main() {
         .flat_map(|i| (0..N).map(move |j| gamma_ref.get(i, j, 0).unwrap_or(0.0)))
         .fold(0.0_f64, f64::max);
 
-    println!("  Pass rate (gamma <= 1): {:.1}%  (expected 100%)", pass_rate * 100.0);
+    println!(
+        "  Pass rate (gamma <= 1): {:.1}%  (expected 100%)",
+        pass_rate * 100.0
+    );
     println!("  Max gamma value:        {max_gamma:.6}  (expected 0.0)");
 
     assert!(
@@ -71,10 +70,7 @@ fn main() {
         "self-gamma pass rate {:.6} must be 1.0",
         pass_rate
     );
-    assert!(
-        max_gamma < 1e-9,
-        "self-gamma max {max_gamma:.6} must be ~0"
-    );
+    assert!(max_gamma < 1e-9, "self-gamma max {max_gamma:.6} must be ~0");
     println!("  PASS\n");
 
     // ── Case 2: Radon / FBP reconstruction RMSE ──────────────────────────────
@@ -117,9 +113,7 @@ fn main() {
 
     // ── Case 3: DVH monotonicity ──────────────────────────────────────────────
     println!("Case 3: DVH monotonicity for linearly ramping dose");
-    let ramp = Volume::from_shape_fn(make_grid(N, SPACING_MM), |[i, j, _]| {
-        (i + j) as f64 * 0.1
-    });
+    let ramp = Volume::from_shape_fn(make_grid(N, SPACING_MM), |[i, j, _]| (i + j) as f64 * 0.1);
     let dvh = Dvh::from_volume(&ramp);
 
     // Cumulative DVH must be non-increasing: D(v) >= D(v + δ).
