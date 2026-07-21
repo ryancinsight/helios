@@ -8,13 +8,18 @@
 
 ## Owner: Codex
 
-## Codex — H-079 Tyche stream CI correction [patch] — in progress
+## Codex — H-079 Tyche stream CI correction [patch] — done 2026-07-21
 
 - [x] Format the GPU example exposed by the full-workspace formatter.
 - [x] Align all hosted provider materialization with Atlas `97f9b7e`.
 - [x] Materialize Tyche for the historical benchmark baseline before lock
       normalization.
-- [ ] Pass the exact merged-head hosted Rust, Python, and benchmark gates.
+- [x] Pass the exact correction-head hosted Rust, Python, and benchmark gates.
+
+Exact hosted evidence: head `11487c2` passed the Rust workspace, built-wheel
+Python binding, and phase-reversed benchmark regression jobs in run
+`29841348842`. The Rust job includes workspace formatting, warning-denied
+Clippy, configured Nextest, doctests, Rustdoc, RustSec, and dependency policy.
 
 ## Codex — H-078 Tyche stream integration [arch] [major] — done 2026-07-21
 

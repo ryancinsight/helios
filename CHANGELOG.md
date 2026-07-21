@@ -29,7 +29,8 @@ under a Breaking subsection.
 
 - H-079: aligned hosted provider materialization with the lock's Atlas graph,
   restored the historical benchmark baseline's Tyche path dependency, and
-  formatted the GPU attenuation example required by the workspace gate.
+  formatted the GPU attenuation and analysis validation examples required by
+  the workspace gate.
 
 ### Changed
 
