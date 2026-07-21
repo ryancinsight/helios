@@ -59,6 +59,7 @@
 - [LINAC-Based Step-and-Shoot Delivery](workflow_linac.md)
   - [Example: LINAC Dose Accumulation](examples/linac_dose_accumulation.md)
 - [Adaptive Radiotherapy with MVCT](workflow_adaptive.md)
+  - [Example: Adaptive RT Workflow](examples/adaptive_rt_workflow.md)
 
 ---
 
