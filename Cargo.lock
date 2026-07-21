@@ -97,6 +97,7 @@ checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
 [[package]]
 name = "apollo-fft"
 version = "0.25.0"
+source = "git+https://github.com/ryancinsight/apollo.git#1bfd1c9f5b39f0b7502f241ff95ef5196ca20202"
 dependencies = [
  "apollo-fft-macros",
  "apollo-leto-interop",
@@ -118,6 +119,7 @@ dependencies = [
 [[package]]
 name = "apollo-fft-macros"
 version = "0.1.0"
+source = "git+https://github.com/ryancinsight/apollo.git#1bfd1c9f5b39f0b7502f241ff95ef5196ca20202"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -127,6 +129,7 @@ dependencies = [
 [[package]]
 name = "apollo-leto-interop"
 version = "0.17.0"
+source = "git+https://github.com/ryancinsight/apollo.git#1bfd1c9f5b39f0b7502f241ff95ef5196ca20202"
 dependencies = [
  "leto",
 ]
@@ -1752,6 +1755,7 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 name = "leto"
 version = "0.39.0"
 dependencies = [
+ "aequitas",
  "bytemuck",
  "eunomia",
  "mnemosyne",
