@@ -75,7 +75,7 @@ pub fn dose_kernel_sum<F: FloatElement>(terma: &[F], scatter: &[F]) -> F {
 
 - [`fbp_reconstruction`](examples/fbp_reconstruction.md) — FBP ramps
   through `Avx2Lane` kernel.
-- [`gpu_detection` (Carrier)](../../CFDrs/docs/book/examples/gpu_detection.md) —
+- [`gpu_detection` (Carrier)](../../../CFDrs/docs/book/examples/gpu_detection.md) —
   when GPU is enabled, this routes through `hephaestus` lanes; otherwise
   Hermes handles the same problem on CPU.
 - [`parallel_beam_radon`](../../../helios/crates/helios-imaging/examples/radon_sinogram.rs) —

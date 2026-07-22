@@ -78,7 +78,7 @@ and governs the cleanup pass that closes it.
 
 ## Cross-References
 
-- [`cfdrs` Atlas Part](../../CFDrs/docs/book/migration_overview.md)
+- [`cfdrs` Atlas Part](../../../CFDrs/docs/book/migration_overview.md)
   — the CFDrs-mirror version of this Part.
-- [`kwavers` Atlas Part](../../kwavers/docs/book/migration_overview.md)
+- [`kwavers` Atlas Part](../../../kwavers/docs/book/migration_overview.md)
   — Atlas Part in kwavers (Part VI).

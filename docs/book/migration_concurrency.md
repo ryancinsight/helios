@@ -91,6 +91,6 @@ oversubscription — three wins the legacy code reproduced per-beam.
 
 ## Further Reading
 
-- [`moirai` source](../../../moirai/crates/)
+- [`moirai` source](../../../moirai/README.md)
 - [Mnemosyne and Themis: Memory](migration_memory.md)
 - [Moirai Book cross-reference](../../../moirai/docs/)
