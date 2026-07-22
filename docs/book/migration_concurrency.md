@@ -1,4 +1,4 @@
-# Moirai: Concurrency — Executors, Task Graphs, Channels
+# Chapter 32 — Moirai: Concurrency
 
 Helios migrates parallel execution from `rayon::ParIter`, bespoke
 `std::thread::spawn`, and partial `tokio` usage to **Moirai**'s unified

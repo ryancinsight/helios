@@ -1,4 +1,4 @@
-# Voxel Grids and Volumetric Data
+# Chapter 2 — Voxel Grids and Volumetric Data
 
 The core spatial data structure in Helios is the `VoxelGrid` + `Volume<T>` pair,
 owned by `helios-domain`.

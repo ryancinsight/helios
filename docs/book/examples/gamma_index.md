@@ -2,7 +2,7 @@
 
 **Crate**: `helios-analysis`  
 **Run**: `cargo run -p helios-analysis --example gamma_index`  
-**Source**: [`crates/helios-analysis/examples/gamma_index.rs`](../../crates/helios-analysis/examples/gamma_index.rs)
+**Source**: [`crates/helios-analysis/examples/gamma_index.rs`](../../../crates/helios-analysis/examples/gamma_index.rs)
 
 ## What This Example Demonstrates
 

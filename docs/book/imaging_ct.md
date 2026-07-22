@@ -1,4 +1,4 @@
-# Hounsfield Units and Attenuation Maps
+# Chapter 5 — Hounsfield Units and Attenuation Maps
 
 CT scanners measure X-ray attenuation and express it in Hounsfield Units (HU):
 

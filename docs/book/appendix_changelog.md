@@ -1,4 +1,4 @@
-# Changelog
+# Appendix D — Changelog
 
 ## Unreleased
 

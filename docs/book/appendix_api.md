@@ -1,4 +1,4 @@
-# API Reference Index
+# Appendix C — API Reference Index
 
 Generated documentation is available via cargo doc:
 
@@ -31,7 +31,8 @@ cargo doc --workspace --no-deps --open
 - Dvh — Dose-Volume Histogram
 - gamma_index_3d — 3D gamma metric
 - gamma_pass_rate — fraction of passing voxels
-- oi_statistics — ROI mean/std/min/max
+- 
+oi_statistics — ROI mean/std/min/max
 
 ## Further Reading
 

@@ -2,7 +2,7 @@
 
 **Crate**: `helios-simulation`  
 **Run**: `cargo run -p helios-simulation --example tomotherapy_workflow [output_dir]`  
-**Source**: [`crates/helios-simulation/examples/tomotherapy_workflow.rs`](../../crates/helios-simulation/examples/tomotherapy_workflow.rs)
+**Source**: [`crates/helios-simulation/examples/tomotherapy_workflow.rs`](../../../crates/helios-simulation/examples/tomotherapy_workflow.rs)
 
 ## What This Example Demonstrates
 

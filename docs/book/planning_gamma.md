@@ -1,4 +1,4 @@
-# Gamma Index and Plan Verification
+# Chapter 16 — Gamma Index and Plan Verification
 
 The gamma index is the standard plan QA metric for 3D dose comparison:
 
@@ -8,7 +8,8 @@ The gamma index is the standard plan QA metric for 3D dose comparison:
 
 A point passes if γ < 1.
 
-`ust
+`
+ust
 use helios_analysis::{gamma_index_3d, gamma_pass_rate};
 
 let gamma = gamma_index_3d(

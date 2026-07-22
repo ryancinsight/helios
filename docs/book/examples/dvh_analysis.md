@@ -2,7 +2,7 @@
 
 **Crate**: `helios-analysis`  
 **Run**: `cargo run -p helios-analysis --example dvh_analysis`  
-**Source**: [`crates/helios-analysis/examples/dvh_analysis.rs`](../../crates/helios-analysis/examples/dvh_analysis.rs)
+**Source**: [`crates/helios-analysis/examples/dvh_analysis.rs`](../../../crates/helios-analysis/examples/dvh_analysis.rs)
 
 ## What This Example Demonstrates
 

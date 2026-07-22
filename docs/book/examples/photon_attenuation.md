@@ -2,7 +2,7 @@
 
 **Crate**: `helios-physics`  
 **Run**: `cargo run -p helios-physics --example photon_attenuation`  
-**Source**: [`crates/helios-physics/examples/photon_attenuation.rs`](../../crates/helios-physics/examples/photon_attenuation.rs)
+**Source**: [`crates/helios-physics/examples/photon_attenuation.rs`](../../../crates/helios-physics/examples/photon_attenuation.rs)
 
 ## What This Example Demonstrates
 

@@ -2,7 +2,7 @@
 
 **Crate**: `helios-gpu`  
 **Run**: `cargo run -p helios-gpu --example gpu_attenuation_projection`  
-**Source**: [`crates/helios-gpu/examples/gpu_attenuation_projection.rs`](../../crates/helios-gpu/examples/gpu_attenuation_projection.rs)
+**Source**: [`crates/helios-gpu/examples/gpu_attenuation_projection.rs`](../../../crates/helios-gpu/examples/gpu_attenuation_projection.rs)
 
 ## What This Example Demonstrates
 

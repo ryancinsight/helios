@@ -2,7 +2,7 @@
 
 **Crate**: `helios-solver`  
 **Run**: `cargo run -p helios-solver --example collapsed_cone_3d`  
-**Source**: [`crates/helios-solver/examples/collapsed_cone_3d.rs`](../../crates/helios-solver/examples/collapsed_cone_3d.rs)
+**Source**: [`crates/helios-solver/examples/collapsed_cone_3d.rs`](../../../crates/helios-solver/examples/collapsed_cone_3d.rs)
 
 ## What This Example Demonstrates
 

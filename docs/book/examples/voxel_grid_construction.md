@@ -2,7 +2,7 @@
 
 **Crate**: `helios-domain`  
 **Run**: `cargo run -p helios-domain --example voxel_grid_construction`  
-**Source**: [`crates/helios-domain/examples/voxel_grid_construction.rs`](../../crates/helios-domain/examples/voxel_grid_construction.rs)
+**Source**: [`crates/helios-domain/examples/voxel_grid_construction.rs`](../../../crates/helios-domain/examples/voxel_grid_construction.rs)
 
 ## What This Example Demonstrates
 

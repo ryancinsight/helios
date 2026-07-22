@@ -1,4 +1,4 @@
-# Leto: Arrays and Linear Algebra
+# Chapter 28 — Leto: Arrays and Linear Algebra
 
 The bulk of helios's tensor arithmetic — CT volumes, attenuation maps,
 dose grids, sparse system matrices — migrates from `ndarray::Array*` and

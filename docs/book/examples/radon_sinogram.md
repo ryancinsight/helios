@@ -2,7 +2,7 @@
 
 **Crate**: `helios-imaging`  
 **Run**: `cargo run -p helios-imaging --example radon_sinogram`  
-**Source**: [`crates/helios-imaging/examples/radon_sinogram.rs`](../../crates/helios-imaging/examples/radon_sinogram.rs)
+**Source**: [`crates/helios-imaging/examples/radon_sinogram.rs`](../../../crates/helios-imaging/examples/radon_sinogram.rs)
 
 ## What This Example Demonstrates
 

@@ -1,4 +1,4 @@
-# Migration Overview: ndarray/nalgebra/burn → Atlas Stack
+# Chapter 26 — Migration Overview: ndarray/nalgebra/burn → Atlas
 
 Helios is one of two primary consumers of the Atlas stack (the other is
 kwavers).  This Part documents the destination crates, the principles they

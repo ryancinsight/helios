@@ -1,4 +1,4 @@
-# Helios Book Organization Plan
+# Appendix E — Book Organization Forward Roadmap
 
 ## Overview
 

@@ -2,7 +2,7 @@
 
 **Crate**: `helios-planning`  
 **Run**: `cargo run -p helios-planning --example dvh_optimization`  
-**Source**: [`crates/helios-planning/examples/dvh_optimization.rs`](../../crates/helios-planning/examples/dvh_optimization.rs)
+**Source**: [`crates/helios-planning/examples/dvh_optimization.rs`](../../../crates/helios-planning/examples/dvh_optimization.rs)
 
 ## What This Example Demonstrates
 

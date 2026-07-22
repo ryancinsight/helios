@@ -1,4 +1,4 @@
-# Adaptive Radiotherapy with MVCT
+# Chapter 19 — Adaptive Radiotherapy with MVCT
 
 Adaptive radiotherapy (ART) modifies the treatment plan based on daily
 MVCT imaging to account for anatomical changes during the course.
@@ -25,8 +25,10 @@ Daily MVCT → Rigid/deformable registration to planning CT
 
 ## Atlas Integration
 
-Helios uses itk-registration for deformable registration and
-itk-io for DICOM RT dose/structure set I/O.
+Helios uses 
+itk-registration for deformable registration and
+
+itk-io for DICOM RT dose/structure set I/O.
 
 ## Further Reading
 

@@ -1,4 +1,4 @@
-# LINAC-Based Step-and-Shoot Delivery
+# Chapter 18 — LINAC-Based Step-and-Shoot Delivery
 
 Linear accelerator (LINAC) IMRT delivers dose through a sequence of static
 beam apertures (step-and-shoot) or dynamically moving MLC leaves (sliding window).
@@ -10,7 +10,8 @@ Each segment has:
 - An MLC aperture shape
 - A monitor unit count
 
-`ust
+`
+ust
 use helios_domain::StaticSegment;
 
 let segment = StaticSegment {
@@ -25,7 +26,8 @@ let segment = StaticSegment {
 Same collapsed-cone engine as TomoTherapy, applied field-by-field
 and summed:
 
-`ust
+`
+ust
 let total_dose = segments.iter()
     .map(|seg| calculate_segment_dose(seg, &mu))
     .fold(Volume::zeros(grid), |acc, d| acc + d);

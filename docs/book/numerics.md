@@ -1,4 +1,4 @@
-# Scalar Fields and Numeric Abstractions
+# Chapter 3 — Scalar Fields and Numeric Abstractions
 
 Helios is generic over the unomia::RealField numeric scalar, allowing
 the same physics code to run at 32 (GPU/staging) or 64 (reference quality).
@@ -17,7 +17,8 @@ eunomia::RealField        ← algebraic field over ℝ
 
 Helios domain objects use T: RealField:
 
-`ust
+`
+ust
 use helios_domain::Volume;
 use helios_math::Scalar;
 

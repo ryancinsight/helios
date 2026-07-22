@@ -2,7 +2,7 @@
 
 **Crate**: `helios-core`  
 **Run**: `cargo run -p helios-core --example validate_foundation_units`  
-**Source**: [`crates/helios-core/examples/validate_foundation_units.rs`](../../crates/helios-core/examples/validate_foundation_units.rs)
+**Source**: [`crates/helios-core/examples/validate_foundation_units.rs`](../../../crates/helios-core/examples/validate_foundation_units.rs)
 
 ## What This Example Demonstrates
 

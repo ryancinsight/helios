@@ -1,4 +1,4 @@
-# MVCT and Correction Workflows
+# Chapter 8 — MVCT and Correction Workflows
 
 Megavoltage CT (MVCT) is acquired on a TomoTherapy unit using the 3.5 MV treatment
 beam before each fraction for patient setup verification.
@@ -17,7 +17,8 @@ beam before each fraction for patient setup verification.
 MVCT reconstruction uses the same FBP pipeline as kVCT, with a different
 beam-hardening correction appropriate for MV photons:
 
-`ust
+`
+ust
 let mvct_sinogram = parallel_beam_radon(&mvct_projection, n_angles);
 let mvct_recon = filtered_back_projection(&mvct_sinogram, n_angles, nx);
 `

@@ -1,4 +1,4 @@
-# Atlas Crate Dependency Map
+# Appendix A — Atlas Crate Dependency Map
 
 Helios sits at the top of the Atlas dependency graph.
 
@@ -30,7 +30,8 @@ Atlas Foundation
 
 | Crate | Purpose | Will be replaced |
 |---|---|---|
-| dicom (dicom-rs) | DICOM I/O | itk-dicom native path |
+| dicom (dicom-rs) | DICOM I/O | 
+itk-dicom native path |
 | image | PNG output in examples | Retained (output only) |
 | nyhow | Error propagation | Retained |
 

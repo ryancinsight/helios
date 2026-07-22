@@ -1,4 +1,4 @@
-# Memory and Allocation: Mnemosyne Integration
+# Chapter 4 — Memory and Allocation: Mnemosyne Integration
 
 Helios uses mnemosyne for arena-based, zero-fragmentation allocation
 of large physics arrays. Large intermediate buffers (sinograms, dose grids,
@@ -6,7 +6,8 @@ terma volumes) are stack-allocated from thread-local arenas.
 
 ## Arena Allocation
 
-`ust
+`
+ust
 use mnemosyne::Arena;
 
 let arena = Arena::with_capacity(256 * 1024 * 1024); // 256 MiB

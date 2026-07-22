@@ -2,7 +2,7 @@
 
 **Crate**: `helios-imaging`  
 **Run**: `cargo run -p helios-imaging --example sirt_reconstruction`  
-**Source**: [`crates/helios-imaging/examples/sirt_reconstruction.rs`](../../crates/helios-imaging/examples/sirt_reconstruction.rs)
+**Source**: [`crates/helios-imaging/examples/sirt_reconstruction.rs`](../../../crates/helios-imaging/examples/sirt_reconstruction.rs)
 
 ## What This Example Demonstrates
 

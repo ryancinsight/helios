@@ -1,4 +1,4 @@
-# Parallel-Beam Radon Transform
+# Chapter 6 — Parallel-Beam Radon Transform
 
 The Radon transform forward-projects a 2-D attenuation map μ(x, y) along
 parallel rays at 
@@ -10,7 +10,8 @@ R[θ, t] = ∫ μ(t·cos θ − s·sin θ, t·sin θ + s·cos θ) ds
 
 In Helios the Radon transform is provided by helios-imaging:
 
-`ust
+`
+ust
 use helios_imaging::parallel_beam_radon;
 
 let n_angles = 180;

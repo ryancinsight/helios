@@ -2,7 +2,7 @@
 
 **Crate**: `helios-imaging`  
 **Run**: `cargo run -p helios-imaging --example mvct_registration`  
-**Source**: [`crates/helios-imaging/examples/mvct_registration.rs`](../../crates/helios-imaging/examples/mvct_registration.rs)
+**Source**: [`crates/helios-imaging/examples/mvct_registration.rs`](../../../crates/helios-imaging/examples/mvct_registration.rs)
 
 ## What This Example Demonstrates
 

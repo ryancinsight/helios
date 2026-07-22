@@ -1,4 +1,4 @@
-# Migration Validation: TG-119, IAEA Phantoms, and Atlas Parity
+# Chapter 37 — Migration Validation: TG-119 and Atlas Parity
 
 Helios's Atlas migration is governed by a **TG-119/I IAEA-style parity
 test harness** that runs both the legacy and Atlas ports of each solver

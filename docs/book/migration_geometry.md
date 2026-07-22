@@ -1,4 +1,4 @@
-# Leto: Geometry — VoxelGrid, MLC, Beam Isometries
+# Chapter 29 — Leto: Geometry — VoxelGrid, MLC, Beam Isometries
 
 Helios geometry — voxel grids, multi-leaf collimator (MLC) leaf positions,
 beam isometries, helical delivery carousels — migrates from

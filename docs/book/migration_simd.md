@@ -1,4 +1,4 @@
-# Hermes: SIMD Lanes and Vectorized Kernels
+# Chapter 30 — Hermes: SIMD Lanes and Vectorized Kernels
 
 Helios's hot paths — Radon inverse, attenuation map sweeps, FBP back-
 projection, sparse kernels — migrate from hand-written SIMD intrinsics

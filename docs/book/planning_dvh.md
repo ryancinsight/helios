@@ -1,8 +1,9 @@
-# Dose-Volume Histograms
+# Chapter 15 — Dose-Volume Histograms
 
 The DVH summarises the volumetric dose distribution of a target or organ:
 
-`ust
+`
+ust
 use helios_analysis::Dvh;
 
 let dvh = Dvh::new(&dose, 200);  // 200 histogram bins

@@ -1,11 +1,12 @@
-# GPU Backend Overview: Hephaestus Integration
+# Chapter 20 — GPU Backend Overview: Hephaestus Integration
 
 Helios GPU acceleration is provided by hephaestus-wgpu (cross-platform
 WebGPU/Vulkan/Metal/DX12) or hephaestus-cuda (NVIDIA CUDA).
 
 ## Backend Selection
 
-`ust
+`
+ust
 #[cfg(feature = \"gpu-wgpu\")]
 use hephaestus_wgpu::WgpuBackend as GpuBackend;
 

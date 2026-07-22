@@ -1,4 +1,4 @@
-# Beam Hardening and Poly-Energetic Spectra
+# Chapter 12 — Beam Hardening and Poly-Energetic Spectra
 
 Real photon beams are poly-energetic: a 6 MV treatment beam contains photons
 from ~0.1 MeV to 6 MeV. As the beam penetrates tissue, low-energy photons are
@@ -8,7 +8,8 @@ preferentially absorbed (beam hardening), shifting the mean energy upward.
 
 Helios models a beam as a sum of SpectralComponent bins:
 
-`ust
+`
+ust
 use helios_simulation::SpectralComponent;
 
 let spectrum = vec![

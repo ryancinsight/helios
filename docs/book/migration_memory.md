@@ -1,4 +1,4 @@
-# Mnemosyne and Themis: Memory Allocation and Placement
+# Chapter 31 — Mnemosyne and Themis: Memory
 
 Helios migrates from `std::alloc` (jemalloc/mimalloc on production) to
 **Mnemosyne** arenas plus **Themis** NUMA placement.  Two crates compose:

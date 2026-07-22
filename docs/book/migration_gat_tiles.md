@@ -1,4 +1,4 @@
-# Leto: GAT-Based Tiling and Lending Iterators
+# Chapter 34 — Leto: GAT-Based Tiling and Lending Iterators
 
 Helios iterates over volumetric data in **tiles** (sliding windows,
 rotational/projection haloes, beam-rotation carousels) at multiple

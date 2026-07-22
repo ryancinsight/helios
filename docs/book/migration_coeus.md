@@ -1,4 +1,4 @@
-# Coeus: Tensors and Autodiff
+# Chapter 35 — Coeus: Tensors and Autodiff
 
 Helios uses **Coeus** as the autodiff-aware tensor crate.  Coeus replaces
 `burn::Tensor`, `tch`, and `candle-core` with a single first-party

@@ -1,10 +1,11 @@
-# Analytical Solutions and Regression Tests
+# Chapter 24 — Analytical Solutions and Regression Tests
 
 Every physics primitive in Helios has at least one analytical oracle test.
 
 ## Radon Transform Oracle
 
-For a cylinder of radius  and uniform attenuation μ₀:
+For a cylinder of radius 
+ and uniform attenuation μ₀:
 
 `	ext
 R(t) = 2μ₀√(r² − t²)  for |t| < r, zero otherwise

@@ -2,7 +2,7 @@
 
 **Crate**: `helios-imaging`  
 **Run**: `cargo run -p helios-imaging --example fbp_reconstruction`  
-**Source**: [`crates/helios-imaging/examples/fbp_reconstruction.rs`](../../crates/helios-imaging/examples/fbp_reconstruction.rs)
+**Source**: [`crates/helios-imaging/examples/fbp_reconstruction.rs`](../../../crates/helios-imaging/examples/fbp_reconstruction.rs)
 
 ## What This Example Demonstrates
 

@@ -1,4 +1,4 @@
-# Clinical Protocol Compliance
+# Chapter 25 — Clinical Protocol Compliance
 
 Helios validation targets the following published clinical benchmarks.
 

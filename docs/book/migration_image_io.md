@@ -1,4 +1,4 @@
-# Ritk: Image I/O — DICOM, NIfTI, PNG
+# Chapter 36 — Ritk: Image I/O — DICOM, NIfTI, PNG
 
 Helios ingests CT, MVCT, and dose-evaluation images in three major
 formats: **DICOM** (clinical standard), **NIfTI** (research), and PNG
