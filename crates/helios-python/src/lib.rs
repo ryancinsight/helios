@@ -10,6 +10,7 @@
 //! concrete numeric type); the underlying kernels remain generic over `Scalar`.
 #![forbid(unsafe_code)]
 
+use aequitas::systems::si::units::SquareCentimeterPerGram;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
@@ -47,7 +48,10 @@ fn klein_nishina_cross_section(energy_mev: f64) -> PyResult<f64> {
 fn compton_mass_attenuation(energy_mev: f64, z_over_a: f64) -> PyResult<f64> {
     let e = checked_energy_mev(energy_mev)?;
     let electrons_per_gram = helios_physics::electrons_per_gram::<f64>(z_over_a);
-    Ok(helios_physics::compton_mass_attenuation::<f64>(e, electrons_per_gram).get())
+    Ok(
+        helios_physics::compton_mass_attenuation::<f64>(e, electrons_per_gram)
+            .in_unit::<SquareCentimeterPerGram>(),
+    )
 }
 
 /// Mass density (g/cm³) from a Hounsfield unit via bilinear CT calibration,

@@ -9,6 +9,14 @@ under a Breaking subsection.
 
 ### Breaking
 
+- H-080 removes Helios's `LinearAttenuation`, `MassAttenuation`, NIST-table,
+  and projection-law facade. Callers use Hyperion coefficient and quantity
+  types directly. `attenuation_map`, `primary_fluence_parallel_x`,
+  `simulate_helical_sinogram`, `frame_portal_fluence`, and
+  `add_quantum_noise` now return typed validation errors instead of accepting
+  invalid material or optical-depth values. `deposit_ray_terma`, its diverging
+  counterpart, and both delivered-dose accumulation APIs also return typed
+  transport errors; ray validation completes before output mutation.
 - H-076: removed the duplicate `helios_analysis::{generalized_eud,
   tcp_logistic, ntcp_lkb}` free functions. `Dvh` now stores its sorted sample as
   Aequitas `AbsorbedDose` quantities and evaluates the canonical Asclepius laws
@@ -34,6 +42,14 @@ under a Breaking subsection.
 
 ### Changed
 
+- H-080 makes Hyperion the single owner of coefficient validation,
+  mass-to-linear conversion, NIST reference data, optical depth, and
+  Beer–Lambert transmission. Proteus remains the material-density owner;
+  Helios retains HU calibration, Compton source models, grid traversal, dose,
+  imaging, and delivery. The GPU transmission differential now uses Hyperion
+  as its CPU law oracle instead of a second raw exponential implementation.
+  TERMA deposition validates the complete sampled ray before mutation without
+  allocating a per-segment staging buffer.
 - H-077: specialized the three scatter-convolution axes with const generics and
   computed each voxel's valid tap interval once, removing per-tap boundary
   branches without changing summation order. A bitwise differential oracle

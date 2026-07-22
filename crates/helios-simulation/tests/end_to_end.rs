@@ -12,21 +12,27 @@
 //! or licensed dataset is involved (those gates are environment-blocked, see
 //! gap_audit G-16/G-18).
 
+use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, spherical_mask, Dvh};
 use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel, Volume, VoxelGrid};
 use helios_imaging::{filtered_back_projection, parallel_beam_radon, register_translation};
 use helios_math::Point3;
-use helios_physics::MassAttenuation;
 use helios_simulation::{
     accumulate_delivered_dose, accumulate_delivered_dose_anisotropic, simulate_helical_delivery,
     BeamGeometry, CollapsedCone, SpectralComponent,
 };
 use helios_solver::{attenuation_map, scatter_superposition, symmetric_deposition_kernel};
+use hyperion::coefficient::MassAttenuation;
 
 const NX: usize = 31;
 const NZ: usize = 5;
 const SPACING: f64 = 2.0;
 const CENTRE_MM: f64 = (NX as f64 - 1.0) * SPACING / 2.0; // 30 mm
+
+fn water_mass_attenuation() -> MassAttenuation<f64> {
+    MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(0.06))
+        .expect("valid water mass attenuation")
+}
 
 // CT phantom (HU): air outside a 24 mm water cylinder, with an 8 mm bone insert
 // (HU 800) at the centre. Uniform along z (cylinder axis).
@@ -51,7 +57,8 @@ fn ct_phantom() -> Volume<f64> {
 fn shared_mu_drives_imaging_and_delivery_end_to_end() {
     // ── Shared physics: CT → μ (μ/ρ = 0.06 cm²/g, water 1.0 g/cm³). ──
     let ct = ct_phantom();
-    let mu = attenuation_map(&ct, MassAttenuation::new(0.06).unwrap(), 1.0);
+    let mu =
+        attenuation_map(&ct, water_mass_attenuation(), 1.0).expect("fixture calibration is finite");
     // Sanity: water μ = 0.06·1.0; bone μ = 0.06·1.8 (HU 800 → density 1.8); air ≈ 0.
     assert!((mu.get(15, 15, 2).unwrap() - 0.108).abs() < 1e-9); // centre = bone
     assert!(mu.get(0, 0, 2).unwrap().abs() < 1e-6); // corner = air
@@ -111,7 +118,8 @@ fn shared_mu_drives_imaging_and_delivery_end_to_end() {
         },
         4.0,
         0.5,
-    );
+    )
+    .expect("attenuation map satisfies Hyperion's transport contract");
     let kernel = symmetric_deposition_kernel(0.5_f64, 0.2, 1);
     let dose = scatter_superposition(&terma, &kernel, &kernel, &kernel);
 
@@ -144,7 +152,8 @@ fn beam_following_poly_energetic_dose_end_to_end() {
     // per-frame terma → beam-following, poly-energetic (beam-hardened) collapsed
     // cone → dose. Oracles are analytical / self-consistent (no external engine).
     let ct = ct_phantom();
-    let mu = attenuation_map(&ct, MassAttenuation::new(0.06).unwrap(), 1.0);
+    let mu =
+        attenuation_map(&ct, water_mass_attenuation(), 1.0).expect("fixture calibration is finite");
 
     let leaves = 9;
     let projections = 20;
@@ -173,7 +182,8 @@ fn beam_following_poly_energetic_dose_end_to_end() {
         },
     ];
     let cone = CollapsedCone::poly_forward_peaked(&spectrum, 0.5, voxel_cm, 2, 3, 1);
-    let dose = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 4.0, 0.5, &cone);
+    let dose = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 4.0, 0.5, &cone)
+        .expect("attenuation map satisfies Hyperion's transport contract");
 
     // Non-negativity everywhere; the delivery deposited energy.
     assert!(dose.sum() > 0.0, "delivery deposited no dose");
@@ -189,7 +199,8 @@ fn beam_following_poly_energetic_dose_end_to_end() {
     // energy at the boundary, never create it — so the scattered dose total is ≤ the
     // deposited terma total, and (delivery concentrated near centre) retains most of
     // it. `accumulate_delivered_dose` with the same frames/geometry yields the terma.
-    let terma = accumulate_delivered_dose(&frames, &mu, geom, 4.0, 0.5);
+    let terma = accumulate_delivered_dose(&frames, &mu, geom, 4.0, 0.5)
+        .expect("attenuation map satisfies Hyperion's transport contract");
     let (dsum, tsum) = (dose.sum(), terma.sum());
     assert!(
         dsum <= tsum * (1.0 + 1e-9),
@@ -218,7 +229,8 @@ fn per_structure_plan_evaluation_over_delivered_dose() {
     // masked DVH → gEUD → TCP (target) / NTCP (OAR). Oracles are clinical-
     // plausibility + probability well-formedness (no external engine).
     let ct = ct_phantom();
-    let mu = attenuation_map(&ct, MassAttenuation::new(0.06).unwrap(), 1.0);
+    let mu =
+        attenuation_map(&ct, water_mass_attenuation(), 1.0).expect("fixture calibration is finite");
     let grid = *mu.grid();
 
     let (leaves, projections) = (9, 20);
@@ -233,7 +245,8 @@ fn per_structure_plan_evaluation_over_delivered_dose() {
     };
     let voxel_cm = SPACING / 10.0;
     let cone = CollapsedCone::forward_peaked(0.1, 0.6, 0.5, voxel_cm, 2, 3, 1);
-    let dose = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 4.0, 0.5, &cone);
+    let dose = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 4.0, 0.5, &cone)
+        .expect("attenuation map satisfies Hyperion's transport contract");
 
     // Central target (isocentre) vs an off-axis OAR, both inside the water cylinder.
     let mid_z = (NZ as f64 - 1.0) * SPACING / 2.0;

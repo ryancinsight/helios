@@ -14,11 +14,12 @@
 //! `σ_T = (8/3)π r_e²` (the low-energy analytical oracle used in the tests).
 //! Result units are m² per electron.
 
-use crate::attenuation::MassAttenuation;
+use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
 use helios_core::constants::{
     AVOGADRO_PER_MOL, CLASSICAL_ELECTRON_RADIUS_M, ELECTRON_REST_ENERGY_MEV,
 };
 use helios_math::{NumericElement, Scalar};
+use hyperion::coefficient::MassAttenuation;
 
 /// Square centimetres per square metre (`1 m² = 10⁴ cm²`).
 const CM2_PER_M2: f64 = 1.0e4;
@@ -80,8 +81,10 @@ pub fn compton_mass_attenuation<T: Scalar>(
 ) -> MassAttenuation<T> {
     let sigma_cm2 = klein_nishina_cross_section(photon_energy_mev) * T::from_f64(CM2_PER_M2);
     let mu_over_rho = sigma_cm2 * electrons_per_gram;
-    MassAttenuation::new(mu_over_rho)
-        .expect("invariant: Compton cross-section and electron density are non-negative")
+    MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(
+        mu_over_rho,
+    ))
+    .expect("invariant: Compton cross-section and electron density are non-negative")
 }
 
 /// Klein–Nishina differential cross-section `dσ/dΩ` (m²/sr) per electron at
@@ -153,8 +156,10 @@ pub fn compton_mass_energy_transfer<T: Scalar>(
     electrons_per_gram: T,
 ) -> MassAttenuation<T> {
     let sigma_tr_cm2 = compton_energy_transfer_cross_section(energy_mev) * T::from_f64(CM2_PER_M2);
-    MassAttenuation::new(sigma_tr_cm2 * electrons_per_gram)
-        .expect("invariant: energy-transfer cross-section and electron density are non-negative")
+    MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(
+        sigma_tr_cm2 * electrons_per_gram,
+    ))
+    .expect("invariant: energy-transfer cross-section and electron density are non-negative")
 }
 
 #[cfg(test)]
@@ -226,15 +231,16 @@ mod tests {
         // (0.0707 cm²/g), which is Compton-dominated (~99.8%) at this energy.
         // The derived Compton-only value must match to within ~2%.
         let epg = electrons_per_gram(0.5551_f64);
-        let mu_over_rho = compton_mass_attenuation(1.0_f64, epg).get();
+        let mu_over_rho =
+            compton_mass_attenuation(1.0_f64, epg).in_unit::<SquareCentimeterPerGram>();
         assert_relative_eq!(mu_over_rho, 0.0707, max_relative = 2e-2);
     }
 
     #[test]
     fn derived_mu_over_rho_decreases_with_energy() {
         let epg = electrons_per_gram(0.5551_f64);
-        let low = compton_mass_attenuation(0.5_f64, epg).get();
-        let high = compton_mass_attenuation(6.0_f64, epg).get();
+        let low = compton_mass_attenuation(0.5_f64, epg).in_unit::<SquareCentimeterPerGram>();
+        let high = compton_mass_attenuation(6.0_f64, epg).in_unit::<SquareCentimeterPerGram>();
         assert!(
             high < low && high > 0.0,
             "μ/ρ Compton must fall with energy"
@@ -291,7 +297,7 @@ mod tests {
         // (≈0.0310 cm²/g, Compton-dominated). Validates the energy-transfer
         // integral against a published coefficient — within ~5%.
         let epg = electrons_per_gram(0.5551_f64);
-        let mu_tr = compton_mass_energy_transfer(1.0_f64, epg).get();
+        let mu_tr = compton_mass_energy_transfer(1.0_f64, epg).in_unit::<SquareCentimeterPerGram>();
         assert_relative_eq!(mu_tr, 0.0310, max_relative = 5e-2);
     }
 
@@ -321,8 +327,10 @@ mod tests {
             e in 0.1_f64..25.0,
             epg in 1e22_f64..1e24,
         ) {
-            let single = compton_mass_attenuation(e, epg).get();
-            let double = compton_mass_attenuation(e, epg * 2.0).get();
+            let single = compton_mass_attenuation(e, epg)
+                .in_unit::<SquareCentimeterPerGram>();
+            let double = compton_mass_attenuation(e, epg * 2.0)
+                .in_unit::<SquareCentimeterPerGram>();
             proptest::prop_assert!(single > 0.0);
             proptest::prop_assert!((double - 2.0 * single).abs() <= 1e-9 * (1.0 + double));
         }

@@ -15,16 +15,17 @@
 
 use std::path::{Path, PathBuf};
 
+use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, Dvh};
 use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel, Volume, VoxelGrid};
 use helios_imaging::{filtered_back_projection, parallel_beam_radon};
 use helios_math::Point3;
-use helios_physics::MassAttenuation;
 use helios_simulation::{
     accumulate_delivered_dose_anisotropic, simulate_helical_delivery, BeamGeometry, CollapsedCone,
     SpectralComponent,
 };
 use helios_solver::attenuation_map;
+use hyperion::coefficient::MassAttenuation;
 
 const NX: usize = 61;
 const NZ: usize = 5;
@@ -98,7 +99,9 @@ fn main() {
 
     // 1. CT → μ.
     let ct = ct_phantom();
-    let mu = attenuation_map(&ct, MassAttenuation::new(0.06).unwrap(), 1.0);
+    let coefficient = MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(0.06))
+        .expect("valid water mass attenuation");
+    let mu = attenuation_map(&ct, coefficient, 1.0).expect("fixture calibration is finite");
 
     // 2. Imaging: Radon → FBP.
     let angles: Vec<f64> = (0..180)
@@ -153,7 +156,8 @@ fn main() {
         3.0,
         0.25,
         &cone,
-    );
+    )
+    .expect("attenuation map satisfies Hyperion's transport contract");
 
     // Analysis.
     let dvh = Dvh::from_volume(&dose);

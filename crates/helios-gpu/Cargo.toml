@@ -21,10 +21,11 @@ hephaestus-wgpu = { workspace = true }
 leto = { workspace = true }
 
 [dev-dependencies]
+aequitas = { workspace = true }
 eunomia = { workspace = true }
 # Differential references for the GPU projector / attenuation tests only.
-helios-physics = { workspace = true }
 helios-solver = { workspace = true }
+hyperion = { workspace = true }
 criterion = { workspace = true }
 
 [[bench]]

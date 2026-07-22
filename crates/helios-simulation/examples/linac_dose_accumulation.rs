@@ -27,12 +27,13 @@
 //!
 //! [← LINAC-Based Step-and-Shoot Delivery](../../docs/book/workflow_linac.md)
 
+use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
 use helios_analysis::Dvh;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{NumericElement, Point3};
-use helios_physics::MassAttenuation;
 use helios_simulation::{accumulate_delivered_dose, BeamGeometry, DeliveryFrame};
 use helios_solver::attenuation_map;
+use hyperion::coefficient::MassAttenuation;
 
 // ── Phantom geometry ─────────────────────────────────────────────────────────
 const N: usize = 32;
@@ -43,12 +44,8 @@ const STEP_MM: f64 = 0.5;
 const MU_WATER_CM: f64 = 0.0636; // 6 MV linear attenuation for water (cm⁻¹)
 
 fn water_phantom() -> Volume<f64> {
-    let grid = VoxelGrid::axis_aligned(
-        [N, N, 1],
-        [SPACING_MM; 3],
-        Point3::new(0.0, 0.0, 0.0),
-    )
-    .expect("valid grid");
+    let grid = VoxelGrid::axis_aligned([N, N, 1], [SPACING_MM; 3], Point3::new(0.0, 0.0, 0.0))
+        .expect("valid grid");
     // Uniform water phantom: HU = 0.0
     Volume::from_shape_fn(grid, |_| 0.0_f64)
 }
@@ -67,26 +64,37 @@ fn main() {
     println!("=== LINAC Step-and-Shoot Dose Accumulation ===\n");
 
     // ── 1. Build water phantom (attenuation map) ──────────────────────────────
-    println!("Phantom: {}×{}×1 voxels, {} mm spacing, uniform water (μ = {:.4} cm⁻¹)",
-        N, N, SPACING_MM, MU_WATER_CM);
+    println!(
+        "Phantom: {}×{}×1 voxels, {} mm spacing, uniform water (μ = {:.4} cm⁻¹)",
+        N, N, SPACING_MM, MU_WATER_CM
+    );
 
     // μ/ρ for water at 6 MV ≈ 0.0636 / 1.0 = 0.0636 cm²/g
-    let mu_over_rho = MassAttenuation::new(MU_WATER_CM).expect("valid μ/ρ");
+    let mu_over_rho = MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(
+        MU_WATER_CM,
+    ))
+    .expect("valid μ/ρ");
     // Water density = 1.0 g/cm³
     let water_density_g_cm3 = 1.0_f64;
-    let phantom = attenuation_map(&water_phantom(), mu_over_rho, water_density_g_cm3);
+    let phantom = attenuation_map(&water_phantom(), mu_over_rho, water_density_g_cm3)
+        .expect("fixture calibration is finite");
 
     // ── 2. Construct 4-field box delivery frames ──────────────────────────────
     let fluence = 1.0_f64; // arbitrary monitor-unit equivalent
     let frames: Vec<DeliveryFrame<f64>> = vec![
-        make_frame(0, 0.0,   fluence), // AP beam
-        make_frame(1, 90.0,  fluence), // lateral beam
+        make_frame(0, 0.0, fluence),   // AP beam
+        make_frame(1, 90.0, fluence),  // lateral beam
         make_frame(2, 180.0, fluence), // PA beam
         make_frame(3, 270.0, fluence), // lateral opposed
     ];
 
-    println!("Delivery: {} fields at 0°/90°/180°/270°, {} leaves × {:.0} mm, uniform fluence = {:.1}",
-        frames.len(), N_LEAVES, LEAF_WIDTH_MM, fluence);
+    println!(
+        "Delivery: {} fields at 0°/90°/180°/270°, {} leaves × {:.0} mm, uniform fluence = {:.1}",
+        frames.len(),
+        N_LEAVES,
+        LEAF_WIDTH_MM,
+        fluence
+    );
 
     // ── 3. Accumulate dose ────────────────────────────────────────────────────
     let dose = accumulate_delivered_dose(
@@ -95,14 +103,15 @@ fn main() {
         BeamGeometry::Parallel { standoff_mm: 500.0 },
         LEAF_WIDTH_MM,
         STEP_MM,
-    );
+    )
+    .expect("attenuation volume satisfies Hyperion's transport contract");
 
     // ── 4. DVH analysis ───────────────────────────────────────────────────────
     let dvh = Dvh::from_volume(&dose);
-    let d_min  = dvh.min();
-    let d_max  = dvh.max();
+    let d_min = dvh.min();
+    let d_max = dvh.max();
     let d_mean = dvh.mean();
-    let d_50   = dvh.dose_at_volume_fraction(0.5);
+    let d_50 = dvh.dose_at_volume_fraction(0.5);
 
     println!("\nDose summary (phantom volume = {} voxels):", N * N);
     println!("  D_min   = {d_min:.4e}");
@@ -115,14 +124,14 @@ fn main() {
 
     // ── 5. Validation checks ──────────────────────────────────────────────────
     // Non-zero total dose
-    assert!(
-        d_max > 1e-12,
-        "Max dose must be positive; got {d_max:.4e}"
-    );
+    assert!(d_max > 1e-12, "Max dose must be positive; got {d_max:.4e}");
 
     // DVH monotonicity
     let levels: Vec<f64> = (0..=20).map(|k| k as f64 / 20.0).collect();
-    let doses: Vec<f64> = levels.iter().map(|&v| dvh.dose_at_volume_fraction(v)).collect();
+    let doses: Vec<f64> = levels
+        .iter()
+        .map(|&v| dvh.dose_at_volume_fraction(v))
+        .collect();
     let monotone = doses.windows(2).all(|w| w[0] >= w[1] - 1e-12);
     assert!(monotone, "DVH must be non-increasing; got {doses:?}");
 

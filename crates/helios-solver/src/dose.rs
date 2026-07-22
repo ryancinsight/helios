@@ -17,9 +17,18 @@
 //! In a homogeneous medium this is the exact exponential `Ψ₀·exp(−μx)` — the
 //! analytical oracle used in the tests.
 
+use aequitas::systems::si::{
+    quantities::{Length, ReciprocalLength},
+    units::{Centimeter, PerCentimeter},
+};
 use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Scalar;
+use hyperion::{
+    coefficient::{InteractionCoefficient, LinearAttenuation},
+    quantity::{OpticalDepth, PathLength},
+    TransportError,
+};
 
 /// Attenuated primary energy fluence for a parallel beam entering along **+x**.
 ///
@@ -31,22 +40,52 @@ use helios_math::Scalar;
 /// The centre of column `i` is treated as one voxel-spacing (`sx`) further into
 /// the medium than column `i−1` (centre-to-centre attenuation), so column 0 sees
 /// the unattenuated `Ψ₀`.
-#[must_use]
-pub fn primary_fluence_parallel_x<T: Scalar>(mu: &Volume<T>, incident_fluence: T) -> Volume<T> {
+///
+/// # Errors
+///
+/// Returns [`TransportError`] when an attenuation coefficient is negative or
+/// non-finite, or when an optical-depth product or partial sum is non-finite.
+pub fn primary_fluence_parallel_x<T: Scalar>(
+    mu: &Volume<T>,
+    incident_fluence: T,
+) -> Result<Volume<T>, TransportError<T>> {
     let grid: VoxelGrid<T> = *mu.grid();
     // Voxel spacing along the beam axis, in cm.
     let sx_cm = grid.spacing()[0] * T::from_f64(MM_PER_CM).recip();
+    let path = PathLength::new(Length::from_unit::<Centimeter>(sx_cm))?;
+    let [nx, ny, nz] = grid.dims();
+    let mut values = Vec::with_capacity(grid.num_voxels());
+    let mut optical_depths = vec![OpticalDepth::zero(); ny * nz];
 
-    Volume::from_shape_fn(grid, |idx| {
-        let [i, j, k] = idx;
-        // Optical depth from the entry face to the centre of column i:
-        // Σ_{i'<i} μ(i',j,k) · sx.
-        let mut tau = <T as helios_math::NumericElement>::ZERO;
-        for col in 0..i {
-            tau += mu.get(col, j, k).expect("column index within grid") * sx_cm;
+    for i in 0..nx {
+        for j in 0..ny {
+            for k in 0..nz {
+                // Optical depth from the entry face to the centre of column i:
+                // Σ_{i'<i} μ(i',j,k) · sx. Hyperion owns coefficient validation,
+                // dimensional multiplication, finite reduction, and transmission.
+                let ray_index = j * nz + k;
+                let coefficient = InteractionCoefficient::<T, LinearAttenuation>::new(
+                    ReciprocalLength::from_unit::<PerCentimeter>(
+                        mu.get(i, j, k).expect("column index within grid"),
+                    ),
+                )?;
+                values.push(
+                    incident_fluence
+                        * optical_depths[ray_index]
+                            .transmission()
+                            .into_quantity()
+                            .into_base(),
+                );
+                if i + 1 < nx {
+                    optical_depths[ray_index] =
+                        optical_depths[ray_index].checked_add(coefficient.optical_depth(path)?)?;
+                }
+            }
         }
-        incident_fluence * (-tau).exp()
-    })
+    }
+
+    Ok(Volume::from_shape_vec(grid, values)
+        .expect("invariant: one primary-fluence value is produced for every voxel"))
 }
 
 /// Build a normalized forward (downstream) exponential dose-deposition kernel.
@@ -123,7 +162,7 @@ mod tests {
     fn homogeneous_medium_gives_exponential_depth_curve() {
         // Uniform μ = 0.3 cm⁻¹, Ψ₀ = 5.0. Ψ(i) = 5·exp(-0.3 · i·0.2).
         let mu = Volume::from_shape_fn(grid(), |_| 0.3);
-        let psi = primary_fluence_parallel_x(&mu, 5.0);
+        let psi = primary_fluence_parallel_x(&mu, 5.0).expect("valid attenuation volume");
         for i in 0..6 {
             let depth_cm = i as f64 * 0.2;
             let expected = 5.0 * (-0.3 * depth_cm).exp();
@@ -134,7 +173,7 @@ mod tests {
     #[test]
     fn entry_column_is_unattenuated() {
         let mu = Volume::from_shape_fn(grid(), |_| 0.9);
-        let psi = primary_fluence_parallel_x(&mu, 2.0);
+        let psi = primary_fluence_parallel_x(&mu, 2.0).expect("valid attenuation volume");
         assert_relative_eq!(psi.get(0, 1, 1).unwrap(), 2.0, epsilon = 1e-15);
     }
 
@@ -143,7 +182,7 @@ mod tests {
         // μ varies along x: column i has μ = 0.1·(i+1). τ to column i =
         // Σ_{i'<i} 0.1·(i'+1) · 0.2.
         let mu = Volume::from_shape_fn(grid(), |idx| 0.1 * (idx[0] as f64 + 1.0));
-        let psi = primary_fluence_parallel_x(&mu, 1.0);
+        let psi = primary_fluence_parallel_x(&mu, 1.0).expect("valid attenuation volume");
         let mut tau = 0.0_f64;
         for i in 0..6 {
             let expected = (-tau).exp();
@@ -197,7 +236,7 @@ mod tests {
         let g = VoxelGrid::axis_aligned([40, 1, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
             .unwrap();
         let mu = Volume::from_shape_fn(g, |_| 0.3);
-        let terma = primary_fluence_parallel_x(&mu, 1.0);
+        let terma = primary_fluence_parallel_x(&mu, 1.0).expect("valid attenuation volume");
         let kernel = exponential_deposition_kernel(1.0_f64, 0.2, 20);
         let dose = dose_convolution_x(&terma, &kernel);
 
@@ -232,8 +271,21 @@ mod tests {
             VoxelGrid::<f32>::axis_aligned([4, 1, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
                 .unwrap();
         let mu = Volume::from_shape_fn(g, |_| 0.3_f32);
-        let psi = primary_fluence_parallel_x(&mu, 5.0_f32);
+        let psi = primary_fluence_parallel_x(&mu, 5.0_f32).expect("valid attenuation volume");
         let expected = 5.0_f32 * (-0.3_f32 * 3.0 * 0.2).exp(); // column 3, depth 0.6 cm
         assert_relative_eq!(psi.get(3, 0, 0).unwrap(), expected, epsilon = 1e-5);
+    }
+
+    #[test]
+    fn negative_attenuation_is_rejected_before_transmission() {
+        let mu = Volume::from_shape_fn(grid(), |[i, _, _]| if i == 5 { -0.1 } else { 0.3 });
+        let error = primary_fluence_parallel_x(&mu, 1.0).expect_err("negative mu must fail");
+        assert!(matches!(
+            error,
+            TransportError::InvalidValue {
+                field: hyperion::ValueKind::LinearAttenuation,
+                ..
+            }
+        ));
     }
 }

@@ -1,8 +1,10 @@
 //! Helical MVCT acquisition: rotate the beam per projection and forward-project.
 
+use aequitas::systems::si::quantities::Dimensionless;
 use helios_domain::{HelicalDelivery, Volume};
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
 use helios_solver::forward_project_ray;
+use hyperion::{quantity::OpticalDepth, TransportError};
 use moirai_parallel::Adaptive;
 
 /// One projection of a helical acquisition: the delivery state (gantry angle,
@@ -38,47 +40,56 @@ pub struct HelicalProjection<T: GeometryScalar> {
 /// index-ordered, so the result is identical to a sequential run regardless of
 /// thread scheduling (each projection is an independent read of `mu`; no reduction).
 /// `T: Send + Sync` (satisfied by every real scalar) is required for the dispatch.
-#[must_use]
+///
+/// # Errors
+///
+/// Returns [`TransportError`] if a projected optical depth is negative or
+/// non-finite.
 pub fn simulate_helical_sinogram<T: GeometryScalar + Send + Sync>(
     delivery: &HelicalDelivery<T>,
     mu: &Volume<T>,
     num_projections: usize,
     source_distance_mm: T,
     step_mm: T,
-) -> Vec<HelicalProjection<T>> {
+) -> Result<Vec<HelicalProjection<T>>, TransportError<T>> {
     let zero = <T as NumericElement>::ZERO;
     let grid = *mu.grid();
     let [nx, ny, nz] = grid.dims();
     // Axial centre of the grid (used for the beam's x–y aim point).
     let centre = grid.voxel_center((nx - 1) / 2, (ny - 1) / 2, (nz - 1) / 2);
 
-    moirai_parallel::map_collect_index_with::<Adaptive, _, _>(num_projections, |projection| {
-        let gantry_angle_rad = delivery.gantry_angle_rad(projection);
-        let couch_mm = delivery.couch_position_mm(projection);
+    let projections =
+        moirai_parallel::map_collect_index_with::<Adaptive, _, _>(num_projections, |projection| {
+            let gantry_angle_rad = delivery.gantry_angle_rad(projection);
+            let couch_mm = delivery.couch_position_mm(projection);
 
-        // Beam direction rotates in the axial plane; z fixed at the couch slice.
-        let direction = Vector3::new(gantry_angle_rad.cos(), gantry_angle_rad.sin(), zero);
-        // Aim point: axial centre at the couch z; source sits behind isocentre.
-        let origin = Point3::new(
-            centre.x - direction.x * source_distance_mm,
-            centre.y - direction.y * source_distance_mm,
-            couch_mm - direction.z * source_distance_mm,
-        );
+            // Beam direction rotates in the axial plane; z fixed at the couch slice.
+            let direction = Vector3::new(gantry_angle_rad.cos(), gantry_angle_rad.sin(), zero);
+            // Aim point: axial centre at the couch z; source sits behind isocentre.
+            let origin = Point3::new(
+                centre.x - direction.x * source_distance_mm,
+                centre.y - direction.y * source_distance_mm,
+                couch_mm - direction.z * source_distance_mm,
+            );
 
-        let optical_depth = Ray::try_new(origin, direction)
-            .ok()
-            .and_then(|ray| forward_project_ray(mu, &ray, step_mm))
-            .unwrap_or(zero);
-        let transmission = (-optical_depth).exp();
+            let optical_depth = Ray::try_new(origin, direction)
+                .ok()
+                .and_then(|ray| forward_project_ray(mu, &ray, step_mm))
+                .unwrap_or(zero);
+            let transmission = OpticalDepth::new(Dimensionless::from_base(optical_depth))?
+                .transmission()
+                .into_quantity()
+                .into_base();
 
-        HelicalProjection {
-            projection,
-            gantry_angle_rad,
-            couch_mm,
-            optical_depth,
-            transmission,
-        }
-    })
+            Ok(HelicalProjection {
+                projection,
+                gantry_angle_rad,
+                couch_mm,
+                optical_depth,
+                transmission,
+            })
+        });
+    projections.into_iter().collect()
 }
 
 #[cfg(test)]
@@ -102,7 +113,8 @@ mod tests {
 
     #[test]
     fn sinogram_has_one_entry_per_projection() {
-        let sino = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 12, 500.0, 0.5);
+        let sino = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 12, 500.0, 0.5)
+            .expect("valid attenuation volume");
         assert_eq!(sino.len(), 12);
         assert!(sino.iter().enumerate().all(|(i, p)| p.projection == i));
     }
@@ -111,7 +123,8 @@ mod tests {
     fn axial_central_ray_measures_mu_times_chord() {
         // Projection 0: θ=0 → +x ray through the cube centre. Chord = 16 mm =
         // 1.6 cm, μ = 0.05 → τ = 0.08; transmission = exp(-0.08).
-        let sino = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 4, 500.0, 0.25);
+        let sino = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 4, 500.0, 0.25)
+            .expect("valid attenuation volume");
         assert_relative_eq!(sino[0].optical_depth, 0.05 * 1.6, epsilon = 1e-9);
         assert_relative_eq!(
             sino[0].transmission,
@@ -124,7 +137,8 @@ mod tests {
     fn rotational_symmetry_of_a_uniform_cube() {
         // For a uniform cube the central-ray line integral is the same at 0° and
         // 90° (equal chords), independent of the couch advance.
-        let sino = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 4, 500.0, 0.25);
+        let sino = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 4, 500.0, 0.25)
+            .expect("valid attenuation volume");
         assert_relative_eq!(
             sino[0].optical_depth,
             sino[1].optical_depth,
@@ -134,7 +148,8 @@ mod tests {
 
     #[test]
     fn couch_advances_monotonically_across_projections() {
-        let sino = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 20, 500.0, 1.0);
+        let sino = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 20, 500.0, 1.0)
+            .expect("valid attenuation volume");
         for pair in sino.windows(2) {
             assert!(pair[1].couch_mm > pair[0].couch_mm, "couch must advance");
         }
@@ -143,7 +158,8 @@ mod tests {
     #[test]
     fn empty_region_transmits_fully() {
         // Zero-μ volume → no attenuation → τ=0, transmission=1 everywhere.
-        let sino = simulate_helical_sinogram(&delivery(), &uniform_cube(0.0), 6, 500.0, 0.5);
+        let sino = simulate_helical_sinogram(&delivery(), &uniform_cube(0.0), 6, 500.0, 0.5)
+            .expect("valid attenuation volume");
         for p in &sino {
             assert_relative_eq!(p.optical_depth, 0.0, epsilon = 1e-12);
             assert_relative_eq!(p.transmission, 1.0, epsilon = 1e-12);
@@ -157,7 +173,8 @@ mod tests {
                 .unwrap();
         let mu = Volume::from_shape_fn(grid, |_| 0.05_f32);
         let del = HelicalDelivery::<f32>::new(4, 25.0, 0.2, 10.0, 0.0, 8.0).unwrap();
-        let sino = simulate_helical_sinogram(&del, &mu, 4, 500.0, 0.25);
+        let sino =
+            simulate_helical_sinogram(&del, &mu, 4, 500.0, 0.25).expect("valid attenuation volume");
         assert_relative_eq!(sino[0].optical_depth, 0.05_f32 * 1.6, epsilon = 1e-4);
     }
 
@@ -167,9 +184,24 @@ mod tests {
         // exercises the parallel path. The index-ordered collect makes the result
         // identical run-to-run (no data race; each projection is an independent
         // read) — the differential guarantee vs a sequential run.
-        let a = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 256, 500.0, 0.5);
-        let b = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 256, 500.0, 0.5);
+        let a = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 256, 500.0, 0.5)
+            .expect("valid attenuation volume");
+        let b = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 256, 500.0, 0.5)
+            .expect("valid attenuation volume");
         assert_eq!(a, b);
         assert!(a.iter().enumerate().all(|(i, p)| p.projection == i));
+    }
+
+    #[test]
+    fn negative_projected_optical_depth_is_rejected() {
+        let error = simulate_helical_sinogram(&delivery(), &uniform_cube(-0.05), 1, 500.0, 0.25)
+            .expect_err("negative optical depth must fail");
+        assert!(matches!(
+            error,
+            TransportError::InvalidValue {
+                field: hyperion::ValueKind::OpticalDepth,
+                ..
+            }
+        ));
     }
 }

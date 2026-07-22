@@ -32,11 +32,12 @@
 //!
 //! Part VI — GPU Acceleration
 
+use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
 use helios_domain::{Volume, VoxelGrid};
 use helios_gpu::{default_device, GpuAttenuationMapper};
 use helios_math::Point3;
-use helios_physics::MassAttenuation;
 use helios_solver::attenuation_map;
+use hyperion::coefficient::MassAttenuation;
 
 fn main() {
     println!("=== GPU Attenuation Map + Forward Projection ===\n");
@@ -65,12 +66,16 @@ fn main() {
     });
 
     let water_rho = 1.0_f64;
-    let mu_over_rho = MassAttenuation::new(0.0636_f64).expect("valid mass attenuation");
+    let mu_over_rho = MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(
+        0.0636_f64,
+    ))
+    .expect("valid mass attenuation");
     println!("Phantom: {n}x{n}x{n}, spacing {spacing_mm} mm");
     println!("  Water HU = 0, Bone-proxy HU = 700\n");
 
     // ── 2. CPU reference (helios-solver) ──────────────────────────────────────
-    let mu_cpu: Volume<f64> = attenuation_map(&phantom_hu, mu_over_rho, water_rho);
+    let mu_cpu: Volume<f64> = attenuation_map(&phantom_hu, mu_over_rho, water_rho)
+        .expect("fixture calibration is finite");
     let cpu_water = mu_cpu.get(0, 0, 0).unwrap();
     let cpu_bone = mu_cpu.get(cx, cx, cx).unwrap();
     let expected_bone = 0.0636 * (1.0 + 700.0 / 1000.0);

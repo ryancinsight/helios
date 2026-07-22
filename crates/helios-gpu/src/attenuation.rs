@@ -222,7 +222,9 @@ mod tests {
 
     #[test]
     fn gpu_matches_helios_solver_attenuation_map() {
+        use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
         use helios_math::Point3;
+        use hyperion::coefficient::MassAttenuation;
 
         let Ok(device) = default_device() else {
             eprintln!("no GPU adapter — skipping HU→μ solver-differential test");
@@ -239,8 +241,12 @@ mod tests {
             -1500.0_f32 + 260.0 * (idx[0] + 4 * idx[1] + 12 * idx[2]) as f32
         });
 
-        let mass_atten = helios_physics::MassAttenuation::new(MU_OVER_RHO).expect("μ/ρ ≥ 0");
-        let reference = helios_solver::attenuation_map(&ct, mass_atten, WATER_DENSITY);
+        let mass_atten = MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(
+            MU_OVER_RHO,
+        ))
+        .expect("μ/ρ ≥ 0");
+        let reference = helios_solver::attenuation_map(&ct, mass_atten, WATER_DENSITY)
+            .expect("fixture calibration is finite");
 
         let mut hu_flat = Vec::with_capacity(4 * 3 * 2);
         for k in 0..2 {

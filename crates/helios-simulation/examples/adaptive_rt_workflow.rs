@@ -29,13 +29,14 @@
 //!
 //! [← Adaptive Radiotherapy with MVCT](../../docs/book/workflow_adaptive.md)
 
+use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, Dvh};
 use helios_domain::{Volume, VoxelGrid};
 use helios_imaging::register_translation;
 use helios_math::Point3;
-use helios_physics::MassAttenuation;
 use helios_simulation::{accumulate_delivered_dose, BeamGeometry, DeliveryFrame};
 use helios_solver::attenuation_map;
+use hyperion::coefficient::MassAttenuation;
 
 // ── Phantom parameters ────────────────────────────────────────────────────────
 const N: usize = 32;
@@ -53,8 +54,12 @@ fn make_grid() -> VoxelGrid<f64> {
 /// Build the synthetic CT phantom (HU): water background with a 10×10×1 bone insert.
 fn planning_ct() -> Volume<f64> {
     Volume::from_shape_fn(make_grid(), |[i, j, _]| {
-        let bone = i >= 11 && i < 21 && j >= 11 && j < 21;
-        if bone { 500.0_f64 } else { 0.0_f64 } // bone ≈ 500 HU, water = 0 HU
+        let bone = (11..21).contains(&i) && (11..21).contains(&j);
+        if bone {
+            500.0_f64
+        } else {
+            0.0_f64
+        } // bone ≈ 500 HU, water = 0 HU
     })
 }
 
@@ -74,9 +79,13 @@ fn shift_phantom(ct: &Volume<f64>, si: isize, sj: isize) -> Volume<f64> {
 fn build_attenuation_map(ct: &Volume<f64>) -> Volume<f64> {
     attenuation_map(
         ct,
-        MassAttenuation::new(MU_WATER_CM).expect("valid μ/ρ"),
+        MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(
+            MU_WATER_CM,
+        ))
+        .expect("valid μ/ρ"),
         1.0_f64,
     )
+    .expect("fixture calibration is finite")
 }
 
 fn four_field_box(fluence: f64) -> Vec<DeliveryFrame<f64>> {
@@ -100,6 +109,7 @@ fn compute_dose(mu: &Volume<f64>) -> Volume<f64> {
         LEAF_WIDTH_MM,
         0.5_f64,
     )
+    .expect("attenuation map satisfies Hyperion's transport contract")
 }
 
 fn main() {
@@ -160,7 +170,7 @@ fn main() {
         0.03_f64, // 3% dose criterion
         2.0_f64,  // 2 mm DTA
         d_max_plan,
-        6.0_f64,  // search radius
+        6.0_f64, // search radius
     )
     .expect("identical grids");
     let pass_rate = gamma_pass_rate(&gamma, &plan_dose, 0.0_f64);
@@ -178,15 +188,27 @@ fn main() {
 
     println!("  Gamma pass-rate (3%/2mm):    {:.1}%", pass_rate * 100.0);
     println!("  Mean dose deviation:         {:.2}%", mean_dev * 100.0);
-    println!("  PTV dose (planned):  mean = {:.4e}  noise = {:.4e}", ptv_stats.mean, ptv_stats.std);
-    println!("  PTV dose (corrected): mean = {:.4e}  noise = {:.4e}", ptv_stats_corr.mean, ptv_stats_corr.std);
+    println!(
+        "  PTV dose (planned):  mean = {:.4e}  noise = {:.4e}",
+        ptv_stats.mean, ptv_stats.std
+    );
+    println!(
+        "  PTV dose (corrected): mean = {:.4e}  noise = {:.4e}",
+        ptv_stats_corr.mean, ptv_stats_corr.std
+    );
 
     // Clinical acceptance criteria
     let gamma_ok = pass_rate >= 0.95;
     let dvh_ok = mean_dev < 0.05; // < 5% mean dose deviation
 
-    println!("\n  Gamma ≥ 95%:     {}", if gamma_ok { "✓ PASS" } else { "✗ FAIL" });
-    println!("  DVH deviation < 5%: {}", if dvh_ok { "✓ PASS" } else { "✗ FAIL" });
+    println!(
+        "\n  Gamma ≥ 95%:     {}",
+        if gamma_ok { "✓ PASS" } else { "✗ FAIL" }
+    );
+    println!(
+        "  DVH deviation < 5%: {}",
+        if dvh_ok { "✓ PASS" } else { "✗ FAIL" }
+    );
 
     let decision = if gamma_ok && dvh_ok {
         "PROCEED — couch-corrected delivery within clinical tolerance"
@@ -197,7 +219,10 @@ fn main() {
 
     // Verify core properties
     assert!(plan_dvh.max() > 1e-12, "Planned dose must be positive");
-    assert!(corrected_dvh.max() > 1e-12, "Corrected dose must be positive");
+    assert!(
+        corrected_dvh.max() > 1e-12,
+        "Corrected dose must be positive"
+    );
 
     println!("\nAll adaptive RT workflow steps completed successfully ✓");
     println!("\nBook chapter: Part V — Adaptive Radiotherapy with MVCT");

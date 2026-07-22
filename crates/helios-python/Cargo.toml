@@ -25,6 +25,7 @@ crate-type = ["cdylib"]
 workspace = true
 
 [dependencies]
+aequitas = { workspace = true }
 # Geometry-free wrappers only: physics/planning consumed without the geometry
 # feature so the binding layer stays thin and infra-light.
 helios-physics = { path = "../helios-physics", default-features = false }

@@ -40,13 +40,14 @@
 //! cargo run -p helios-solver --example collapsed_cone_3d
 //! ```
 
+use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Point3;
-use helios_physics::MassAttenuation;
 use helios_solver::{
     attenuation_map, dose_convolution_x, exponential_deposition_kernel, primary_fluence_parallel_x,
     scatter_superposition, symmetric_deposition_kernel,
 };
+use hyperion::coefficient::MassAttenuation;
 
 fn main() {
     println!("=== Collapsed-Cone 3-D Dose Engine ===\n");
@@ -79,10 +80,14 @@ fn main() {
     let ct_hu = Volume::from_shape_fn(grid, |_| 0.0_f64);
 
     // Water at 6 MV: μ/ρ ≈ 0.0636 cm²/g, ρ_water = 1.0 g/cm³ → μ ≈ 0.0636 cm⁻¹.
-    let mu_over_rho = MassAttenuation::new(0.0636_f64).expect("valid mass attenuation");
+    let mu_over_rho = MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(
+        0.0636_f64,
+    ))
+    .expect("valid mass attenuation");
     let water_rho = 1.0_f64; // g/cm³
 
-    let mu = attenuation_map(&ct_hu, mu_over_rho, water_rho);
+    let mu = attenuation_map(&ct_hu, mu_over_rho, water_rho)
+        .expect("water calibration produces finite attenuation");
 
     let mu_center = mu.get(nx / 2, ny / 2, nz / 2).unwrap();
     println!("Stage 1 — CT → μ map (Compton-dominated 6 MV approximation)");
@@ -91,7 +96,8 @@ fn main() {
 
     // ── 3. Primary fluence — Beer–Lambert along +x ────────────────────────────
     let incident_fluence = 1.0_f64; // normalized to 1 at entry face
-    let primary = primary_fluence_parallel_x(&mu, incident_fluence);
+    let primary = primary_fluence_parallel_x(&mu, incident_fluence)
+        .expect("attenuation map satisfies Hyperion's transport contract");
 
     let voxel_cm = spacing_mm * 0.1; // mm → cm
     let expected_surface = incident_fluence * (-mu_center * 0.0 * voxel_cm).exp();

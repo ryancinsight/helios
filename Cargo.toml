@@ -89,16 +89,17 @@ coeus-tensor = { git = "https://github.com/ryancinsight/Coeus.git" }
 coeus-autograd = { git = "https://github.com/ryancinsight/Coeus.git" }
 coeus-optim = { git = "https://github.com/ryancinsight/Coeus.git" }
 # Biological-response laws and their Coeus tape construction.
-asclepius = { git = "https://github.com/ryancinsight/asclepius", rev = "ceb8b6d9e0f119181258a27ae4888aa099b64d99" }
-asclepius-coeus = { git = "https://github.com/ryancinsight/asclepius", rev = "ceb8b6d9e0f119181258a27ae4888aa099b64d99" }
+asclepius = { git = "https://github.com/ryancinsight/asclepius", rev = "e85350d68a4652a80c66e98d55b94cfbdc601850" }
+asclepius-coeus = { git = "https://github.com/ryancinsight/asclepius", rev = "e85350d68a4652a80c66e98d55b94cfbdc601850" }
 # Volumetric storage (HDF5/Zarr, compression).
 consus-core = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
 consus-hdf5 = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
 consus-io = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
 consus-compression = { git = "https://github.com/ryancinsight/consus", features = ["std", "deflate"] }
 # Numeric datatype SSOT (Scalar seam: RealField/FloatElement/NumericElement).
-aequitas = { git = "https://github.com/ryancinsight/aequitas", rev = "be3a1ac91286a17aecf18f0065d2aa6b385eb67b" }
-proteus = { git = "https://github.com/ryancinsight/proteus", rev = "f6dec722788f215c6c9ef1d1e76c3be11ae28918" }
+aequitas = { git = "https://github.com/ryancinsight/aequitas", rev = "cf9b2c3debabf0c08a2769fa8246908ad7cf53da" }
+proteus = { git = "https://github.com/ryancinsight/proteus", rev = "a61d0e5647503e7b44e7489be373fc2b20f62785" }
+hyperion = { git = "https://github.com/ryancinsight/hyperion", rev = "064a18985b4e24764d45825a06ed4ec86c9e5d28" }
 eunomia = { git = "https://github.com/ryancinsight/eunomia" }
 tyche-core = { git = "https://github.com/ryancinsight/tyche", rev = "0fc810befc6df43a5e24139080489313d31b0f87" }
 # Array substrate + geometry primitives, and portable SIMD.

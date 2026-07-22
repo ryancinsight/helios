@@ -32,9 +32,12 @@ helios-core                                             foundation
 ```
 
 Strictly unidirectional layering; Atlas crates (ritk, gaia, hephaestus, moirai,
-coeus, asclepius, proteus, consus, leto, hermes, mnemosyne, themis, apollo) are
-consumed as remote git dependencies. Full crate responsibilities and the Atlas
-dependency map are in
+coeus, asclepius, proteus, hyperion, consus, leto, hermes, mnemosyne, themis,
+apollo) are consumed as remote git dependencies. Hyperion owns photon/optical
+coefficient validation and transport laws; Proteus owns material density;
+Helios owns CT calibration, spatial projection, dose, imaging, and delivery.
+Helios does not mirror or re-export either provider vocabulary. Full crate
+responsibilities and the Atlas dependency map are in
 [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Building
@@ -61,10 +64,13 @@ fails closed on a reproduced family-wise regression or incomplete evidence.
 1. **Sprint 1 — Foundation:** workspace skeleton, `helios-core`, `helios-math`
    seam, `helios-domain` (`VoxelGrid` + `Volume`), and provider-owned CT/MVCT
    DICOM ingest. *(implemented)*
-2. **Sprint 2 — Physics & GPU foundation:** photon attenuation, hephaestus/Moirai
-   execution, deterministic CPU dose and baseline imaging projection kernels,
-   and GPU HU→μ conversion. *(implemented baseline; exact and GPU projection
-   remain tracked)*
+2. **Sprint 2 — Physics & GPU foundation:** Hyperion-owned photon attenuation,
+   hephaestus/Moirai execution, deterministic CPU dose and baseline imaging
+   projection kernels, and GPU HU→μ conversion. The provider cutover deletes
+   Helios's coefficient types, NIST tables, and Beer–Lambert implementation;
+   Helios retains only consumer-specific calibration and spatial/dose kernels.
+   *(provider cutover complete; exact and GPU spatial projection remain tracked
+   as Helios integration work)*
 3. **Sprint 3 — Delivery:** binary-MLC modeling, collimator aperture, helical
    TomoTherapy delivery, and beam-following collapsed-cone dose. *(implemented)*
 4. **Sprint 4 — Planning & imaging:** Coeus planning objectives and dedicated

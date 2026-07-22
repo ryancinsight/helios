@@ -10,9 +10,11 @@
 
 use crate::delivery::DeliveryFrame;
 use crate::dose_accumulation::{beamlet_ray, gantry_basis, BeamGeometry};
+use aequitas::systems::si::quantities::Dimensionless;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement};
 use helios_solver::forward_project_ray;
+use hyperion::{quantity::OpticalDepth, TransportError};
 
 /// Portal exit fluence per MLC leaf for one delivery `frame` through `mu`.
 ///
@@ -21,14 +23,18 @@ use helios_solver::forward_project_ray;
 /// `leaf_fluence[l] · exp(−τ_l)`. `geometry`/`leaf_width_mm`/`step_mm` are as in
 /// [`accumulate_delivered_dose`](crate::accumulate_delivered_dose). A leaf whose
 /// beamlet misses the volume reads its full (unattenuated) fluence.
-#[must_use]
+///
+/// # Errors
+///
+/// Returns [`TransportError`] if a beamlet produces a negative or non-finite
+/// optical depth.
 pub fn frame_portal_fluence<T: GeometryScalar>(
     frame: &DeliveryFrame<T>,
     mu: &Volume<T>,
     geometry: BeamGeometry<T>,
     leaf_width_mm: T,
     step_mm: T,
-) -> Vec<T> {
+) -> Result<Vec<T>, TransportError<T>> {
     let zero = <T as NumericElement>::ZERO;
     let (centre, dir, perp) = gantry_basis(mu.grid(), frame.gantry_angle_rad);
     frame
@@ -37,12 +43,16 @@ pub fn frame_portal_fluence<T: GeometryScalar>(
         .enumerate()
         .map(|(leaf, &fluence)| {
             if fluence <= zero {
-                return zero; // closed leaf: no exit signal.
+                return Ok(zero); // closed leaf: no exit signal.
             }
             let tau = beamlet_ray(centre, dir, perp, frame, leaf, leaf_width_mm, geometry)
                 .and_then(|beamlet| forward_project_ray(mu, &beamlet.ray, step_mm))
                 .unwrap_or(zero);
-            fluence * (-tau).exp()
+            let transmission = OpticalDepth::new(Dimensionless::from_base(tau))?
+                .transmission()
+                .into_quantity()
+                .into_base();
+            Ok(fluence * transmission)
         })
         .collect()
 }
@@ -78,7 +88,8 @@ mod tests {
             BeamGeometry::Parallel { standoff_mm: 500.0 },
             2.0,
             0.25,
-        );
+        )
+        .expect("valid attenuation volume");
         assert_relative_eq!(portal[0], 2.0, epsilon = 1e-9);
     }
 
@@ -92,7 +103,8 @@ mod tests {
             BeamGeometry::Parallel { standoff_mm: 500.0 },
             2.0,
             0.25,
-        );
+        )
+        .expect("valid attenuation volume");
         assert_relative_eq!(portal[0], 3.0 * (-0.05 * 1.6_f64).exp(), epsilon = 1e-9);
     }
 
@@ -108,11 +120,14 @@ mod tests {
             couch_mm: 8.0,
             leaf_fluence: vec![1.0, 0.0, 1.0],
         };
-        let portal = frame_portal_fluence(&frame, &mu_lo, geom, 2.0, 0.25);
+        let portal = frame_portal_fluence(&frame, &mu_lo, geom, 2.0, 0.25)
+            .expect("valid attenuation volume");
         assert_relative_eq!(portal[1], 0.0, epsilon = 1e-15);
         // Higher μ darkens the transmitted signal (central leaf).
-        let lo = frame_portal_fluence(&single_leaf_frame(1.0), &mu_lo, geom, 2.0, 0.25)[0];
-        let hi = frame_portal_fluence(&single_leaf_frame(1.0), &mu_hi, geom, 2.0, 0.25)[0];
+        let lo = frame_portal_fluence(&single_leaf_frame(1.0), &mu_lo, geom, 2.0, 0.25)
+            .expect("valid attenuation volume")[0];
+        let hi = frame_portal_fluence(&single_leaf_frame(1.0), &mu_hi, geom, 2.0, 0.25)
+            .expect("valid attenuation volume")[0];
         assert!(
             hi < lo && hi > 0.0,
             "more attenuation must darken: {hi} !< {lo}"
@@ -137,7 +152,27 @@ mod tests {
             BeamGeometry::Parallel { standoff_mm: 500.0 },
             2.0,
             0.25,
-        );
+        )
+        .expect("valid attenuation volume");
         assert_relative_eq!(portal[0], 2.0_f32 * (-0.05_f32 * 1.6).exp(), epsilon = 1e-5);
+    }
+
+    #[test]
+    fn negative_projected_optical_depth_is_rejected() {
+        let error = frame_portal_fluence(
+            &single_leaf_frame(1.0),
+            &uniform_cube(-0.05),
+            BeamGeometry::Parallel { standoff_mm: 500.0 },
+            2.0,
+            0.25,
+        )
+        .expect_err("negative optical depth must fail");
+        assert!(matches!(
+            error,
+            TransportError::InvalidValue {
+                field: hyperion::ValueKind::OpticalDepth,
+                ..
+            }
+        ));
     }
 }

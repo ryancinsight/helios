@@ -8,6 +8,36 @@
 
 ## Owner: Codex
 
+## Codex — H-080/H-081 Hyperion transport ownership [arch] [major] — done 2026-07-21
+
+- [x] Pin public Hyperion, current Aequitas/Proteus, and the aligned Asclepius,
+      Leto, and Hephaestus prerequisite revisions with one Aequitas identity.
+- [x] Delete Helios's coefficient types, NIST tables, projection wrapper, and
+      physics-level Beer–Lambert owner; retain CT calibration and Compton source
+      models in `helios-physics`.
+- [x] Make HU→linear attenuation use Proteus density and Hyperion
+      mass-to-linear conversion directly, with typed density/transport errors.
+- [x] Route primary fluence, helical acquisition, portal fluence, quantum noise,
+      and the GPU CPU-reference oracle through Hyperion optical-depth and
+      transmission contracts; add negative-input regressions.
+- [x] Complete focused and full-workspace Nextest, doctest, Rustdoc, example,
+      residue, dependency-policy, and SemVer gates.
+- [x] Execute H-081 as the next vertical increment: transactional Hyperion
+      validation for mutating TERMA deposition without per-segment allocation.
+
+Exact shared-target evidence: workspace formatting and all-feature,
+warning-denied Clippy passed; configured CI-profile Nextest passed 257/257
+(run `68541af6-5173-47fd-8c9c-7043656d08de`); all-feature doctests,
+warning-denied Rustdoc, workspace examples, and `cargo deny check` passed.
+The focused transport run passed 147/147
+(`399d558f-1089-4591-b677-ace0dc0cd43e`) including typed negative-input,
+transactional TERMA, analytical attenuation, energy-conservation, step-size,
+and CPU/GPU differential oracles. Residue scans found no Helios coefficient,
+NIST-table, projection-law, or production Beer–Lambert owner. SemVer checks
+passed 196/196 for solver, simulation, imaging, and GPU; physics reported the
+four intended major removals (enum, functions, modules, and structs), with no
+compatibility facade retained.
+
 ## Codex — H-079 Tyche stream CI correction [patch] — done 2026-07-21
 
 - [x] Format the GPU example exposed by the full-workspace formatter.

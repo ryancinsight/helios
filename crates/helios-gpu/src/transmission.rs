@@ -4,7 +4,8 @@
 //! into MVCT detector transmission `exp(−τ)` on the GPU with hephaestus-wgpu's
 //! fused [`ExpNegOp`] kernel — one dispatch, no intermediate device buffer
 //! (previously a `NegOp` → `ExpOp` chain; the fused op was upstreamed for this
-//! path, H-043b). Differentially validated against the CPU `f32::exp` reference.
+//! path, H-043b). Differentially validated against Hyperion's CPU optical-depth
+//! transport law.
 
 use hephaestus_core::{BlockWidth, ComputeDevice, Result};
 use hephaestus_wgpu::{unary_elementwise_strided, ExpNegOp, StridedOperand, WgpuDevice};
@@ -45,9 +46,11 @@ pub fn beam_transmission_into(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use aequitas::systems::si::quantities::Dimensionless;
+    use hyperion::quantity::OpticalDepth;
 
     #[test]
-    fn gpu_transmission_matches_cpu_exp() {
+    fn gpu_transmission_matches_hyperion_transport() {
         // Requires a GPU adapter; skip cleanly if none is present.
         let Ok(device) = crate::default_device() else {
             eprintln!("no GPU adapter — skipping GPU transmission test");
@@ -57,7 +60,11 @@ mod tests {
         let mut got = [0.0_f32; 7];
         beam_transmission_into(&device, &tau, &mut got).expect("gpu transmission");
         for (&t, &g) in tau.iter().zip(got.iter()) {
-            let cpu = (-t).exp();
+            let cpu = OpticalDepth::new(Dimensionless::from_base(t))
+                .expect("fixture optical depth is valid")
+                .transmission()
+                .into_quantity()
+                .into_base();
             // f32 GPU exp vs CPU exp: agree to a few ULP → relative bound 1e-5.
             assert!(
                 (g - cpu).abs() <= 1e-5 * (1.0 + cpu.abs()),

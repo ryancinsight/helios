@@ -17,7 +17,9 @@
 //! sampler type; changing either deliberately selects a different noise field.
 
 use crate::radon::Sinogram;
+use aequitas::systems::si::quantities::Dimensionless;
 use helios_math::GeometryScalar;
+use hyperion::{quantity::OpticalDepth, TransportError};
 use tyche_core::{Seed, SplitMix64, StandardNormal};
 
 /// Add MVCT quantum noise to a sinogram of line integrals `τ`, returning the
@@ -33,23 +35,42 @@ use tyche_core::{Seed, SplitMix64, StandardNormal};
 /// # Panics
 /// Does not panic; `photons_per_ray` should be positive (a non-positive value
 /// yields a degenerate all-`NaN`/`Inf` sinogram, the caller's contract).
-#[must_use]
+///
+/// # Errors
+///
+/// Returns [`TransportError`] if a sinogram reading is a negative or non-finite
+/// optical depth.
 pub fn add_quantum_noise<T: GeometryScalar>(
     sinogram: &Sinogram<T>,
     photons_per_ray: f64,
     seed: u64,
-) -> Sinogram<T> {
+) -> Result<Sinogram<T>, TransportError<f64>> {
     let seed = Seed::new(seed);
     let mut sample_index = 0_u64;
-    sinogram.map_readings(|tau_t| {
-        let tau = tau_t.to_f64();
-        let expected = photons_per_ray * (-tau).exp();
-        let gaussian = StandardNormal::<f64, SplitMix64>::at(seed, sample_index, 0);
-        sample_index = sample_index.wrapping_add(1);
-        let noisy = expected + expected.sqrt() * gaussian;
-        let counts = noisy.max(1.0);
-        <T as GeometryScalar>::from_f64(-(counts / photons_per_ray).ln())
-    })
+    let (angle_count, offset_count) = sinogram.dims();
+    let mut readings = Vec::with_capacity(angle_count * offset_count);
+    for angle in 0..angle_count {
+        for offset in 0..offset_count {
+            let optical_depth = OpticalDepth::new(Dimensionless::from_base(
+                sinogram.get(angle, offset).to_f64(),
+            ))?;
+            let transmission = optical_depth.transmission().into_quantity().into_base();
+            let expected = photons_per_ray * transmission;
+            let gaussian = StandardNormal::<f64, SplitMix64>::at(seed, sample_index, 0);
+            sample_index = sample_index.wrapping_add(1);
+            let noisy = expected + expected.sqrt() * gaussian;
+            let counts = noisy.max(1.0);
+            readings.push(<T as GeometryScalar>::from_f64(
+                -(counts / photons_per_ray).ln(),
+            ));
+        }
+    }
+    Ok(Sinogram::from_readings(
+        sinogram.angles().to_vec(),
+        sinogram.offsets().to_vec(),
+        readings,
+    )
+    .expect("invariant: one noisy reading is produced for each sinogram cell"))
 }
 
 #[cfg(test)]
@@ -74,9 +95,9 @@ mod tests {
     #[test]
     fn same_seed_is_deterministic_different_seed_differs() {
         let clean = constant_sinogram(0.5, 256);
-        let a = add_quantum_noise(&clean, 1.0e4, 42);
-        let b = add_quantum_noise(&clean, 1.0e4, 42);
-        let c = add_quantum_noise(&clean, 1.0e4, 43);
+        let a = add_quantum_noise(&clean, 1.0e4, 42).expect("valid optical depths");
+        let b = add_quantum_noise(&clean, 1.0e4, 42).expect("valid optical depths");
+        let c = add_quantum_noise(&clean, 1.0e4, 43).expect("valid optical depths");
         assert_eq!(a, b, "same seed must reproduce exactly");
         assert_ne!(a, c, "different seed must differ");
     }
@@ -84,7 +105,7 @@ mod tests {
     #[test]
     fn tyche_seed_mapping_is_pinned() {
         let clean = constant_sinogram(0.5, 1);
-        let noisy = add_quantum_noise(&clean, 1.0e4, 42);
+        let noisy = add_quantum_noise(&clean, 1.0e4, 42).expect("valid optical depths");
         assert_eq!(SplitMix64::VERSION.get(), 1);
         assert_eq!(noisy.get(0, 0).to_bits(), 0x3FDE_CF39_220D_DC6B);
     }
@@ -93,7 +114,7 @@ mod tests {
     fn high_flux_limit_recovers_clean_line_integrals() {
         // As N₀ → ∞ the relative noise 1/√N → 0, so τ' → τ.
         let clean = constant_sinogram(0.7, 128);
-        let noisy = add_quantum_noise(&clean, 1.0e14, 7);
+        let noisy = add_quantum_noise(&clean, 1.0e14, 7).expect("valid optical depths");
         for j in 0..128 {
             assert!(
                 (noisy.get(0, j) - 0.7).abs() < 1e-5,
@@ -108,7 +129,8 @@ mod tests {
         // has relative error √(2/n) ≈ 1% at n = 20000 → 10% tolerance is safe.
         let tau0 = 0.5;
         let n0 = 1.0e4;
-        let noisy = add_quantum_noise(&constant_sinogram(tau0, 20_000), n0, 2024);
+        let noisy = add_quantum_noise(&constant_sinogram(tau0, 20_000), n0, 2024)
+            .expect("valid optical depths");
         let (mean, var) = mean_and_var(&noisy);
         let expected_var = tau0.exp() / n0;
         assert!(
@@ -123,9 +145,12 @@ mod tests {
     fn noise_grows_with_attenuation() {
         // Var(τ') = exp(τ)/N₀ increases with τ: a thicker path is noisier.
         let n0 = 1.0e4;
-        let (_, var_low) = mean_and_var(&add_quantum_noise(&constant_sinogram(0.2, 20_000), n0, 1));
-        let (_, var_high) =
-            mean_and_var(&add_quantum_noise(&constant_sinogram(1.5, 20_000), n0, 1));
+        let low = add_quantum_noise(&constant_sinogram(0.2, 20_000), n0, 1)
+            .expect("valid optical depths");
+        let high = add_quantum_noise(&constant_sinogram(1.5, 20_000), n0, 1)
+            .expect("valid optical depths");
+        let (_, var_low) = mean_and_var(&low);
+        let (_, var_high) = mean_and_var(&high);
         assert!(
             var_high > var_low * 2.0,
             "high-τ noise {var_high:.3e} should dominate low-τ {var_low:.3e}"
@@ -136,11 +161,24 @@ mod tests {
     fn noise_model_is_generic_over_scalar_f32() {
         let offsets: Vec<f32> = (0..64).map(|i| i as f32).collect();
         let clean = Sinogram::from_readings(vec![0.0_f32], offsets, vec![0.5_f32; 64]).unwrap();
-        let a = add_quantum_noise(&clean, 1.0e4, 99);
-        let b = add_quantum_noise(&clean, 1.0e4, 99);
+        let a = add_quantum_noise(&clean, 1.0e4, 99).expect("valid optical depths");
+        let b = add_quantum_noise(&clean, 1.0e4, 99).expect("valid optical depths");
         assert_eq!(a, b);
         // High flux → near-clean.
-        let hi = add_quantum_noise(&clean, 1.0e12, 99);
+        let hi = add_quantum_noise(&clean, 1.0e12, 99).expect("valid optical depths");
         assert!((hi.get(0, 0) - 0.5_f32).abs() < 1e-3);
+    }
+
+    #[test]
+    fn negative_optical_depth_is_rejected() {
+        let error = add_quantum_noise(&constant_sinogram(-0.1, 1), 1.0e4, 7)
+            .expect_err("negative optical depth must fail");
+        assert!(matches!(
+            error,
+            TransportError::InvalidValue {
+                field: hyperion::ValueKind::OpticalDepth,
+                ..
+            }
+        ));
     }
 }

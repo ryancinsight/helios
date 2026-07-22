@@ -211,8 +211,10 @@ mod tests {
         .std;
 
         // Low flux → visible noise; high flux → less. Both exceed the clean ripple.
-        let low = add_quantum_noise(&clean_sino, 1.0e4, 20260701);
-        let high = add_quantum_noise(&clean_sino, 1.0e6, 20260701);
+        let low = add_quantum_noise(&clean_sino, 1.0e4, 20260701)
+            .expect("forward projection produces valid optical depths");
+        let high = add_quantum_noise(&clean_sino, 1.0e6, 20260701)
+            .expect("forward projection produces valid optical depths");
         let std_low = roi_statistics(
             &filtered_back_projection(&low, &recon_grid()),
             interior,

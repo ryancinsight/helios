@@ -12,10 +12,12 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+aequitas = { workspace = true }
 helios-core = { workspace = true }
 helios-math = { workspace = true }
 helios-domain = { workspace = true }
 helios-solver = { workspace = true }
+hyperion = { workspace = true }
 tyche-core = { workspace = true }
 
 [dev-dependencies]
