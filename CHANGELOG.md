@@ -35,6 +35,10 @@ under a Breaking subsection.
 
 ### Fixed
 
+- H-082 aligns every hosted path-dependency checkout with Atlas `4ff5c07`,
+  whose gitlinks match the provider revisions used by the Hyperion consumer
+  lock, so locked Rust and Python builds resolve the same graph as local gates.
+
 - H-079: aligned hosted provider materialization with the lock's Atlas graph,
   restored the historical benchmark baseline's Tyche path dependency, and
   formatted the GPU attenuation and analysis validation examples required by

@@ -18,18 +18,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@97f9b7e65cfbf3e445e1b0525fe2b3489700e14e
+      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@4ff5c072ad74a941fcaf435aabfee4521fea6935
         with:
           manifest: Cargo.toml
           destination: ..
-          atlas_ref: 97f9b7e65cfbf3e445e1b0525fe2b3489700e14e
+          atlas_ref: 4ff5c072ad74a941fcaf435aabfee4521fea6935
 
       - name: Checkout Coeus path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@97f9b7e65cfbf3e445e1b0525fe2b3489700e14e
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@4ff5c072ad74a941fcaf435aabfee4521fea6935
         with:
           manifest: ../coeus/Cargo.toml
           destination: ..
-          atlas_ref: 97f9b7e65cfbf3e445e1b0525fe2b3489700e14e
+          atlas_ref: 4ff5c072ad74a941fcaf435aabfee4521fea6935
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -82,18 +82,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@97f9b7e65cfbf3e445e1b0525fe2b3489700e14e
+      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@4ff5c072ad74a941fcaf435aabfee4521fea6935
         with:
           manifest: Cargo.toml
           destination: ..
-          atlas_ref: 97f9b7e65cfbf3e445e1b0525fe2b3489700e14e
+          atlas_ref: 4ff5c072ad74a941fcaf435aabfee4521fea6935
 
       - name: Checkout Coeus path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@97f9b7e65cfbf3e445e1b0525fe2b3489700e14e
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@4ff5c072ad74a941fcaf435aabfee4521fea6935
         with:
           manifest: ../coeus/Cargo.toml
           destination: ..
-          atlas_ref: 97f9b7e65cfbf3e445e1b0525fe2b3489700e14e
+          atlas_ref: 4ff5c072ad74a941fcaf435aabfee4521fea6935
 
       - uses: actions/setup-python@v6
         with:
@@ -144,25 +144,25 @@ jobs:
           path: atlas-tool
 
       - name: Checkout candidate path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@97f9b7e65cfbf3e445e1b0525fe2b3489700e14e
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@4ff5c072ad74a941fcaf435aabfee4521fea6935
         with:
           manifest: helios-candidate/Cargo.toml
           destination: .
-          atlas_ref: 97f9b7e65cfbf3e445e1b0525fe2b3489700e14e
+          atlas_ref: 4ff5c072ad74a941fcaf435aabfee4521fea6935
 
       - name: Checkout historical baseline path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@97f9b7e65cfbf3e445e1b0525fe2b3489700e14e
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@4ff5c072ad74a941fcaf435aabfee4521fea6935
         with:
           manifest: helios-baseline/Cargo.toml
           destination: .
-          atlas_ref: 97f9b7e65cfbf3e445e1b0525fe2b3489700e14e
+          atlas_ref: 4ff5c072ad74a941fcaf435aabfee4521fea6935
 
       - name: Checkout Coeus path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@97f9b7e65cfbf3e445e1b0525fe2b3489700e14e
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@4ff5c072ad74a941fcaf435aabfee4521fea6935
         with:
           manifest: coeus/Cargo.toml
           destination: .
-          atlas_ref: 97f9b7e65cfbf3e445e1b0525fe2b3489700e14e
+          atlas_ref: 4ff5c072ad74a941fcaf435aabfee4521fea6935
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable

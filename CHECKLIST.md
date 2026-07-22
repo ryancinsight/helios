@@ -8,6 +8,14 @@
 
 ## Owner: Codex
 
+## Codex — H-082 hosted provider graph correction [patch] — in progress 2026-07-21
+
+- [x] Publish Atlas graph `4ff5c07` with the exact Aequitas, Proteus,
+      Asclepius, Leto, Hephaestus, and Helios revisions used by the lock.
+- [x] Pin every hosted path-dependency materialization step to that graph.
+- [ ] Pass the Rust workspace and built-wheel Python jobs at the correction
+      head; record the exact run and revision.
+
 ## Codex — H-080/H-081 Hyperion transport ownership [arch] [major] — done 2026-07-21
 
 - [x] Pin public Hyperion, current Aequitas/Proteus, and the aligned Asclepius,
