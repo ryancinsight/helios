@@ -9,6 +9,10 @@ under a Breaking subsection.
 
 ### Changed
 
+- H-085 precompiles each exact Criterion target outside its execution budget,
+  smoke-runs every benchmark ID under a 60-second deadline, and bounds each
+  full benchmark binary at 300 seconds without changing workloads, baselines,
+  counterbalancing, confidence classification, or regression thresholds.
 - H-083 makes the mdBook build deterministic (`create-missing = false`) and
   enables MathJax rendering. Its API, dependency, GPU, numeric, and changelog
   pages now reflect the current crate re-exports and canonical root documents;
