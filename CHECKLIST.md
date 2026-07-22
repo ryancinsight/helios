@@ -781,6 +781,18 @@ H-021 delivery simulation stepping.
   remaining 10 crates are added when their layer is built (architecture_scoping
   growth triggers). `workspace.dependencies` declares the full Atlas set now as the
   integration SSOT.
+## Codex — H-085 benchmark runtime budgets [patch] — done 2026-07-22
+
+- [x] Keep one benchmark-target list as the SSOT for exact precompile, smoke,
+  and full replicated measurements.
+- [x] Precompile candidate and baseline targets outside execution deadlines.
+- [x] Smoke-run every Criterion ID once with a 60-second deadline and enforce
+  a 300-second deadline plus bounded termination grace per full binary.
+- [x] Preserve benchmark workloads, baselines, phase reversal, confidence
+  classification, and regression thresholds.
+- [x] Pass exact-head Rust, Python, smoke, full measurement, and replicated
+  classification in hosted run `29955993829` at `e6add109`.
+
 ## H-076 done 2026-07-20 — Asclepius response ownership
 
 - [x] Delete Helios's duplicate gEUD, logistic TCP, and Lyman NTCP functions.

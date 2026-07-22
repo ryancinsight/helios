@@ -124,6 +124,17 @@ jobs:
     timeout-minutes: 60
     env:
       CARGO_TARGET_DIR: ${{ github.workspace }}/target
+      # Criterion 0.5 defaults to 3 s warm-up + 5 s measurement per ID. The
+      # largest Helios binary has ten IDs (80 s modelled measurement time);
+      # 300 s bounds initialization, slow iterations, and runner variance.
+      BENCH_FULL_TIMEOUT_SECONDS: 300
+      BENCH_SMOKE_TIMEOUT_SECONDS: 60
+      BENCH_TIMEOUT_KILL_GRACE_SECONDS: 10
+      BENCHMARK_TARGETS: |
+        helios-analysis:dvh_queries
+        helios-gpu:projection_throughput
+        helios-gpu:transmission_throughput
+        helios-solver:scatter_superposition
     steps:
       - name: Checkout baseline
         uses: actions/checkout@v6
@@ -202,7 +213,25 @@ jobs:
               "helios-candidate/crates/$crate/benches"
           done
 
-      - name: Measure phase-reversed replications
+      - name: Compile benchmark binaries outside runtime budgets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for revision in helios-candidate helios-baseline; do
+            while IFS=: read -r package benchmark; do
+              [[ -n "$package" ]] || continue
+              cargo bench \
+                --manifest-path "$revision/Cargo.toml" \
+                --locked \
+                --all-features \
+                --package "$package" \
+                --bench "$benchmark" \
+                --no-run
+            done <<<"$BENCHMARK_TARGETS"
+          done
+
+      - name: Smoke and measure phase-reversed replications
         shell: bash
         run: |
           set -euo pipefail
@@ -211,10 +240,17 @@ jobs:
 
           run_benches() {
             local revision="$1"
-            shift
+            local budget_seconds="$2"
+            shift 2
 
             while IFS=: read -r package benchmark; do
-              cargo bench \
+              [[ -n "$package" ]] || continue
+              echo "::group::$revision $package/$benchmark (${budget_seconds}s budget)"
+              timeout \
+                --foreground \
+                --kill-after="${BENCH_TIMEOUT_KILL_GRACE_SECONDS}s" \
+                "${budget_seconds}s" \
+                cargo bench \
                 --manifest-path "$revision/Cargo.toml" \
                 --locked \
                 --all-features \
@@ -222,13 +258,17 @@ jobs:
                 --bench "$benchmark" \
                 -- \
                 "$@"
-            done <<'BENCHMARKS'
-          helios-analysis:dvh_queries
-          helios-gpu:projection_throughput
-          helios-gpu:transmission_throughput
-          helios-solver:scatter_superposition
-          BENCHMARKS
+              echo "::endgroup::"
+            done <<<"$BENCHMARK_TARGETS"
           }
+
+          # Criterion test mode executes every benchmark ID exactly once. The
+          # same suite list drives smoke and full runs, so new binaries cannot
+          # enter regression measurement without the 60 s smoke gate.
+          run_benches \
+            helios-candidate \
+            "$BENCH_SMOKE_TIMEOUT_SECONDS" \
+            --test
 
           compare_pair() {
             local report_root="$1"
@@ -238,6 +278,7 @@ jobs:
             rm -rf "$CARGO_TARGET_DIR/criterion"
             run_benches \
               "$first_revision" \
+              "$BENCH_FULL_TIMEOUT_SECONDS" \
               --save-baseline atlas-base
 
             if [[ -z "$confidence" ]]; then
@@ -254,6 +295,7 @@ jobs:
 
             run_benches \
               "$second_revision" \
+              "$BENCH_FULL_TIMEOUT_SECONDS" \
               --baseline atlas-base \
               --confidence-level "$confidence"
 
