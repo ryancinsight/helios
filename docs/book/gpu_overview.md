@@ -1,32 +1,30 @@
 # Chapter 20 — GPU Backend Overview: Hephaestus Integration
 
-Helios GPU acceleration is provided by hephaestus-wgpu (cross-platform
-WebGPU/Vulkan/Metal/DX12) or hephaestus-cuda (NVIDIA CUDA).
+`helios-gpu` implements Helios-specific kernels over the Atlas
+`hephaestus_core::ComputeDevice` seam and the `hephaestus-wgpu` backend.
+Domain and physics crates do not depend on GPU infrastructure.
 
-## Backend Selection
+## Public operations
 
-`
-ust
-#[cfg(feature = \"gpu-wgpu\")]
-use hephaestus_wgpu::WgpuBackend as GpuBackend;
+- `default_device` acquires a `WgpuDevice`.
+- `GpuAttenuationMapper` maps CT values on the device.
+- `GpuProjector` performs resident-volume projection.
+- `beam_transmission_into` evaluates transmission into caller-provided output
+  storage.
 
-#[cfg(not(feature = \"gpu-wgpu\"))]
-use coeus_core::MoiraiBackend as GpuBackend; // CPU fallback
-`
+GPU buffers use `f32`, matching the wgpu compute boundary. The crate validates
+each GPU operation differentially against its CPU reference; a device failure is
+reported as `HephaestusError` rather than silently selecting another backend.
 
-## GPU Tensor Operations
+## Example
 
-All GPU arrays are hephaestus::Array<T, B, D>, sharing the same API as
-leto::Array<T, _, D> for seamless CPU↔GPU switching.
+Run the live-device example on a host with a compatible adapter:
 
-## Sparse GPU Support
+```text
+cargo run -p helios-gpu --example gpu_attenuation_projection
+```
 
-Both hephaestus-wgpu and hephaestus-cuda include:
-- GpuCsrMatrix<T> — compressed sparse row storage
-- spmv — sparse matrix × dense vector
-- spmm — sparse matrix × dense matrix
-
-## Further Reading
+## Further reading
 
 - [GPU-Accelerated Dose Kernels](gpu_dose.md)
-- [Coeus Tensor Operations](gpu_coeus.md)
+- [GPU Attenuation and Projection Example](examples/gpu_attenuation_projection.md)

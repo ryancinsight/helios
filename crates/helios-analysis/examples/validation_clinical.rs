@@ -153,19 +153,13 @@ fn main() {
     println!("  Cord gEUD (a=3):    {cord_geud:.2} Gy");
 
     // TCP: tumour control probability (logistic model)
-    let tcp = ptv_dvh
-        .tcp_logistic(5.0, 55.0, 3.0)
-        .expect("valid TCP");
+    let tcp = ptv_dvh.tcp_logistic(5.0, 55.0, 3.0).expect("valid TCP");
     println!("  PTV TCP:            {tcp:.4}  ({:.1}%)", tcp * 100.0);
     assert!(tcp > 0.5, "PTV TCP {tcp:.4} below 50%");
 
     // NTCP: normal-tissue complication probability (Lyman-Kutcher-Burman)
-    let parotid_ntcp = parotid_dvh
-        .ntcp_lkb(1.0, 30.0, 0.15)
-        .expect("valid NTCP");
-    let cord_ntcp = cord_dvh
-        .ntcp_lkb(3.0, 45.0, 0.12)
-        .expect("valid NTCP");
+    let parotid_ntcp = parotid_dvh.ntcp_lkb(1.0, 30.0, 0.15).expect("valid NTCP");
+    let cord_ntcp = cord_dvh.ntcp_lkb(3.0, 45.0, 0.12).expect("valid NTCP");
     println!(
         "  Parotid NTCP:       {parotid_ntcp:.4}  ({:.1}%)",
         parotid_ntcp * 100.0
@@ -178,10 +172,7 @@ fn main() {
         parotid_ntcp < 0.30,
         "Parotid NTCP {parotid_ntcp:.4} exceeds 30%"
     );
-    assert!(
-        cord_ntcp < 0.05,
-        "Cord NTCP {cord_ntcp:.4} exceeds 5%"
-    );
+    assert!(cord_ntcp < 0.05, "Cord NTCP {cord_ntcp:.4} exceeds 5%");
 
     println!("\n✓  Biological outcome within clinical tolerance\n");
 

@@ -1,40 +1,28 @@
 # Appendix A — Atlas Crate Dependency Map
 
-Helios sits at the top of the Atlas dependency graph.
+Helios is an Atlas domain consumer. Dependency direction runs from workflow
+orchestration toward domain vocabulary and provider-owned infrastructure.
 
-## Helios Layer Map
+Primary production edges in the workspace manifests are:
 
-`
-helios-simulation   ← top-level integrator
-    ├── helios-imaging       (Radon, FBP)
-    ├── helios-physics       (attenuation, spectra)
-    ├── helios-solver        (attenuation maps)
-    ├── helios-analysis      (DVH, gamma)
-    ├── helios-domain        (VoxelGrid, Volume)
-    ├── helios-math          (Point3, Scalar)
-    └── helios-gpu           (hephaestus wgpu kernels)
+- `helios-simulation` → `helios-solver`, `helios-physics`, and
+  `helios-domain`;
+- `helios-imaging` → `helios-solver` and `helios-domain`;
+- `helios-solver` → `helios-physics` and `helios-domain`;
+- `helios-analysis` → `helios-domain`; and
+- `helios-domain` → `helios-math` and `helios-core`.
 
-Atlas Foundation
-    ├── coeus-core / coeus-tensor  (tensor ops, autodiff)
-    ├── leto                       (CPU arrays)
-    ├── hephaestus-wgpu            (GPU arrays)
-    ├── moirai                     (async runtime + parallelism)
-    ├── mnemosyne                  (memory allocator)
-    ├── hermes-simd                (SIMD kernels)
-    ├── eunomia                    (numeric traits)
-    ├── apollo-fft                 (FFT)
-    └── themis                     (topology / placement)
-`
+The end-to-end examples and tests additionally compose simulation, imaging, and
+analysis through development-only dependencies. Atlas providers own numeric
+traits (`eunomia`), arrays and linear algebra (`leto`), spatial primitives
+(`gaia`), photon transport (`hyperion`), GPU compute (`hephaestus`), parallel
+execution (`moirai`), DICOM decoding (`ritk-dicom`), and volume persistence
+(`consus-hdf5`).
 
-## Third-Party Dependencies
+The root [architecture document](../../ARCHITECTURE.md) owns the complete
+layering and dependency contract. This appendix is a navigation aid, not a
+second dependency specification.
 
-| Crate | Purpose | Will be replaced |
-|---|---|---|
-| dicom (dicom-rs) | DICOM I/O | 
-itk-dicom native path |
-| image | PNG output in examples | Retained (output only) |
-| nyhow | Error propagation | Retained |
-
-## Further Reading
+## Further reading
 
 - [API Reference Index](appendix_api.md)

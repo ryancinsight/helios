@@ -5,6 +5,17 @@ All notable changes to Helios are documented here. Format follows
 [SemVer 2.0.0](https://semver.org/). Pre-1.0: minor bumps may break, documented
 under a Breaking subsection.
 
+## [Unreleased]
+
+### Changed
+
+- H-083 makes the mdBook build deterministic (`create-missing = false`) and
+  enables MathJax rendering. Its API, dependency, GPU, numeric, and changelog
+  pages now reflect the current crate re-exports and canonical root documents;
+  corrupt control characters and unimplemented API claims are removed.
+- The legacy migration allowlist is empty after the audit confirmed zero
+  remaining legacy dependency declarations and source tokens.
+
 ## [0.1.0] — 2026-07-22
 
 ### Breaking

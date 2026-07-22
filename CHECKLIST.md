@@ -8,6 +8,27 @@
 
 ## Owner: Codex
 
+## Codex — H-083 book recovery [patch] — done 2026-07-22
+
+- [x] Take over the unclaimed book draft only after its latest scoped write was
+      unchanged for one hour.
+- [x] Reject draft examples and API claims that have no implementation in the
+      current crate re-exports; retain the source-grounded book baseline.
+- [x] Replace the corrupted duplicate API, dependency, GPU, numeric, and
+      changelog pages with concise source-grounded documentation.
+- [x] Remove the obsolete legacy-surface allowlist entries after the scanner
+      reports zero matching manifests and zero matching source files.
+- [x] Build the complete mdBook with MathJax and missing-source creation
+      disabled; verify every relative Markdown link and workspace Rustdoc.
+
+Exact evidence: `mdbook 0.5.4 build docs/book` completes without warnings;
+the relative-link audit resolves every local target; the control-character scan
+reports none; `cargo run --locked -p xtask -- legacy-migration-audit` reports
+zero legacy manifests/tokens and a clean allowlist; warning-denied workspace
+Rustdoc completes under the pinned 1.97.1 toolchain. The rejected draft named
+nonexistent public types and methods and therefore supplied no compilable API
+evidence.
+
 ## Codex — H-082 hosted provider graph correction [patch] — done 2026-07-21
 
 - [x] Publish Atlas graph `4a69a6a` with the exact Aequitas, Proteus,
