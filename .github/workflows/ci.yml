@@ -130,6 +130,11 @@ jobs:
       BENCH_FULL_TIMEOUT_SECONDS: 300
       BENCH_SMOKE_TIMEOUT_SECONDS: 60
       BENCH_TIMEOUT_KILL_GRACE_SECONDS: 10
+      BENCHMARK_TARGETS: |
+        helios-analysis:dvh_queries
+        helios-gpu:projection_throughput
+        helios-gpu:transmission_throughput
+        helios-solver:scatter_superposition
     steps:
       - name: Checkout baseline
         uses: actions/checkout@v6
@@ -209,19 +214,21 @@ jobs:
           done
 
       - name: Compile benchmark binaries outside runtime budgets
+        shell: bash
         run: |
-          cargo bench \
-            --manifest-path helios-candidate/Cargo.toml \
-            --locked \
-            --workspace \
-            --all-features \
-            --no-run
-          cargo bench \
-            --manifest-path helios-baseline/Cargo.toml \
-            --locked \
-            --workspace \
-            --all-features \
-            --no-run
+          set -euo pipefail
+
+          for revision in helios-candidate helios-baseline; do
+            while IFS=: read -r package benchmark; do
+              cargo bench \
+                --manifest-path "$revision/Cargo.toml" \
+                --locked \
+                --all-features \
+                --package "$package" \
+                --bench "$benchmark" \
+                --no-run
+            done <<<"$BENCHMARK_TARGETS"
+          done
 
       - name: Smoke and measure phase-reversed replications
         shell: bash
@@ -250,12 +257,7 @@ jobs:
                 -- \
                 "$@"
               echo "::endgroup::"
-            done <<'BENCHMARKS'
-          helios-analysis:dvh_queries
-          helios-gpu:projection_throughput
-          helios-gpu:transmission_throughput
-          helios-solver:scatter_superposition
-          BENCHMARKS
+            done <<<"$BENCHMARK_TARGETS"
           }
 
           # Criterion test mode executes every benchmark ID exactly once. The
