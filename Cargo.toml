@@ -97,9 +97,9 @@ consus-hdf5 = { git = "https://github.com/ryancinsight/consus", features = ["std
 consus-io = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
 consus-compression = { git = "https://github.com/ryancinsight/consus", features = ["std", "deflate"] }
 # Numeric datatype SSOT (Scalar seam: RealField/FloatElement/NumericElement).
-aequitas = { git = "https://github.com/ryancinsight/aequitas", rev = "cf9b2c3debabf0c08a2769fa8246908ad7cf53da" }
-proteus = { git = "https://github.com/ryancinsight/proteus", rev = "a61d0e5647503e7b44e7489be373fc2b20f62785" }
-hyperion = { git = "https://github.com/ryancinsight/hyperion", rev = "064a18985b4e24764d45825a06ed4ec86c9e5d28" }
+aequitas = { git = "https://github.com/ryancinsight/aequitas", rev = "262b3e09c19d844f57765d3e4ea6ab2336653d6d", default-features = false, features = ["std"] }
+proteus = { git = "https://github.com/ryancinsight/proteus", rev = "bb51ac414f74fb47d8001310206c5aea2e3a160c" }
+hyperion = { git = "https://github.com/ryancinsight/hyperion", rev = "7b4561b9b51949c8ca59ee2d6f4294cd085ca8a4" }
 eunomia = { git = "https://github.com/ryancinsight/eunomia" }
 tyche-core = { git = "https://github.com/ryancinsight/tyche", rev = "0fc810befc6df43a5e24139080489313d31b0f87" }
 # Array substrate + geometry primitives, and portable SIMD.
@@ -200,6 +200,15 @@ themis = { path = "../themis" }
 
 [patch."https://github.com/ryancinsight/melinoe.git"]
 melinoe = { path = "../melinoe" }
+
+[patch."https://github.com/ryancinsight/aequitas"]
+aequitas = { path = "../aequitas" }
+
+[patch."https://github.com/ryancinsight/proteus"]
+proteus = { path = "../proteus" }
+
+[patch."https://github.com/ryancinsight/hyperion"]
+hyperion = { path = "../hyperion" }
 
 [profile.dev]
 opt-level = 1
