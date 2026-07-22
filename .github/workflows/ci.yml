@@ -220,6 +220,7 @@ jobs:
 
           for revision in helios-candidate helios-baseline; do
             while IFS=: read -r package benchmark; do
+              [[ -n "$package" ]] || continue
               cargo bench \
                 --manifest-path "$revision/Cargo.toml" \
                 --locked \
@@ -243,6 +244,7 @@ jobs:
             shift 2
 
             while IFS=: read -r package benchmark; do
+              [[ -n "$package" ]] || continue
               echo "::group::$revision $package/$benchmark (${budget_seconds}s budget)"
               timeout \
                 --foreground \
