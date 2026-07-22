@@ -82,8 +82,30 @@
 
 ---
 
+# Part VIII — Atlas Stack Integration (Migration Reference)
+
+Helios is one primary consumer of the Atlas stack (the other is kwavers).
+This part documents the Atlas-first design and migration surface area.
+
+- [Migration Overview: ndarray/nalgebra/burn → Atlas](migration_overview.md)
+- [Eunomia: Numeric Trait Unification](migration_eunomia.md)
+- [Leto: Arrays and Linear Algebra](migration_arrays.md)
+- [Leto: Geometry — VoxelGrid, MLC, Beam Isometries](migration_geometry.md)
+- [Hermes: SIMD Lanes and Vectorized Kernels](migration_simd.md)
+- [Mnemosyne and Themis: Memory](migration_memory.md)
+- [Moirai: Concurrency](migration_concurrency.md)
+- [Apollo: FFT and Spectral Methods](migration_fft.md)
+- [Leto: GAT-Based Tiling and Lending Iterators](migration_gat_tiles.md)
+- [Coeus: Tensors and Autodiff](migration_coeus.md)
+- [Ritk: Image I/O — DICOM, NIfTI, PNG](migration_image_io.md)
+- [Migration Validation: TG-119 and Atlas Parity](migration_validation.md)
+
+---
+
 # Appendices
 
 - [Atlas Crate Dependency Map](appendix_dependencies.md)
+- [Atlas Glossary](appendix_glossary.md)
 - [API Reference Index](appendix_api.md)
 - [Changelog](appendix_changelog.md)
+- [Book Organization Forward Roadmap](BOOK_ORGANIZATION.md)
