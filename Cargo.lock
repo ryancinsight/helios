@@ -179,6 +179,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "approx"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cab112f0a86d568ea0e627cc1d6be74a1e9cd55214684db5561995f6dad897c6"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "arrayvec"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1150,6 +1159,7 @@ name = "gaia"
 version = "0.3.0"
 dependencies = [
  "anyhow",
+ "approx",
  "eunomia",
  "geometry-predicates",
  "hashbrown 0.15.5",

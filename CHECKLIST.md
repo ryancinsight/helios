@@ -13,6 +13,8 @@
 - [x] Publish Atlas graph `4ff5c07` with the exact Aequitas, Proteus,
       Asclepius, Leto, Hephaestus, and Helios revisions used by the lock.
 - [x] Pin every hosted path-dependency materialization step to that graph.
+- [x] Regenerate `Cargo.lock` from the committed Atlas graph rather than the
+      shared tree's uncommitted Gaia dependency cleanup.
 - [ ] Pass the Rust workspace and built-wheel Python jobs at the correction
       head; record the exact run and revision.
 
