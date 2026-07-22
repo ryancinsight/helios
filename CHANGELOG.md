@@ -5,7 +5,7 @@ All notable changes to Helios are documented here. Format follows
 [SemVer 2.0.0](https://semver.org/). Pre-1.0: minor bumps may break, documented
 under a Breaking subsection.
 
-## [0.1.0] — Unreleased
+## [0.1.0] — 2026-07-22
 
 ### Breaking
 
