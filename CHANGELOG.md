@@ -36,8 +36,9 @@ under a Breaking subsection.
 ### Fixed
 
 - H-082 aligns every hosted path-dependency checkout and the consumer lock with
-  Atlas `4ff5c07`. The lock now derives from that committed provider graph, not
-  from uncommitted changes in a shared local provider checkout.
+  Atlas `a5279bf`. The lock now derives from that committed provider graph,
+  including Eunomia's provider-owned relative-equality API, rather than from
+  uncommitted changes in shared local provider checkouts.
 
 - H-079: aligned hosted provider materialization with the lock's Atlas graph,
   restored the historical benchmark baseline's Tyche path dependency, and
