@@ -1,43 +1,47 @@
 # Chapter 3 — Scalar Fields and Numeric Abstractions
 
-Helios is generic over the unomia::RealField numeric scalar, allowing
-the same physics code to run at 32 (GPU/staging) or 64 (reference quality).
+Helios uses `helios_math::Scalar`, a re-export of
+`eunomia::RealField`, as its canonical real-number seam. The same generic
+kernel can therefore be instantiated for each scalar type supported by Eunomia
+without duplicating the algorithm.
 
-## The Scalar Hierarchy
+## Scalar hierarchy
 
-`	ext
-eunomia::NumericElement   ← integer types
+```text
+eunomia::NumericElement
          ↓
-eunomia::FloatElement     ← f32, f64
+eunomia::FloatElement
          ↓
-eunomia::RealField        ← algebraic field over ℝ
-`
+eunomia::RealField
+```
 
-## Generic Physics
+`helios-math` also re-exports `NumericElement`, `FloatElement`,
+`CastFrom`, and `CastTo`; domain crates normally depend only on the
+`Scalar` name.
 
-Helios domain objects use T: RealField:
+## Generic kernel
 
-`
-ust
-use helios_domain::Volume;
+```rust
 use helios_math::Scalar;
 
-fn rms_dose<T: Scalar>(dose: &Volume<T>) -> T {
-    let sum = dose.as_slice().iter().fold(T::zero(), |acc, &v| acc + v * v);
-    (sum / T::from_usize(dose.num_voxels()).unwrap()).sqrt()
+fn square<T: Scalar>(value: T) -> T {
+    value * value
 }
-`
+```
 
-## Atlas Crate Integration
+The bound stays on the operation that requires field arithmetic. Storage types
+such as `Volume<T>` do not introduce a second numeric trait.
 
-| Operation | Crate |
+## Atlas ownership
+
+| Concern | Authoritative crate |
 |---|---|
-| Scalar traits | unomia |
-| Array storage | leto::Array3<T> |
-| SIMD dispatch | hermes-simd |
-| GPU kernels | hephaestus-wgpu |
+| Scalar traits and conversions | `eunomia` |
+| Dense arrays and geometry | `leto` |
+| Helios scalar vocabulary | `helios-math` |
+| GPU execution | `hephaestus-core` / `hephaestus-wgpu` |
 
-## Further Reading
+## Further reading
 
 - [Physics Domain Types and Safety Boundaries](foundations.md)
 - [Memory and Allocation](memory.md)

@@ -44,6 +44,16 @@ target closure.
 
 ### Recently closed
 
+- **G-30 — RESOLVED (H-083).** A stale unclaimed mdBook expansion described
+  numerous types and methods absent from the current Helios source, while four
+  older appendix/numeric pages contained control characters created by escaped
+  Markdown delimiters. The expansion was not published. The recovered book now
+  names APIs verified against crate re-exports, delegates release history and
+  architecture to their root SSOT documents, contains no control characters,
+  resolves every relative Markdown link, and builds without warnings under
+  mdBook 0.5.4. The legacy scanner independently proves that its emptied
+  migration allowlist matches zero current legacy dependency or source surfaces.
+
 - **G-27 — RESOLVED (H-071).** The copied same-run classifier and bare native
   test invocation are deleted. Implementation head `44fb2768d` uses Atlas gate
   `9bfb722`, holds the candidate Criterion harness constant, measures

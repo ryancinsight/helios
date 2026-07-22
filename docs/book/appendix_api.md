@@ -1,39 +1,42 @@
 # Appendix C — API Reference Index
 
-Generated documentation is available via cargo doc:
+The Rustdoc output is the authoritative API reference:
 
-`ash
-# Helios full workspace docs
-cd path/to/helios
+```bash
 cargo doc --workspace --no-deps --open
-`
+```
 
-## Key Public APIs by Crate
+## Selected public APIs
 
-### helios-core
-- EnergyMeV, HounsfieldUnit, VoxelSpacingMm — validated domain types
-- HeliosError — unified error type
+### `helios-core`
 
-### helios-domain  
-- VoxelGrid — axis-aligned 3D grid with coordinate mapping
-- Volume<T> — dense scalar field over a VoxelGrid
+- `EnergyMeV`, `HounsfieldUnit`, and `VoxelSpacingMm`
+- `HeliosError` and `Result`
 
-### helios-imaging
-- parallel_beam_radon — forward Radon transform
-- iltered_back_projection — FBP reconstruction
+### `helios-domain`
 
-### helios-simulation
-- simulate_helical_delivery — TomoTherapy terma simulation
-- ccumulate_delivered_dose_anisotropic — Collapsed-cone dose
-- CollapsedCone — poly-energetic dose kernel configuration
+- `VoxelGrid<T>` and `Volume<T>`
+- `HelicalDelivery<T>`, `LeafOpenTimeSinogram<T>`, and `MlcModel<T>`
+- `FieldAperture<T>`
 
-### helios-analysis
-- Dvh — Dose-Volume Histogram
-- gamma_index_3d — 3D gamma metric
-- gamma_pass_rate — fraction of passing voxels
-- 
-oi_statistics — ROI mean/std/min/max
+### `helios-imaging`
 
-## Further Reading
+- `parallel_beam_radon` and `filtered_back_projection`
+- `sirt_reconstruction`
+- `register_translation` and `register_translation_ncc`
 
-- [Changelog](appendix_changelog.md)
+### `helios-simulation`
+
+- `simulate_helical_delivery` and `simulate_helical_sinogram`
+- `accumulate_delivered_dose` and `accumulate_delivered_dose_anisotropic`
+- `BeamGeometry` and `CollapsedCone`
+
+### `helios-analysis`
+
+- `Dvh`
+- `gamma_index_3d`, `gamma_index_3d_local`, and `gamma_pass_rate`
+- `roi_statistics`, `volume_rmse`, and `volume_relative_l2_error`
+
+## Further reading
+
+- [Repository changelog](../../CHANGELOG.md)
