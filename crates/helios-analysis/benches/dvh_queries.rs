@@ -6,6 +6,7 @@
 //! workload and retain the accumulated value so Criterion cannot elide it.
 #![allow(missing_docs)]
 
+use aequitas::systems::si::quantities::AbsorbedDose;
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use helios_analysis::Dvh;
 use helios_domain::{Volume, VoxelGrid};
@@ -60,7 +61,9 @@ fn bench_dvh_queries(c: &mut Criterion) {
     group.bench_function(BenchmarkId::new("production", QUERY_COUNT), |b| {
         b.iter(|| {
             let total = queries.iter().fold(0.0, |acc, &dose| {
-                acc + black_box(dvh.volume_fraction_at_dose(black_box(dose)))
+                acc + black_box(
+                    dvh.volume_fraction_at_dose(AbsorbedDose::from_base(black_box(dose))),
+                )
             });
             black_box(total)
         });

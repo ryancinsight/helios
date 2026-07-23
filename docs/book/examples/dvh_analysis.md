@@ -12,17 +12,21 @@ evaluation metrics used in treatment plan review:
 | Metric | API | Clinical Meaning |
 |---|---|---|
 | D₉₅ | `dvh.dose_at_volume_fraction(0.95)` | 95% of volume receives ≥ D₉₅ |
-| V₉₅% | `dvh.volume_fraction_at_dose(Rx·0.95)` | fraction receiving ≥ 95% Rx |
+| V₉₅% | `dvh.volume_fraction_at_dose(rx * 0.95)` | fraction receiving ≥ 95% Rx |
 | Homogeneity Index | `dvh.homogeneity_index()` | ICRU-83 (D₂−D₉₈)/D₅₀ |
 | Masked DVH | `Dvh::from_volume_masked(dose, mask)` | structure-specific DVH |
 
 ## Key Code Snippet
 
 ```rust
+use aequitas::systems::si::{quantities::AbsorbedDose, units::Gray};
 use helios_analysis::Dvh;
 
 let dvh = Dvh::from_volume(&dose_volume);
-println!("D₉₅ = {:.2} Gy", dvh.dose_at_volume_fraction(0.95));
+let rx = AbsorbedDose::from_unit::<Gray>(60.0);
+let d95 = dvh.dose_at_volume_fraction(0.95);
+println!("D₉₅ = {:.2} Gy", d95.in_unit::<Gray>());
+let v95 = dvh.volume_fraction_at_dose(rx * 0.95);
 println!("HI  = {:.4}",    dvh.homogeneity_index());
 
 // PTV-masked DVH

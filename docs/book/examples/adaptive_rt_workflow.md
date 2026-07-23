@@ -33,7 +33,7 @@ Phase 4: Adaptive decision gate
 | Metric | Threshold | API |
 |--------|-----------|-----|
 | 3 %/2 mm gamma pass-rate | ≥ 95 % | `gamma_index_3d`, `gamma_pass_rate` |
-| Mean dose deviation | < 5 % | `Dvh::mean` |
+| Mean dose deviation | < 5 % | `Dvh::mean().into_base()` at the scalar gamma boundary |
 
 When either criterion fails the workflow returns `REPLAN`, triggering an online
 or offline replanning cycle.

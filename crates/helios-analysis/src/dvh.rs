@@ -74,65 +74,63 @@ impl<T: Scalar> Dvh<T> {
         self.sorted.len()
     }
 
-    /// Minimum dose.
+    /// Minimum dose as an Aequitas quantity.
     #[must_use]
-    pub fn min(&self) -> T {
-        *self.sorted.first().expect("non-empty DVH").as_base()
+    pub fn min(&self) -> AbsorbedDose<T> {
+        *self.sorted.first().expect("non-empty DVH")
     }
 
-    /// Maximum dose.
+    /// Maximum dose as an Aequitas quantity.
     #[must_use]
-    pub fn max(&self) -> T {
-        *self.sorted.last().expect("non-empty DVH").as_base()
+    pub fn max(&self) -> AbsorbedDose<T> {
+        *self.sorted.last().expect("non-empty DVH")
     }
 
-    /// Mean dose over all sampled voxels.
+    /// Mean dose over all sampled voxels as an Aequitas quantity.
     #[must_use]
-    pub fn mean(&self) -> T {
-        let sum = self
-            .sorted
-            .iter()
-            .fold(<T as NumericElement>::ZERO, |acc, dose| {
-                acc + *dose.as_base()
-            });
-        sum * T::from_f64(self.sorted.len() as f64).recip()
+    pub fn mean(&self) -> AbsorbedDose<T> {
+        let sum = self.sorted.iter().copied().fold(
+            AbsorbedDose::from_base(<T as NumericElement>::ZERO),
+            |acc, dose| acc + dose,
+        );
+        sum / T::from_f64(self.sorted.len() as f64)
     }
 
     /// Volume fraction (in `[0, 1]`) receiving **at least** `dose`.
+    ///
+    /// The threshold is an [`AbsorbedDose`] so a caller cannot pass an
+    /// unrelated scalar physical quantity by accident.
     #[must_use]
-    pub fn volume_fraction_at_dose(&self, dose: T) -> T {
+    pub fn volume_fraction_at_dose(&self, dose: AbsorbedDose<T>) -> T {
         // NaN is unordered, so preserve the pre-indexed filter semantics for
         // invalid samples instead of treating a NaN suffix as qualifying. For
         // finite and infinite samples, the sorted invariant makes the lower
         // bound exact and reduces repeated queries from O(n) to O(log n) with
         // no allocation.
-        let at_least = if dose.to_f64().is_nan() {
+        let at_least = if dose.as_base().to_f64().is_nan() {
             0
         } else if self.contains_nan {
-            self.sorted
-                .iter()
-                .filter(|value| *value.as_base() >= dose)
-                .count()
+            self.sorted.iter().filter(|value| **value >= dose).count()
         } else {
-            self.sorted.len() - self.sorted.partition_point(|value| *value.as_base() < dose)
+            self.sorted.len() - self.sorted.partition_point(|value| *value < dose)
         };
         T::from_f64(at_least as f64) * T::from_f64(self.sorted.len() as f64).recip()
     }
 
     /// Near-rank dose `Dx`: the dose received by at least `fraction` of the
     /// volume (`fraction` in `[0, 1]`). `D_1.0` is the minimum dose, `D_0.0` the
-    /// maximum.
+    /// maximum. The returned dose retains its Aequitas dimension.
     ///
     /// Nearest-rank (no interpolation): `k = ceil(fraction·n)` hottest voxels
     /// must meet the threshold, so `Dx` is the `k`-th largest dose.
     #[must_use]
-    pub fn dose_at_volume_fraction(&self, fraction: T) -> T {
+    pub fn dose_at_volume_fraction(&self, fraction: T) -> AbsorbedDose<T> {
         let n = self.sorted.len();
         let frac = fraction.to_f64().clamp(0.0, 1.0);
         // k hottest voxels; k in [1, n]. k=0 (fraction 0) → hottest voxel.
         let k = (frac * n as f64).ceil() as usize;
         let k = k.clamp(1, n);
-        *self.sorted[n - k].as_base()
+        self.sorted[n - k]
     }
 
     /// ICRU-83 dose **homogeneity index** `HI = (D₂ − D₉₈) / D₅₀` over the sampled
@@ -143,10 +141,10 @@ impl<T: Scalar> Dvh<T> {
         let d2 = self.dose_at_volume_fraction(T::from_f64(0.02));
         let d98 = self.dose_at_volume_fraction(T::from_f64(0.98));
         let d50 = self.dose_at_volume_fraction(T::from_f64(0.5));
-        if d50 <= <T as NumericElement>::ZERO {
+        if *d50.as_base() <= <T as NumericElement>::ZERO {
             return <T as NumericElement>::ZERO;
         }
-        (d2 - d98) * d50.recip()
+        ((d2 - d98) / d50).into_base()
     }
 
     /// The structure's dose sample (ascending-sorted), borrowed zero-copy.
@@ -168,11 +166,9 @@ impl<T: Scalar> Dvh<T> {
     /// Returns [`ResponseError`] when `a` is zero or non-finite, the sample is
     /// empty, a dose is negative or non-finite, or a negative exponent observes
     /// zero dose.
-    pub fn generalized_eud(&self, a: T) -> Result<T, ResponseError<T>> {
+    pub fn generalized_eud(&self, a: T) -> Result<AbsorbedDose<T>, ResponseError<T>> {
         let volume_effect = VolumeEffect::new(a).map_err(ResponseError::from)?;
-        GeneralizedEquivalentUniformDose::new(volume_effect)
-            .evaluate(&self.sorted)
-            .map(|dose| *dose.as_base())
+        GeneralizedEquivalentUniformDose::new(volume_effect).evaluate(&self.sorted)
     }
 
     /// Niemierko logistic tumour control probability of this structure's dose:
@@ -182,11 +178,15 @@ impl<T: Scalar> Dvh<T> {
     ///
     /// Returns [`ResponseError`] when any model parameter or dose observation
     /// violates the law's mathematical domain.
-    pub fn tcp_logistic(&self, a: T, tcd50: T, gamma50: T) -> Result<T, ResponseError<T>> {
-        let dose = AbsorbedDose::from_base(self.generalized_eud(a)?);
+    pub fn tcp_logistic(
+        &self,
+        a: T,
+        tcd50: AbsorbedDose<T>,
+        gamma50: T,
+    ) -> Result<T, ResponseError<T>> {
+        let dose = self.generalized_eud(a)?;
         let slope = ResponseSlope::new(gamma50).map_err(ResponseError::from)?;
-        let model = LogisticControlProbability::new(AbsorbedDose::from_base(tcd50), slope)
-            .map_err(ResponseError::from)?;
+        let model = LogisticControlProbability::new(tcd50, slope).map_err(ResponseError::from)?;
         model.evaluate(dose).map(asclepius::Probability::get)
     }
 
@@ -197,11 +197,10 @@ impl<T: Scalar> Dvh<T> {
     ///
     /// Returns [`ResponseError`] when any model parameter or dose observation
     /// violates the law's mathematical domain.
-    pub fn ntcp_lkb(&self, a: T, td50: T, m: T) -> Result<T, ResponseError<T>> {
-        let dose = AbsorbedDose::from_base(self.generalized_eud(a)?);
+    pub fn ntcp_lkb(&self, a: T, td50: AbsorbedDose<T>, m: T) -> Result<T, ResponseError<T>> {
+        let dose = self.generalized_eud(a)?;
         let slope = ResponseSlope::new(m).map_err(ResponseError::from)?;
-        let model = LymanComplicationProbability::new(AbsorbedDose::from_base(td50), slope)
-            .map_err(ResponseError::from)?;
+        let model = LymanComplicationProbability::new(td50, slope).map_err(ResponseError::from)?;
         model.evaluate(dose).map(asclepius::Probability::get)
     }
 }
@@ -222,15 +221,31 @@ mod tests {
         let dose = Volume::from_shape_fn(grid([4, 4, 4]), |_| 2.5);
         let dvh = Dvh::from_volume(&dose);
         assert_eq!(dvh.count(), 64);
-        assert_relative_eq!(dvh.min(), 2.5, epsilon = 1e-15);
-        assert_relative_eq!(dvh.max(), 2.5, epsilon = 1e-15);
-        assert_relative_eq!(dvh.mean(), 2.5, epsilon = 1e-15);
+        assert_relative_eq!(dvh.min().into_base(), 2.5, epsilon = 1e-15);
+        assert_relative_eq!(dvh.max().into_base(), 2.5, epsilon = 1e-15);
+        assert_relative_eq!(dvh.mean().into_base(), 2.5, epsilon = 1e-15);
         // At/below 2.5 → full volume; above → none.
-        assert_relative_eq!(dvh.volume_fraction_at_dose(2.5), 1.0, epsilon = 1e-15);
-        assert_relative_eq!(dvh.volume_fraction_at_dose(2.5001), 0.0, epsilon = 1e-15);
+        assert_relative_eq!(
+            dvh.volume_fraction_at_dose(AbsorbedDose::from_base(2.5)),
+            1.0,
+            epsilon = 1e-15
+        );
+        assert_relative_eq!(
+            dvh.volume_fraction_at_dose(AbsorbedDose::from_base(2.5001)),
+            0.0,
+            epsilon = 1e-15
+        );
         // Every Dx equals the uniform dose.
-        assert_relative_eq!(dvh.dose_at_volume_fraction(0.5), 2.5, epsilon = 1e-15);
-        assert_relative_eq!(dvh.dose_at_volume_fraction(1.0), 2.5, epsilon = 1e-15);
+        assert_relative_eq!(
+            dvh.dose_at_volume_fraction(0.5).into_base(),
+            2.5,
+            epsilon = 1e-15
+        );
+        assert_relative_eq!(
+            dvh.dose_at_volume_fraction(1.0).into_base(),
+            2.5,
+            epsilon = 1e-15
+        );
     }
 
     #[test]
@@ -240,13 +255,21 @@ mod tests {
             .unwrap();
         let dose = Volume::from_shape_fn(g, |idx| idx[0] as f64);
         let dvh = Dvh::from_volume(&dose);
-        assert_relative_eq!(dvh.min(), 0.0, epsilon = 1e-12);
-        assert_relative_eq!(dvh.max(), 99.0, epsilon = 1e-12);
-        assert_relative_eq!(dvh.mean(), 49.5, epsilon = 1e-12);
+        assert_relative_eq!(dvh.min().into_base(), 0.0, epsilon = 1e-12);
+        assert_relative_eq!(dvh.max().into_base(), 99.0, epsilon = 1e-12);
+        assert_relative_eq!(dvh.mean().into_base(), 49.5, epsilon = 1e-12);
         // Half the volume (50 hottest voxels) receives ≥ dose 50 (values 50..99).
-        assert_relative_eq!(dvh.dose_at_volume_fraction(0.5), 50.0, epsilon = 1e-12);
+        assert_relative_eq!(
+            dvh.dose_at_volume_fraction(0.5).into_base(),
+            50.0,
+            epsilon = 1e-12
+        );
         // Exactly half of voxels have dose ≥ 50 (values 50..99 = 50 voxels).
-        assert_relative_eq!(dvh.volume_fraction_at_dose(50.0), 0.5, epsilon = 1e-12);
+        assert_relative_eq!(
+            dvh.volume_fraction_at_dose(AbsorbedDose::from_base(50.0)),
+            0.5,
+            epsilon = 1e-12
+        );
     }
 
     #[test]
@@ -256,15 +279,19 @@ mod tests {
 
         let target = Dvh::from_volume_masked(&dose, |idx| idx[0] < 2);
         assert_eq!(target.count(), 32); // half of 64 voxels
-        assert_relative_eq!(target.mean(), 2.0, epsilon = 1e-15);
-        assert_relative_eq!(target.max(), 2.0, epsilon = 1e-15);
+        assert_relative_eq!(target.mean().into_base(), 2.0, epsilon = 1e-15);
+        assert_relative_eq!(target.max().into_base(), 2.0, epsilon = 1e-15);
 
         let oar = Dvh::from_volume_masked(&dose, |idx| idx[0] >= 2);
         assert_eq!(oar.count(), 32);
-        assert_relative_eq!(oar.mean(), 8.0, epsilon = 1e-15);
+        assert_relative_eq!(oar.mean().into_base(), 8.0, epsilon = 1e-15);
 
         // Whole-volume mean (5.0) differs from either structure — masking matters.
-        assert_relative_eq!(Dvh::from_volume(&dose).mean(), 5.0, epsilon = 1e-15);
+        assert_relative_eq!(
+            Dvh::from_volume(&dose).mean().into_base(),
+            5.0,
+            epsilon = 1e-15
+        );
     }
 
     #[test]
@@ -272,8 +299,12 @@ mod tests {
         let dose = Volume::from_shape_fn(grid([3, 3, 3]), |idx| (idx[0] + idx[1] + idx[2]) as f64);
         let point = Dvh::from_volume_masked(&dose, |idx| idx == [2, 2, 2]);
         assert_eq!(point.count(), 1);
-        assert_relative_eq!(point.min(), 6.0, epsilon = 1e-15);
-        assert_relative_eq!(point.dose_at_volume_fraction(1.0), 6.0, epsilon = 1e-15);
+        assert_relative_eq!(point.min().into_base(), 6.0, epsilon = 1e-15);
+        assert_relative_eq!(
+            point.dose_at_volume_fraction(1.0).into_base(),
+            6.0,
+            epsilon = 1e-15
+        );
     }
 
     #[test]
@@ -296,7 +327,7 @@ mod tests {
                 .expect("grid");
         let dose = Volume::from_shape_fn(g, |_| 1.0_f32);
         let dvh = Dvh::from_volume(&dose);
-        assert_relative_eq!(dvh.mean(), 1.0_f32, epsilon = 1e-6);
+        assert_relative_eq!(dvh.mean().into_base(), 1.0_f32, epsilon = 1e-6);
     }
 
     #[test]
@@ -316,8 +347,8 @@ mod tests {
                 .evaluate(dvh.dose_sample())
                 .expect("valid dose observation");
             assert_relative_eq!(
-                dvh.generalized_eud(a).expect("valid response"),
-                *direct.as_base(),
+                dvh.generalized_eud(a).expect("valid response").into_base(),
+                direct.into_base(),
                 max_relative = 1e-13
             );
         }
@@ -329,11 +360,26 @@ mod tests {
             .expect("grid");
         let finite = Volume::from_shape_fn(g, |[i, _, _]| i as f64);
         let finite_dvh = Dvh::from_volume(&finite);
-        assert_eq!(finite_dvh.volume_fraction_at_dose(-1.0), 1.0);
-        assert_eq!(finite_dvh.volume_fraction_at_dose(0.0), 1.0);
-        assert_eq!(finite_dvh.volume_fraction_at_dose(3.0), 0.25);
-        assert_eq!(finite_dvh.volume_fraction_at_dose(4.0), 0.0);
-        assert_eq!(finite_dvh.volume_fraction_at_dose(f64::NAN), 0.0);
+        assert_eq!(
+            finite_dvh.volume_fraction_at_dose(AbsorbedDose::from_base(-1.0)),
+            1.0
+        );
+        assert_eq!(
+            finite_dvh.volume_fraction_at_dose(AbsorbedDose::from_base(0.0)),
+            1.0
+        );
+        assert_eq!(
+            finite_dvh.volume_fraction_at_dose(AbsorbedDose::from_base(3.0)),
+            0.25
+        );
+        assert_eq!(
+            finite_dvh.volume_fraction_at_dose(AbsorbedDose::from_base(4.0)),
+            0.0
+        );
+        assert_eq!(
+            finite_dvh.volume_fraction_at_dose(AbsorbedDose::from_base(f64::NAN)),
+            0.0
+        );
 
         let with_nan = Volume::from_shape_fn(
             VoxelGrid::axis_aligned([3, 1, 1], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
@@ -341,8 +387,14 @@ mod tests {
             |[i, _, _]| [1.0, f64::NAN, 3.0][i],
         );
         let nan_dvh = Dvh::from_volume(&with_nan);
-        assert_eq!(nan_dvh.volume_fraction_at_dose(1.0), 2.0 / 3.0);
-        assert_eq!(nan_dvh.volume_fraction_at_dose(2.0), 1.0 / 3.0);
+        assert_eq!(
+            nan_dvh.volume_fraction_at_dose(AbsorbedDose::from_base(1.0)),
+            2.0 / 3.0
+        );
+        assert_eq!(
+            nan_dvh.volume_fraction_at_dose(AbsorbedDose::from_base(2.0)),
+            1.0 / 3.0
+        );
         assert!(matches!(
             nan_dvh.generalized_eud(1.0),
             Err(ResponseError::InvalidObservation { index: 2, .. })
@@ -359,7 +411,7 @@ mod tests {
                     && source.constraint() == asclepius::ValueConstraint::FiniteNonZero
         ));
         assert!(matches!(
-            dvh.tcp_logistic(1.0, 1.0, -0.5),
+            dvh.tcp_logistic(1.0, AbsorbedDose::from_base(1.0), -0.5),
             Err(ResponseError::InvalidValue(source))
                 if source.kind() == asclepius::ValueKind::ResponseSlope
                     && source.constraint() == asclepius::ValueConstraint::FinitePositive
@@ -373,18 +425,22 @@ mod tests {
         let d = 62.0;
         let dvh = Dvh::from_volume(&Volume::from_shape_fn(grid([3, 3, 3]), |_| d));
         assert_relative_eq!(
-            dvh.generalized_eud(-10.0).expect("valid response"),
+            dvh.generalized_eud(-10.0)
+                .expect("valid response")
+                .into_base(),
             d,
             max_relative = 1e-12
         );
         // NTCP with TD50 = d ⇒ t = 0 ⇒ 0.5; TCP with TCD50 = d ⇒ 0.5.
         assert_relative_eq!(
-            dvh.ntcp_lkb(1.0, d, 0.2).expect("valid response"),
+            dvh.ntcp_lkb(1.0, AbsorbedDose::from_base(d), 0.2)
+                .expect("valid response"),
             0.5,
             epsilon = 1e-12
         );
         assert_relative_eq!(
-            dvh.tcp_logistic(1.0, d, 2.0).expect("valid response"),
+            dvh.tcp_logistic(1.0, AbsorbedDose::from_base(d), 2.0)
+                .expect("valid response"),
             0.5,
             epsilon = 1e-12
         );
@@ -400,19 +456,15 @@ mod tests {
         )
         .expect("positive midpoint");
         assert_relative_eq!(
-            dvh.ntcp_lkb(2.0, 50.0, 0.2).expect("valid response"),
-            ntcp_model
-                .evaluate(AbsorbedDose::from_base(geud))
-                .expect("valid response")
-                .get(),
+            dvh.ntcp_lkb(2.0, AbsorbedDose::from_base(50.0), 0.2)
+                .expect("valid response"),
+            ntcp_model.evaluate(geud).expect("valid response").get(),
             epsilon = 1e-14
         );
         assert_relative_eq!(
-            dvh.tcp_logistic(2.0, 55.0, 2.0).expect("valid response"),
-            tcp_model
-                .evaluate(AbsorbedDose::from_base(geud))
-                .expect("valid response")
-                .get(),
+            dvh.tcp_logistic(2.0, AbsorbedDose::from_base(55.0), 2.0)
+                .expect("valid response"),
+            tcp_model.evaluate(geud).expect("valid response").get(),
             epsilon = 1e-14
         );
     }
@@ -426,18 +478,25 @@ mod tests {
         let hot = Dvh::from_volume_masked(&dose, |idx| idx[0] >= 2);
         let cold = Dvh::from_volume_masked(&dose, |idx| idx[0] < 2);
         assert_relative_eq!(
-            hot.generalized_eud(1.0).expect("valid response"),
+            hot.generalized_eud(1.0)
+                .expect("valid response")
+                .into_base(),
             80.0,
             epsilon = 1e-12
         );
         assert_relative_eq!(
-            cold.generalized_eud(1.0).expect("valid response"),
+            cold.generalized_eud(1.0)
+                .expect("valid response")
+                .into_base(),
             20.0,
             epsilon = 1e-12
         );
         assert!(
-            hot.ntcp_lkb(1.0, 50.0, 0.2).expect("valid response")
-                > cold.ntcp_lkb(1.0, 50.0, 0.2).expect("valid response")
+            hot.ntcp_lkb(1.0, AbsorbedDose::from_base(50.0), 0.2)
+                .expect("valid response")
+                > cold
+                    .ntcp_lkb(1.0, AbsorbedDose::from_base(50.0), 0.2)
+                    .expect("valid response")
         );
     }
 }

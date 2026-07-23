@@ -44,7 +44,7 @@ tolerance.  Higher-resolution grids approach clinical MVCT accuracy (≤ 1 %).
 
 ```rust
 let dvh = Dvh::from_volume(&ramp);
-let d   = dvh.dose_at_volume_fraction(v);
+let d   = dvh.dose_at_volume_fraction(v).into_base();
 ```
 
 The cumulative DVH of any physical dose must be non-increasing: every higher volume

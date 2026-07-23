@@ -27,10 +27,13 @@
 //!
 //! [← LINAC-Based Step-and-Shoot Delivery](../../docs/book/workflow_linac.md)
 
-use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
+use aequitas::systems::si::{
+    quantities::AreaPerMass,
+    units::{Gray, SquareCentimeterPerGram},
+};
 use helios_analysis::Dvh;
 use helios_domain::{Volume, VoxelGrid};
-use helios_math::{NumericElement, Point3};
+use helios_math::Point3;
 use helios_simulation::{accumulate_delivered_dose, BeamGeometry, DeliveryFrame};
 use helios_solver::attenuation_map;
 use hyperion::coefficient::MassAttenuation;
@@ -114,30 +117,40 @@ fn main() {
     let d_50 = dvh.dose_at_volume_fraction(0.5);
 
     println!("\nDose summary (phantom volume = {} voxels):", N * N);
-    println!("  D_min   = {d_min:.4e}");
-    println!("  D_max   = {d_max:.4e}");
-    println!("  D_mean  = {d_mean:.4e}");
-    println!("  D50     = {d_50:.4e}  (median dose)");
-    if d_max > <f64 as NumericElement>::ZERO {
-        println!("  D_min/D_max = {:.4}  (uniformity proxy)", d_min / d_max);
+    println!("  D_min   = {:.4e} Gy", d_min.in_unit::<Gray>());
+    println!("  D_max   = {:.4e} Gy", d_max.in_unit::<Gray>());
+    println!("  D_mean  = {:.4e} Gy", d_mean.in_unit::<Gray>());
+    println!(
+        "  D50     = {:.4e} Gy  (median dose)",
+        d_50.in_unit::<Gray>()
+    );
+    if *d_max.as_base() > 0.0 {
+        println!(
+            "  D_min/D_max = {:.4}  (uniformity proxy)",
+            (d_min / d_max).into_base()
+        );
     }
 
     // ── 5. Validation checks ──────────────────────────────────────────────────
     // Non-zero total dose
-    assert!(d_max > 1e-12, "Max dose must be positive; got {d_max:.4e}");
+    assert!(
+        *d_max.as_base() > 1e-12,
+        "Max dose must be positive; got {:.4e}",
+        d_max.in_unit::<Gray>()
+    );
 
     // DVH monotonicity
     let levels: Vec<f64> = (0..=20).map(|k| k as f64 / 20.0).collect();
     let doses: Vec<f64> = levels
         .iter()
-        .map(|&v| dvh.dose_at_volume_fraction(v))
+        .map(|&v| dvh.dose_at_volume_fraction(v).into_base())
         .collect();
     let monotone = doses.windows(2).all(|w| w[0] >= w[1] - 1e-12);
     assert!(monotone, "DVH must be non-increasing; got {doses:?}");
 
     // 4-field box should deliver reasonable uniformity (min/max > 0.3 for simple terma)
-    if d_max > 1e-12 {
-        let uniformity = d_min / d_max;
+    if *d_max.as_base() > 1e-12 {
+        let uniformity = (d_min / d_max).into_base();
         println!("\n  DVH monotone:  ✓");
         println!("  Uniformity:    {uniformity:.3}  (> 0.0 required)");
         assert!(uniformity >= 0.0, "Negative dose ratio is unphysical");

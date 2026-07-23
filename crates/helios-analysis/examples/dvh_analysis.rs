@@ -11,6 +11,7 @@
 //!
 //! Run with: cargo run --example dvh_analysis -p helios-analysis
 
+use aequitas::systems::si::{quantities::AbsorbedDose, units::Gray};
 use helios_analysis::Dvh;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Point3;
@@ -47,6 +48,7 @@ fn main() {
     const PRESCRIPTION_GY: f64 = 60.0; // 60 Gy prescription dose
     const PEAK_GY: f64 = 63.0; // slight hot spot at centre
     const SIGMA_MM: f64 = 25.0; // beam sigma (Gaussian width)
+    let prescription = AbsorbedDose::from_unit::<Gray>(PRESCRIPTION_GY);
 
     println!("Building synthetic dose phantom  peak={PEAK_GY} Gy  σ={SIGMA_MM} mm");
     let dose = gaussian_dose_phantom([31, 31, 31], 2.0, PEAK_GY, SIGMA_MM);
@@ -54,20 +56,21 @@ fn main() {
     // --- Full-volume DVH ---
     let dvh = Dvh::from_volume(&dose);
     println!("\nFull-volume DVH  ({} voxels)", dvh.count());
-    println!("  D_min  = {:.2} Gy", dvh.min());
-    println!("  D_mean = {:.2} Gy", dvh.mean());
-    println!("  D_max  = {:.2} Gy", dvh.max());
+    println!("  D_min  = {:.2} Gy", dvh.min().in_unit::<Gray>());
+    println!("  D_mean = {:.2} Gy", dvh.mean().in_unit::<Gray>());
+    println!("  D_max  = {:.2} Gy", dvh.max().in_unit::<Gray>());
 
     // Clinical coverage: V_95 and D_95 relative to prescription
     let d95 = dvh.dose_at_volume_fraction(0.95);
-    let v95_pct = dvh.volume_fraction_at_dose(PRESCRIPTION_GY * 0.95) * 100.0;
+    let v95_pct = dvh.volume_fraction_at_dose(prescription * 0.95) * 100.0;
     println!(
-        "\n  D₉₅  = {d95:.2} Gy  ({:.1}% of Rx)",
-        d95 / PRESCRIPTION_GY * 100.0
+        "\n  D₉₅  = {:.2} Gy  ({:.1}% of Rx)",
+        d95.in_unit::<Gray>(),
+        (d95 / prescription).into_base() * 100.0
     );
     println!(
         "  V₉₅%  = {v95_pct:.1}%  (volume receiving ≥ 95% Rx = {:.1} Gy)",
-        PRESCRIPTION_GY * 0.95
+        (prescription * 0.95).in_unit::<Gray>()
     );
 
     // ICRU-83 homogeneity index (lower = better)
@@ -90,16 +93,18 @@ fn main() {
         ptv_dvh.count(),
         ptv_mask_radius
     );
-    println!("  PTV D_mean = {ptv_mean:.2} Gy");
-    println!("  PTV D₉₅   = {ptv_d95:.2} Gy");
+    println!("  PTV D_mean = {:.2} Gy", ptv_mean.in_unit::<Gray>());
+    println!("  PTV D₉₅   = {:.2} Gy", ptv_d95.in_unit::<Gray>());
 
     assert!(
-        ptv_d95 >= PRESCRIPTION_GY * 0.90,
-        "PTV D₉₅ {ptv_d95:.2} Gy is below 90% of prescription"
+        ptv_d95 >= prescription * 0.90,
+        "PTV D₉₅ {:.2} Gy is below 90% of prescription",
+        ptv_d95.in_unit::<Gray>()
     );
     assert!(
-        ptv_mean >= PRESCRIPTION_GY * 0.95,
-        "PTV mean dose {ptv_mean:.2} Gy is below 95% of prescription"
+        ptv_mean >= prescription * 0.95,
+        "PTV mean dose {:.2} Gy is below 95% of prescription",
+        ptv_mean.in_unit::<Gray>()
     );
 
     println!("\n✓  DVH coverage metrics pass clinical criteria");

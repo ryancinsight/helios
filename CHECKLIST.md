@@ -8,6 +8,20 @@
 
 ## Owner: Codex
 
+## Codex — H-089 typed DVH dose metrics [arch] [major] — done 2026-07-23
+
+- [x] Return Aequitas `AbsorbedDose<T>` from DVH extrema, mean, nearest-rank
+      dose queries, and gEUD; accept typed dose thresholds for Vx, TCP, and
+      NTCP.
+- [x] Migrate all Helios analysis/simulation callers, examples, benchmarks,
+      and book snippets with explicit `into_base()`/`in_unit::<Gray>()` scalar
+      boundaries; add ADR 0006.
+- [x] Verify analysis nextest 31/31, simulation end-to-end nextest 3/3,
+      all-target checks, warning-denied Clippy, doctests, Rustdoc, and format.
+      Locked metadata is externally blocked by unrelated sibling-provider
+      manifest drift; offline checks passed without retaining generated lock
+      changes.
+
 ## Codex — H-088 typed TERMA total [patch] — done
 
 - [x] Return TERMA deposition totals as Aequitas `AbsorbedDose` quantities from

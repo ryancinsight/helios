@@ -72,7 +72,7 @@ mod tests {
         let dose = Volume::from_shape_fn(g, |idx| if mask(idx) { 5.0 } else { 1.0 });
         let roi =
             Dvh::from_volume_masked(&dose, spherical_mask(g, Point3::new(4.0, 4.0, 0.0), 2.5));
-        assert_relative_eq!(roi.mean(), 5.0, epsilon = 1e-15);
+        assert_relative_eq!(roi.mean().into_base(), 5.0, epsilon = 1e-15);
         // 5 voxels (centre + 4 neighbours) are within the radius.
         assert_eq!(roi.count(), 5);
     }
