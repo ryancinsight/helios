@@ -13,7 +13,8 @@
 - [x] Add the Pages build/deploy workflow for `docs/book`.
 - [x] Declare the `/helios/` project-site base path.
 - [x] Link the published book from the repository README. Local mdBook build
-      and workflow syntax checks pass.
+      and workflow syntax checks pass; remove the stale external parity-archive
+      Summary entry that failed clean hosted builds.
 
 ## Codex — H-083 book recovery [patch] — done 2026-07-22
 
