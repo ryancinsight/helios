@@ -8,6 +8,13 @@
 
 ## Owner: Codex
 
+## Codex — H-088 typed TERMA total [patch] — done
+
+- [x] Return TERMA deposition totals as Aequitas `AbsorbedDose` quantities from
+      both parallel and divergent ray paths.
+- [x] Migrate the simulation caller and value-semantic deposition regressions;
+      preserve scalar voxel storage at the domain volume boundary.
+
 ## Codex — H-087 Aequitas fluence boundary [patch] — done
 
 - [x] Keep portal fluence as `EnergyPerArea<T>` through the Hyperion optical

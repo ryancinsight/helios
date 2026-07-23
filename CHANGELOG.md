@@ -9,6 +9,10 @@ under a Breaking subsection.
 
 ### Changed
 
+- `helios-solver` TERMA deposition now returns an Aequitas `AbsorbedDose`
+  quantity. Voxel storage remains scalar at the `Volume` boundary, while the
+  public deposited-total contract preserves the dose dimension.
+
 - Portal fluence now remains an Aequitas `EnergyPerArea` quantity through
   optical transmission before returning the established scalar frame API.
 
