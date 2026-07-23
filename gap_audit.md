@@ -23,7 +23,7 @@ and attenuation, and `AreaPerMass` for mass attenuation. `EnergyMeV` and
 | ID | Evidence | Remaining implementation | Owner | Status / acceptance oracle |
 |---|---|---|---|---|
 | `HELIOS-AEQ-MET-01` | `helios-analysis/src/dvh.rs` stores `Vec<AbsorbedDose<T>>`, but `min`, `max`, `mean`, `dose_at_volume_fraction`, and `generalized_eud` return raw `T`; dose criteria and TD50/TCD50 parameters also enter as `T`. | Return `AbsorbedDose<T>` for dose-valued results and parameters; keep Vx, HI, TCP, and NTCP dimensionless or probability-typed. | Helios | **RESOLVED.** `Dvh` extrema, mean, Dx, gEUD, and TCP/NTCP dose parameters now use `AbsorbedDose<T>`; nearest-rank, masked, NaN, Asclepius-law, and end-to-end PTV/OAR value semantics remain covered. |
-| `HELIOS-AEQ-MET-02` | `helios-analysis/src/gamma.rs` accepts `dta_mm`, normalization dose, low-dose cutoff, and search radius as raw `T`; gamma volume and pass rate are dimensionless. | Type distances as `Length`, dose thresholds as `AbsorbedDose`, and keep the result storage scalar/dimensionless. | Helios | Ready. Preserve Low gamma equations, local/global normalization, grid identity, and pass-rate results. |
+| `HELIOS-AEQ-MET-02` | `helios-analysis/src/gamma.rs` accepted `dta_mm`, normalization dose, low-dose cutoff, and search radius as raw `T`; gamma volume and pass rate are dimensionless. | Type distances as `Length`, dose thresholds as `AbsorbedDose`, and keep the result storage scalar/dimensionless. | Helios | **RESOLVED.** `gamma_index_3d`, `gamma_index_3d_local`, and `gamma_pass_rate` now type physical criteria with Aequitas while retaining the Low gamma kernel, local/global normalization, grid checks, scalar gamma field, and scalar pass rate. Focused value-semantic gamma tests and all in-tree callers migrate; ADR 0007 records the breaking boundary. |
 | `HELIOS-AEQ-MET-03` | `helios-simulation/src/delivery.rs` stores leaf fluence as `T`; `total_delivered_fluence` returns `T`. `portal.rs` constructs `EnergyPerArea` internally and converts it back. `dose_accumulation.rs` accepts `*_mm` geometry and sampling values as `T`. | Carry fluence as `EnergyPerArea` and geometry distances as `Length` through delivery, portal, and dose accumulation. | Helios | Ready. Prove zero closed-leaf output, attenuation monotonicity, and linearity in delivered fluence. |
 | `HELIOS-AEQ-MET-04` | `helios-analysis/src/image_quality.rs` returns raw intensity/RMSE values, while the same analysis can operate on dose volumes. | Decide the semantic input at the analysis boundary: retain raw image intensity for MVCT, but return `AbsorbedDose` RMSE when the API contract is dose-specific. | Helios | Deferred pending API partition. No provider extension is required; the acceptance contract must distinguish image intensity from dose. |
 
@@ -34,7 +34,7 @@ and attenuation, and `AreaPerMass` for mass attenuation. `EnergyMeV` and
 - Beam angles, gamma values, fractions, homogeneity indices, and TCP/NTCP are
   dimensionless; they must not be wrapped as length or dose merely because they
   are reported beside physical quantities.
-- The next Helios slice is `HELIOS-AEQ-MET-02`, followed by the delivery/portal
+- The next Helios slice is `HELIOS-AEQ-MET-03`, followed by the delivery/portal
   boundary. Each public signature change must update its examples, Python
   surface, and focused dose-analysis tests in the same change.
 

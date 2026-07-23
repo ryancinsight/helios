@@ -43,6 +43,7 @@ or offline replanning cycle.
 ```rust
 use helios_imaging::register_translation;
 use helios_simulation::{accumulate_delivered_dose, BeamGeometry, DeliveryFrame};
+use aequitas::systems::si::{quantities::{AbsorbedDose, Length}, units::Millimeter};
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, Dvh};
 
 // Register daily to planning
@@ -53,8 +54,15 @@ let corrected = shift_phantom(&daily_ct, -shift[0], -shift[1]);
 let corrected_dose = accumulate_delivered_dose(&frames, &mu, geometry, lw, step);
 
 // Adaptive gate
-let gamma = gamma_index_3d(&plan_dose, &corrected_dose, 0.03, 2.0, d_max, 6.0)?;
-let pass = gamma_pass_rate(&gamma, &plan_dose, 0.0);
+let gamma = gamma_index_3d(
+    &plan_dose,
+    &corrected_dose,
+    0.03,
+    Length::from_unit::<Millimeter>(2.0),
+    d_max,
+    Length::from_unit::<Millimeter>(6.0),
+)?;
+let pass = gamma_pass_rate(&gamma, &plan_dose, AbsorbedDose::from_base(0.0));
 ```
 
 ## Book Chapter

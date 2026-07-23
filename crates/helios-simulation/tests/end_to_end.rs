@@ -12,7 +12,10 @@
 //! or licensed dataset is involved (those gates are environment-blocked, see
 //! gap_audit G-16/G-18).
 
-use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
+use aequitas::systems::si::{
+    quantities::{AbsorbedDose, AreaPerMass, Length},
+    units::{Millimeter, SquareCentimeterPerGram},
+};
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, spherical_mask, Dvh};
 use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel, Volume, VoxelGrid};
 use helios_imaging::{filtered_back_projection, parallel_beam_radon, register_translation};
@@ -141,8 +144,16 @@ fn shared_mu_drives_imaging_and_delivery_end_to_end() {
     );
     // Gamma of the dose against itself is identically 0 → 100% pass at 3%/2 mm.
     let peak = dose.mean_top_dose();
-    let gamma = gamma_index_3d(&dose, &dose, 0.03, 2.0, peak, 6.0).unwrap();
-    let pass = gamma_pass_rate(&gamma, &dose, 0.1 * peak);
+    let gamma = gamma_index_3d(
+        &dose,
+        &dose,
+        0.03,
+        Length::from_unit::<Millimeter>(2.0),
+        AbsorbedDose::from_base(peak),
+        Length::from_unit::<Millimeter>(6.0),
+    )
+    .unwrap();
+    let pass = gamma_pass_rate(&gamma, &dose, AbsorbedDose::from_base(0.1 * peak));
     assert!(
         (pass - 1.0).abs() < 1e-9,
         "self-gamma pass rate {pass} must be 100%"
@@ -221,8 +232,16 @@ fn beam_following_poly_energetic_dose_end_to_end() {
         "DVH mean dose must be positive"
     );
     let peak = dose.mean_top_dose();
-    let gamma = gamma_index_3d(&dose, &dose, 0.03, 2.0, peak, 6.0).unwrap();
-    let pass = gamma_pass_rate(&gamma, &dose, 0.1 * peak);
+    let gamma = gamma_index_3d(
+        &dose,
+        &dose,
+        0.03,
+        Length::from_unit::<Millimeter>(2.0),
+        AbsorbedDose::from_base(peak),
+        Length::from_unit::<Millimeter>(6.0),
+    )
+    .unwrap();
+    let pass = gamma_pass_rate(&gamma, &dose, AbsorbedDose::from_base(0.1 * peak));
     assert!(
         (pass - 1.0).abs() < 1e-9,
         "self-gamma pass rate {pass} must be 100%"

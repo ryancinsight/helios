@@ -19,18 +19,26 @@ reference. Tests three scenarios:
 ## Key Code Snippet
 
 ```rust
+use aequitas::systems::si::{
+    quantities::{AbsorbedDose, Length},
+    units::{Gray, Millimeter},
+};
 use helios_analysis::{gamma_index_3d, gamma_pass_rate};
 
 // 3%/2 mm global normalization
 let gamma = gamma_index_3d(
     &reference, &evaluated,
     0.03,   // dose-difference criterion (3%)
-    2.0,    // DTA in mm
-    60.0,   // normalization dose (Gy)
-    6.0,    // search radius (mm)
+    Length::from_unit::<Millimeter>(2.0),
+    AbsorbedDose::from_unit::<Gray>(60.0),
+    Length::from_unit::<Millimeter>(6.0),
 )?;
 
-let pass_rate = gamma_pass_rate(&gamma, &reference, dose_threshold);
+let pass_rate = gamma_pass_rate(
+    &gamma,
+    &reference,
+    AbsorbedDose::from_unit::<Gray>(6.0),
+);
 // pass_rate >= 0.95 → clinical acceptance (95% pass rate)
 ```
 

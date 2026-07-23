@@ -16,7 +16,10 @@
 //!
 //! Run with: `cargo run --example validation_clinical -p helios-analysis`
 
-use aequitas::systems::si::{quantities::AbsorbedDose, units::Gray};
+use aequitas::systems::si::{
+    quantities::{AbsorbedDose, Length},
+    units::{Gray, Millimeter},
+};
 use helios_analysis::{
     contrast_to_noise_ratio, gamma_index_3d, gamma_pass_rate, michelson_contrast, roi_statistics,
     Dvh,
@@ -236,12 +239,12 @@ fn main() {
         &dose,
         &dose, // self-comparison (identical → 100% pass)
         0.03,
-        2.0,
-        PRESCRIPTION_GY,
-        6.0,
+        Length::from_unit::<Millimeter>(2.0),
+        prescription,
+        Length::from_unit::<Millimeter>(6.0),
     )
     .expect("self-gamma must succeed");
-    let pass = gamma_pass_rate(&gamma, &dose, PRESCRIPTION_GY * 0.10);
+    let pass = gamma_pass_rate(&gamma, &dose, prescription * 0.10);
     println!("  Self-comparison pass rate: {pass:.1}%");
     assert!(pass >= 0.999, "Self-gamma pass rate {pass:.4} < 99.9%");
     println!("  ✓  Gamma self-consistency verified\n");

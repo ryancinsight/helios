@@ -8,6 +8,17 @@
 
 ## Owner: Codex
 
+## Codex — H-090 typed gamma physical criteria [arch] [major] — done 2026-07-23
+
+- [x] Type gamma distance-to-agreement and search radius as Aequitas
+      `Length<T>`; type normalization, cutoff, and pass-rate thresholds as
+      `AbsorbedDose<T>` while retaining scalar gamma and pass-rate results.
+- [x] Migrate analysis/simulation callers, examples, tests, and book snippets;
+      add ADR 0007.
+- [x] Run focused analysis/simulation gates, mdBook, and warning-denied
+      diagnostics; locked metadata remains externally blocked by unrelated
+      sibling-provider manifest drift and was not changed.
+
 ## Codex — H-089 typed DVH dose metrics [arch] [major] — done 2026-07-23
 
 - [x] Return Aequitas `AbsorbedDose<T>` from DVH extrema, mean, nearest-rank

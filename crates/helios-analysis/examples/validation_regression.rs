@@ -24,6 +24,10 @@
 //!
 //! [← Analytical Solutions and Regression Tests](../../docs/book/validation_regression.md)
 
+use aequitas::systems::si::{
+    quantities::{AbsorbedDose, Length},
+    units::{Gray, Millimeter},
+};
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, volume_rmse, Dvh};
 use helios_domain::{Volume, VoxelGrid};
 use helios_imaging::{filtered_back_projection, parallel_beam_radon};
@@ -45,15 +49,17 @@ fn main() {
     let dose = Volume::from_shape_fn(make_grid(N, SPACING_MM), |[i, j, _]| (i + j) as f64 * 0.05);
 
     let gamma = gamma_index_3d(
-        &dose, &dose, 0.03_f64, // 3% dose criterion
-        2.0_f64,  // 2 mm DTA
-        1.0_f64,  // normalization = 1 Gy
-        6.0_f64,  // search radius
+        &dose,
+        &dose,
+        0.03_f64, // 3% dose criterion
+        Length::from_unit::<Millimeter>(2.0_f64),
+        AbsorbedDose::from_unit::<Gray>(1.0_f64),
+        Length::from_unit::<Millimeter>(6.0_f64),
     )
     .expect("self-gamma must not fail");
 
     // Include all voxels (dose_threshold = 0); self-comparison → γ = 0 everywhere.
-    let pass_rate = gamma_pass_rate(&gamma, &dose, 0.0_f64);
+    let pass_rate = gamma_pass_rate(&gamma, &dose, AbsorbedDose::from_base(0.0_f64));
     let gamma_ref = &gamma;
     let max_gamma = (0..N)
         .flat_map(|i| (0..N).map(move |j| gamma_ref.get(i, j, 0).unwrap_or(0.0)))

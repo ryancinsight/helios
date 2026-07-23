@@ -34,6 +34,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 
 | H-086 | Publish the source-backed mdBook through the repository's GitHub Pages site; build `docs/book` with the pinned mdBook release, upload the configured static output, deploy only from `main`, declare the `/helios/` project-site base path, and link the published book from the README. | [patch] | done | Codex `/root` | `.github/workflows/book-pages.yml`, `docs/book/book.toml`, `README.md`, PM artifacts |
 | H-089 | Replace raw scalar DVH dose results and thresholds with Aequitas `AbsorbedDose<T>` while retaining dimensionless fractions, indices, probabilities, and scalar dense-field storage. Migrate all analysis/simulation callers and book examples; preserve nearest-rank, masked, NaN, Asclepius-law, and end-to-end value semantics. | [arch] [major] | done | Codex | `crates/helios-analysis/**`, `crates/helios-simulation/**`, `docs/adr/0006-dvh-dose-quantities.md`, `docs/book/**`, PM artifacts |
+| H-090 | Type gamma distance-to-agreement and search radius as Aequitas `Length<T>`, global/local dose criteria and pass-rate thresholds as `AbsorbedDose<T>`, and migrate every analysis/simulation caller and book snippet. Preserve Low gamma values, local/global normalization, grid identity, and scalar pass-rate semantics. | [arch] [major] | done | Codex | `crates/helios-analysis/**`, `crates/helios-simulation/**`, `docs/adr/0007-gamma-physical-criteria.md`, `docs/book/**`, PM artifacts |
 
 ## Sprint 1 — Foundation
 

@@ -11,6 +11,10 @@
 //!
 //! Run with: cargo run --example gamma_index -p helios-analysis
 
+use aequitas::systems::si::{
+    quantities::{AbsorbedDose, Length},
+    units::{Gray, Millimeter},
+};
 use helios_analysis::{gamma_index_3d, gamma_pass_rate};
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Point3;
@@ -53,6 +57,10 @@ fn main() {
     const DOSE_DIFF: f64 = 0.03;
     const DTA_MM: f64 = 2.0;
     const SEARCH_MM: f64 = 6.0; // 3× DTA
+    let normalization_dose = AbsorbedDose::from_unit::<Gray>(NORM_DOSE);
+    let dose_threshold = AbsorbedDose::from_unit::<Gray>(DOSE_THRESHOLD);
+    let dta = Length::from_unit::<Millimeter>(DTA_MM);
+    let search_radius = Length::from_unit::<Millimeter>(SEARCH_MM);
 
     // Reference plan: centred Gaussian
     let reference = gaussian_dose(DIMS, SPACING_MM, PEAK_GY, SIGMA_MM, [0.0; 3]);
@@ -60,10 +68,15 @@ fn main() {
     // --- Case 1: identical plan (γ should be ≈ 0, pass rate = 100%) ---
     let identical = gaussian_dose(DIMS, SPACING_MM, PEAK_GY, SIGMA_MM, [0.0; 3]);
     let gamma_identical = gamma_index_3d(
-        &reference, &identical, DOSE_DIFF, DTA_MM, NORM_DOSE, SEARCH_MM,
+        &reference,
+        &identical,
+        DOSE_DIFF,
+        dta,
+        normalization_dose,
+        search_radius,
     )
     .expect("gamma computation succeeded");
-    let pass_identical = gamma_pass_rate(&gamma_identical, &reference, DOSE_THRESHOLD);
+    let pass_identical = gamma_pass_rate(&gamma_identical, &reference, dose_threshold);
     println!(
         "Identical plan:  pass rate = {:.1}%  (expect 100%)",
         pass_identical * 100.0
@@ -79,12 +92,12 @@ fn main() {
         &reference,
         &shifted_small,
         DOSE_DIFF,
-        DTA_MM,
-        NORM_DOSE,
-        SEARCH_MM,
+        dta,
+        normalization_dose,
+        search_radius,
     )
     .expect("gamma computation succeeded");
-    let pass_shifted_small = gamma_pass_rate(&gamma_shifted_small, &reference, DOSE_THRESHOLD);
+    let pass_shifted_small = gamma_pass_rate(&gamma_shifted_small, &reference, dose_threshold);
     println!(
         "1.5 mm shift:    pass rate = {:.1}%  (expect high)",
         pass_shifted_small * 100.0
@@ -96,12 +109,12 @@ fn main() {
         &reference,
         &shifted_large,
         DOSE_DIFF,
-        DTA_MM,
-        NORM_DOSE,
-        SEARCH_MM,
+        dta,
+        normalization_dose,
+        search_radius,
     )
     .expect("gamma computation succeeded");
-    let pass_shifted_large = gamma_pass_rate(&gamma_shifted_large, &reference, DOSE_THRESHOLD);
+    let pass_shifted_large = gamma_pass_rate(&gamma_shifted_large, &reference, dose_threshold);
     println!(
         "4.0 mm shift:    pass rate = {:.1}%  (expect <100%)",
         pass_shifted_large * 100.0
