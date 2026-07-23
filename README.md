@@ -53,6 +53,11 @@ cargo test --doc           # doctests (nextest does not run these)
 The workspace uses the shared Atlas test-time budget: a test that crosses 30 s is a
 performance defect to profile and optimize, never a limit to raise.
 
+## Documentation
+
+- [Published Helios book](https://ryancinsight.github.io/helios/) — hosted mdBook site.
+- [Book source](docs/book/) — Markdown chapters and local build configuration.
+
 Pull-request CI compares baseline and candidate Criterion reports through the
 Atlas-owned phase-replicated gate pinned in
 [ADR 0003](docs/adr/0003-atlas-benchmark-gate.md). It executes ABBA followed
