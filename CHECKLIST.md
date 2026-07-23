@@ -19,6 +19,19 @@
       diagnostics; locked metadata remains externally blocked by unrelated
       sibling-provider manifest drift and was not changed.
 
+## Codex — H-091 typed delivery physical quantities [arch] [major] — done 2026-07-23
+
+- [x] Carry `EnergyPerArea<T>` through `DeliveryFrame`, collimation, portal
+      transmission, and total delivered fluence; type all public delivery and
+      beam geometry distances as Aequitas `Length<T>`.
+- [x] Convert typed quantities once at the millimetre-based ray/voxel kernel
+      boundary; migrate simulation callers, examples, tests, and book snippets
+      without retaining scalar compatibility wrappers.
+- [x] Verify simulation nextest 38/38, analysis nextest 31/31, all-target
+      checks, warning-denied Clippy, doctests, Rustdoc, mdBook, and format.
+      Locked metadata remains externally blocked by unrelated sibling-provider
+      manifest drift; the generated lockfile changes were not retained.
+
 ## Codex — H-089 typed DVH dose metrics [arch] [major] — done 2026-07-23
 
 - [x] Return Aequitas `AbsorbedDose<T>` from DVH extrema, mean, nearest-rank

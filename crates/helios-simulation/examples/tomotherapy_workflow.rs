@@ -154,10 +154,10 @@ fn main() {
         &frames,
         &mu,
         BeamGeometry::PointSource {
-            source_axis_mm: 850.0,
+            source_axis: Length::from_unit::<Millimeter>(850.0),
         },
-        3.0,
-        0.25,
+        Length::from_unit::<Millimeter>(3.0),
+        Length::from_unit::<Millimeter>(0.25),
         &cone,
     )
     .expect("attenuation map satisfies Hyperion's transport contract");

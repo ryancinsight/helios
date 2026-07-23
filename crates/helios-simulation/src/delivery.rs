@@ -8,6 +8,10 @@
 //! This is the integrated imaging/delivery-workflow layer that a dose
 //! accumulation (per-leaf beamlet ray-trace) builds on.
 
+use aequitas::systems::si::{
+    quantities::{Dimensionless, EnergyPerArea, Length},
+    units::Millimeter,
+};
 use helios_domain::{FieldAperture, HelicalDelivery, LeafOpenTimeSinogram, MlcModel};
 use helios_math::{GeometryScalar, NumericElement, Point3, Scalar};
 
@@ -19,11 +23,11 @@ pub struct DeliveryFrame<T: Scalar> {
     pub projection: usize,
     /// Gantry angle (rad).
     pub gantry_angle_rad: T,
-    /// Couch position (mm).
-    pub couch_mm: T,
+    /// Couch position in millimetres.
+    pub couch: Length<T>,
     /// Effective transmitted fluence per leaf (leakage + tongue-and-groove
     /// applied to the leaf-open-time pattern).
-    pub leaf_fluence: Vec<T>,
+    pub leaf_fluence: Vec<EnergyPerArea<T>>,
 }
 
 /// Build the time-ordered delivery sequence: one [`DeliveryFrame`] per projection
@@ -41,8 +45,12 @@ pub fn simulate_helical_delivery<T: Scalar>(
         .map(|p| DeliveryFrame {
             projection: p,
             gantry_angle_rad: delivery.gantry_angle_rad(p),
-            couch_mm: delivery.couch_position_mm(p),
-            leaf_fluence: effective[p * leaves..(p + 1) * leaves].to_vec(),
+            couch: Length::from_unit::<Millimeter>(delivery.couch_position_mm(p)),
+            leaf_fluence: effective[p * leaves..(p + 1) * leaves]
+                .iter()
+                .copied()
+                .map(EnergyPerArea::from_base)
+                .collect(),
         })
         .collect()
 }
@@ -50,20 +58,20 @@ pub fn simulate_helical_delivery<T: Scalar>(
 /// Total delivered fluence integrated over all frames and leaves (a proxy for
 /// total monitor units / beam-on).
 #[must_use]
-pub fn total_delivered_fluence<T: Scalar>(frames: &[DeliveryFrame<T>]) -> T {
-    frames.iter().fold(<T as NumericElement>::ZERO, |acc, f| {
-        acc + f
-            .leaf_fluence
-            .iter()
-            .copied()
-            .fold(<T as NumericElement>::ZERO, |a, x| a + x)
-    })
+pub fn total_delivered_fluence<T: Scalar>(frames: &[DeliveryFrame<T>]) -> EnergyPerArea<T> {
+    frames
+        .iter()
+        .flat_map(|frame| frame.leaf_fluence.iter().copied())
+        .fold(
+            EnergyPerArea::from_base(<T as NumericElement>::ZERO),
+            |acc, x| acc + x,
+        )
 }
 
 /// Apply a secondary-collimator [`FieldAperture`] to a delivery: scale each leaf's
 /// fluence by the aperture transmission at that leaf's collimator coordinate
-/// `(lateral_offset, couch_mm, 0)`, where
-/// `lateral_offset = (leaf − centre_leaf)·leaf_width_mm`.
+/// `(lateral_offset, couch, 0)`, where
+/// `lateral_offset = (leaf − centre_leaf)·leaf_width`.
 ///
 /// This is the jaw field-shaping + geometric edge penumbra, applied on top of the
 /// per-leaf MLC modulation already in `frames`: leaves outside the open field are
@@ -74,9 +82,10 @@ pub fn total_delivered_fluence<T: Scalar>(frames: &[DeliveryFrame<T>]) -> T {
 pub fn collimate_frames<T: GeometryScalar>(
     frames: &[DeliveryFrame<T>],
     aperture: &FieldAperture<T>,
-    leaf_width_mm: T,
+    leaf_width: Length<T>,
 ) -> Vec<DeliveryFrame<T>> {
     let zero = <T as NumericElement>::ZERO;
+    let leaf_width_mm = leaf_width.in_unit::<Millimeter>();
     frames
         .iter()
         .map(|frame| {
@@ -89,14 +98,15 @@ pub fn collimate_frames<T: GeometryScalar>(
                 .map(|(leaf, &fluence)| {
                     let offset =
                         (<T as GeometryScalar>::from_f64(leaf as f64) - centre) * leaf_width_mm;
-                    let point = Point3::new(offset, frame.couch_mm, zero);
-                    fluence * aperture.transmission(&point)
+                    let point = Point3::new(offset, frame.couch.in_unit::<Millimeter>(), zero);
+                    let transmission = Dimensionless::from_base(aperture.transmission(&point));
+                    fluence * transmission
                 })
                 .collect();
             DeliveryFrame {
                 projection: frame.projection,
                 gantry_angle_rad: frame.gantry_angle_rad,
-                couch_mm: frame.couch_mm,
+                couch: frame.couch,
                 leaf_fluence,
             }
         })
@@ -110,6 +120,14 @@ mod tests {
 
     fn delivery() -> HelicalDelivery<f64> {
         HelicalDelivery::new(51, 25.0, 0.4, 10.0, 0.0, 0.0).expect("delivery")
+    }
+
+    fn length(value: f64) -> Length<f64> {
+        Length::from_unit::<Millimeter>(value)
+    }
+
+    fn fluence(value: f64) -> EnergyPerArea<f64> {
+        EnergyPerArea::from_base(value)
     }
 
     #[test]
@@ -126,7 +144,11 @@ mod tests {
                 del.gantry_angle_rad(p),
                 epsilon = 1e-12
             );
-            assert_relative_eq!(frame.couch_mm, del.couch_position_mm(p), epsilon = 1e-12);
+            assert_relative_eq!(
+                frame.couch.in_unit::<Millimeter>(),
+                del.couch_position_mm(p),
+                epsilon = 1e-12
+            );
             assert_eq!(frame.leaf_fluence.len(), 4);
         }
     }
@@ -139,9 +161,11 @@ mod tests {
         let mlc = MlcModel::new(0.0_f64, 0.1).unwrap();
         let frames = simulate_helical_delivery(&delivery(), &lot, &mlc);
         let expected = mlc.effective_fluence_sinogram(&lot);
-        assert_eq!(frames[0].leaf_fluence, expected);
+        for (actual, expected) in frames[0].leaf_fluence.iter().zip(expected) {
+            assert_relative_eq!(*actual.as_base(), expected, epsilon = 1e-15);
+        }
         // leaf0: open=1, left=self(1), right=0 → 1 − 0.1·½·1 = 0.95.
-        assert_relative_eq!(frames[0].leaf_fluence[0], 0.95, epsilon = 1e-15);
+        assert_relative_eq!(*frames[0].leaf_fluence[0].as_base(), 0.95, epsilon = 1e-15);
     }
 
     #[test]
@@ -150,16 +174,13 @@ mod tests {
         let mlc = MlcModel::new(0.01_f64, 0.1).unwrap();
         let frames = simulate_helical_delivery(&delivery(), &lot, &mlc);
         for frame in &frames {
-            for &f in &frame.leaf_fluence {
-                assert_relative_eq!(f, 0.01, epsilon = 1e-15);
+            for f in &frame.leaf_fluence {
+                assert_relative_eq!(*f.as_base(), 0.01, epsilon = 1e-15);
             }
         }
         // Total = 2 projections · 5 leaves · 0.01 leakage.
-        assert_relative_eq!(
-            total_delivered_fluence(&frames),
-            2.0 * 5.0 * 0.01,
-            epsilon = 1e-13
-        );
+        let total = total_delivered_fluence(&frames);
+        assert_relative_eq!(*total.as_base(), 2.0 * 5.0 * 0.01, epsilon = 1e-13);
     }
 
     #[test]
@@ -168,7 +189,8 @@ mod tests {
         let mlc = MlcModel::new(0.01_f64, 0.1).unwrap();
         let frames = simulate_helical_delivery(&delivery(), &lot, &mlc);
         // Uniformly open → no T&G loss, full transmission everywhere.
-        assert_relative_eq!(total_delivered_fluence(&frames), 10.0, epsilon = 1e-13);
+        let total = total_delivered_fluence(&frames);
+        assert_relative_eq!(*total.as_base(), 10.0, epsilon = 1e-13);
     }
 
     #[test]
@@ -177,15 +199,19 @@ mod tests {
         let mlc = MlcModel::new(0.0_f32, 0.1).unwrap();
         let del = HelicalDelivery::<f32>::new(51, 25.0, 0.4, 10.0, 0.0, 0.0).unwrap();
         let frames = simulate_helical_delivery(&del, &lot, &mlc);
-        assert_relative_eq!(frames[0].leaf_fluence[0], 0.95_f32, epsilon = 1e-6);
+        assert_relative_eq!(
+            *frames[0].leaf_fluence[0].as_base(),
+            0.95_f32,
+            epsilon = 1e-6
+        );
     }
 
     fn open_frame() -> DeliveryFrame<f64> {
         DeliveryFrame {
             projection: 3,
             gantry_angle_rad: 1.2,
-            couch_mm: 4.0,
-            leaf_fluence: vec![1.0; 9],
+            couch: length(4.0),
+            leaf_fluence: vec![fluence(1.0); 9],
         }
     }
 
@@ -194,8 +220,8 @@ mod tests {
         // Aperture far larger than the leaf bank → every leaf fully open (× 1).
         let ap = FieldAperture::rectangular(Point3::new(0.0, 4.0, 0.0), [500.0, 500.0, 500.0], 2.0)
             .unwrap();
-        let out = collimate_frames(&[open_frame()], &ap, 5.0);
-        assert_eq!(out[0].leaf_fluence, vec![1.0; 9]);
+        let out = collimate_frames(&[open_frame()], &ap, length(5.0));
+        assert!(out[0].leaf_fluence.iter().all(|f| *f.as_base() == 1.0));
     }
 
     #[test]
@@ -205,22 +231,22 @@ mod tests {
         // interior leaves 3–5 fully open, and leaves 0–1 / 7–8 fully blocked.
         let ap = FieldAperture::rectangular(Point3::new(0.0, 4.0, 0.0), [10.0, 500.0, 500.0], 2.0)
             .unwrap();
-        let out = collimate_frames(&[open_frame()], &ap, 5.0);
+        let out = collimate_frames(&[open_frame()], &ap, length(5.0));
         let f = &out[0].leaf_fluence;
-        assert_relative_eq!(f[4], 1.0, epsilon = 1e-12); // centre, open
-        assert_relative_eq!(f[3], 1.0, epsilon = 1e-12);
-        assert_relative_eq!(f[2], 0.5, epsilon = 1e-12); // on the field edge
-        assert_relative_eq!(f[6], 0.5, epsilon = 1e-12);
-        assert_relative_eq!(f[0], 0.0, epsilon = 1e-12); // outside the field
-        assert_relative_eq!(f[8], 0.0, epsilon = 1e-12);
+        assert_relative_eq!(*f[4].as_base(), 1.0, epsilon = 1e-12); // centre, open
+        assert_relative_eq!(*f[3].as_base(), 1.0, epsilon = 1e-12);
+        assert_relative_eq!(*f[2].as_base(), 0.5, epsilon = 1e-12); // on the field edge
+        assert_relative_eq!(*f[6].as_base(), 0.5, epsilon = 1e-12);
+        assert_relative_eq!(*f[0].as_base(), 0.0, epsilon = 1e-12); // outside the field
+        assert_relative_eq!(*f[8].as_base(), 0.0, epsilon = 1e-12);
         assert!(
-            f.iter().sum::<f64>() < 9.0,
+            f.iter().map(|value| *value.as_base()).sum::<f64>() < 9.0,
             "collimation must remove fluence"
         );
         // Machine state is preserved.
         assert_eq!(out[0].projection, 3);
         assert_relative_eq!(out[0].gantry_angle_rad, 1.2, epsilon = 1e-15);
-        assert_relative_eq!(out[0].couch_mm, 4.0, epsilon = 1e-15);
+        assert_relative_eq!(out[0].couch.in_unit::<Millimeter>(), 4.0, epsilon = 1e-15);
     }
 
     #[test]
@@ -229,12 +255,15 @@ mod tests {
         let ap = FieldAperture::rectangular(Point3::new(3.0, 4.0, 0.0), [6.0, 500.0, 500.0], 1.5)
             .unwrap();
         let frame = DeliveryFrame {
-            leaf_fluence: vec![0.9, 0.3, 1.0, 0.7, 0.5, 0.8, 0.2, 1.0, 0.6],
+            leaf_fluence: vec![0.9, 0.3, 1.0, 0.7, 0.5, 0.8, 0.2, 1.0, 0.6]
+                .into_iter()
+                .map(fluence)
+                .collect(),
             ..open_frame()
         };
-        let out = collimate_frames(std::slice::from_ref(&frame), &ap, 5.0);
+        let out = collimate_frames(std::slice::from_ref(&frame), &ap, length(5.0));
         for (before, after) in frame.leaf_fluence.iter().zip(&out[0].leaf_fluence) {
-            assert!(*after <= *before + 1e-12 && *after >= 0.0);
+            assert!(*after.as_base() <= *before.as_base() + 1e-12 && *after.as_base() >= 0.0);
         }
     }
 }

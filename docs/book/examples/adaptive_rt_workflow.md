@@ -54,12 +54,13 @@ let corrected = shift_phantom(&daily_ct, -shift[0], -shift[1]);
 let corrected_dose = accumulate_delivered_dose(&frames, &mu, geometry, lw, step);
 
 // Adaptive gate
+let normalization_dose = AbsorbedDose::from_base(1.0);
 let gamma = gamma_index_3d(
     &plan_dose,
     &corrected_dose,
     0.03,
     Length::from_unit::<Millimeter>(2.0),
-    d_max,
+    normalization_dose,
     Length::from_unit::<Millimeter>(6.0),
 )?;
 let pass = gamma_pass_rate(&gamma, &plan_dose, AbsorbedDose::from_base(0.0));

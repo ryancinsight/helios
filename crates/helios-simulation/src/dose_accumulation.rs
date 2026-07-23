@@ -26,7 +26,10 @@
 //! later increment.
 
 use crate::delivery::DeliveryFrame;
-use aequitas::systems::si::quantities::AbsorbedDose;
+use aequitas::systems::si::{
+    quantities::{AbsorbedDose, Length},
+    units::Millimeter,
+};
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
 use helios_solver::{
@@ -41,19 +44,19 @@ use hyperion::TransportError;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BeamGeometry<T: GeometryScalar> {
     /// Parallel beamlets (small-fan approximation): every leaf ray runs along the
-    /// gantry direction, offset laterally; `standoff_mm` places the origin behind
+    /// gantry direction, offset laterally; `standoff` places the origin behind
     /// isocentre. Cheap and exact for a narrow field.
     Parallel {
         /// Distance the beamlet origin stands off behind isocentre (mm).
-        standoff_mm: T,
+        standoff: Length<T>,
     },
-    /// Divergent fan from a point source at `source_axis_mm` from isocentre (SAD):
+    /// Divergent fan from a point source at `source_axis` from isocentre (SAD):
     /// each beamlet runs from the focal spot through its isocentre-plane offset
     /// point, so beamlets diverge with depth — the true TomoTherapy fan geometry.
-    /// Reduces to [`Parallel`](Self::Parallel) as `source_axis_mm → ∞`.
+    /// Reduces to [`Parallel`](Self::Parallel) as `source_axis → ∞`.
     PointSource {
         /// Source-to-axis distance / SAD (mm).
-        source_axis_mm: T,
+        source_axis: Length<T>,
     },
 }
 
@@ -61,7 +64,7 @@ pub enum BeamGeometry<T: GeometryScalar> {
 /// dose [`Volume`] over the same grid as the attenuation volume `mu`.
 ///
 /// `geometry` selects the beam model (parallel vs divergent point-source fan);
-/// `leaf_width_mm` is the inter-leaf lateral pitch; `step_mm` is the ray-march
+/// `leaf_width` is the inter-leaf lateral pitch; `step` is the ray-march
 /// sampling step. Dose is linear in the per-leaf fluence, so scaling all fluence
 /// scales the dose and independent frames/leaves superpose (the test oracles).
 ///
@@ -73,13 +76,13 @@ pub fn accumulate_delivered_dose<T: GeometryScalar>(
     frames: &[DeliveryFrame<T>],
     mu: &Volume<T>,
     geometry: BeamGeometry<T>,
-    leaf_width_mm: T,
-    step_mm: T,
+    leaf_width: Length<T>,
+    step: Length<T>,
 ) -> Result<Volume<T>, TransportError<T>> {
     let grid = *mu.grid();
     let mut dose = Volume::zeros(grid);
     for frame in frames {
-        deposit_frame_terma(&mut dose, frame, mu, geometry, leaf_width_mm, step_mm)?;
+        deposit_frame_terma(&mut dose, frame, mu, geometry, leaf_width, step)?;
     }
     Ok(dose)
 }
@@ -93,16 +96,18 @@ fn deposit_frame_terma<T: GeometryScalar>(
     frame: &DeliveryFrame<T>,
     mu: &Volume<T>,
     geometry: BeamGeometry<T>,
-    leaf_width_mm: T,
-    step_mm: T,
+    leaf_width: Length<T>,
+    step: Length<T>,
 ) -> Result<Vector3<T>, TransportError<T>> {
     let zero = <T as NumericElement>::ZERO;
+    let step_mm = step.in_unit::<Millimeter>();
     let (centre, dir, perp) = gantry_basis(mu.grid(), frame.gantry_angle_rad);
-    for (leaf, &weight) in frame.leaf_fluence.iter().enumerate() {
+    for (leaf, fluence) in frame.leaf_fluence.iter().enumerate() {
+        let weight = *fluence.as_base();
         if weight <= zero {
             continue; // closed/leak-free leaf deposits nothing.
         }
-        let Some(beamlet) = beamlet_ray(centre, dir, perp, frame, leaf, leaf_width_mm, geometry)
+        let Some(beamlet) = beamlet_ray(centre, dir, perp, frame, leaf, leaf_width, geometry)
         else {
             continue;
         };
@@ -224,22 +229,15 @@ pub fn accumulate_delivered_dose_anisotropic<T: GeometryScalar>(
     frames: &[DeliveryFrame<T>],
     mu: &Volume<T>,
     geometry: BeamGeometry<T>,
-    leaf_width_mm: T,
-    step_mm: T,
+    leaf_width: Length<T>,
+    step: Length<T>,
     cone: &CollapsedCone<T>,
 ) -> Result<Volume<T>, TransportError<T>> {
     let grid = *mu.grid();
     let mut acc = vec![<T as NumericElement>::ZERO; grid.num_voxels()];
     for frame in frames {
         let mut frame_terma = Volume::zeros(grid);
-        let dir = deposit_frame_terma(
-            &mut frame_terma,
-            frame,
-            mu,
-            geometry,
-            leaf_width_mm,
-            step_mm,
-        )?;
+        let dir = deposit_frame_terma(&mut frame_terma, frame, mu, geometry, leaf_width, step)?;
         let frame_dose = oriented_forward_scatter(
             &frame_terma,
             dir,
@@ -274,10 +272,12 @@ pub(crate) fn beamlet_ray<T: GeometryScalar>(
     perp: Vector3<T>,
     frame: &DeliveryFrame<T>,
     leaf: usize,
-    leaf_width_mm: T,
+    leaf_width: Length<T>,
     geometry: BeamGeometry<T>,
 ) -> Option<Beamlet<T>> {
     let zero = <T as NumericElement>::ZERO;
+    let leaf_width_mm = leaf_width.in_unit::<Millimeter>();
+    let couch_mm = frame.couch.in_unit::<Millimeter>();
     let leaves = frame.leaf_fluence.len();
     let centre_leaf = <T as GeometryScalar>::from_f64((leaves as f64 - 1.0) * 0.5);
     let offset = (<T as GeometryScalar>::from_f64(leaf as f64) - centre_leaf) * leaf_width_mm;
@@ -285,16 +285,20 @@ pub(crate) fn beamlet_ray<T: GeometryScalar>(
     // branches lie in the couch z-slice (dir.z = perp.z = 0); the ray constructor
     // normalizes the direction vector.
     let (origin, direction, falloff) = match geometry {
-        BeamGeometry::Parallel { standoff_mm } => (
-            Point3::new(
-                centre.x + perp.x * offset - dir.x * standoff_mm,
-                centre.y + perp.y * offset - dir.y * standoff_mm,
-                frame.couch_mm,
-            ),
-            dir,
-            None,
-        ),
-        BeamGeometry::PointSource { source_axis_mm } => {
+        BeamGeometry::Parallel { standoff } => {
+            let standoff_mm = standoff.in_unit::<Millimeter>();
+            (
+                Point3::new(
+                    centre.x + perp.x * offset - dir.x * standoff_mm,
+                    centre.y + perp.y * offset - dir.y * standoff_mm,
+                    couch_mm,
+                ),
+                dir,
+                None,
+            )
+        }
+        BeamGeometry::PointSource { source_axis } => {
+            let source_axis_mm = source_axis.in_unit::<Millimeter>();
             // Focal spot behind isocentre; ray aims through the leaf's isocentre-
             // plane point `centre + perp·offset`, so direction = (perp·offset +
             // dir·SAD). For offset 0 this is the central axis; off-axis leaves fan
@@ -302,7 +306,7 @@ pub(crate) fn beamlet_ray<T: GeometryScalar>(
             let focal = Point3::new(
                 centre.x - dir.x * source_axis_mm,
                 centre.y - dir.y * source_axis_mm,
-                frame.couch_mm,
+                couch_mm,
             );
             let aim = Vector3::new(
                 perp.x * offset + dir.x * source_axis_mm,
@@ -349,12 +353,20 @@ mod tests {
 
     // A single-leaf frame at gantry angle θ, couch z, fluence w. One leaf → the
     // beamlet is on the central axis (zero lateral offset).
+    fn length(value: f64) -> Length<f64> {
+        Length::from_unit::<Millimeter>(value)
+    }
+
+    fn fluence(value: f64) -> aequitas::systems::si::quantities::EnergyPerArea<f64> {
+        aequitas::systems::si::quantities::EnergyPerArea::from_base(value)
+    }
+
     fn frame(gantry_angle_rad: f64, couch_mm: f64, w: f64) -> DeliveryFrame<f64> {
         DeliveryFrame {
             projection: 0,
             gantry_angle_rad,
-            couch_mm,
-            leaf_fluence: vec![w],
+            couch: length(couch_mm),
+            leaf_fluence: vec![fluence(w)],
         }
     }
 
@@ -371,9 +383,11 @@ mod tests {
         let dose = accumulate_delivered_dose(
             &[frame(0.0, 8.0, 2.0)],
             &mu,
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            2.0,
-            0.25,
+            BeamGeometry::Parallel {
+                standoff: length(500.0),
+            },
+            length(2.0),
+            length(0.25),
         )
         .expect("valid attenuation volume");
         assert_relative_eq!(dose.sum(), expected_axial_energy(0.05, 2.0), epsilon = 1e-9);
@@ -385,9 +399,11 @@ mod tests {
         let dose = accumulate_delivered_dose(
             &[frame(0.0, 8.0, 0.0)],
             &mu,
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            2.0,
-            0.5,
+            BeamGeometry::Parallel {
+                standoff: length(500.0),
+            },
+            length(2.0),
+            length(0.5),
         )
         .expect("valid attenuation volume");
         assert_relative_eq!(dose.sum(), 0.0, epsilon = 1e-15);
@@ -400,17 +416,21 @@ mod tests {
         let d1 = accumulate_delivered_dose(
             &[frame(0.0, 8.0, 1.0)],
             &mu,
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            2.0,
-            0.25,
+            BeamGeometry::Parallel {
+                standoff: length(500.0),
+            },
+            length(2.0),
+            length(0.25),
         )
         .expect("valid attenuation volume");
         let d2 = accumulate_delivered_dose(
             &[frame(0.0, 8.0, 2.0)],
             &mu,
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            2.0,
-            0.25,
+            BeamGeometry::Parallel {
+                standoff: length(500.0),
+            },
+            length(2.0),
+            length(0.25),
         )
         .expect("valid attenuation volume");
         assert_relative_eq!(d2.sum(), 2.0 * d1.sum(), epsilon = 1e-12);
@@ -431,25 +451,31 @@ mod tests {
         let together = accumulate_delivered_dose(
             &[a.clone(), b.clone()],
             &mu,
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            2.0,
-            0.25,
+            BeamGeometry::Parallel {
+                standoff: length(500.0),
+            },
+            length(2.0),
+            length(0.25),
         )
         .expect("valid attenuation volume");
         let da = accumulate_delivered_dose(
             &[a],
             &mu,
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            2.0,
-            0.25,
+            BeamGeometry::Parallel {
+                standoff: length(500.0),
+            },
+            length(2.0),
+            length(0.25),
         )
         .expect("valid attenuation volume");
         let db = accumulate_delivered_dose(
             &[b],
             &mu,
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            2.0,
-            0.25,
+            BeamGeometry::Parallel {
+                standoff: length(500.0),
+            },
+            length(2.0),
+            length(0.25),
         )
         .expect("valid attenuation volume");
         assert_relative_eq!(together.sum(), da.sum() + db.sum(), epsilon = 1e-12);
@@ -464,15 +490,17 @@ mod tests {
         let f = DeliveryFrame {
             projection: 0,
             gantry_angle_rad: 0.0,
-            couch_mm: 8.0,
-            leaf_fluence: vec![1.0, 1.0, 1.0],
+            couch: length(8.0),
+            leaf_fluence: vec![fluence(1.0), fluence(1.0), fluence(1.0)],
         };
         let dose = accumulate_delivered_dose(
             &[f],
             &mu,
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            2.0,
-            0.25,
+            BeamGeometry::Parallel {
+                standoff: length(500.0),
+            },
+            length(2.0),
+            length(0.25),
         )
         .expect("valid attenuation volume");
         assert_relative_eq!(
@@ -499,15 +527,19 @@ mod tests {
         let f = DeliveryFrame {
             projection: 0,
             gantry_angle_rad: 0.0_f32,
-            couch_mm: 8.0,
-            leaf_fluence: vec![2.0_f32],
+            couch: Length::from_unit::<Millimeter>(8.0_f32),
+            leaf_fluence: vec![aequitas::systems::si::quantities::EnergyPerArea::from_base(
+                2.0_f32,
+            )],
         };
         let dose = accumulate_delivered_dose(
             &[f],
             &mu,
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            2.0,
-            0.25,
+            BeamGeometry::Parallel {
+                standoff: Length::from_unit::<Millimeter>(500.0_f32),
+            },
+            Length::from_unit::<Millimeter>(2.0_f32),
+            Length::from_unit::<Millimeter>(0.25_f32),
         )
         .expect("valid attenuation volume");
         let expected = 2.0_f32 * (1.0 - (-0.05_f32 * 1.6).exp());
@@ -522,25 +554,27 @@ mod tests {
         let f = DeliveryFrame {
             projection: 0,
             gantry_angle_rad: 0.0,
-            couch_mm: 8.0,
-            leaf_fluence: vec![1.0, 1.0, 1.0],
+            couch: length(8.0),
+            leaf_fluence: vec![fluence(1.0), fluence(1.0), fluence(1.0)],
         };
         let parallel = accumulate_delivered_dose(
             std::slice::from_ref(&f),
             &mu,
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            2.0,
-            0.25,
+            BeamGeometry::Parallel {
+                standoff: length(500.0),
+            },
+            length(2.0),
+            length(0.25),
         )
         .expect("valid attenuation volume");
         let far = accumulate_delivered_dose(
             &[f],
             &mu,
             BeamGeometry::PointSource {
-                source_axis_mm: 1.0e6,
+                source_axis: length(1.0e6),
             },
-            2.0,
-            0.25,
+            length(2.0),
+            length(0.25),
         )
         .expect("valid attenuation volume");
         assert_relative_eq!(far.sum(), parallel.sum(), max_relative = 1e-4);
@@ -560,8 +594,8 @@ mod tests {
         let f = DeliveryFrame {
             projection: 0,
             gantry_angle_rad: 0.0,
-            couch_mm: 0.0,
-            leaf_fluence: vec![0.0, 0.0, 1.0],
+            couch: length(0.0),
+            leaf_fluence: vec![fluence(0.0), fluence(0.0), fluence(1.0)],
         };
         let lit_rows = |dose: &Volume<f64>| -> usize {
             (0..31)
@@ -571,19 +605,21 @@ mod tests {
         let par = accumulate_delivered_dose(
             std::slice::from_ref(&f),
             &mu,
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            6.0,
-            0.25,
+            BeamGeometry::Parallel {
+                standoff: length(500.0),
+            },
+            length(6.0),
+            length(0.25),
         )
         .expect("valid attenuation volume");
         let pts = accumulate_delivered_dose(
             &[f],
             &mu,
             BeamGeometry::PointSource {
-                source_axis_mm: 30.0,
+                source_axis: length(30.0),
             },
-            6.0,
-            0.25,
+            length(6.0),
+            length(0.25),
         )
         .expect("valid attenuation volume");
         assert_eq!(lit_rows(&par), 1, "parallel beamlet must stay in one row");
@@ -605,9 +641,11 @@ mod tests {
         let terma = accumulate_delivered_dose(
             &[frame(0.0, 8.0, 1.0)],
             &mu,
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            2.0,
-            0.25,
+            BeamGeometry::Parallel {
+                standoff: length(500.0),
+            },
+            length(2.0),
+            length(0.25),
         )
         .expect("valid attenuation volume");
 
@@ -656,7 +694,9 @@ mod tests {
         // the verified isotropic pipeline.
         use helios_solver::scatter_superposition;
         let mu = uniform_cube(0.05);
-        let geom = BeamGeometry::Parallel { standoff_mm: 500.0 };
+        let geom = BeamGeometry::Parallel {
+            standoff: length(500.0),
+        };
         let frames = [frame(0.0, 8.0, 2.0)];
         let voxel_cm = 0.2;
 
@@ -664,11 +704,18 @@ mod tests {
         let (beam_k, _) = forward_peaked_kernel(0.4, 0.4, voxel_cm, 1, 1);
         let lat = symmetric_deposition_kernel(0.3, voxel_cm, 1);
 
-        let terma = accumulate_delivered_dose(&frames, &mu, geom, 2.0, 0.25)
+        let terma = accumulate_delivered_dose(&frames, &mu, geom, length(2.0), length(0.25))
             .expect("valid attenuation volume");
         let expected = scatter_superposition(&terma, &beam_k, &lat, &lat);
-        let got = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 2.0, 0.25, &cone)
-            .expect("valid attenuation volume");
+        let got = accumulate_delivered_dose_anisotropic(
+            &frames,
+            &mu,
+            geom,
+            length(2.0),
+            length(0.25),
+            &cone,
+        )
+        .expect("valid attenuation volume");
 
         for i in 0..9 {
             for j in 0..9 {
@@ -690,16 +737,32 @@ mod tests {
         // (larger x) — proof the anisotropy reaches delivered dose, not just the
         // solver primitive.
         let mu = uniform_cube(0.05);
-        let geom = BeamGeometry::Parallel { standoff_mm: 500.0 };
+        let geom = BeamGeometry::Parallel {
+            standoff: length(500.0),
+        };
         let frames = [frame(0.0, 8.0, 2.0)];
         let voxel_cm = 0.2;
         let iso = CollapsedCone::forward_peaked(0.4, 0.4, 0.3, voxel_cm, 2, 2, 1);
         let fwd = CollapsedCone::forward_peaked(0.1, 1.0, 0.3, voxel_cm, 2, 2, 1);
 
-        let d_iso = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 2.0, 0.25, &iso)
-            .expect("valid attenuation volume");
-        let d_fwd = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 2.0, 0.25, &fwd)
-            .expect("valid attenuation volume");
+        let d_iso = accumulate_delivered_dose_anisotropic(
+            &frames,
+            &mu,
+            geom,
+            length(2.0),
+            length(0.25),
+            &iso,
+        )
+        .expect("valid attenuation volume");
+        let d_fwd = accumulate_delivered_dose_anisotropic(
+            &frames,
+            &mu,
+            geom,
+            length(2.0),
+            length(0.25),
+            &fwd,
+        )
+        .expect("valid attenuation volume");
         let (c_iso, c_fwd) = (beam_axis_centroid_x(&d_iso), beam_axis_centroid_x(&d_fwd));
         assert!(
             c_fwd > c_iso,
@@ -713,7 +776,9 @@ mod tests {
         // the monoenergetic cone with the same ranges (the differential oracle
         // tying the poly path to the verified monoenergetic one).
         let mu = uniform_cube(0.05);
-        let geom = BeamGeometry::Parallel { standoff_mm: 500.0 };
+        let geom = BeamGeometry::Parallel {
+            standoff: length(500.0),
+        };
         let frames = [frame(0.0, 8.0, 2.0)];
         let voxel_cm = 0.2;
         let mono = CollapsedCone::forward_peaked(0.1, 1.0, 0.3, voxel_cm, 2, 3, 1);
@@ -729,10 +794,24 @@ mod tests {
             3,
             1,
         );
-        let d_mono = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 2.0, 0.25, &mono)
-            .expect("valid attenuation volume");
-        let d_poly = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 2.0, 0.25, &poly)
-            .expect("valid attenuation volume");
+        let d_mono = accumulate_delivered_dose_anisotropic(
+            &frames,
+            &mu,
+            geom,
+            length(2.0),
+            length(0.25),
+            &mono,
+        )
+        .expect("valid attenuation volume");
+        let d_poly = accumulate_delivered_dose_anisotropic(
+            &frames,
+            &mu,
+            geom,
+            length(2.0),
+            length(0.25),
+            &poly,
+        )
+        .expect("valid attenuation volume");
         for i in 0..9 {
             for j in 0..9 {
                 for k in 0..9 {
@@ -751,7 +830,9 @@ mod tests {
         // Two-component spectra weighted soft vs hard: the harder-weighted beam
         // pushes the delivered-dose beam-axis centroid further downstream.
         let mu = uniform_cube(0.05);
-        let geom = BeamGeometry::Parallel { standoff_mm: 500.0 };
+        let geom = BeamGeometry::Parallel {
+            standoff: length(500.0),
+        };
         let frames = [frame(0.0, 8.0, 2.0)];
         let voxel_cm = 0.2;
         let soft = SpectralComponent {
@@ -792,12 +873,24 @@ mod tests {
             2,
             1,
         );
-        let d_soft =
-            accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 2.0, 0.25, &mostly_soft)
-                .expect("valid attenuation volume");
-        let d_hard =
-            accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 2.0, 0.25, &mostly_hard)
-                .expect("valid attenuation volume");
+        let d_soft = accumulate_delivered_dose_anisotropic(
+            &frames,
+            &mu,
+            geom,
+            length(2.0),
+            length(0.25),
+            &mostly_soft,
+        )
+        .expect("valid attenuation volume");
+        let d_hard = accumulate_delivered_dose_anisotropic(
+            &frames,
+            &mu,
+            geom,
+            length(2.0),
+            length(0.25),
+            &mostly_hard,
+        )
+        .expect("valid attenuation volume");
         assert!(
             beam_axis_centroid_x(&d_hard) > beam_axis_centroid_x(&d_soft),
             "harder spectrum centroid {} must exceed softer {}",
@@ -809,15 +902,17 @@ mod tests {
     #[test]
     fn anisotropic_dose_is_linear_in_fluence() {
         let mu = uniform_cube(0.05);
-        let geom = BeamGeometry::Parallel { standoff_mm: 500.0 };
+        let geom = BeamGeometry::Parallel {
+            standoff: length(500.0),
+        };
         let voxel_cm = 0.2;
         let cone = CollapsedCone::forward_peaked(0.1, 1.0, 0.3, voxel_cm, 2, 2, 1);
         let d1 = accumulate_delivered_dose_anisotropic(
             &[frame(0.0, 8.0, 1.0)],
             &mu,
             geom,
-            2.0,
-            0.25,
+            length(2.0),
+            length(0.25),
             &cone,
         )
         .expect("valid attenuation volume");
@@ -825,8 +920,8 @@ mod tests {
             &[frame(0.0, 8.0, 2.0)],
             &mu,
             geom,
-            2.0,
-            0.25,
+            length(2.0),
+            length(0.25),
             &cone,
         )
         .expect("valid attenuation volume");

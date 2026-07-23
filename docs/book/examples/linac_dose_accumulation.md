@@ -17,19 +17,29 @@ Demonstrates a 4-field box LINAC step-and-shoot delivery on a uniform water phan
 ## Key APIs
 
 ```rust
+use aequitas::systems::si::{
+    quantities::{EnergyPerArea, Length},
+    units::Millimeter,
+};
 use helios_simulation::{accumulate_delivered_dose, BeamGeometry, DeliveryFrame};
 
 let frames = vec![
-    DeliveryFrame { projection: 0, gantry_angle_rad: 0.0, couch_mm: 0.0,
-                    leaf_fluence: vec![1.0; 16] },
+    DeliveryFrame {
+        projection: 0,
+        gantry_angle_rad: 0.0,
+        couch: Length::from_unit::<Millimeter>(0.0),
+        leaf_fluence: vec![EnergyPerArea::from_base(1.0); 16],
+    },
     // ... 90°, 180°, 270°
 ];
 
 let dose = accumulate_delivered_dose(
     &frames, &mu_volume,
-    BeamGeometry::Parallel { standoff_mm: 500.0 },
-    2.0,  // leaf_width_mm
-    0.5,  // step_mm
+    BeamGeometry::Parallel {
+        standoff: Length::from_unit::<Millimeter>(500.0),
+    },
+    Length::from_unit::<Millimeter>(2.0),
+    Length::from_unit::<Millimeter>(0.5),
 );
 ```
 
@@ -37,9 +47,13 @@ let dose = accumulate_delivered_dose(
 
 Each `DeliveryFrame` carries:
 - `gantry_angle_rad` — the beam direction in the axial plane
-- `leaf_fluence` — per-leaf monitor-unit weight (16 leaves × 2 mm = 32 mm field)
+- `couch` — the couch position as an Aequitas length
+- `leaf_fluence` — per-leaf Aequitas fluence (16 leaves × 2 mm = 32 mm field)
 
-`BeamGeometry::Parallel` uses a small-fan approximation: all beamlets run parallel along the gantry direction, offset laterally by `(leaf - centre) × leaf_width_mm`. Switch to `BeamGeometry::PointSource { source_axis_mm: 850.0 }` for a true divergent SAD geometry.
+`BeamGeometry::Parallel` uses a small-fan approximation: all beamlets run
+parallel along the gantry direction, offset laterally by `(leaf - centre) ×
+leaf_width`. Switch to `BeamGeometry::PointSource { source_axis:
+Length::from_unit::<Millimeter>(850.0) }` for a true divergent SAD geometry.
 
 ## Book Chapter
 

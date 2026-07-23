@@ -11,7 +11,10 @@
 //! criterion. `γ ≤ 1` passes. With a 3%/2 mm criterion, `Δd = 2 mm` and
 //! `ΔD = 0.03 · D_norm` (global normalization).
 
-use aequitas::systems::si::quantities::{AbsorbedDose, Length};
+use aequitas::systems::si::{
+    quantities::{AbsorbedDose, Length},
+    units::Millimeter,
+};
 use helios_core::HeliosError;
 use helios_domain::Volume;
 use helios_math::{NumericElement, Scalar};
@@ -30,7 +33,7 @@ fn require_positive_finite<T: Scalar>(value: T, field: &'static str) -> Result<(
 /// Compute the 3-D gamma index of `evaluated` against `reference` on a shared grid.
 ///
 /// - `dose_diff_criterion`: fractional dose-difference criterion (e.g. `0.03`).
-/// - `dta`: distance-to-agreement (e.g. `Length::from_base(2.0)`).
+/// - `dta`: distance-to-agreement (e.g. `Length::from_unit::<Millimeter>(2.0)`).
 /// - `normalization_dose`: global normalization dose for `ΔD` (e.g. the reference
 ///   maximum or the prescription).
 /// - `search_radius`: neighborhood radius searched for the minimizing point;
@@ -117,8 +120,10 @@ fn gamma_impl<T: Scalar>(
         });
     }
     require_positive_finite(dose_diff_criterion, "gamma::dose_diff_criterion")?;
-    require_positive_finite(*dta.as_base(), "gamma::dta")?;
-    require_positive_finite(*search_radius.as_base(), "gamma::search_radius")?;
+    let dta_mm = dta.in_unit::<Millimeter>();
+    let search_radius_mm = search_radius.in_unit::<Millimeter>();
+    require_positive_finite(dta_mm, "gamma::dta")?;
+    require_positive_finite(search_radius_mm, "gamma::search_radius")?;
     match norm {
         Norm::Global(d) => require_positive_finite(*d.as_base(), "gamma::normalization_dose")?,
         Norm::Local { cutoff } => {
@@ -131,14 +136,12 @@ fn gamma_impl<T: Scalar>(
     let spacing = grid.spacing();
     let zero = <T as NumericElement>::ZERO;
 
-    let dta_base = *dta.as_base();
-    let search_radius_base = *search_radius.as_base();
-    let inv_dta_sq = (dta_base * dta_base).recip();
-    let search_sq = search_radius_base * search_radius_base;
+    let inv_dta_sq = (dta_mm * dta_mm).recip();
+    let search_sq = search_radius_mm * search_radius_mm;
 
     // Per-axis neighborhood radius in voxels covering the search sphere.
     let radius_vox = |axis: usize| -> usize {
-        (search_radius_base * spacing[axis].recip()).ceil().to_f64() as usize
+        (search_radius_mm * spacing[axis].recip()).ceil().to_f64() as usize
     };
     let (rx, ry, rz) = (radius_vox(0), radius_vox(1), radius_vox(2));
 
@@ -229,7 +232,7 @@ mod tests {
     }
 
     fn distance(value: f64) -> Length<f64> {
-        Length::from_base(value)
+        Length::from_unit::<Millimeter>(value)
     }
 
     fn absorbed(value: f64) -> AbsorbedDose<f64> {
@@ -429,9 +432,9 @@ mod tests {
             &dose,
             &dose,
             0.03_f32,
-            Length::from_base(2.0_f32),
+            Length::from_unit::<Millimeter>(2.0_f32),
             AbsorbedDose::from_base(5.0_f32),
-            Length::from_base(4.0_f32),
+            Length::from_unit::<Millimeter>(4.0_f32),
         )
         .expect("valid");
         assert_relative_eq!(gamma.get(1, 1, 1).unwrap(), 0.0_f32, epsilon = 1e-6);
