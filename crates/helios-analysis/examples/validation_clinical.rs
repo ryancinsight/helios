@@ -16,6 +16,7 @@
 //!
 //! Run with: `cargo run --example validation_clinical -p helios-analysis`
 
+use aequitas::systems::si::{quantities::AbsorbedDose, units::Gray};
 use helios_analysis::{
     contrast_to_noise_ratio, gamma_index_3d, gamma_pass_rate, michelson_contrast, roi_statistics,
     Dvh,
@@ -77,6 +78,7 @@ fn main() {
     const PRESCRIPTION_GY: f64 = 60.0;
     const DIMS: [usize; 3] = [41, 41, 41];
     const SPACING_MM: f64 = 2.0;
+    let prescription = AbsorbedDose::from_unit::<Gray>(PRESCRIPTION_GY);
 
     println!("=== Clinical Plan Validation ===\n");
 
@@ -111,30 +113,33 @@ fn main() {
 
     println!("Structure         Voxels   D_mean (Gy)   D₉₅ (Gy)    HI");
     println!("──────────────────────────────────────────────────────────");
-    report_dvh("PTV", &ptv_dvh, PRESCRIPTION_GY);
-    report_dvh("Parotid L", &parotid_dvh, PRESCRIPTION_GY);
-    report_dvh("Spinal cord", &cord_dvh, PRESCRIPTION_GY);
+    report_dvh("PTV", &ptv_dvh);
+    report_dvh("Parotid L", &parotid_dvh);
+    report_dvh("Spinal cord", &cord_dvh);
 
     // ── Clinical coverage assertions ──────────────────────────────────────────
     let ptv_d95 = ptv_dvh.dose_at_volume_fraction(0.95);
     // Flat-top PTV: D₉₅ should be near prescription (60 Gy)
     assert!(
-        ptv_d95 >= PRESCRIPTION_GY * 0.90,
-        "PTV D₉₅ {ptv_d95:.2} Gy is below 90% of prescription"
+        ptv_d95 >= prescription * 0.90,
+        "PTV D₉₅ {:.2} Gy is below 90% of prescription",
+        ptv_d95.in_unit::<Gray>()
     );
 
     let parotid_mean = parotid_dvh.mean();
     // Parotid mean should be well below prescription
     assert!(
-        parotid_mean < PRESCRIPTION_GY * 0.50,
-        "Parotid mean dose {parotid_mean:.2} Gy exceeds 50% of prescription"
+        parotid_mean < prescription * 0.50,
+        "Parotid mean dose {:.2} Gy exceeds 50% of prescription",
+        parotid_mean.in_unit::<Gray>()
     );
 
     let cord_max = cord_dvh.max();
     // Cord dose should be well below the 50 Gy hard limit
     assert!(
-        cord_max < 50.0,
-        "Spinal cord max dose {cord_max:.2} Gy exceeds 50 Gy hard limit"
+        cord_max < AbsorbedDose::from_unit::<Gray>(50.0),
+        "Spinal cord max dose {:.2} Gy exceeds 50 Gy hard limit",
+        cord_max.in_unit::<Gray>()
     );
 
     println!("\n✓  DVH coverage passes clinical criteria\n");
@@ -148,18 +153,30 @@ fn main() {
     let ptv_geud = ptv_dvh.generalized_eud(5.0).expect("valid gEUD");
     let parotid_geud = parotid_dvh.generalized_eud(1.0).expect("valid gEUD");
     let cord_geud = cord_dvh.generalized_eud(3.0).expect("valid gEUD");
-    println!("  PTV gEUD (a=5):     {ptv_geud:.2} Gy");
-    println!("  Parotid gEUD (a=1): {parotid_geud:.2} Gy");
-    println!("  Cord gEUD (a=3):    {cord_geud:.2} Gy");
+    println!("  PTV gEUD (a=5):     {:.2} Gy", ptv_geud.in_unit::<Gray>());
+    println!(
+        "  Parotid gEUD (a=1): {:.2} Gy",
+        parotid_geud.in_unit::<Gray>()
+    );
+    println!(
+        "  Cord gEUD (a=3):    {:.2} Gy",
+        cord_geud.in_unit::<Gray>()
+    );
 
     // TCP: tumour control probability (logistic model)
-    let tcp = ptv_dvh.tcp_logistic(5.0, 55.0, 3.0).expect("valid TCP");
+    let tcp = ptv_dvh
+        .tcp_logistic(5.0, AbsorbedDose::from_unit::<Gray>(55.0), 3.0)
+        .expect("valid TCP");
     println!("  PTV TCP:            {tcp:.4}  ({:.1}%)", tcp * 100.0);
     assert!(tcp > 0.5, "PTV TCP {tcp:.4} below 50%");
 
     // NTCP: normal-tissue complication probability (Lyman-Kutcher-Burman)
-    let parotid_ntcp = parotid_dvh.ntcp_lkb(1.0, 30.0, 0.15).expect("valid NTCP");
-    let cord_ntcp = cord_dvh.ntcp_lkb(3.0, 45.0, 0.12).expect("valid NTCP");
+    let parotid_ntcp = parotid_dvh
+        .ntcp_lkb(1.0, AbsorbedDose::from_unit::<Gray>(30.0), 0.15)
+        .expect("valid NTCP");
+    let cord_ntcp = cord_dvh
+        .ntcp_lkb(3.0, AbsorbedDose::from_unit::<Gray>(45.0), 0.12)
+        .expect("valid NTCP");
     println!(
         "  Parotid NTCP:       {parotid_ntcp:.4}  ({:.1}%)",
         parotid_ntcp * 100.0
@@ -235,12 +252,14 @@ fn main() {
     println!("       michelson_contrast, contrast_to_noise_ratio}}");
 }
 
-fn report_dvh(name: &str, dvh: &Dvh<f64>, _rx: f64) {
+fn report_dvh(name: &str, dvh: &Dvh<f64>) {
     let d95 = dvh.dose_at_volume_fraction(0.95);
     let mean = dvh.mean();
     let hi = dvh.homogeneity_index();
     println!(
-        "  {name:<16} {:>6}   {mean:>8.2}     {d95:>7.2}    {hi:.4}",
-        dvh.count()
+        "  {name:<16} {:>6}   {:>8.2}     {:>7.2}    {hi:.4}",
+        dvh.count(),
+        mean.in_unit::<Gray>(),
+        d95.in_unit::<Gray>()
     );
 }

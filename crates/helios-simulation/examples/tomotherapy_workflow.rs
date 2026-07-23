@@ -15,7 +15,10 @@
 
 use std::path::{Path, PathBuf};
 
-use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
+use aequitas::systems::si::{
+    quantities::AreaPerMass,
+    units::{Gray, SquareCentimeterPerGram},
+};
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, Dvh};
 use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel, Volume, VoxelGrid};
 use helios_imaging::{filtered_back_projection, parallel_beam_radon};
@@ -185,7 +188,7 @@ fn main() {
         "  dose:   total {:.3}, peak {:.4}, DVH mean {:.4}",
         dose.sum(),
         peak_dose,
-        dvh.mean()
+        dvh.mean().in_unit::<Gray>()
     );
     println!(
         "  gamma:  3%/2 mm self-consistency pass rate {:.1}%",

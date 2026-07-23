@@ -9,6 +9,11 @@ under a Breaking subsection.
 
 ### Changed
 
+- `helios-analysis::Dvh` now returns and accepts Aequitas `AbsorbedDose`
+  quantities for extrema, mean, quantiles, gEUD, and TCP/NTCP dose thresholds.
+  Fractions, homogeneity indices, probabilities, and gamma scalar boundaries
+  remain dimensionless. See [ADR 0006](docs/adr/0006-dvh-dose-quantities.md).
+
 - `helios-solver` TERMA deposition now returns an Aequitas `AbsorbedDose`
   quantity. Voxel storage remains scalar at the `Volume` boundary, while the
   public deposited-total contract preserves the dose dimension.

@@ -29,7 +29,10 @@
 //!
 //! [← Adaptive Radiotherapy with MVCT](../../docs/book/workflow_adaptive.md)
 
-use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
+use aequitas::systems::si::{
+    quantities::AreaPerMass,
+    units::{Gray, SquareCentimeterPerGram},
+};
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, Dvh};
 use helios_domain::{Volume, VoxelGrid};
 use helios_imaging::register_translation;
@@ -123,7 +126,11 @@ fn main() {
     let plan_dvh = Dvh::from_volume(&plan_dose);
     let d_mean_plan = plan_dvh.mean();
     let d_max_plan = plan_dvh.max();
-    println!("  Planned dose:  mean = {d_mean_plan:.4e}  max = {d_max_plan:.4e}");
+    println!(
+        "  Planned dose:  mean = {:.4e} Gy  max = {:.4e} Gy",
+        d_mean_plan.in_unit::<Gray>(),
+        d_max_plan.in_unit::<Gray>()
+    );
 
     // ── 2. Daily MVCT — simulate 3-voxel setup error ──────────────────────────
     println!("\nPhase 2: Daily MVCT (simulated setup error)");
@@ -158,7 +165,11 @@ fn main() {
     let corrected_dvh = Dvh::from_volume(&corrected_dose);
     let d_mean_corr = corrected_dvh.mean();
     let d_max_corr = corrected_dvh.max();
-    println!("  Corrected dose: mean = {d_mean_corr:.4e}  max = {d_max_corr:.4e}");
+    println!(
+        "  Corrected dose: mean = {:.4e} Gy  max = {:.4e} Gy",
+        d_mean_corr.in_unit::<Gray>(),
+        d_max_corr.in_unit::<Gray>()
+    );
 
     // ── 4. Adaptive decision gate ─────────────────────────────────────────────
     println!("\nPhase 4: Adaptive decision gate");
@@ -169,15 +180,16 @@ fn main() {
         &corrected_dose,
         0.03_f64, // 3% dose criterion
         2.0_f64,  // 2 mm DTA
-        d_max_plan,
+        d_max_plan.into_base(),
         6.0_f64, // search radius
     )
     .expect("identical grids");
     let pass_rate = gamma_pass_rate(&gamma, &plan_dose, 0.0_f64);
 
     // DVH mean deviation
-    let mean_dev = if d_mean_plan > 1e-12 {
-        (d_mean_corr - d_mean_plan).abs() / d_mean_plan
+    let mean_plan = d_mean_plan.into_base();
+    let mean_dev = if mean_plan > 1e-12 {
+        (d_mean_corr.into_base() - mean_plan).abs() / mean_plan
     } else {
         0.0
     };
@@ -218,9 +230,12 @@ fn main() {
     println!("\n  Decision: {decision}");
 
     // Verify core properties
-    assert!(plan_dvh.max() > 1e-12, "Planned dose must be positive");
     assert!(
-        corrected_dvh.max() > 1e-12,
+        *plan_dvh.max().as_base() > 1e-12,
+        "Planned dose must be positive"
+    );
+    assert!(
+        *corrected_dvh.max().as_base() > 1e-12,
         "Corrected dose must be positive"
     );
 

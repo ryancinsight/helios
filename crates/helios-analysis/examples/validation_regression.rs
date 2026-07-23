@@ -120,7 +120,7 @@ fn main() {
     let levels: Vec<f64> = (0..=10).map(|k| k as f64 / 10.0).collect();
     let doses: Vec<f64> = levels
         .iter()
-        .map(|&v| dvh.dose_at_volume_fraction(v))
+        .map(|&v| dvh.dose_at_volume_fraction(v).into_base())
         .collect();
 
     let monotone = doses.windows(2).all(|w| w[0] >= w[1] - 1e-12);

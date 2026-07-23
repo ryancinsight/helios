@@ -2,22 +2,22 @@
 
 The DVH summarises the volumetric dose distribution of a target or organ:
 
-`
-ust
+```rust
+use aequitas::systems::si::{quantities::AbsorbedDose, units::Gray};
 use helios_analysis::Dvh;
 
-let dvh = Dvh::new(&dose, 200);  // 200 histogram bins
-let d95 = dvh.d_percent(95.0);  // dose covering 95% of volume
-let v20 = dvh.v_dose(20.0);     // volume receiving ≥ 20 Gy
-`
+let dvh = Dvh::from_volume(&dose);
+let d95 = dvh.dose_at_volume_fraction(0.95); // typed dose
+let v20 = dvh.volume_fraction_at_dose(AbsorbedDose::from_unit::<Gray>(20.0));
+```
 
 ## Cumulative DVH
 
 The cumulative DVH V(d) gives the fraction of voxels receiving dose ≥ d:
 
-`	ext
+```text
 V(d) = |{r : D(r) ≥ d}| / |Volume|
-`
+```
 
 ## Clinical Metrics
 

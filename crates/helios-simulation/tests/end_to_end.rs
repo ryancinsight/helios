@@ -135,7 +135,10 @@ fn shared_mu_drives_imaging_and_delivery_end_to_end() {
 
     // ── Analysis: DVH + 3%/2 mm gamma self-consistency. ──
     let dvh = Dvh::from_volume(&dose);
-    assert!(dvh.mean() > 0.0, "DVH mean dose must be positive");
+    assert!(
+        *dvh.mean().as_base() > 0.0,
+        "DVH mean dose must be positive"
+    );
     // Gamma of the dose against itself is identically 0 → 100% pass at 3%/2 mm.
     let peak = dose.mean_top_dose();
     let gamma = gamma_index_3d(&dose, &dose, 0.03, 2.0, peak, 6.0).unwrap();
@@ -213,7 +216,10 @@ fn beam_following_poly_energetic_dose_end_to_end() {
 
     // DVH + 3%/2 mm self-gamma self-consistency (dose vs itself → 100% pass).
     let dvh = Dvh::from_volume(&dose);
-    assert!(dvh.mean() > 0.0, "DVH mean dose must be positive");
+    assert!(
+        *dvh.mean().as_base() > 0.0,
+        "DVH mean dose must be positive"
+    );
     let peak = dose.mean_top_dose();
     let gamma = gamma_index_3d(&dose, &dose, 0.03, 2.0, peak, 6.0).unwrap();
     let pass = gamma_pass_rate(&gamma, &dose, 0.1 * peak);
@@ -267,8 +273,8 @@ fn per_structure_plan_evaluation_over_delivered_dose() {
     assert!(
         ptv.mean() > oar.mean(),
         "PTV mean {} must exceed OAR mean {}",
-        ptv.mean(),
-        oar.mean()
+        ptv.mean().into_base(),
+        oar.mean().into_base()
     );
     let ptv_geud = ptv.generalized_eud(1.0).expect("valid PTV response");
     let oar_geud = oar.generalized_eud(1.0).expect("valid OAR response");
@@ -277,7 +283,10 @@ fn per_structure_plan_evaluation_over_delivered_dose() {
     // Outcome models are well-formed probabilities. With TCD50 set below the PTV
     // gEUD the target controls (TCP > 0.5); with TD50 above the OAR gEUD the OAR is
     // spared (NTCP < 0.5) — both by ratio, independent of the absolute dose scale.
-    assert!(oar_geud > 0.0, "OAR (in-water) must receive some dose");
+    assert!(
+        *oar_geud.as_base() > 0.0,
+        "OAR (in-water) must receive some dose"
+    );
     let tcp = ptv
         .tcp_logistic(1.0, ptv_geud * 0.8, 2.0)
         .expect("valid tumour-control response");
