@@ -8,11 +8,12 @@
 
 ## Owner: Codex
 
-## Codex — H-086 mdBook Pages publication [patch] — in-progress
+## Codex — H-086 mdBook Pages publication [patch] — done
 
-- [ ] Add the Pages build/deploy workflow for `docs/book`.
-- [ ] Declare the `/helios/` project-site base path.
-- [ ] Link the published book from the repository README.
+- [x] Add the Pages build/deploy workflow for `docs/book`.
+- [x] Declare the `/helios/` project-site base path.
+- [x] Link the published book from the repository README. Local mdBook build
+      and workflow syntax checks pass.
 
 ## Codex — H-083 book recovery [patch] — done 2026-07-22
 

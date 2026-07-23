@@ -20,6 +20,7 @@ create-missing = false
 # Math support: `mathjax-support = true` enables MathJax rendering for $...$ and
 # $$...$$ blocks, matching kwavers/docs/book/book.toml convention.
 mathjax-support = true
+site-url = "/helios/"
 # `theme = "default"` was dropped: mdbook v0.5.4 treats it as an unknown
 # field and looks for a `default/` directory under the book root, which
 # is not present (CFDrs and kwavers do not declare a `theme` field either).
