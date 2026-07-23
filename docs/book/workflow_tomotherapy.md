@@ -54,9 +54,24 @@ The `helios-analysis` crate provides:
 - `gamma_pass_rate` — fraction of voxels with γ < 1
 
 ```rust
+use aequitas::systems::si::{
+    quantities::{AbsorbedDose, Length},
+    units::{Gray, Millimeter},
+};
+
 let dvh = Dvh::from_volume(&dose);
-let gamma = gamma_index_3d(&dose, &reference_dose, 0.03, 2.0, 5.0);
-println!("Pass rate: {:.1}%", gamma_pass_rate(&gamma, 1.0) * 100.0);
+let gamma = gamma_index_3d(
+    &dose,
+    &reference_dose,
+    0.03,
+    Length::from_unit::<Millimeter>(2.0),
+    AbsorbedDose::from_unit::<Gray>(5.0),
+    Length::from_unit::<Millimeter>(6.0),
+)?;
+println!(
+    "Pass rate: {:.1}%",
+    gamma_pass_rate(&gamma, &reference_dose, AbsorbedDose::from_base(0.0)) * 100.0
+);
 ```
 
 ## Further Reading

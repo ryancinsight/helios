@@ -11,6 +11,7 @@
 //! criterion. `γ ≤ 1` passes. With a 3%/2 mm criterion, `Δd = 2 mm` and
 //! `ΔD = 0.03 · D_norm` (global normalization).
 
+use aequitas::systems::si::quantities::{AbsorbedDose, Length};
 use helios_core::HeliosError;
 use helios_domain::Volume;
 use helios_math::{NumericElement, Scalar};
@@ -29,11 +30,11 @@ fn require_positive_finite<T: Scalar>(value: T, field: &'static str) -> Result<(
 /// Compute the 3-D gamma index of `evaluated` against `reference` on a shared grid.
 ///
 /// - `dose_diff_criterion`: fractional dose-difference criterion (e.g. `0.03`).
-/// - `dta_mm`: distance-to-agreement (e.g. `2.0`).
+/// - `dta`: distance-to-agreement (e.g. `Length::from_base(2.0)`).
 /// - `normalization_dose`: global normalization dose for `ΔD` (e.g. the reference
 ///   maximum or the prescription).
-/// - `search_radius_mm`: neighborhood radius searched for the minimizing point;
-///   choose ≥ a few × `dta_mm` so the true minimum is not truncated.
+/// - `search_radius`: neighborhood radius searched for the minimizing point;
+///   choose ≥ a few × `dta` so the true minimum is not truncated.
 ///
 /// Returns a gamma value per reference voxel.
 ///
@@ -44,17 +45,17 @@ pub fn gamma_index_3d<T: Scalar>(
     reference: &Volume<T>,
     evaluated: &Volume<T>,
     dose_diff_criterion: T,
-    dta_mm: T,
-    normalization_dose: T,
-    search_radius_mm: T,
+    dta: Length<T>,
+    normalization_dose: AbsorbedDose<T>,
+    search_radius: Length<T>,
 ) -> Result<Volume<T>, HeliosError> {
     gamma_impl(
         reference,
         evaluated,
         dose_diff_criterion,
-        dta_mm,
+        dta,
         Norm::Global(normalization_dose),
-        search_radius_mm,
+        search_radius,
     )
 }
 
@@ -73,19 +74,19 @@ pub fn gamma_index_3d_local<T: Scalar>(
     reference: &Volume<T>,
     evaluated: &Volume<T>,
     dose_diff_criterion: T,
-    dta_mm: T,
-    low_dose_cutoff: T,
-    search_radius_mm: T,
+    dta: Length<T>,
+    low_dose_cutoff: AbsorbedDose<T>,
+    search_radius: Length<T>,
 ) -> Result<Volume<T>, HeliosError> {
     gamma_impl(
         reference,
         evaluated,
         dose_diff_criterion,
-        dta_mm,
+        dta,
         Norm::Local {
             cutoff: low_dose_cutoff,
         },
-        search_radius_mm,
+        search_radius,
     )
 }
 
@@ -93,9 +94,9 @@ pub fn gamma_index_3d_local<T: Scalar>(
 #[derive(Debug, Clone, Copy)]
 enum Norm<T: Scalar> {
     /// Global: `ΔD = criterion · dose` for a single normalization `dose`.
-    Global(T),
+    Global(AbsorbedDose<T>),
     /// Local: `ΔD = criterion · D_r`; points below `cutoff` are excluded.
-    Local { cutoff: T },
+    Local { cutoff: AbsorbedDose<T> },
 }
 
 /// Shared gamma computation for [`gamma_index_3d`] (global) and
@@ -104,9 +105,9 @@ fn gamma_impl<T: Scalar>(
     reference: &Volume<T>,
     evaluated: &Volume<T>,
     dose_diff_criterion: T,
-    dta_mm: T,
+    dta: Length<T>,
     norm: Norm<T>,
-    search_radius_mm: T,
+    search_radius: Length<T>,
 ) -> Result<Volume<T>, HeliosError> {
     if reference.grid() != evaluated.grid() {
         return Err(HeliosError::InvalidDomainValue {
@@ -116,11 +117,13 @@ fn gamma_impl<T: Scalar>(
         });
     }
     require_positive_finite(dose_diff_criterion, "gamma::dose_diff_criterion")?;
-    require_positive_finite(dta_mm, "gamma::dta_mm")?;
-    require_positive_finite(search_radius_mm, "gamma::search_radius_mm")?;
+    require_positive_finite(*dta.as_base(), "gamma::dta")?;
+    require_positive_finite(*search_radius.as_base(), "gamma::search_radius")?;
     match norm {
-        Norm::Global(d) => require_positive_finite(d, "gamma::normalization_dose")?,
-        Norm::Local { cutoff } => require_positive_finite(cutoff, "gamma::low_dose_cutoff")?,
+        Norm::Global(d) => require_positive_finite(*d.as_base(), "gamma::normalization_dose")?,
+        Norm::Local { cutoff } => {
+            require_positive_finite(*cutoff.as_base(), "gamma::low_dose_cutoff")?
+        }
     }
 
     let grid = *reference.grid();
@@ -128,12 +131,14 @@ fn gamma_impl<T: Scalar>(
     let spacing = grid.spacing();
     let zero = <T as NumericElement>::ZERO;
 
-    let inv_dta_sq = (dta_mm * dta_mm).recip();
-    let search_sq = search_radius_mm * search_radius_mm;
+    let dta_base = *dta.as_base();
+    let search_radius_base = *search_radius.as_base();
+    let inv_dta_sq = (dta_base * dta_base).recip();
+    let search_sq = search_radius_base * search_radius_base;
 
     // Per-axis neighborhood radius in voxels covering the search sphere.
     let radius_vox = |axis: usize| -> usize {
-        (search_radius_mm * spacing[axis].recip()).ceil().to_f64() as usize
+        (search_radius_base * spacing[axis].recip()).ceil().to_f64() as usize
     };
     let (rx, ry, rz) = (radius_vox(0), radius_vox(1), radius_vox(2));
 
@@ -145,9 +150,9 @@ fn gamma_impl<T: Scalar>(
         // Per-point dose-difference denominator (global constant or local D_r);
         // low-dose points under local normalization are excluded (gamma 0).
         let delta_dose = match norm {
-            Norm::Global(d) => dose_diff_criterion * d,
+            Norm::Global(d) => dose_diff_criterion * *d.as_base(),
             Norm::Local { cutoff } => {
-                if dose_r < cutoff {
+                if dose_r < *cutoff.as_base() {
                     return zero;
                 }
                 dose_diff_criterion * dose_r
@@ -186,7 +191,7 @@ fn gamma_impl<T: Scalar>(
 pub fn gamma_pass_rate<T: Scalar>(
     gamma: &Volume<T>,
     reference: &Volume<T>,
-    dose_threshold: T,
+    dose_threshold: AbsorbedDose<T>,
 ) -> T {
     let [nx, ny, nz] = reference.grid().dims();
     let one = <T as NumericElement>::ONE;
@@ -195,7 +200,7 @@ pub fn gamma_pass_rate<T: Scalar>(
     for i in 0..nx {
         for j in 0..ny {
             for k in 0..nz {
-                if reference.get(i, j, k).expect("index") < dose_threshold {
+                if reference.get(i, j, k).expect("index") < *dose_threshold.as_base() {
                     continue;
                 }
                 evaluated += 1;
@@ -223,10 +228,26 @@ mod tests {
             .expect("grid")
     }
 
+    fn distance(value: f64) -> Length<f64> {
+        Length::from_base(value)
+    }
+
+    fn absorbed(value: f64) -> AbsorbedDose<f64> {
+        AbsorbedDose::from_base(value)
+    }
+
     #[test]
     fn identical_distributions_have_zero_gamma_and_full_pass() {
         let dose = Volume::from_shape_fn(grid(), |idx| 1.0 + idx[0] as f64);
-        let gamma = gamma_index_3d(&dose, &dose, 0.03, 2.0, 5.0, 4.0).expect("valid");
+        let gamma = gamma_index_3d(
+            &dose,
+            &dose,
+            0.03,
+            distance(2.0),
+            absorbed(5.0),
+            distance(4.0),
+        )
+        .expect("valid");
         for i in 0..5 {
             for j in 0..5 {
                 for k in 0..5 {
@@ -234,7 +255,11 @@ mod tests {
                 }
             }
         }
-        assert_relative_eq!(gamma_pass_rate(&gamma, &dose, 0.0), 1.0, epsilon = 1e-15);
+        assert_relative_eq!(
+            gamma_pass_rate(&gamma, &dose, absorbed(0.0)),
+            1.0,
+            epsilon = 1e-15
+        );
     }
 
     #[test]
@@ -249,14 +274,30 @@ mod tests {
         let reference = Volume::from_shape_fn(grid(), |_| norm);
 
         let at_criterion = Volume::from_shape_fn(grid(), |_| norm + criterion_delta);
-        let gamma = gamma_index_3d(&reference, &at_criterion, 0.03, 2.0, norm, 4.0).expect("valid");
+        let gamma = gamma_index_3d(
+            &reference,
+            &at_criterion,
+            0.03,
+            distance(2.0),
+            absorbed(norm),
+            distance(4.0),
+        )
+        .expect("valid");
         assert_relative_eq!(gamma.get(2, 2, 2).unwrap(), 1.0, epsilon = 1e-12);
 
         let half = Volume::from_shape_fn(grid(), |_| norm + 0.5 * criterion_delta);
-        let gamma_half = gamma_index_3d(&reference, &half, 0.03, 2.0, norm, 4.0).expect("valid");
+        let gamma_half = gamma_index_3d(
+            &reference,
+            &half,
+            0.03,
+            distance(2.0),
+            absorbed(norm),
+            distance(4.0),
+        )
+        .expect("valid");
         assert_relative_eq!(gamma_half.get(2, 2, 2).unwrap(), 0.5, epsilon = 1e-12);
         assert_relative_eq!(
-            gamma_pass_rate(&gamma_half, &reference, 0.0),
+            gamma_pass_rate(&gamma_half, &reference, absorbed(0.0)),
             1.0,
             epsilon = 1e-15
         );
@@ -267,11 +308,19 @@ mod tests {
         let norm = 10.0;
         let reference = Volume::from_shape_fn(grid(), |_| norm);
         let evaluated = Volume::from_shape_fn(grid(), |_| norm + 2.0 * 0.03 * norm);
-        let gamma = gamma_index_3d(&reference, &evaluated, 0.03, 2.0, norm, 4.0).expect("valid");
+        let gamma = gamma_index_3d(
+            &reference,
+            &evaluated,
+            0.03,
+            distance(2.0),
+            absorbed(norm),
+            distance(4.0),
+        )
+        .expect("valid");
         // γ = 2 everywhere (uniform, no closer match).
         assert_relative_eq!(gamma.get(2, 2, 2).unwrap(), 2.0, epsilon = 1e-12);
         assert_relative_eq!(
-            gamma_pass_rate(&gamma, &reference, 0.0),
+            gamma_pass_rate(&gamma, &reference, absorbed(0.0)),
             0.0,
             epsilon = 1e-15
         );
@@ -283,9 +332,11 @@ mod tests {
         let other = VoxelGrid::axis_aligned([4, 4, 4], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
             .unwrap();
         let b = Volume::from_shape_fn(other, |_| 1.0);
-        assert!(gamma_index_3d(&a, &b, 0.03, 2.0, 5.0, 4.0).is_err());
-        assert!(gamma_index_3d(&a, &a, 0.0, 2.0, 5.0, 4.0).is_err());
-        assert!(gamma_index_3d(&a, &a, 0.03, 2.0, -5.0, 4.0).is_err());
+        assert!(gamma_index_3d(&a, &b, 0.03, distance(2.0), absorbed(5.0), distance(4.0)).is_err());
+        assert!(gamma_index_3d(&a, &a, 0.0, distance(2.0), absorbed(5.0), distance(4.0)).is_err());
+        assert!(
+            gamma_index_3d(&a, &a, 0.03, distance(2.0), absorbed(-5.0), distance(4.0)).is_err()
+        );
     }
 
     #[test]
@@ -294,7 +345,15 @@ mod tests {
         // = global ΔD with norm 10 → both give γ = 1 (co-located, no spatial term).
         let reference = Volume::from_shape_fn(grid(), |_| 10.0);
         let evaluated = Volume::from_shape_fn(grid(), |_| 10.3);
-        let local = gamma_index_3d_local(&reference, &evaluated, 0.03, 2.0, 1.0, 4.0).unwrap();
+        let local = gamma_index_3d_local(
+            &reference,
+            &evaluated,
+            0.03,
+            distance(2.0),
+            absorbed(1.0),
+            distance(4.0),
+        )
+        .unwrap();
         assert_relative_eq!(local.get(2, 2, 2).unwrap(), 1.0, epsilon = 1e-12);
     }
 
@@ -308,8 +367,24 @@ mod tests {
             let d = if idx[0] < 2 { 10.0 } else { 2.0 };
             d * 1.03
         });
-        let local = gamma_index_3d_local(&reference, &evaluated, 0.03, 2.0, 0.5, 4.0).unwrap();
-        let global = gamma_index_3d(&reference, &evaluated, 0.03, 2.0, 10.0, 4.0).unwrap();
+        let local = gamma_index_3d_local(
+            &reference,
+            &evaluated,
+            0.03,
+            distance(2.0),
+            absorbed(0.5),
+            distance(4.0),
+        )
+        .unwrap();
+        let global = gamma_index_3d(
+            &reference,
+            &evaluated,
+            0.03,
+            distance(2.0),
+            absorbed(10.0),
+            distance(4.0),
+        )
+        .unwrap();
         // Interior low-dose voxel (i=3, neighbours i=2,4 also low).
         assert_relative_eq!(local.get(3, 2, 2).unwrap(), 1.0, epsilon = 1e-12);
         assert_relative_eq!(global.get(3, 2, 2).unwrap(), 0.2, epsilon = 1e-12);
@@ -321,10 +396,26 @@ mod tests {
         // Reference below the cutoff → excluded (gamma 0) even with a large error.
         let reference = Volume::from_shape_fn(grid(), |_| 0.5);
         let evaluated = Volume::from_shape_fn(grid(), |_| 5.0); // huge error
-        let local = gamma_index_3d_local(&reference, &evaluated, 0.03, 2.0, 1.0, 4.0).unwrap();
+        let local = gamma_index_3d_local(
+            &reference,
+            &evaluated,
+            0.03,
+            distance(2.0),
+            absorbed(1.0),
+            distance(4.0),
+        )
+        .unwrap();
         assert_relative_eq!(local.get(2, 2, 2).unwrap(), 0.0, epsilon = 1e-15);
         // Bad cutoff is rejected.
-        assert!(gamma_index_3d_local(&reference, &evaluated, 0.03, 2.0, -1.0, 4.0).is_err());
+        assert!(gamma_index_3d_local(
+            &reference,
+            &evaluated,
+            0.03,
+            distance(2.0),
+            absorbed(-1.0),
+            distance(4.0),
+        )
+        .is_err());
     }
 
     #[test]
@@ -334,7 +425,15 @@ mod tests {
                 .unwrap(),
             |_| 1.0_f32,
         );
-        let gamma = gamma_index_3d(&dose, &dose, 0.03_f32, 2.0, 5.0, 4.0).expect("valid");
+        let gamma = gamma_index_3d(
+            &dose,
+            &dose,
+            0.03_f32,
+            Length::from_base(2.0_f32),
+            AbsorbedDose::from_base(5.0_f32),
+            Length::from_base(4.0_f32),
+        )
+        .expect("valid");
         assert_relative_eq!(gamma.get(1, 1, 1).unwrap(), 0.0_f32, epsilon = 1e-6);
     }
 }

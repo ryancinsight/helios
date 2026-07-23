@@ -9,6 +9,11 @@ under a Breaking subsection.
 
 ### Changed
 
+- `helios-analysis::gamma_index_3d`, `gamma_index_3d_local`, and
+  `gamma_pass_rate` now use Aequitas `Length` and `AbsorbedDose` for physical
+  distance and dose criteria. Gamma values, fractional criteria, and pass rates
+  remain dimensionless. See [ADR 0007](docs/adr/0007-gamma-physical-criteria.md).
+
 - `helios-analysis::Dvh` now returns and accepts Aequitas `AbsorbedDose`
   quantities for extrema, mean, quantiles, gEUD, and TCP/NTCP dose thresholds.
   Fractions, homogeneity indices, probabilities, and gamma scalar boundaries

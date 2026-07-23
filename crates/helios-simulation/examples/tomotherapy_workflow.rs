@@ -16,8 +16,8 @@
 use std::path::{Path, PathBuf};
 
 use aequitas::systems::si::{
-    quantities::AreaPerMass,
-    units::{Gray, SquareCentimeterPerGram},
+    quantities::{AbsorbedDose, AreaPerMass, Length},
+    units::{Gray, Millimeter, SquareCentimeterPerGram},
 };
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, Dvh};
 use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel, Volume, VoxelGrid};
@@ -165,8 +165,16 @@ fn main() {
     // Analysis.
     let dvh = Dvh::from_volume(&dose);
     let peak_dose = peak(&dose);
-    let gamma = gamma_index_3d(&dose, &dose, 0.03, 2.0, peak_dose, 6.0).unwrap();
-    let pass = gamma_pass_rate(&gamma, &dose, 0.1 * peak_dose);
+    let gamma = gamma_index_3d(
+        &dose,
+        &dose,
+        0.03,
+        Length::from_unit::<Millimeter>(2.0),
+        AbsorbedDose::from_base(peak_dose),
+        Length::from_unit::<Millimeter>(6.0),
+    )
+    .unwrap();
+    let pass = gamma_pass_rate(&gamma, &dose, AbsorbedDose::from_base(0.1 * peak_dose));
 
     // Renders.
     render_slice(&ct, NZ / 2, &out.join("ct.png"));

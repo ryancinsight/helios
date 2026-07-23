@@ -19,12 +19,25 @@ dose-engine and imaging stack.
 ## Case 1 — Gamma Self-Consistency
 
 ```rust
-let gamma = gamma_index_3d(&dose, &dose, 0.03, 2.0, 1.0, 6.0)?;
-let pass_rate = gamma_pass_rate(&gamma, &dose, 0.0);
+use aequitas::systems::si::{
+    quantities::{AbsorbedDose, Length},
+    units::{Gray, Millimeter},
+};
+
+let gamma = gamma_index_3d(
+    &dose,
+    &dose,
+    0.03,
+    Length::from_unit::<Millimeter>(2.0),
+    AbsorbedDose::from_unit::<Gray>(1.0),
+    Length::from_unit::<Millimeter>(6.0),
+)?;
+let pass_rate = gamma_pass_rate(&gamma, &dose, AbsorbedDose::from_base(0.0));
 ```
 
-`gamma_index_3d` takes `(reference, evaluated, dose_diff_criterion, dta_mm,
-normalization_dose, search_radius_mm)`. Comparing a distribution against itself
+`gamma_index_3d` takes `(reference, evaluated, dose_diff_criterion, dta,
+normalization_dose, search_radius)`, with Aequitas `Length` and `AbsorbedDose`
+at the physical boundaries. Comparing a distribution against itself
 yields γ = 0 at every voxel → 100 % pass rate.
 
 ## Case 2 — Radon / FBP Round-Trip

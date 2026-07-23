@@ -30,8 +30,8 @@
 //! [← Adaptive Radiotherapy with MVCT](../../docs/book/workflow_adaptive.md)
 
 use aequitas::systems::si::{
-    quantities::AreaPerMass,
-    units::{Gray, SquareCentimeterPerGram},
+    quantities::{AbsorbedDose, AreaPerMass, Length},
+    units::{Gray, Millimeter, SquareCentimeterPerGram},
 };
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, Dvh};
 use helios_domain::{Volume, VoxelGrid};
@@ -179,12 +179,12 @@ fn main() {
         &plan_dose,
         &corrected_dose,
         0.03_f64, // 3% dose criterion
-        2.0_f64,  // 2 mm DTA
-        d_max_plan.into_base(),
-        6.0_f64, // search radius
+        Length::from_unit::<Millimeter>(2.0_f64),
+        d_max_plan,
+        Length::from_unit::<Millimeter>(6.0_f64),
     )
     .expect("identical grids");
-    let pass_rate = gamma_pass_rate(&gamma, &plan_dose, 0.0_f64);
+    let pass_rate = gamma_pass_rate(&gamma, &plan_dose, AbsorbedDose::from_base(0.0_f64));
 
     // DVH mean deviation
     let mean_plan = d_mean_plan.into_base();
