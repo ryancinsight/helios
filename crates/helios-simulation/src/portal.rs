@@ -10,7 +10,7 @@
 
 use crate::delivery::DeliveryFrame;
 use crate::dose_accumulation::{beamlet_ray, gantry_basis, BeamGeometry};
-use aequitas::systems::si::quantities::Dimensionless;
+use aequitas::systems::si::quantities::{Dimensionless, EnergyPerArea};
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement};
 use helios_solver::forward_project_ray;
@@ -48,11 +48,12 @@ pub fn frame_portal_fluence<T: GeometryScalar>(
             let tau = beamlet_ray(centre, dir, perp, frame, leaf, leaf_width_mm, geometry)
                 .and_then(|beamlet| forward_project_ray(mu, &beamlet.ray, step_mm))
                 .unwrap_or(zero);
-            let transmission = OpticalDepth::new(Dimensionless::from_base(tau))?
+            let transmission: Dimensionless<T> = OpticalDepth::new(Dimensionless::from_base(tau))?
                 .transmission()
-                .into_quantity()
-                .into_base();
-            Ok(fluence * transmission)
+                .into_quantity();
+            let delivered_fluence = EnergyPerArea::from_base(fluence);
+            let exit_fluence: EnergyPerArea<T> = delivered_fluence * transmission;
+            Ok(exit_fluence.into_base())
         })
         .collect()
 }
