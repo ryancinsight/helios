@@ -8,16 +8,16 @@
 
 use crate::projector::ray_grid_interval;
 use aequitas::systems::si::{
-    quantities::{Length, ReciprocalLength},
+    quantities::{AbsorbedDose, Length, ReciprocalLength},
     units::{Centimeter, PerCentimeter},
 };
 use helios_core::constants::MM_PER_CM;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray};
 use hyperion::{
+    TransportError,
     coefficient::{InteractionCoefficient, LinearAttenuation},
     quantity::{OpticalDepth, PathLength},
-    TransportError,
 };
 
 /// Nearest voxel index along one axis for a continuous index `coord`, clamped to
@@ -26,11 +26,7 @@ use hyperion::{
 fn nearest<T: GeometryScalar>(coord: T, n: usize) -> usize {
     let half = <T as GeometryScalar>::from_f64(0.5);
     let r = (coord + half).floor().to_f64();
-    if r <= 0.0 {
-        0
-    } else {
-        (r as usize).min(n - 1)
-    }
+    if r <= 0.0 { 0 } else { (r as usize).min(n - 1) }
 }
 
 /// Deposit primary-beam energy along `ray` into `dose`, returning the total
@@ -48,7 +44,9 @@ fn nearest<T: GeometryScalar>(coord: T, n: usize) -> usize {
 /// # Units
 /// `dose` and `mu` must share the same grid. `mu` is in cm⁻¹ and the grid / `ray`
 /// in mm, so segment lengths are converted mm→cm (matching the projector). A ray
-/// that misses the grid deposits nothing and returns zero.
+/// that misses the grid deposits nothing and returns zero. The returned total is
+/// an Aequitas [`AbsorbedDose`] quantity; the voxel field remains the established
+/// scalar `Volume` storage boundary.
 ///
 /// # Errors
 ///
@@ -62,7 +60,7 @@ pub fn deposit_ray_terma<T: GeometryScalar>(
     ray: &Ray<T>,
     weight: T,
     step_mm: T,
-) -> Result<T, TransportError<T>> {
+) -> Result<AbsorbedDose<T>, TransportError<T>> {
     deposit_terma_impl(dose, mu, ray, weight, step_mm, None)
 }
 
@@ -78,7 +76,9 @@ pub fn deposit_ray_terma<T: GeometryScalar>(
 ///
 /// # Errors
 ///
-/// Returns the same typed transport failures as [`deposit_ray_terma`].
+/// Returns the same typed transport failures as [`deposit_ray_terma`]. The
+/// returned total is an Aequitas [`AbsorbedDose`] quantity; voxel storage keeps
+/// the established scalar `Volume` boundary.
 pub fn deposit_ray_terma_diverging<T: GeometryScalar>(
     dose: &mut Volume<T>,
     mu: &Volume<T>,
@@ -87,7 +87,7 @@ pub fn deposit_ray_terma_diverging<T: GeometryScalar>(
     step_mm: T,
     focal: Point3<T>,
     sad_mm: T,
-) -> Result<T, TransportError<T>> {
+) -> Result<AbsorbedDose<T>, TransportError<T>> {
     deposit_terma_impl(dose, mu, ray, weight, step_mm, Some((focal, sad_mm)))
 }
 
@@ -100,7 +100,7 @@ fn deposit_terma_impl<T: GeometryScalar>(
     weight: T,
     step_mm: T,
     falloff: Option<(Point3<T>, T)>,
-) -> Result<T, TransportError<T>> {
+) -> Result<AbsorbedDose<T>, TransportError<T>> {
     let grid = *mu.grid();
     debug_assert_eq!(
         grid.dims(),
@@ -109,11 +109,11 @@ fn deposit_terma_impl<T: GeometryScalar>(
     );
     let (t_enter, t_exit) = match ray_grid_interval(&grid, ray) {
         Some(v) => v,
-        None => return Ok(T::ZERO),
+        None => return Ok(AbsorbedDose::from_base(T::ZERO)),
     };
     let length = t_exit - t_enter;
     if length <= T::ZERO {
-        return Ok(T::ZERO);
+        return Ok(AbsorbedDose::from_base(T::ZERO));
     }
 
     // Substeps so the step divides the traversed length exactly (>= 1).
@@ -172,7 +172,7 @@ fn deposit_terma_impl<T: GeometryScalar>(
         total += absorbed;
         trans_before = trans_after;
     }
-    Ok(total)
+    Ok(AbsorbedDose::from_base(total))
 }
 
 #[cfg(test)]
@@ -220,7 +220,8 @@ mod tests {
         let mu = uniform_cube(0.05);
         let mut dose = Volume::zeros(*mu.grid());
         let total = deposit_ray_terma(&mut dose, &mu, &central_x_ray(), 1.0, 0.5)
-            .expect("valid attenuation volume");
+            .expect("valid attenuation volume")
+            .into_base();
         let expected = 1.0 - (-0.05 * 1.6_f64).exp();
         assert_relative_eq!(total, expected, epsilon = 1e-12);
     }
@@ -233,8 +234,9 @@ mod tests {
         let mut dose = Volume::zeros(*mu.grid());
         let ray = Ray::try_new(Point3::new(2.0, -20.0, 38.0), Vector3::new(0.0, 1.0, 0.0))
             .expect("unit +y ray");
-        let total =
-            deposit_ray_terma(&mut dose, &mu, &ray, 1.0, 0.5).expect("valid attenuation volume");
+        let total = deposit_ray_terma(&mut dose, &mu, &ray, 1.0, 0.5)
+            .expect("valid attenuation volume")
+            .into_base();
         let expected = 1.0 - (-0.05 * 1.6_f64).exp();
         assert_relative_eq!(total, expected, epsilon = 1e-12);
         assert_relative_eq!(dose.sum(), expected, epsilon = 1e-12);
@@ -246,7 +248,8 @@ mod tests {
         let mu = uniform_cube(0.08);
         let mut dose = Volume::zeros(*mu.grid());
         let total = deposit_ray_terma(&mut dose, &mu, &central_x_ray(), 3.0, 0.3)
-            .expect("valid attenuation volume");
+            .expect("valid attenuation volume")
+            .into_base();
         assert_relative_eq!(dose.sum(), total, epsilon = 1e-12);
     }
 
@@ -256,9 +259,11 @@ mod tests {
         let mu = uniform_cube(0.05);
         let (mut d_coarse, mut d_fine) = (Volume::zeros(*mu.grid()), Volume::zeros(*mu.grid()));
         let coarse = deposit_ray_terma(&mut d_coarse, &mu, &central_x_ray(), 1.0, 4.0)
-            .expect("valid attenuation volume");
+            .expect("valid attenuation volume")
+            .into_base();
         let fine = deposit_ray_terma(&mut d_fine, &mu, &central_x_ray(), 1.0, 0.05)
-            .expect("valid attenuation volume");
+            .expect("valid attenuation volume")
+            .into_base();
         assert_relative_eq!(coarse, fine, epsilon = 1e-12);
     }
 
@@ -281,7 +286,8 @@ mod tests {
         let mut d0 = Volume::zeros(*empty.grid());
         assert_relative_eq!(
             deposit_ray_terma(&mut d0, &empty, &central_x_ray(), 1.0, 0.5)
-                .expect("valid attenuation volume"),
+                .expect("valid attenuation volume")
+                .into_base(),
             0.0,
             epsilon = 1e-15
         );
@@ -291,7 +297,8 @@ mod tests {
         let mut dw = Volume::zeros(*mu.grid());
         assert_relative_eq!(
             deposit_ray_terma(&mut dw, &mu, &central_x_ray(), 0.0, 0.5)
-                .expect("valid attenuation volume"),
+                .expect("valid attenuation volume")
+                .into_base(),
             0.0,
             epsilon = 1e-15
         );
@@ -304,7 +311,9 @@ mod tests {
         let miss =
             Ray::try_new(Point3::new(-50.0, 500.0, 8.0), Vector3::new(1.0, 0.0, 0.0)).unwrap();
         assert_relative_eq!(
-            deposit_ray_terma(&mut dose, &mu, &miss, 1.0, 0.5).expect("valid attenuation volume"),
+            deposit_ray_terma(&mut dose, &mu, &miss, 1.0, 0.5)
+                .expect("valid attenuation volume")
+                .into_base(),
             0.0,
             epsilon = 1e-15
         );
@@ -341,7 +350,8 @@ mod tests {
         )
         .unwrap();
         let total = deposit_ray_terma(&mut dose, &mu, &ray, 1.0_f32, 0.25)
-            .expect("valid attenuation volume");
+            .expect("valid attenuation volume")
+            .into_base();
         let expected = 1.0_f32 - (-0.05_f32 * 1.6).exp();
         assert_relative_eq!(total, expected, epsilon = 1e-6);
         assert_relative_eq!(dose.sum(), total, epsilon = 1e-5);
@@ -354,11 +364,13 @@ mod tests {
         let mu = uniform_cube(0.05);
         let (mut plain_d, mut div_d) = (Volume::zeros(*mu.grid()), Volume::zeros(*mu.grid()));
         let plain = deposit_ray_terma(&mut plain_d, &mu, &central_x_ray(), 1.0, 0.25)
-            .expect("valid attenuation volume");
+            .expect("valid attenuation volume")
+            .into_base();
         let focal = Point3::new(-1.0e9, 8.0, 8.0);
         let div =
             deposit_ray_terma_diverging(&mut div_d, &mu, &central_x_ray(), 1.0, 0.25, focal, 1.0e9)
-                .expect("valid attenuation volume");
+                .expect("valid attenuation volume")
+                .into_base();
         assert_relative_eq!(div, plain, max_relative = 1e-6);
     }
 
