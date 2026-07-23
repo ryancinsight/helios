@@ -97,7 +97,7 @@ consus-hdf5 = { git = "https://github.com/ryancinsight/consus", features = ["std
 consus-io = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
 consus-compression = { git = "https://github.com/ryancinsight/consus", features = ["std", "deflate"] }
 # Numeric datatype SSOT (Scalar seam: RealField/FloatElement/NumericElement).
-aequitas = { git = "https://github.com/ryancinsight/aequitas", rev = "262b3e09c19d844f57765d3e4ea6ab2336653d6d", default-features = false, features = ["std"] }
+aequitas = { git = "https://github.com/ryancinsight/aequitas", rev = "3ae0b6bb07c9d0792d33129dc5e6acd4fb54e508", default-features = false, features = ["std"] }
 proteus = { git = "https://github.com/ryancinsight/proteus", rev = "bb51ac414f74fb47d8001310206c5aea2e3a160c" }
 hyperion = { git = "https://github.com/ryancinsight/hyperion", rev = "7b4561b9b51949c8ca59ee2d6f4294cd085ca8a4" }
 eunomia = { git = "https://github.com/ryancinsight/eunomia" }

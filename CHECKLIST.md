@@ -8,6 +8,14 @@
 
 ## Owner: Codex
 
+## Codex — H-087 Aequitas fluence boundary [patch] — done
+
+- [x] Keep portal fluence as `EnergyPerArea<T>` through the Hyperion optical
+      transmission product before returning the established scalar frame API.
+- [x] Update the pinned Aequitas revision and pass the portal Nextest lane plus
+      warning-denied simulation-package checks against the synchronized local
+      provider checkout.
+
 ## Codex — H-086 mdBook Pages publication [patch] — done
 
 - [x] Add the Pages build/deploy workflow for `docs/book`.
