@@ -30,7 +30,7 @@
 //! [← Adaptive Radiotherapy with MVCT](../../docs/book/workflow_adaptive.md)
 
 use aequitas::systems::si::{
-    quantities::{AbsorbedDose, AreaPerMass, Length},
+    quantities::{AbsorbedDose, AreaPerMass, EnergyPerArea, Length},
     units::{Gray, Millimeter, SquareCentimeterPerGram},
 };
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, Dvh};
@@ -98,8 +98,8 @@ fn four_field_box(fluence: f64) -> Vec<DeliveryFrame<f64>> {
         .map(|(idx, &deg)| DeliveryFrame {
             projection: idx,
             gantry_angle_rad: deg.to_radians(),
-            couch_mm: 0.0,
-            leaf_fluence: vec![fluence; N_LEAVES],
+            couch: Length::from_unit::<Millimeter>(0.0),
+            leaf_fluence: vec![EnergyPerArea::from_base(fluence); N_LEAVES],
         })
         .collect()
 }
@@ -108,9 +108,11 @@ fn compute_dose(mu: &Volume<f64>) -> Volume<f64> {
     accumulate_delivered_dose(
         &four_field_box(1.0),
         mu,
-        BeamGeometry::Parallel { standoff_mm: 500.0 },
-        LEAF_WIDTH_MM,
-        0.5_f64,
+        BeamGeometry::Parallel {
+            standoff: Length::from_unit::<Millimeter>(500.0),
+        },
+        Length::from_unit::<Millimeter>(LEAF_WIDTH_MM),
+        Length::from_unit::<Millimeter>(0.5_f64),
     )
     .expect("attenuation map satisfies Hyperion's transport contract")
 }

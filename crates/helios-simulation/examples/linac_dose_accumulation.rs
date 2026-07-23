@@ -28,8 +28,8 @@
 //! [← LINAC-Based Step-and-Shoot Delivery](../../docs/book/workflow_linac.md)
 
 use aequitas::systems::si::{
-    quantities::AreaPerMass,
-    units::{Gray, SquareCentimeterPerGram},
+    quantities::{AreaPerMass, EnergyPerArea, Length},
+    units::{Gray, Millimeter, SquareCentimeterPerGram},
 };
 use helios_analysis::Dvh;
 use helios_domain::{Volume, VoxelGrid};
@@ -58,8 +58,8 @@ fn make_frame(projection: usize, gantry_deg: f64, fluence_per_leaf: f64) -> Deli
     DeliveryFrame {
         projection,
         gantry_angle_rad: gantry_rad,
-        couch_mm: 0.0,
-        leaf_fluence: vec![fluence_per_leaf; N_LEAVES],
+        couch: Length::from_unit::<Millimeter>(0.0),
+        leaf_fluence: vec![EnergyPerArea::from_base(fluence_per_leaf); N_LEAVES],
     }
 }
 
@@ -103,9 +103,11 @@ fn main() {
     let dose = accumulate_delivered_dose(
         &frames,
         &phantom,
-        BeamGeometry::Parallel { standoff_mm: 500.0 },
-        LEAF_WIDTH_MM,
-        STEP_MM,
+        BeamGeometry::Parallel {
+            standoff: Length::from_unit::<Millimeter>(500.0),
+        },
+        Length::from_unit::<Millimeter>(LEAF_WIDTH_MM),
+        Length::from_unit::<Millimeter>(STEP_MM),
     )
     .expect("attenuation volume satisfies Hyperion's transport contract");
 

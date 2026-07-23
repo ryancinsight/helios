@@ -10,7 +10,10 @@
 
 use crate::delivery::DeliveryFrame;
 use crate::dose_accumulation::{beamlet_ray, gantry_basis, BeamGeometry};
-use aequitas::systems::si::quantities::{Dimensionless, EnergyPerArea};
+use aequitas::systems::si::{
+    quantities::{Dimensionless, EnergyPerArea, Length},
+    units::Millimeter,
+};
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement};
 use helios_solver::forward_project_ray;
@@ -20,7 +23,7 @@ use hyperion::{quantity::OpticalDepth, TransportError};
 ///
 /// Returns a vector aligned with `frame.leaf_fluence`: entry `l` is the delivered
 /// leaf fluence attenuated by the beamlet's optical depth,
-/// `leaf_fluence[l] · exp(−τ_l)`. `geometry`/`leaf_width_mm`/`step_mm` are as in
+/// `leaf_fluence[l] · exp(−τ_l)`. `geometry`/`leaf_width`/`step` are as in
 /// [`accumulate_delivered_dose`](crate::accumulate_delivered_dose). A leaf whose
 /// beamlet misses the volume reads its full (unattenuated) fluence.
 ///
@@ -32,28 +35,30 @@ pub fn frame_portal_fluence<T: GeometryScalar>(
     frame: &DeliveryFrame<T>,
     mu: &Volume<T>,
     geometry: BeamGeometry<T>,
-    leaf_width_mm: T,
-    step_mm: T,
-) -> Result<Vec<T>, TransportError<T>> {
+    leaf_width: Length<T>,
+    step: Length<T>,
+) -> Result<Vec<EnergyPerArea<T>>, TransportError<T>> {
     let zero = <T as NumericElement>::ZERO;
+    let step_mm = step.in_unit::<Millimeter>();
     let (centre, dir, perp) = gantry_basis(mu.grid(), frame.gantry_angle_rad);
     frame
         .leaf_fluence
         .iter()
         .enumerate()
-        .map(|(leaf, &fluence)| {
-            if fluence <= zero {
-                return Ok(zero); // closed leaf: no exit signal.
+        .map(|(leaf, fluence)| {
+            let fluence_base = *fluence.as_base();
+            if fluence_base <= zero {
+                return Ok(EnergyPerArea::from_base(zero)); // closed leaf: no exit signal.
             }
-            let tau = beamlet_ray(centre, dir, perp, frame, leaf, leaf_width_mm, geometry)
+            let tau = beamlet_ray(centre, dir, perp, frame, leaf, leaf_width, geometry)
                 .and_then(|beamlet| forward_project_ray(mu, &beamlet.ray, step_mm))
                 .unwrap_or(zero);
             let transmission: Dimensionless<T> = OpticalDepth::new(Dimensionless::from_base(tau))?
                 .transmission()
                 .into_quantity();
-            let delivered_fluence = EnergyPerArea::from_base(fluence);
+            let delivered_fluence = EnergyPerArea::from_base(fluence_base);
             let exit_fluence: EnergyPerArea<T> = delivered_fluence * transmission;
-            Ok(exit_fluence.into_base())
+            Ok(exit_fluence)
         })
         .collect()
 }
@@ -76,9 +81,13 @@ mod tests {
         DeliveryFrame {
             projection: 0,
             gantry_angle_rad: 0.0,
-            couch_mm: 8.0,
-            leaf_fluence: vec![fluence],
+            couch: Length::from_unit::<Millimeter>(8.0),
+            leaf_fluence: vec![EnergyPerArea::from_base(fluence)],
         }
+    }
+
+    fn length(value: f64) -> Length<f64> {
+        Length::from_unit::<Millimeter>(value)
     }
 
     #[test]
@@ -86,12 +95,14 @@ mod tests {
         let portal = frame_portal_fluence(
             &single_leaf_frame(2.0),
             &uniform_cube(0.0),
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            2.0,
-            0.25,
+            BeamGeometry::Parallel {
+                standoff: length(500.0),
+            },
+            length(2.0),
+            length(0.25),
         )
         .expect("valid attenuation volume");
-        assert_relative_eq!(portal[0], 2.0, epsilon = 1e-9);
+        assert_relative_eq!(*portal[0].as_base(), 2.0, epsilon = 1e-9);
     }
 
     #[test]
@@ -101,34 +112,59 @@ mod tests {
         let portal = frame_portal_fluence(
             &single_leaf_frame(3.0),
             &uniform_cube(0.05),
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            2.0,
-            0.25,
+            BeamGeometry::Parallel {
+                standoff: length(500.0),
+            },
+            length(2.0),
+            length(0.25),
         )
         .expect("valid attenuation volume");
-        assert_relative_eq!(portal[0], 3.0 * (-0.05 * 1.6_f64).exp(), epsilon = 1e-9);
+        assert_relative_eq!(
+            *portal[0].as_base(),
+            3.0 * (-0.05 * 1.6_f64).exp(),
+            epsilon = 1e-9
+        );
     }
 
     #[test]
     fn closed_leaf_reads_zero_and_more_attenuation_darkens() {
         let mu_lo = uniform_cube(0.05);
         let mu_hi = uniform_cube(0.20);
-        let geom = BeamGeometry::Parallel { standoff_mm: 500.0 };
+        let geom = BeamGeometry::Parallel {
+            standoff: length(500.0),
+        };
         // A closed leaf (0 fluence) among open ones reads exactly 0.
         let frame = DeliveryFrame {
             projection: 0,
             gantry_angle_rad: 0.0,
-            couch_mm: 8.0,
-            leaf_fluence: vec![1.0, 0.0, 1.0],
+            couch: length(8.0),
+            leaf_fluence: vec![1.0, 0.0, 1.0]
+                .into_iter()
+                .map(EnergyPerArea::from_base)
+                .collect(),
         };
-        let portal = frame_portal_fluence(&frame, &mu_lo, geom, 2.0, 0.25)
+        let portal = frame_portal_fluence(&frame, &mu_lo, geom, length(2.0), length(0.25))
             .expect("valid attenuation volume");
-        assert_relative_eq!(portal[1], 0.0, epsilon = 1e-15);
+        assert_relative_eq!(*portal[1].as_base(), 0.0, epsilon = 1e-15);
         // Higher μ darkens the transmitted signal (central leaf).
-        let lo = frame_portal_fluence(&single_leaf_frame(1.0), &mu_lo, geom, 2.0, 0.25)
-            .expect("valid attenuation volume")[0];
-        let hi = frame_portal_fluence(&single_leaf_frame(1.0), &mu_hi, geom, 2.0, 0.25)
-            .expect("valid attenuation volume")[0];
+        let lo = *frame_portal_fluence(
+            &single_leaf_frame(1.0),
+            &mu_lo,
+            geom,
+            length(2.0),
+            length(0.25),
+        )
+        .expect("valid attenuation volume")[0]
+            .as_base();
+        let hi = *frame_portal_fluence(
+            &single_leaf_frame(1.0),
+            &mu_hi,
+            geom,
+            length(2.0),
+            length(0.25),
+        )
+        .expect("valid attenuation volume")[0]
+            .as_base();
         assert!(
             hi < lo && hi > 0.0,
             "more attenuation must darken: {hi} !< {lo}"
@@ -144,18 +180,24 @@ mod tests {
         let frame = DeliveryFrame {
             projection: 0,
             gantry_angle_rad: 0.0_f32,
-            couch_mm: 8.0,
-            leaf_fluence: vec![2.0_f32],
+            couch: Length::from_unit::<Millimeter>(8.0_f32),
+            leaf_fluence: vec![EnergyPerArea::from_base(2.0_f32)],
         };
         let portal = frame_portal_fluence(
             &frame,
             &mu,
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            2.0,
-            0.25,
+            BeamGeometry::Parallel {
+                standoff: Length::from_unit::<Millimeter>(500.0_f32),
+            },
+            Length::from_unit::<Millimeter>(2.0_f32),
+            Length::from_unit::<Millimeter>(0.25_f32),
         )
         .expect("valid attenuation volume");
-        assert_relative_eq!(portal[0], 2.0_f32 * (-0.05_f32 * 1.6).exp(), epsilon = 1e-5);
+        assert_relative_eq!(
+            *portal[0].as_base(),
+            2.0_f32 * (-0.05_f32 * 1.6).exp(),
+            epsilon = 1e-5
+        );
     }
 
     #[test]
@@ -163,9 +205,11 @@ mod tests {
         let error = frame_portal_fluence(
             &single_leaf_frame(1.0),
             &uniform_cube(-0.05),
-            BeamGeometry::Parallel { standoff_mm: 500.0 },
-            2.0,
-            0.25,
+            BeamGeometry::Parallel {
+                standoff: length(500.0),
+            },
+            length(2.0),
+            length(0.25),
         )
         .expect_err("negative optical depth must fail");
         assert!(matches!(

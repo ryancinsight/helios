@@ -117,10 +117,10 @@ fn shared_mu_drives_imaging_and_delivery_end_to_end() {
         &frames,
         &mu,
         BeamGeometry::PointSource {
-            source_axis_mm: 850.0,
+            source_axis: Length::from_unit::<Millimeter>(850.0),
         },
-        4.0,
-        0.5,
+        Length::from_unit::<Millimeter>(4.0),
+        Length::from_unit::<Millimeter>(0.5),
     )
     .expect("attenuation map satisfies Hyperion's transport contract");
     let kernel = symmetric_deposition_kernel(0.5_f64, 0.2, 1);
@@ -178,7 +178,7 @@ fn beam_following_poly_energetic_dose_end_to_end() {
     let mlc = MlcModel::new(0.01, 0.05).unwrap();
     let frames = simulate_helical_delivery(&delivery, &lot, &mlc);
     let geom = BeamGeometry::PointSource {
-        source_axis_mm: 850.0,
+        source_axis: Length::from_unit::<Millimeter>(850.0),
     };
 
     // Two-component (soft/hard) forward-peaked spectrum, re-oriented per gantry angle.
@@ -196,8 +196,15 @@ fn beam_following_poly_energetic_dose_end_to_end() {
         },
     ];
     let cone = CollapsedCone::poly_forward_peaked(&spectrum, 0.5, voxel_cm, 2, 3, 1);
-    let dose = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 4.0, 0.5, &cone)
-        .expect("attenuation map satisfies Hyperion's transport contract");
+    let dose = accumulate_delivered_dose_anisotropic(
+        &frames,
+        &mu,
+        geom,
+        Length::from_unit::<Millimeter>(4.0),
+        Length::from_unit::<Millimeter>(0.5),
+        &cone,
+    )
+    .expect("attenuation map satisfies Hyperion's transport contract");
 
     // Non-negativity everywhere; the delivery deposited energy.
     assert!(dose.sum() > 0.0, "delivery deposited no dose");
@@ -213,8 +220,14 @@ fn beam_following_poly_energetic_dose_end_to_end() {
     // energy at the boundary, never create it — so the scattered dose total is ≤ the
     // deposited terma total, and (delivery concentrated near centre) retains most of
     // it. `accumulate_delivered_dose` with the same frames/geometry yields the terma.
-    let terma = accumulate_delivered_dose(&frames, &mu, geom, 4.0, 0.5)
-        .expect("attenuation map satisfies Hyperion's transport contract");
+    let terma = accumulate_delivered_dose(
+        &frames,
+        &mu,
+        geom,
+        Length::from_unit::<Millimeter>(4.0),
+        Length::from_unit::<Millimeter>(0.5),
+    )
+    .expect("attenuation map satisfies Hyperion's transport contract");
     let (dsum, tsum) = (dose.sum(), terma.sum());
     assert!(
         dsum <= tsum * (1.0 + 1e-9),
@@ -266,12 +279,19 @@ fn per_structure_plan_evaluation_over_delivered_dose() {
     let mlc = MlcModel::new(0.01, 0.05).unwrap();
     let frames = simulate_helical_delivery(&delivery, &lot, &mlc);
     let geom = BeamGeometry::PointSource {
-        source_axis_mm: 850.0,
+        source_axis: Length::from_unit::<Millimeter>(850.0),
     };
     let voxel_cm = SPACING / 10.0;
     let cone = CollapsedCone::forward_peaked(0.1, 0.6, 0.5, voxel_cm, 2, 3, 1);
-    let dose = accumulate_delivered_dose_anisotropic(&frames, &mu, geom, 4.0, 0.5, &cone)
-        .expect("attenuation map satisfies Hyperion's transport contract");
+    let dose = accumulate_delivered_dose_anisotropic(
+        &frames,
+        &mu,
+        geom,
+        Length::from_unit::<Millimeter>(4.0),
+        Length::from_unit::<Millimeter>(0.5),
+        &cone,
+    )
+    .expect("attenuation map satisfies Hyperion's transport contract");
 
     // Central target (isocentre) vs an off-axis OAR, both inside the water cylinder.
     let mid_z = (NZ as f64 - 1.0) * SPACING / 2.0;

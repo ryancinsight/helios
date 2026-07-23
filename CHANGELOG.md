@@ -9,6 +9,12 @@ under a Breaking subsection.
 
 ### Changed
 
+- `helios-simulation` delivery frames and portal fluence now carry Aequitas
+  `EnergyPerArea`, while couch position, leaf width, sampling step, standoff,
+  and point-source axis use Aequitas `Length`. Typed values convert only at the
+  existing millimetre-based ray/voxel kernel boundary; scalar dense-volume
+  storage and dimensionless machine angles remain unchanged. See [ADR 0008](docs/adr/0008-delivery-physical-quantities.md).
+
 - `helios-analysis::gamma_index_3d`, `gamma_index_3d_local`, and
   `gamma_pass_rate` now use Aequitas `Length` and `AbsorbedDose` for physical
   distance and dose criteria. Gamma values, fractional criteria, and pass rates
