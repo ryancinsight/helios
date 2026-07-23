@@ -15,9 +15,9 @@ use helios_core::constants::MM_PER_CM;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray};
 use hyperion::{
-    TransportError,
     coefficient::{InteractionCoefficient, LinearAttenuation},
     quantity::{OpticalDepth, PathLength},
+    TransportError,
 };
 
 /// Nearest voxel index along one axis for a continuous index `coord`, clamped to
@@ -26,7 +26,11 @@ use hyperion::{
 fn nearest<T: GeometryScalar>(coord: T, n: usize) -> usize {
     let half = <T as GeometryScalar>::from_f64(0.5);
     let r = (coord + half).floor().to_f64();
-    if r <= 0.0 { 0 } else { (r as usize).min(n - 1) }
+    if r <= 0.0 {
+        0
+    } else {
+        (r as usize).min(n - 1)
+    }
 }
 
 /// Deposit primary-beam energy along `ray` into `dose`, returning the total
