@@ -81,8 +81,8 @@ gaia = { git = "https://github.com/ryancinsight/gaia", default-features = false 
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.
 hephaestus-core = { git = "https://github.com/ryancinsight/hephaestus" }
 hephaestus-wgpu = { git = "https://github.com/ryancinsight/hephaestus" }
-moirai = { git = "https://github.com/ryancinsight/Moirai.git" }
-moirai-parallel = { git = "https://github.com/ryancinsight/Moirai.git", package = "moirai-parallel", default-features = false, features = ["parallel"] }
+moirai = { path = "../moirai/moirai" }
+moirai-parallel = { path = "../moirai/moirai-parallel", default-features = false, features = ["parallel"] }
 # Tensors, autodiff, optimizers, neural surrogates.
 coeus-core = { git = "https://github.com/ryancinsight/Coeus.git" }
 coeus-tensor = { git = "https://github.com/ryancinsight/Coeus.git" }
