@@ -58,7 +58,8 @@ target closure.
   owner. The direct provider pin is now the merged Aequitas revision
   `e0fc5f3`. Existing full-transmission, Beer–Lambert, closed-leaf, f32, and
   invalid-optical-depth regressions remain the behavioral oracle.
-- PR #32 is open at head `31147f0`. A local focused `helios-simulation`
+- PR #32 remains open with implementation head `31147f0` and PM follow-up
+  `1f55d9d`. A local focused `helios-simulation`
   Nextest attempt could not start because active peer CFDrs/Leto builds held
   the shared Atlas lock; no local package-gate result is claimed. Hosted build,
   Rust workspace, Python, deployment, and review checks pass, but the
