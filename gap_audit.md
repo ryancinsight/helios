@@ -41,8 +41,8 @@ target closure.
   invalid-optical-depth regressions remain the behavioral oracle.
 - PR #32 is open. A local focused `helios-simulation` Nextest attempt could not
   start because active peer CFDrs/Leto builds held the shared Atlas lock; no
-  local package-gate result is claimed. Hosted Python bindings and CodeRabbit
-  pass, while the Rust workspace and benchmark checks remain pending.
+  local package-gate result is claimed. Hosted checks are rerunning on the
+  latest PM-synchronized head; no hosted-green result is claimed.
 
 ### G-29 — DICOM charset dependency (externally blocked)
 
