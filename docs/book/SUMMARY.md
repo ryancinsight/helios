@@ -109,3 +109,5 @@ This part documents the Atlas-first design and migration surface area.
 - [C. API Reference Index](appendix_api.md)
 - [D. Changelog](appendix_changelog.md)
 - [E. Book Organization Forward Roadmap](BOOK_ORGANIZATION.md)
+
+- [STRY-FIG](figures/zzz_test_drift_helios.svg)
