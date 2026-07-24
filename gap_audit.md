@@ -29,6 +29,19 @@ target closure.
 
 ## Open gaps
 
+### H-087 — portal fluence quantity boundary (implemented, PR #32)
+
+- `helios-simulation::frame_portal_fluence` now carries the transmitted portal
+  fluence as Aequitas `EnergyPerArea<T>` through Hyperion's dimensionless
+  transmission product before converting at the established scalar frame API.
+  The direct Aequitas pin is `3ae0b6b`; implementation commit `b2a9ebe`.
+- This closes the remaining quantity-conversion seam in the portal workflow;
+  the dense fluence frame remains representation storage, not a second metric
+  owner. Existing full-transmission, Beer–Lambert, closed-leaf, f32, and
+  invalid-optical-depth regressions remain the behavioral oracle.
+- PR #32 is open. The focused `helios-simulation` Nextest is queued behind the
+  shared Atlas build lock; no package-gate result is claimed until it runs.
+
 ### G-29 — DICOM charset dependency (externally blocked)
 
 - `dicom-encoding` 0.10.0 declares `encoding` 0.2.33 unconditionally and uses
