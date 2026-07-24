@@ -29,7 +29,7 @@ target closure.
 
 ## Open gaps
 
-### H-088 — deterministic book-figure SSOT gate (implemented, PR #32)
+### H-088 — deterministic book-figure SSOT gate (implemented, PR #32 merged)
 
 - `xtask` now owns `FIGURE_SPECS`, deterministic SHA-256 manifest generation,
   and the `check-figures` command. The command validates the seven committed
@@ -41,13 +41,11 @@ target closure.
   subcommand, not a figure mismatch.
 - Local evidence: `cargo check -p xtask --offline`, formatter check, `mdbook
   build docs/book`, and `cargo run -p xtask --offline --locked -- check-figures`
-  pass with `SSOT_IN_SYNC` and 7/7 references. The latest hosted PR #32 rerun
-  passes build, Rust workspace, Python bindings, deployment, and CodeRabbit.
-  Its replicated benchmark gate fails on a beam-transmission CPU regression
-  (+0.08%/+0.21% at size 16384), so the PR remains open and no hosted-green
-  result is claimed.
+  pass with `SSOT_IN_SYNC` and 7/7 references. Hosted PR #32 run
+  `30070400660` passes build, Rust workspace, Python bindings, and the
+  replicated benchmark gate; the PR merges as `02d7a775`.
 
-### H-087 — portal fluence quantity boundary (implemented, PR #32)
+### H-087 — portal fluence quantity boundary (implemented, PR #32 merged)
 
 - `helios-simulation::frame_portal_fluence` now carries the transmitted portal
   fluence as Aequitas `EnergyPerArea<T>` through Hyperion's dimensionless
@@ -58,13 +56,11 @@ target closure.
   owner. The direct provider pin is now the merged Aequitas revision
   `e0fc5f3`. Existing full-transmission, Beer–Lambert, closed-leaf, f32, and
   invalid-optical-depth regressions remain the behavioral oracle.
-- PR #32 remains open with implementation head `31147f0` and PM follow-up
-  `1f55d9d`. A local focused `helios-simulation`
+- PR #32 merges as `02d7a775` from implementation head `31147f0` and PM
+  follow-up `5832ffa`. The hosted build, Rust workspace, Python, and
+  replicated benchmark checks pass. A local focused `helios-simulation`
   Nextest attempt could not start because active peer CFDrs/Leto builds held
-  the shared Atlas lock; no local package-gate result is claimed. Hosted build,
-  Rust workspace, Python, deployment, and review checks pass, but the
-  replicated benchmark gate fails on the beam-transmission CPU regression
-  described above.
+  the shared Atlas lock; no local package-gate result is claimed.
 
 ### G-29 — DICOM charset dependency (externally blocked)
 
