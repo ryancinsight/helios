@@ -25,13 +25,20 @@
 //!
 //! [← Mass Attenuation and Photon Cross Sections](../../docs/book/dose_attenuation.md)
 
-use aequitas::systems::si::units::SquareCentimeterPerGram;
+use aequitas::systems::si::{
+    quantities::Energy,
+    units::{MegaElectronVolt, SquareCentimeterPerGram},
+};
 use helios_physics::{
     compton_energy_transfer_cross_section, compton_mass_attenuation,
     compton_mean_energy_transfer_fraction, electrons_per_gram, klein_nishina_cross_section,
     thomson_cross_section,
 };
 use hyperion::coefficient::MassAttenuation;
+
+fn photon_energy(mev: f64) -> Energy<f64> {
+    Energy::from_unit::<MegaElectronVolt>(mev)
+}
 
 fn main() {
     println!("=== Compton Scattering Physics ===\n");
@@ -41,7 +48,7 @@ fn main() {
     println!("Thomson cross section  σ_T = {:.4e} m²/electron", sigma_t);
 
     // At 1 keV, KN should be within 0.1% of Thomson
-    let sigma_kn_1kev: f64 = klein_nishina_cross_section(0.001_f64);
+    let sigma_kn_1kev: f64 = klein_nishina_cross_section(photon_energy(0.001_f64));
     let ratio_1kev = sigma_kn_1kev / sigma_t;
     println!("KN at 1 keV / σ_T     = {ratio_1kev:.6}  (expected ≈ 1.0)");
     assert!(
@@ -68,7 +75,7 @@ fn main() {
     ];
 
     for (&e, &lbl) in energies_mev.iter().zip(labels.iter()) {
-        let sigma: f64 = klein_nishina_cross_section(e);
+        let sigma: f64 = klein_nishina_cross_section(photon_energy(e));
         let ratio = sigma / sigma_t;
         println!("  {:<14}  {:.4e}   {:.4}", lbl, sigma, ratio);
     }
@@ -76,7 +83,7 @@ fn main() {
     // Verify monotonic decrease (cross section decreases with energy)
     let sigmas: Vec<f64> = energies_mev
         .iter()
-        .map(|&e| klein_nishina_cross_section(e))
+        .map(|&e| klein_nishina_cross_section(photon_energy(e)))
         .collect();
     let monotone = sigmas.windows(2).all(|w| w[0] > w[1]);
     assert!(
@@ -93,7 +100,7 @@ fn main() {
     let et_energies = [0.05, 0.1, 1.0, 6.0, 18.0];
     let et_labels = ["50 keV", "100 keV", "1 MeV", "6 MeV", "18 MeV"];
     for (&e, &lbl) in et_energies.iter().zip(et_labels.iter()) {
-        let f_tr: f64 = compton_mean_energy_transfer_fraction(e);
+        let f_tr: f64 = compton_mean_energy_transfer_fraction(photon_energy(e));
         let interp = if f_tr < 0.3 {
             "low (scatter dominates)"
         } else if f_tr < 0.6 {
@@ -105,7 +112,7 @@ fn main() {
     }
 
     // At 6 MV, energy-transfer fraction should be > 0.5
-    let f_tr_6mv: f64 = compton_mean_energy_transfer_fraction(6.0);
+    let f_tr_6mv: f64 = compton_mean_energy_transfer_fraction(photon_energy(6.0));
     assert!(
         f_tr_6mv > 0.5,
         "Energy-transfer fraction at 6 MeV should exceed 0.5, got {f_tr_6mv:.4}"
@@ -117,7 +124,8 @@ fn main() {
     // Water Z/A ≈ 0.5551 → electrons per gram ≈ 3.343×10²³ e⁻/g
     let e_per_g_water: f64 = electrons_per_gram(0.5551_f64);
     for &(label, energy) in &[("100 keV", 0.1_f64), ("6 MeV", 6.0_f64)] {
-        let mu_rho: MassAttenuation<f64> = compton_mass_attenuation(energy, e_per_g_water);
+        let mu_rho: MassAttenuation<f64> =
+            compton_mass_attenuation(photon_energy(energy), e_per_g_water);
         println!(
             "  {:<14}  μ_C/ρ = {:.4} cm²/g  (water)",
             label,
@@ -127,12 +135,12 @@ fn main() {
 
     // ── 5. Energy-transfer cross section ─────────────────────────────────────
     println!();
-    let sigma_tr_6mv: f64 = compton_energy_transfer_cross_section(6.0_f64);
-    let sigma_tot_6mv: f64 = klein_nishina_cross_section(6.0_f64);
+    let sigma_tr_6mv: f64 = compton_energy_transfer_cross_section(photon_energy(6.0_f64));
+    let sigma_tot_6mv: f64 = klein_nishina_cross_section(photon_energy(6.0_f64));
     println!(
         "At 6 MeV:  σ_tr/σ_KN = {:.4}  (energy-transfer fraction check: {:.4})",
         sigma_tr_6mv / sigma_tot_6mv,
-        compton_mean_energy_transfer_fraction(6.0_f64)
+        compton_mean_energy_transfer_fraction(photon_energy(6.0_f64))
     );
 
     println!("\n✓  All Compton physics checks passed");

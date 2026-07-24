@@ -8,6 +8,22 @@
 
 ## Owner: Codex
 
+## Codex — H-093 typed Compton photon energy [arch] [major] — implementation done, verification partially blocked 2026-07-24
+
+- [x] Type all public Compton photon-energy parameters as Aequitas `Energy<T>`
+      and convert to MeV only at the formula boundary.
+- [x] Migrate Helios Rust tests, the Compton example, and the Python binding;
+      add unit-equivalence coverage.
+- [x] Add ADR 0010, gap-audit, and changelog synchronization.
+- [x] `cargo check -p helios-physics --offline` and
+      `cargo check -p helios-python --offline` pass; focused Nextest passes
+      18/18 and `cargo test --doc -p helios-physics --offline` passes with
+      zero doctests.
+- [ ] Warning-denied Clippy remains blocked before source compilation because
+      the peer provider graph references the missing
+      `D:\atlas\worktrees\coeus\coeus-autograd\Cargo.toml`; rerun after that
+      path/dependency graph is repaired.
+
 ## Codex — H-092 image-quality physical semantics [arch] [minor] — done
 
 - [x] Share ROI and volume-error arithmetic between raw MVCT and typed-dose
