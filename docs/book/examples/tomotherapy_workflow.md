@@ -56,6 +56,15 @@ cargo run -p helios-simulation --example tomotherapy_workflow
 cargo run -p helios-simulation --example tomotherapy_workflow -- /tmp/helios_demo/
 ```
 
+## Generated Figures
+
+The two figures below mirror the dose + MLC outputs of this end-to-end demo.
+The cell intensity in the dose heatmap encodes the per-voxel delivered
+dose under the same modulated fluence pattern as the MLC sinogram:
+
+![Central-slice dose heatmap of the helical TomoTherapy workflow](../figures/dose_slice_heatmap.svg)
+![21-leaf × 40-projection MLC leaf-open sinogram (central 9-leaf band open)](../figures/helical_mlc_fluence.svg)
+
 ## Book Chapter
 
 [← TomoTherapy End-to-End Workflow](../workflow_tomotherapy.md)

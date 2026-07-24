@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" font-family="sans-serif" font-size="12" role="img" aria-label="Hounsfield-unit to relative-electron-density calibration">
+  <title>CT HU -> relative electron density calibration</title>
+  <desc>Deterministic piecewise plot of HU vs rho_rel = max(0, 1 + HU/1000), at six calibration materials (air/lung/adipose/water/soft tissue/compact bone). Source: helios-physics examples.</desc>
+  <g stroke="#222" fill="none">
+    <line x1="60" y1="20" x2="60" y2="280" />
+    <line x1="60" y1="280" x2="460" y2="280" />
+  </g>
+  <g font-size="11" fill="#222">
+    <text x="180" y="16" font-size="13" font-weight="bold">HU &#8594; relative electron density &#961;<tspan baseline-shift="sub" font-size="10">rel</tspan></text>
+    <text x="55" y="35" text-anchor="end">1.7</text>
+    <text x="55" y="280" text-anchor="end">0.0</text>
+  </g>
+  <text x="20" y="170" text-anchor="middle" font-size="11" fill="#222" transform="rotate(-90 20 170)">&#961;<tspan baseline-shift="sub" font-size="10">rel</tspan></text>
+  <text x="260" y="298" text-anchor="middle" font-size="11" fill="#222">Hounsfield units (HU)</text>
+  <!-- x-axis ticks at -1000, -800, -100, 0, 50, 700 ; span = 460-60 = 400 px covers HU -1000..+1000 -->
+  <g stroke="#222">
+    <line x1="60" y1="280" x2="60" y2="284"/>
+    <line x1="100" y1="280" x2="100" y2="284"/>
+    <line x1="220" y1="280" x2="220" y2="284"/>
+    <line x1="260" y1="280" x2="260" y2="284"/>
+    <line x1="280" y1="280" x2="280" y2="284"/>
+    <line x1="500" y1="280" x2="500" y2="284"/>
+  </g>
+  <g font-size="10" fill="#222" text-anchor="middle">
+    <text x="60"  y="294">-1000</text>
+    <text x="100" y="294">-800</text>
+    <text x="220" y="294">-100</text>
+    <text x="260" y="294">0</text>
+    <text x="280" y="294">+50</text>
+    <text x="500" y="294">+700</text>
+  </g>
+  <!-- piecewise-line: rho_rel = max(0, 1 + HU/1000)
+       scale:  HU -1000 -> rho 0   -> y=280
+               HU -800  -> rho 0.2 -> y=280-0.2*260 = 228
+               HU -100  -> rho 0.9 -> y=280-0.9*260 = 46  clipped to top
+               HU 0     -> rho 1.0 -> y=20
+               HU 50    -> rho 1.05 -> y= -7 clipped; we plot only up to 1.0 baseline at y=20
+               HU 700   -> rho 1.7 -> off-chart
+       Segment slopes show the linear HU->rho relationship; clamped at rho=0 (air floor). -->
+  <g stroke="#3b6fa0" stroke-width="2" fill="none">
+    <line x1="60"  y1="280" x2="60"  y2="280"/>          <!-- floor from -1000 to -800 -->
+    <line x1="60"  y1="280" x2="100" y2="228"/>
+    <line x1="100" y1="228" x2="260" y2="20"/>
+    <line x1="260" y1="20"  x2="500" y2="-182"  stroke="#9a9a9a" stroke-dasharray="3 3"/> <!-- linear extrapolation -->
+  </g>
+  <!-- markers for each labelled material -->
+  <g fill="#234">
+    <circle cx="60"  cy="280" r="4"/>
+    <circle cx="100" cy="228" r="4"/>
+    <circle cx="220" cy="60"  r="4"/>
+    <circle cx="260" cy="20"  r="4"/>
+    <circle cx="280" cy="7"   r="4"/>
+    <circle cx="460" cy="20"  r="4"/>
+  </g>
+  <g font-size="10" fill="#234">
+    <text x="68"  y="282">Air (-1000 HU &#8594; 0.000)</text>
+    <text x="108" y="226">Lung (-800 &#8594; 0.200)</text>
+    <text x="148" y="86">Adipose (-100 &#8594; 0.900)</text>
+    <text x="266" y="18">Water (0 &#8594; 1.000)</text>
+    <text x="286" y="6">Soft tissue (50 &#8594; 1.050)</text>
+    <text x="332" y="14">Compact bone (700 &#8594; 1.700)</text>
+  </g>
+  <text x="240" y="316" text-anchor="middle" font-size="10" fill="#555">&#961;<tspan baseline-shift="sub" font-size="10">rel</tspan> = max(0, 1 + HU/1000)  ·  source: helios-physics/examples/photon_attenuation.rs (CT calibration)</text>
+</svg>

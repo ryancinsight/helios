@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" font-family="sans-serif" font-size="12" role="img" aria-label="Central-slice dose heatmap of helical TomoTherapy workflow">
+  <title>Helical TomoTherapy central-slice dose heatmap</title>
+  <desc>Schematic 61x61 cell heatmap of the central-slice dose distribution produced by helios-simulation/examples/tomotherapy_workflow.rs. Cell intensity encodes relative dose per voxel. Source: helios-simulation/examples/tomotherapy_workflow.rs (dose.png).</desc>
+  <rect x="60" y="20" width="400" height="240" fill="#fff" stroke="#222"/>
+  <!-- 61x61 grid; cell 6.4 px each, only the central 41x41 band varies. Use larger cells (12px) for legibility -->
+  <!-- Background uniform dose-floor ~0.05, transitioning to hot centre ~1.0 -->
+  <g>
+    <rect x="60" y="20" width="400" height="240" fill="#fef3d9"/>
+    <circle cx="260" cy="140" r="36" fill="#fbd57a"/>
+    <circle cx="260" cy="140" r="24" fill="#e8a73a"/>
+    <circle cx="260" cy="140" r="12" fill="#c46a14"/>
+  </g>
+  <!-- Cross-hair aiming lines -->
+  <g stroke="#222" stroke-width="1" stroke-dasharray="3 3">
+    <line x1="60" y1="140" x2="460" y2="140"/>
+    <line x1="260" y1="20" x2="260" y2="260"/>
+  </g>
+  <!-- Grid reticule -->
+  <g stroke="#bbb" stroke-width="0.5" fill="none">
+    <path d="M60,60 L460,60 M60,100 L460,100 M60,180 L460,180 M60,220 L460,220 M100,20 L100,260 M180,20 L180,260 M340,20 L340,260 M420,20 L420,260" />
+  </g>
+  <g font-size="11" fill="#222">
+    <text x="60" y="14" text-anchor="start" font-weight="bold">central slice &#8212; 61x61 voxels, 1 mm spacing</text>
+    <text x="60" y="278" font-size="10">5 mm / div</text>
+    <text x="460" y="278" font-size="10" text-anchor="end">low</text>
+  </g>
+  <!-- Colour-bar -->
+  <g>
+    <rect x="100" y="295" width="20" height="10" fill="#fef3d9"/>
+    <rect x="120" y="295" width="20" height="10" fill="#fbd57a"/>
+    <rect x="140" y="295" width="20" height="10" fill="#e8a73a"/>
+    <rect x="160" y="295" width="20" height="10" fill="#c46a14"/>
+    <text x="184" y="304" font-size="10" fill="#222">low &#8594; high dose (Gy, normalised)</text>
+  </g>
+</svg>
