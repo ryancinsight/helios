@@ -2,6 +2,16 @@
 
 [Introduction](README.md)
 
+## Deterministic figures
+
+- [Photon transmission vs depth](figures/photon_attenuation_depth.svg)
+- [HU to relative electron density calibration](figures/ct_calibration_curve.svg)
+- [Single-angle Radon sinogram profile](figures/radon_sinogram_disk.svg)
+- [Differential DVH](figures/dvh_curve.svg)
+- [Central-slice dose heatmap](figures/dose_slice_heatmap.svg)
+- [MLC leaf-open sinogram](figures/helical_mlc_fluence.svg)
+- [Helios layered architecture](figures/architecture_stack.svg)
+
 ---
 
 # Part I — Foundations

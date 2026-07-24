@@ -29,6 +29,21 @@ target closure.
 
 ## Open gaps
 
+### H-088 — deterministic book-figure SSOT gate (implemented, PR #32)
+
+- `xtask` now owns `FIGURE_SPECS`, deterministic SHA-256 manifest generation,
+  and the `check-figures` command. The command validates the seven committed
+  SVGs, scans `docs/book/SUMMARY.md` and `docs/book/README.md`, and fails on
+  either an unlisted asset or a docs/spec mismatch.
+- The workflow runs the gate after Rustdoc. The Python and benchmark lanes
+  allow Cargo to refresh the lock after Atlas path-dependency materialization;
+  the Rust workspace remains locked. The previous CI failure was the absent
+  subcommand, not a figure mismatch.
+- Local evidence: `cargo check -p xtask --offline`, formatter check, `mdbook
+  build docs/book`, and `cargo run -p xtask --offline --locked -- check-figures`
+  pass with `SSOT_IN_SYNC` and 7/7 references. The hosted PR #32 rerun is
+  pending on the latest head; no hosted-green result is claimed yet.
+
 ### H-087 — portal fluence quantity boundary (implemented, PR #32)
 
 - `helios-simulation::frame_portal_fluence` now carries the transmitted portal

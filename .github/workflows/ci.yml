@@ -110,7 +110,9 @@ jobs:
 
       - name: Build Python extension
         working-directory: crates/helios-python
-        run: python -m maturin build --locked --release --out dist
+        # The Atlas checkout action materializes git path dependencies before
+        # this build; Cargo must be allowed to refresh the generated lock.
+        run: python -m maturin build --release --out dist
 
       - name: Install Python extension
         working-directory: crates/helios-python
@@ -226,7 +228,6 @@ jobs:
               [[ -n "$package" ]] || continue
               cargo bench \
                 --manifest-path "$revision/Cargo.toml" \
-                --locked \
                 --all-features \
                 --package "$package" \
                 --bench "$benchmark" \
@@ -254,13 +255,12 @@ jobs:
                 --kill-after="${BENCH_TIMEOUT_KILL_GRACE_SECONDS}s" \
                 "${budget_seconds}s" \
                 cargo bench \
-                --manifest-path "$revision/Cargo.toml" \
-                --locked \
-                --all-features \
-                --package "$package" \
-                --bench "$benchmark" \
-                -- \
-                "$@"
+                  --manifest-path "$revision/Cargo.toml" \
+                  --all-features \
+                  --package "$package" \
+                  --bench "$benchmark" \
+                  -- \
+                  "$@"
               echo "::endgroup::"
             done <<<"$BENCHMARK_TARGETS"
           }

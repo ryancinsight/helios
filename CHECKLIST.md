@@ -16,6 +16,19 @@
       warning-denied simulation-package checks against the synchronized local
       provider checkout.
 
+## Codex — H-088 deterministic book-figure SSOT gate [minor] — review
+
+- [x] Materialize the seven committed SVGs and link them from the book summary
+      and README.
+- [x] Add `xtask prebook` manifest generation and `check-figures` drift checks;
+      reject both unlisted SVGs and docs/spec mismatches.
+- [x] Add the gate after Rustdoc and allow lock refresh only in the Python and
+      benchmark lanes that materialize Atlas path dependencies.
+- [x] Verify `cargo check -p xtask --offline`, formatter checks, `mdbook build`,
+      and the locked local `check-figures` command (`SSOT_IN_SYNC`, 7/7).
+- [ ] Re-run the hosted PR #32 matrix on the latest head and record the exact
+      result before merge.
+
 ## Codex — H-086 mdBook Pages publication [patch] — done
 
 - [x] Add the Pages build/deploy workflow for `docs/book`.
