@@ -52,7 +52,8 @@ target closure.
   The direct Aequitas pin is `3ae0b6b`; implementation commit `b2a9ebe`.
 - This closes the remaining quantity-conversion seam in the portal workflow;
   the dense fluence frame remains representation storage, not a second metric
-  owner. Existing full-transmission, Beer–Lambert, closed-leaf, f32, and
+  owner. The direct provider pin is now the merged Aequitas revision
+  `e0fc5f3`. Existing full-transmission, Beer–Lambert, closed-leaf, f32, and
   invalid-optical-depth regressions remain the behavioral oracle.
 - PR #32 is open. A local focused `helios-simulation` Nextest attempt could not
   start because active peer CFDrs/Leto builds held the shared Atlas lock; no
