@@ -39,8 +39,10 @@ target closure.
   the dense fluence frame remains representation storage, not a second metric
   owner. Existing full-transmission, Beer–Lambert, closed-leaf, f32, and
   invalid-optical-depth regressions remain the behavioral oracle.
-- PR #32 is open. The focused `helios-simulation` Nextest is queued behind the
-  shared Atlas build lock; no package-gate result is claimed until it runs.
+- PR #32 is open. A local focused `helios-simulation` Nextest attempt could not
+  start because active peer CFDrs/Leto builds held the shared Atlas lock; no
+  local package-gate result is claimed. Hosted Python bindings and CodeRabbit
+  pass, while the Rust workspace and benchmark checks remain pending.
 
 ### G-29 — DICOM charset dependency (externally blocked)
 
