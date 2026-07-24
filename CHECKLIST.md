@@ -8,15 +8,15 @@
 
 ## Owner: Codex
 
-## Codex — H-092 image-quality physical semantics [arch] [minor] — in progress
+## Codex — H-092 image-quality physical semantics [arch] [minor] — done
 
-- [ ] Share ROI and volume-error arithmetic between raw MVCT and typed-dose
+- [x] Share ROI and volume-error arithmetic between raw MVCT and typed-dose
       APIs without duplicating the numerical kernels.
-- [ ] Add `AbsorbedDose<T>` ROI mean/std and volume RMSE surfaces; retain raw
+- [x] Add `AbsorbedDose<T>` ROI mean/std and volume RMSE surfaces; retain raw
       scalar MVCT metrics and dimensionless contrast/CNR.
-- [ ] Migrate the clinical validation example and add the ADR, gap-audit,
+- [x] Migrate the clinical validation example and add the ADR, gap-audit,
       changelog, and value-semantic/f32 coverage.
-- [ ] Run focused Nextest, Clippy, doctest, Rustdoc, format, and example gates.
+- [x] Run focused Nextest, Clippy, doctest, Rustdoc, format, and example gates.
 
 ## Codex — H-090 typed gamma physical criteria [arch] [major] — done 2026-07-23
 

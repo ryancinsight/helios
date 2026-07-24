@@ -9,6 +9,11 @@ under a Breaking subsection.
 
 ### Changed
 
+- `helios-analysis` now separates raw MVCT image statistics from dose-semantic
+  metrics: `dose_roi_statistics` and `dose_volume_rmse` return typed Aequitas
+  `AbsorbedDose` values, while contrast, CNR, and raw image APIs retain their
+  scalar or dimensionless contracts. See [ADR 0009](docs/adr/0009-image-quality-physical-semantics.md).
+
 - `helios-simulation` delivery frames and portal fluence now carry Aequitas
   `EnergyPerArea`, while couch position, leaf width, sampling step, standoff,
   and point-source axis use Aequitas `Length`. Typed values convert only at the

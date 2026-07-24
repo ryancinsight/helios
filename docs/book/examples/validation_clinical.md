@@ -16,11 +16,12 @@ For each structure the example computes:
 
 1. **DVH coverage**: D₉₅, D_mean, homogeneity index (ICRU-83)
 2. **Biological outcome**: gEUD, TCP (logistic), NTCP (Lyman-Kutcher-Burman)
-3. **Image quality**: ROI statistics and contrast-to-noise ratio between PTV and parotid
+3. **Dose ROI analysis**: Aequitas dose-valued ROI statistics and
+   dimensionless contrast-to-noise ratio between PTV and parotid
 
 ## Atlas Integration
 
-Uses `helios-analysis` directly: `Dvh`, `gamma_index_3d`, `gamma_pass_rate`, `roi_statistics`, `contrast_to_noise_ratio`, `michelson_contrast`.
+Uses `helios-analysis` directly: `Dvh`, `gamma_index_3d`, `gamma_pass_rate`, `dose_roi_statistics`, `contrast_to_noise_ratio`, `michelson_contrast`.
 
 ## Part Reference
 
