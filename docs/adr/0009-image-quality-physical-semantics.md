@@ -1,7 +1,7 @@
 # ADR 0009: Partition image-quality physical semantics
 
 - Status: Accepted
-- Date: 2026-07-24
+- Date: 2026-07-23
 - Class: [arch] [minor]
 
 ## Context
