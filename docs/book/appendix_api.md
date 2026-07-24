@@ -35,7 +35,9 @@ cargo doc --workspace --no-deps --open
 
 - `Dvh`
 - `gamma_index_3d`, `gamma_index_3d_local`, and `gamma_pass_rate`
-- `roi_statistics`, `volume_rmse`, and `volume_relative_l2_error`
+- Raw MVCT metrics: `roi_statistics`, `volume_rmse`, and
+  `volume_relative_l2_error`
+- Dose-semantic metrics: `dose_roi_statistics` and `dose_volume_rmse`
 
 ## Further reading
 

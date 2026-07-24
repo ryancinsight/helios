@@ -25,7 +25,7 @@ and attenuation, and `AreaPerMass` for mass attenuation. `EnergyMeV` and
 | `HELIOS-AEQ-MET-01` | `helios-analysis/src/dvh.rs` stores `Vec<AbsorbedDose<T>>`, but `min`, `max`, `mean`, `dose_at_volume_fraction`, and `generalized_eud` return raw `T`; dose criteria and TD50/TCD50 parameters also enter as `T`. | Return `AbsorbedDose<T>` for dose-valued results and parameters; keep Vx, HI, TCP, and NTCP dimensionless or probability-typed. | Helios | **RESOLVED.** `Dvh` extrema, mean, Dx, gEUD, and TCP/NTCP dose parameters now use `AbsorbedDose<T>`; nearest-rank, masked, NaN, Asclepius-law, and end-to-end PTV/OAR value semantics remain covered. |
 | `HELIOS-AEQ-MET-02` | `helios-analysis/src/gamma.rs` accepted `dta_mm`, normalization dose, low-dose cutoff, and search radius as raw `T`; gamma volume and pass rate are dimensionless. | Type distances as `Length`, dose thresholds as `AbsorbedDose`, and keep the result storage scalar/dimensionless. | Helios | **RESOLVED.** `gamma_index_3d`, `gamma_index_3d_local`, and `gamma_pass_rate` now type physical criteria with Aequitas while retaining the Low gamma kernel, local/global normalization, grid checks, scalar gamma field, and scalar pass rate. Focused value-semantic gamma tests and all in-tree callers migrate; ADR 0007 records the breaking boundary. |
 | `HELIOS-AEQ-MET-03` | `helios-simulation/src/delivery.rs` stored leaf fluence as `T`; `total_delivered_fluence` returned `T`. `portal.rs` constructed `EnergyPerArea` internally and converted it back. `dose_accumulation.rs` accepted `*_mm` geometry and sampling values as `T`. | Carry fluence as `EnergyPerArea` and geometry distances as `Length` through delivery, portal, and dose accumulation. | Helios | **RESOLVED.** `DeliveryFrame`, collimation, portal transmission, total fluence, and dose geometry now use Aequitas quantities. Typed values convert once to the existing millimetre ray/voxel kernel; closed-leaf zero, Beer–Lambert darkening, fluence linearity, geometry-limit, f32, example, and end-to-end regressions pass. ADR 0008 records the breaking boundary. |
-| `HELIOS-AEQ-MET-04` | `helios-analysis/src/image_quality.rs` returns raw intensity/RMSE values, while the same analysis can operate on dose volumes. | Decide the semantic input at the analysis boundary: retain raw image intensity for MVCT, but return `AbsorbedDose` RMSE when the API contract is dose-specific. | Helios | Deferred pending API partition. No provider extension is required; the acceptance contract must distinguish image intensity from dose. |
+| `HELIOS-AEQ-MET-04` | `helios-analysis/src/image_quality.rs` returns raw intensity/RMSE values, while the same analysis can operate on dose volumes. | Decide the semantic input at the analysis boundary: retain raw image intensity for MVCT, but return `AbsorbedDose` statistics when the API contract is dose-specific. | Helios | **RESOLVED.** Shared ROI/RMSE value kernels now back raw MVCT `roi_statistics`/`volume_rmse` and typed-dose `dose_roi_statistics`/`dose_volume_rmse`; the clinical validation example uses typed dose means/stddev and converts only for dimensionless contrast/CNR. Value tests cover f64/f32 and Gray outputs; ADR 0009 records the partition. |
 
 ### Explicit non-gaps and constraints
 
@@ -34,11 +34,10 @@ and attenuation, and `AreaPerMass` for mass attenuation. `EnergyMeV` and
 - Beam angles, gamma values, fractions, homogeneity indices, and TCP/NTCP are
   dimensionless; they must not be wrapped as length or dose merely because they
   are reported beside physical quantities.
-- The next Helios metric slice is `HELIOS-AEQ-MET-04`, which requires an API
-  partition between raw MVCT image intensity and dose-specific image quality;
-  no Aequitas provider extension is currently required. Each public signature
-  change must update its examples, Python surface, and focused tests in the same
-  change.
+- `HELIOS-AEQ-MET-04` is closed. Raw MVCT intensity remains scalar, while
+  dose-specific ROI and RMSE results carry `AbsorbedDose`; no Aequitas provider
+  extension was required. Future public signature changes must update their
+  examples, Python surface, and focused tests in the same change.
 
 ## H-003d oriented-grid provider convergence (closed)
 

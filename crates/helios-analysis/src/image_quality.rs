@@ -1,13 +1,14 @@
 //! MVCT image-quality metrics: reconstruction accuracy, noise, and contrast.
 //!
-//! Quantitative instruments for the imaging validation gate. Reconstruction
-//! **accuracy** is measured against a ground-truth attenuation volume
-//! ([`volume_rmse`], [`volume_relative_l2_error`]); **noise** is the intensity
-//! standard deviation over a uniform region of interest ([`roi_statistics`]); and
-//! **contrast** between two materials/ROIs is the Michelson contrast
-//! ([`michelson_contrast`]) with its noise-normalized form, the contrast-to-noise
-//! ratio ([`contrast_to_noise_ratio`]). All are generic over the [`Scalar`] seam.
+//! Quantitative instruments for the imaging validation gate. Raw MVCT
+//! reconstruction accuracy and noise use scalar intensity metrics
+//! ([`volume_rmse`], [`volume_relative_l2_error`], [`roi_statistics`]); dose
+//! callers use the typed [`dose_volume_rmse`] and [`dose_roi_statistics`]
+//! surfaces. Contrast and contrast-to-noise remain dimensionless
+//! ([`michelson_contrast`], [`contrast_to_noise_ratio`]). All are generic over
+//! the [`Scalar`] seam.
 
+use aequitas::systems::si::quantities::AbsorbedDose;
 use helios_core::HeliosError;
 use helios_domain::Volume;
 use helios_math::{NumericElement, Scalar};
@@ -19,6 +20,15 @@ pub struct RoiStats<T: Scalar> {
     pub mean: T,
     /// Population standard deviation over the ROI (the noise level).
     pub std: T,
+}
+
+/// Mean and population standard deviation of a dose-valued region of interest.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct DoseRoiStats<T: Scalar> {
+    /// Mean absorbed dose over the ROI.
+    pub mean: AbsorbedDose<T>,
+    /// Population standard deviation of absorbed dose over the ROI.
+    pub std: AbsorbedDose<T>,
 }
 
 /// Absolute value via the ordered seam (`max(x, −x)`), avoiding a dependency on a
@@ -34,11 +44,11 @@ fn abs<T: Scalar>(x: T) -> T {
 /// The standard deviation over a *uniform* region is the MVCT noise metric (a
 /// noiseless region yields `std = 0`). An empty box returns zero statistics.
 #[must_use]
-pub fn roi_statistics<T: Scalar>(
+fn roi_statistics_values<T: Scalar>(
     volume: &Volume<T>,
     min: [usize; 3],
     max: [usize; 3],
-) -> RoiStats<T> {
+) -> (T, T) {
     let zero = <T as NumericElement>::ZERO;
     let mut sum = zero;
     let mut sum_sq = zero;
@@ -55,18 +65,46 @@ pub fn roi_statistics<T: Scalar>(
         }
     }
     if count == 0 {
-        return RoiStats {
-            mean: zero,
-            std: zero,
-        };
+        return (zero, zero);
     }
     let inv_n = T::from_f64(count as f64).recip();
     let mean = sum * inv_n;
     // Var = E[x²] − E[x]²; clamp a tiny negative from rounding before sqrt.
     let var = (sum_sq * inv_n - mean * mean).max_scalar(zero);
-    RoiStats {
-        mean,
-        std: var.sqrt(),
+    (mean, var.sqrt())
+}
+
+/// Mean and population standard deviation over the half-open index box
+/// `[min, max)` of a raw MVCT intensity volume.
+///
+/// This is the intensity-semantic API. Dose-valued callers must use
+/// [`dose_roi_statistics`] so the physical result retains its Aequitas
+/// `AbsorbedDose` dimension.
+#[must_use]
+pub fn roi_statistics<T: Scalar>(
+    volume: &Volume<T>,
+    min: [usize; 3],
+    max: [usize; 3],
+) -> RoiStats<T> {
+    let (mean, std) = roi_statistics_values(volume, min, max);
+    RoiStats { mean, std }
+}
+
+/// Mean and population standard deviation over a dose-valued region of
+/// interest.
+///
+/// The dense volume remains scalar storage; this boundary attaches the
+/// `AbsorbedDose` semantic to the returned physical statistics.
+#[must_use]
+pub fn dose_roi_statistics<T: Scalar>(
+    volume: &Volume<T>,
+    min: [usize; 3],
+    max: [usize; 3],
+) -> DoseRoiStats<T> {
+    let (mean, std) = roi_statistics_values(volume, min, max);
+    DoseRoiStats {
+        mean: AbsorbedDose::from_base(mean),
+        std: AbsorbedDose::from_base(std),
     }
 }
 
@@ -114,14 +152,33 @@ fn error_accumulate<T: Scalar>(a: &Volume<T>, b: &Volume<T>) -> Result<(T, T, us
     Ok((sq_diff, sq_ref, da[0] * da[1] * da[2]))
 }
 
-/// Root-mean-square error between a reconstruction `recon` and ground truth
-/// `truth` (identical grids). `0` for identical volumes.
+fn volume_rmse_value<T: Scalar>(recon: &Volume<T>, truth: &Volume<T>) -> Result<T, HeliosError> {
+    let (sq_diff, _sq_ref, n) = error_accumulate(recon, truth)?;
+    Ok((sq_diff * T::from_f64(n as f64).recip()).sqrt())
+}
+
+/// Root-mean-square error between raw MVCT intensity volumes.
+///
+/// Use [`dose_volume_rmse`] when the volumes represent absorbed dose.
 ///
 /// # Errors
 /// [`HeliosError::InvalidDomainValue`] if the grid dimensions differ.
 pub fn volume_rmse<T: Scalar>(recon: &Volume<T>, truth: &Volume<T>) -> Result<T, HeliosError> {
-    let (sq_diff, _sq_ref, n) = error_accumulate(recon, truth)?;
-    Ok((sq_diff * T::from_f64(n as f64).recip()).sqrt())
+    volume_rmse_value(recon, truth)
+}
+
+/// Root-mean-square error between dose volumes as an Aequitas quantity.
+///
+/// The dense input volumes retain scalar storage; the result carries the
+/// dose dimension required by a dose-specific image-quality contract.
+///
+/// # Errors
+/// [`HeliosError::InvalidDomainValue`] if the grid dimensions differ.
+pub fn dose_volume_rmse<T: Scalar>(
+    recon: &Volume<T>,
+    truth: &Volume<T>,
+) -> Result<AbsorbedDose<T>, HeliosError> {
+    volume_rmse_value(recon, truth).map(AbsorbedDose::from_base)
 }
 
 /// Relative L2 error `‖recon − truth‖₂ / ‖truth‖₂` (identical grids). `0` for an
@@ -149,6 +206,7 @@ pub fn volume_relative_l2_error<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use aequitas::systems::si::units::Gray;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
@@ -172,6 +230,15 @@ mod tests {
         let s = roi_statistics(&vol, [0, 0, 0], [1, 1, 2]);
         assert_relative_eq!(s.mean, 3.0, epsilon = 1e-14);
         assert_relative_eq!(s.std, 1.0, epsilon = 1e-14);
+    }
+
+    #[test]
+    fn dose_roi_statistics_preserve_absorbed_dose_semantics() {
+        let vol = Volume::from_shape_vec(grid([1, 1, 2]), vec![2.0, 4.0]).unwrap();
+        let stats = dose_roi_statistics(&vol, [0, 0, 0], [1, 1, 2]);
+
+        assert_relative_eq!(stats.mean.in_unit::<Gray>(), 3.0, epsilon = 1e-14);
+        assert_relative_eq!(stats.std.in_unit::<Gray>(), 1.0, epsilon = 1e-14);
     }
 
     #[test]
@@ -203,6 +270,15 @@ mod tests {
         let shifted =
             Volume::from_shape_fn(grid([2, 2, 2]), |idx| idx[0] as f64 + idx[1] as f64 + 0.5);
         assert_relative_eq!(volume_rmse(&shifted, &truth).unwrap(), 0.5, epsilon = 1e-14);
+    }
+
+    #[test]
+    fn dose_volume_rmse_preserves_absorbed_dose_semantics() {
+        let truth = Volume::from_shape_fn(grid([2, 2, 2]), |_| 2.0);
+        let recon = Volume::from_shape_fn(grid([2, 2, 2]), |_| 2.5);
+        let rmse = dose_volume_rmse(&recon, &truth).unwrap();
+
+        assert_relative_eq!(rmse.in_unit::<Gray>(), 0.5, epsilon = 1e-14);
     }
 
     #[test]
@@ -243,5 +319,8 @@ mod tests {
         let s = roi_statistics(&vol, [0, 0, 0], [1, 1, 2]);
         assert_relative_eq!(s.std, 1.0_f32, epsilon = 1e-6);
         assert_relative_eq!(michelson_contrast(3.0_f32, 1.0), 0.5, epsilon = 1e-7);
+
+        let dose_rmse = dose_volume_rmse(&vol, &vol).unwrap();
+        assert_relative_eq!(dose_rmse.into_base(), 0.0_f32, epsilon = 1e-6);
     }
 }

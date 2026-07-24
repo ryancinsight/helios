@@ -21,8 +21,8 @@ use aequitas::systems::si::{
     units::{Gray, Millimeter},
 };
 use helios_analysis::{
-    contrast_to_noise_ratio, gamma_index_3d, gamma_pass_rate, michelson_contrast, roi_statistics,
-    Dvh,
+    contrast_to_noise_ratio, dose_roi_statistics, gamma_index_3d, gamma_pass_rate,
+    michelson_contrast, Dvh,
 };
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Point3;
@@ -196,42 +196,49 @@ fn main() {
 
     println!("\n✓  Biological outcome within clinical tolerance\n");
 
-    // ── Image quality assessment ──────────────────────────────────────────────
-    println!("Image quality metrics (ROI statistics over structure regions):");
+    // ── Dose ROI assessment ────────────────────────────────────────────────────
+    println!("Dose ROI statistics over structure regions:");
 
     // PTV ROI: central block where dose is flat at ~60 Gy
-    let ptv_stats = roi_statistics(&dose, [16, 16, 16], [25, 25, 25]);
+    let ptv_stats = dose_roi_statistics(&dose, [16, 16, 16], [25, 25, 25]);
     // Parotid ROI: lateral region centred at y ≈ 60 mm
-    let parotid_stats = roi_statistics(&dose, [18, 28, 18], [23, 32, 23]);
+    let parotid_stats = dose_roi_statistics(&dose, [18, 28, 18], [23, 32, 23]);
     // Cord ROI: posterior strip centred at x ≈ 62 mm
-    let cord_stats = roi_statistics(&dose, [29, 19, 19], [33, 22, 22]);
+    let cord_stats = dose_roi_statistics(&dose, [29, 19, 19], [33, 22, 22]);
 
     println!(
         "  PTV ROI:        mean={:.2} Gy, σ={:.4} Gy",
-        ptv_stats.mean, ptv_stats.std
+        ptv_stats.mean.in_unit::<Gray>(),
+        ptv_stats.std.in_unit::<Gray>()
     );
     println!(
         "  Parotid ROI:    mean={:.2} Gy, σ={:.4} Gy",
-        parotid_stats.mean, parotid_stats.std
+        parotid_stats.mean.in_unit::<Gray>(),
+        parotid_stats.std.in_unit::<Gray>()
     );
     println!(
         "  Cord ROI:       mean={:.2} Gy, σ={:.4} Gy",
-        cord_stats.mean, cord_stats.std
+        cord_stats.mean.in_unit::<Gray>(),
+        cord_stats.std.in_unit::<Gray>()
     );
 
     // Michelson contrast between PTV and parotid signal levels
-    let contrast = michelson_contrast(ptv_stats.mean, parotid_stats.mean);
+    let contrast = michelson_contrast(ptv_stats.mean.into_base(), parotid_stats.mean.into_base());
     println!("  PTV/Parotid Michelson contrast: {contrast:.4}");
 
     // CNR: PTV vs background (parotid as background, PTV std as noise proxy)
-    let cnr = if ptv_stats.std > 0.0 {
-        contrast_to_noise_ratio(ptv_stats.mean, parotid_stats.mean, ptv_stats.std)
+    let cnr = if ptv_stats.std.into_base() > 0.0 {
+        contrast_to_noise_ratio(
+            ptv_stats.mean.into_base(),
+            parotid_stats.mean.into_base(),
+            ptv_stats.std.into_base(),
+        )
     } else {
         f64::INFINITY
     };
     println!("  PTV/Parotid CNR:  {cnr:.2}");
 
-    println!("\n✓  Image quality metrics computed\n");
+    println!("\n✓  Dose ROI metrics computed\n");
 
     // ── Gamma index plan verification ─────────────────────────────────────────
     println!("Gamma index verification (3%/2 mm global vs identical plan):");
@@ -245,13 +252,13 @@ fn main() {
     )
     .expect("self-gamma must succeed");
     let pass = gamma_pass_rate(&gamma, &dose, prescription * 0.10);
-    println!("  Self-comparison pass rate: {pass:.1}%");
+    println!("  Self-comparison pass rate: {:.1}%", pass * 100.0);
     assert!(pass >= 0.999, "Self-gamma pass rate {pass:.4} < 99.9%");
     println!("  ✓  Gamma self-consistency verified\n");
 
     // ── Summary ───────────────────────────────────────────────────────────────
     println!("All clinical validation checks passed");
-    println!("API: helios_analysis::{{Dvh, gamma_index_3d, gamma_pass_rate, roi_statistics,");
+    println!("API: helios_analysis::{{Dvh, gamma_index_3d, gamma_pass_rate, dose_roi_statistics,");
     println!("       michelson_contrast, contrast_to_noise_ratio}}");
 }
 
