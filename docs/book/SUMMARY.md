@@ -119,3 +119,5 @@ This part documents the Atlas-first design and migration surface area.
 - [C. API Reference Index](appendix_api.md)
 - [D. Changelog](appendix_changelog.md)
 - [E. Book Organization Forward Roadmap](BOOK_ORGANIZATION.md)
+
+- [Stray test figure (drift fixture)](figures/atlas_drift_fixture_test_only_no_such_figure.svg)
