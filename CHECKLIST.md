@@ -26,8 +26,10 @@
       benchmark lanes that materialize Atlas path dependencies.
 - [x] Verify `cargo check -p xtask --offline`, formatter checks, `mdbook build`,
       and the locked local `check-figures` command (`SSOT_IN_SYNC`, 7/7).
-- [ ] Re-run the hosted PR #32 matrix on the latest head and record the exact
-      result before merge.
+- [x] Re-run the hosted PR #32 matrix on the latest head and record the exact
+      result: build, Rust workspace, Python, deployment, and review checks
+      pass; the replicated benchmark gate reports beam-transmission CPU
+      regression (+0.08%/+0.21% at size 16384), so merge remains blocked.
 
 ## Codex — H-086 mdBook Pages publication [patch] — done
 

@@ -41,8 +41,11 @@ target closure.
   subcommand, not a figure mismatch.
 - Local evidence: `cargo check -p xtask --offline`, formatter check, `mdbook
   build docs/book`, and `cargo run -p xtask --offline --locked -- check-figures`
-  pass with `SSOT_IN_SYNC` and 7/7 references. The hosted PR #32 rerun is
-  pending on the latest head; no hosted-green result is claimed yet.
+  pass with `SSOT_IN_SYNC` and 7/7 references. The latest hosted PR #32 rerun
+  passes build, Rust workspace, Python bindings, deployment, and CodeRabbit.
+  Its replicated benchmark gate fails on a beam-transmission CPU regression
+  (+0.08%/+0.21% at size 16384), so the PR remains open and no hosted-green
+  result is claimed.
 
 ### H-087 — portal fluence quantity boundary (implemented, PR #32)
 
@@ -55,10 +58,12 @@ target closure.
   owner. The direct provider pin is now the merged Aequitas revision
   `e0fc5f3`. Existing full-transmission, Beer–Lambert, closed-leaf, f32, and
   invalid-optical-depth regressions remain the behavioral oracle.
-- PR #32 is open. A local focused `helios-simulation` Nextest attempt could not
-  start because active peer CFDrs/Leto builds held the shared Atlas lock; no
-  local package-gate result is claimed. Hosted checks are rerunning on the
-  latest PM-synchronized head; no hosted-green result is claimed.
+- PR #32 is open at head `31147f0`. A local focused `helios-simulation`
+  Nextest attempt could not start because active peer CFDrs/Leto builds held
+  the shared Atlas lock; no local package-gate result is claimed. Hosted build,
+  Rust workspace, Python, deployment, and review checks pass, but the
+  replicated benchmark gate fails on the beam-transmission CPU regression
+  described above.
 
 ### G-29 — DICOM charset dependency (externally blocked)
 
