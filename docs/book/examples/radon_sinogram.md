@@ -44,6 +44,13 @@ offset `s` is `2√(R² − s²)`, so `p(θ, s) = μ₀ · 2√(R² − s²) / 1
 conversion). This provides a closed-form oracle for validating the numerical
 ray-march implementation.
 
+## Generated Figure
+
+The figure below mirrors the θ = 0 chord profile that the example asserts
+within 5 % of the analytical `p(s) = μ₀ · 2√(R² − s²) / 10` oracle:
+
+![Single-angle (θ = 0) sinogram profile for a 30 mm radius disk phantom](../figures/radon_sinogram_disk.svg)
+
 ## Book Chapter
 
 [← Parallel-Beam Radon Transform](../imaging_radon.md)

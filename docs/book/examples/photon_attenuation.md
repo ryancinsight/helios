@@ -49,6 +49,16 @@ The **CT calibration** maps Hounsfield units to relative electron density via
 `ρ_rel = max(0, 1 + HU/1000)` — the first-order linear model used as the
 vendor-independent baseline before scanner-specific stoichiometric calibration.
 
+## Generated Figure
+
+This example underwrites the deterministic figure committed to the book:
+
+![Beer–Lambert transmission vs depth in water](../figures/photon_attenuation_depth.svg)
+![Hounsfield-unit to relative-electron-density calibration](../figures/ct_calibration_curve.svg)
+
+The figure values match the printed `transmission_at(depth)` and
+`relative_electron_density_from_hu(hu)` outputs to four decimal places.
+
 ## Book Chapter
 
 [← Hounsfield Units and Attenuation Maps](../imaging_ct.md)

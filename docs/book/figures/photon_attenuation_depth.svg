@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" font-family="sans-serif" font-size="12" role="img" aria-label="Beer-Lambert transmission vs depth in water at 100 keV (mu = 0.171 cm^-1)">
+  <title>Photon transmission vs depth — water, 100 keV</title>
+  <desc>Deterministic bar plot of I/I0 = exp(-mu*x) at depths {0,1,2,5,10,20} cm, generated from helios-physics/examples/photon_attenuation.rs deterministic outputs.</desc>
+  <g stroke="#222" fill="none">
+    <line x1="60" y1="20" x2="60" y2="280" />
+    <line x1="60" y1="280" x2="460" y2="280" />
+  </g>
+  <g font-size="11" fill="#222">
+    <text x="200" y="16" font-size="13" font-weight="bold">Transmitted fraction vs depth (water, 100 keV, &#956; = 0.171 cm&#8315;&#185;)</text>
+    <text x="20" y="35" text-anchor="end">1.0</text>
+    <text x="20" y="100" text-anchor="end">0.75</text>
+    <text x="20" y="170" text-anchor="end">0.5</text>
+    <text x="20" y="235" text-anchor="end">0.25</text>
+    <text x="20" y="285" text-anchor="end">0</text>
+  </g>
+  <g stroke="#bbb" stroke-dasharray="2 2">
+    <line x1="60" y1="100" x2="460" y2="100" />
+    <line x1="60" y1="170" x2="460" y2="170" />
+    <line x1="60" y1="235" x2="460" y2="235" />
+  </g>
+  <!-- Bars: 0 cm=1.0000, 1 cm=0.8431, 2 cm=0.7108, 5 cm=0.4253, 10 cm=0.1809, 20 cm=0.0327
+       y = 280 - frac * 260  ; widths unit=60 ; centers at 90,150,210,270,330,390 -->
+  <g fill="#3b6fa0" stroke="#234">
+    <rect x="78" y="20"    width="24" height="260"/>
+    <rect x="138" y="60.79" width="24" height="219.21"/>
+    <rect x="198" y="95.20" width="24" height="184.80"/>
+    <rect x="258" y="169.42" width="24" height="110.58"/>
+    <rect x="318" y="232.97" width="24" height="47.03"/>
+    <rect x="378" y="271.50" width="24" height="8.50"/>
+  </g>
+  <g font-size="11" fill="#234" text-anchor="middle">
+    <text x="90"  y="296">0 cm</text>
+    <text x="150" y="296">1 cm</text>
+    <text x="210" y="296">2 cm</text>
+    <text x="270" y="296">5 cm</text>
+    <text x="330" y="296">10 cm</text>
+    <text x="390" y="296">20 cm</text>
+  </g>
+  <g font-size="10" fill="#234" text-anchor="middle">
+    <text x="90"  y="14">1.0000</text>
+    <text x="150" y="55">0.8431</text>
+    <text x="210" y="90">0.7108</text>
+    <text x="270" y="164">0.4253</text>
+    <text x="330" y="227">0.1809</text>
+    <text x="390" y="266">0.0327</text>
+  </g>
+  <text x="240" y="310" text-anchor="middle" font-size="10" fill="#555">HVL = ln(2)/&#956; &#8776; 4.05 cm  ·  exp(-&#956;&#183;x)  ·  source: helios-physics/examples/photon_attenuation.rs</text>
+</svg>
