@@ -6,13 +6,12 @@ terma volumes) are stack-allocated from thread-local arenas.
 
 ## Arena Allocation
 
-`
-ust
+```rust
 use mnemosyne::Arena;
 
 let arena = Arena::with_capacity(256 * 1024 * 1024); // 256 MiB
 let buffer: &mut [f64] = arena.alloc_slice(64 * 64 * 64)?;
-`
+```
 
 ## Layout Policy
 

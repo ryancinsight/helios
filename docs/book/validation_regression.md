@@ -7,9 +7,9 @@ Every physics primitive in Helios has at least one analytical oracle test.
 For a cylinder of radius 
  and uniform attenuation μ₀:
 
-`	ext
+```text
 R(t) = 2μ₀√(r² − t²)  for |t| < r, zero otherwise
-`
+```
 
 This oracle is tested in helios-imaging/tests/radon_oracle.rs.
 

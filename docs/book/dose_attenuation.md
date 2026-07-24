@@ -3,23 +3,22 @@
 The helios-physics crate provides MassAttenuation models that convert
 Hounsfield units to linear attenuation coefficients (μ, cm⁻¹):
 
-`
-ust
+```rust
 use helios_physics::MassAttenuation;
 use helios_solver::attenuation_map;
 
 let mu = attenuation_map(&ct_volume, MassAttenuation::water());
-`
+```
 
 ## Water Calibration
 
 For photon beams in the MV range, the linear attenuation coefficient is
 derived from the HU value and the beam energy:
 
-`	ext
+```text
 μ(HU) = μ_water · (1 + HU/1000)   for soft tissue
 μ(HU) = μ_cortical_bone            for HU > 700
-`
+```
 
 Typical values at 6 MV:
 | Material | HU | μ (cm⁻¹) |

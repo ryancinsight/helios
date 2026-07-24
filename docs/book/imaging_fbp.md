@@ -5,22 +5,21 @@ Filtered back projection (FBP) reconstructs a 2-D image from a sinogram by:
 1. **Ramp filtering** each projection in the Fourier domain: |ω| · P̂(θ, ω)
 2. **Back-projecting** filtered projections across all angles
 
-`
-ust
+```rust
 use helios_imaging::filtered_back_projection;
 
 let recon = filtered_back_projection(&sinogram, n_angles, nx);
 // recon.grid().dims() == [nx, nx]
-`
+```
 
 ## Frequency Filter
 
 The ramp filter amplifies high frequencies, sharpening edges.
 A Hanning window can be applied to suppress noise:
 
-`	ext
+```text
 H(ω) = |ω| · W(ω),   W(ω) = 0.5 + 0.5 cos(π|ω|/ω_max)
-`
+```
 
 ## Accuracy
 

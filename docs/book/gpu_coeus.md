@@ -6,8 +6,7 @@ them portable across CPU (MoiraiBackend) and GPU backends.
 
 ## Tensor-Based Dose Operations
 
-`
-ust
+```rust
 use coeus_core::ComputeBackend;
 use coeus_tensor::Tensor;
 
@@ -17,7 +16,7 @@ fn scale_dose<B: ComputeBackend>(
 ) -> Tensor<f32, B> {
     dose.clone() * prescription_gy
 }
-`
+```
 
 ## autodiff Integration
 

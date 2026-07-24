@@ -4,29 +4,28 @@ The Radon transform forward-projects a 2-D attenuation map μ(x, y) along
 parallel rays at 
 _angles uniformly-spaced rotation angles:
 
-`	ext
+```text
 R[θ, t] = ∫ μ(t·cos θ − s·sin θ, t·sin θ + s·cos θ) ds
-`
+```
 
 In Helios the Radon transform is provided by helios-imaging:
 
-`
-ust
+```rust
 use helios_imaging::parallel_beam_radon;
 
 let n_angles = 180;
 let sinogram = parallel_beam_radon(&mu_volume, n_angles);
 // sinogram.grid().dims() == [n_angles, nx]
-`
+```
 
 ## Physical Interpretation
 
 Each row of the sinogram is the projection at one gantry angle.
 For a cylinder of uniform attenuation μ₀:
 
-`	ext
+```text
 R[θ, 0] = μ₀ · 2√(r² − t²)  for |t| < r
-`
+```
 
 This analytical oracle is used in the regression tests.
 

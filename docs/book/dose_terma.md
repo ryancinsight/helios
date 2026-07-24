@@ -3,18 +3,17 @@
 **Terma** (Total Energy Released per unit MAss) is the primary quantity
 from which dose is convolved:
 
-`	ext
+```text
 T(r) = Φ(r) · (μ_en/ρ)(r)
-`
+```
 
 where Φ is the fluence and μ_en/ρ is the energy-absorption coefficient.
 
-`
-ust
+```rust
 use helios_simulation::simulate_helical_delivery;
 
 let terma = simulate_helical_delivery(&delivery, &mu_volume, &spectrum);
-`
+```
 
 ## Helical Delivery Terma
 

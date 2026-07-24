@@ -8,8 +8,7 @@ preferentially absorbed (beam hardening), shifting the mean energy upward.
 
 Helios models a beam as a sum of SpectralComponent bins:
 
-`
-ust
+```rust
 use helios_simulation::SpectralComponent;
 
 let spectrum = vec![
@@ -17,7 +16,7 @@ let spectrum = vec![
     SpectralComponent { energy_mev: 3.0, weight: 0.45 },
     SpectralComponent { energy_mev: 6.0, weight: 0.20 },
 ];
-`
+```
 
 ## Beam-Hardened Transport
 
@@ -25,9 +24,9 @@ For each spectral component, the collapsed-cone kernel uses the component's
 own attenuation coefficient μ(E), producing energy-dependent depth–dose
 curves. The total dose is the energy-weighted sum:
 
-`	ext
+```text
 D(r) = Σ_k  w_k · D_k(r; μ_k)
-`
+```
 
 ## Clinical Significance
 

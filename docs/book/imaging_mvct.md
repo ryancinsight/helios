@@ -17,11 +17,10 @@ beam before each fraction for patient setup verification.
 MVCT reconstruction uses the same FBP pipeline as kVCT, with a different
 beam-hardening correction appropriate for MV photons:
 
-`
-ust
+```rust
 let mvct_sinogram = parallel_beam_radon(&mvct_projection, n_angles);
 let mvct_recon = filtered_back_projection(&mvct_sinogram, n_angles, nx);
-`
+```
 
 ## Further Reading
 

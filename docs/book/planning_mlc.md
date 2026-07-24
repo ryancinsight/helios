@@ -4,13 +4,12 @@ The Multi-Leaf Collimator (MLC) is the binary modulator in a TomoTherapy
 machine. Each of the 64 binary leaves (1.0 cm width at isocentre) is either
 open or closed during delivery.
 
-`
-ust
+```rust
 use helios_domain::{LeafOpenTimeSinogram, MlcModel};
 
 let mlc = MlcModel::binary(64, 1.0); // 64 leaves, 1 cm width
 let lots = LeafOpenTimeSinogram { leaves: 64, gantry_angles: 51, data: ... };
-`
+```
 
 ## Leaf Open Time
 

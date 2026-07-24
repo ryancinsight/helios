@@ -92,30 +92,22 @@
 
 ---
 
-# Part VIII — Atlas Stack Integration (Migration Reference)
-
-Helios is one primary consumer of the Atlas stack (the other is kwavers).
-This part documents the Atlas-first design and migration surface area.
-
-- [26. Migration Overview: ndarray/nalgebra/burn → Atlas](migration_overview.md)
-- [27. Eunomia: Numeric Trait Unification](migration_eunomia.md)
-- [28. Leto: Arrays and Linear Algebra](migration_arrays.md)
-- [29. Leto: Geometry — VoxelGrid, MLC, Beam Isometries](migration_geometry.md)
-- [30. Hermes: SIMD Lanes and Vectorized Kernels](migration_simd.md)
-- [31. Mnemosyne and Themis: Memory](migration_memory.md)
-- [32. Moirai: Concurrency](migration_concurrency.md)
-- [33. Apollo: FFT and Spectral Methods](migration_fft.md)
-- [34. Leto: GAT-Based Tiling and Lending Iterators](migration_gat_tiles.md)
-- [35. Coeus: Tensors and Autodiff](migration_coeus.md)
-- [36. Ritk: Image I/O — DICOM, NIfTI, PNG](migration_image_io.md)
-- [37. Migration Validation: TG-119 and Atlas Parity](migration_validation.md)
-
----
-
 # Appendices
 
 - [A. Atlas Crate Dependency Map](appendix_dependencies.md)
 - [B. Atlas Glossary](appendix_glossary.md)
 - [C. API Reference Index](appendix_api.md)
 - [D. Changelog](appendix_changelog.md)
-- [E. Book Organization Forward Roadmap](BOOK_ORGANIZATION.md)
+- [E. Migration Reference: ndarray/nalgebra/burn → Atlas](migration_overview.md)
+  - [E.1 Eunomia: Numeric Trait Unification](migration_eunomia.md)
+  - [E.2 Leto: Arrays and Linear Algebra](migration_arrays.md)
+  - [E.3 Leto: Geometry — VoxelGrid, MLC, Beam Isometries](migration_geometry.md)
+  - [E.4 Hermes: SIMD Lanes and Vectorized Kernels](migration_simd.md)
+  - [E.5 Mnemosyne and Themis: Memory](migration_memory.md)
+  - [E.6 Moirai: Concurrency](migration_concurrency.md)
+  - [E.7 Apollo: FFT and Spectral Methods](migration_fft.md)
+  - [E.8 Leto: GAT-Based Tiling and Lending Iterators](migration_gat_tiles.md)
+  - [E.9 Coeus: Tensors and Autodiff](migration_coeus.md)
+  - [E.10 Ritk: Image I/O — DICOM, NIfTI, PNG](migration_image_io.md)
+  - [E.11 Migration Validation: TG-119 and Atlas Parity](migration_validation.md)
+- [F. Book Organization Forward Roadmap](BOOK_ORGANIZATION.md)
