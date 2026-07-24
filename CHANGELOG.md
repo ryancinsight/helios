@@ -9,6 +9,10 @@ under a Breaking subsection.
 
 ### Changed
 
+- `helios-physics` Compton and Klein–Nishina APIs now accept Aequitas
+  `Energy<T>` photon values. The Python binding retains validated MeV input and
+  constructs the typed core value at the FFI boundary. See [ADR 0010](docs/adr/0010-compton-energy-quantity.md).
+
 - `helios-analysis` now separates raw MVCT image statistics from dose-semantic
   metrics: `dose_roi_statistics` and `dose_volume_rmse` return typed Aequitas
   `AbsorbedDose` values, while contrast, CNR, and raw image APIs retain their
