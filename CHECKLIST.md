@@ -108,15 +108,30 @@ are outside H-094.
 
 ## Owner: Codex
 
-## Codex — H-093 restore typed helical and collimation contracts [arch] [major] — done
+## Codex — H-101 typed Compton photon energy [arch] [major] — done 2026-08-06
 
-- [x] Confirm the typed implementation commits are not ancestors of current
-      `main` and that live Helios APIs have reverted to raw physical scalars.
-- [x] Port the existing typed implementation and migrate all current callers;
-      retain millimetre geometry only at the Gaia kernel boundary.
-- [x] Run focused source, format, Clippy, Nextest, doctest, and audit checks;
-      record any provider-graph blocker without changing peer lock work.
-- [x] Commit and push the verified correction and advance the Atlas audit.
+- [x] Type all public Compton photon-energy parameters as Aequitas `Energy<T>`
+      and convert to MeV only at the formula boundary.
+- [x] Migrate Helios Rust tests, the Compton example, and the Python binding;
+      retain the validated MeV Python boundary and add unit-equivalence coverage.
+- [x] Add ADR 0010, update the generated ADR index, and synchronize the gap
+      audit, backlog, checklist, and changelog.
+- [x] Verify the current Atlas graph resolves `coeus-autograd` through
+      `repos/coeus/crates/coeus-autograd`; do not retain a member-local patch or
+      compatibility path.
+- [x] Run the locked warning-denied Clippy, value-semantic Nextest, doctest,
+      Rustdoc, formatting, and metadata gates.
+
+Evidence: rebased onto `origin/main` at `41f2c3b`; `cargo metadata
+--format-version 1 --no-deps --locked` resolves 12 workspace packages and
+`coeus-autograd` from the Atlas overlay at `repos/coeus/crates/coeus-autograd`.
+The former missing-path blocker is resolved; the member manifest retains only
+the git dependency and no local Coeus patch or compatibility path. Full
+workspace warning-denied Clippy, Nextest `a2b51dbd-bef2-4ba3-95d9-189110dc00e8`
+(286/286), workspace doctests (0), warning-denied workspace Rustdoc, and
+formatting pass. The package Python wheel build and pytest pass 13/13; the
+focused Helios package Nextest pass is 18/18. Local Atlas overlay warnings for
+unused sibling patches are non-failing derived-graph diagnostics.
 
 ## Codex — H-092 image-quality physical semantics [arch] [minor] — done
 
