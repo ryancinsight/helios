@@ -1,0 +1,4 @@
+# Figure bytes feed the prebook SHA-256 manifest; keep them identical on all
+# checkout platforms.
+docs/book/figures/*.svg text eol=lf
+docs/book/figures/MANIFEST.json text eol=lf
