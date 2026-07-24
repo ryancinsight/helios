@@ -44,6 +44,13 @@ Key metrics per ICRU-83 and AAPM TG-119:
 - **Structure-specific** DVHs are computed with `from_volume_masked` for each
   PTV and OAR using the RT-struct rasterization mask.
 
+## Generated Figure
+
+The histogram plot below mirrors the differential DVH of the synthetic
+Gaussian phantom (peak 63 Gy, σ = 25 mm, 31³ voxels) used by this example:
+
+![Differential DVH (Gaussian dose phantom)](../figures/dvh_curve.svg)
+
 ## Book Chapter
 
 [← Dose-Volume Histograms](../planning_dvh.md)

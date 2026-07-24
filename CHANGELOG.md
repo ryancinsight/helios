@@ -37,6 +37,11 @@ under a Breaking subsection.
 - Portal fluence now remains an Aequitas `EnergyPerArea` quantity through
   optical transmission before returning the established scalar frame API.
 
+- H-088 adds a deterministic `xtask` figure manifest and `check-figures` SSOT
+  gate for the mdBook. The gate validates all seven committed SVGs and both
+  book indexes; Python and benchmark CI lanes refresh Cargo after Atlas path
+  dependency materialization.
+
 - H-085 precompiles each exact Criterion target outside its execution budget,
   smoke-runs every benchmark ID under a 60-second deadline, and bounds each
   full benchmark binary at 300 seconds without changing workloads, baselines,

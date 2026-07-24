@@ -64,6 +64,43 @@ and attenuation, and `AreaPerMass` for mass attenuation. `EnergyMeV` and
 
 ## Open gaps
 
+### H-088 — deterministic book-figure SSOT gate (implemented, PR #32)
+
+- `xtask` now owns `FIGURE_SPECS`, deterministic SHA-256 manifest generation,
+  and the `check-figures` command. The command validates the seven committed
+  SVGs, scans `docs/book/SUMMARY.md` and `docs/book/README.md`, and fails on
+  either an unlisted asset or a docs/spec mismatch.
+- The workflow runs the gate after Rustdoc. The Python and benchmark lanes
+  allow Cargo to refresh the lock after Atlas path-dependency materialization;
+  the Rust workspace remains locked. The previous CI failure was the absent
+  subcommand, not a figure mismatch.
+- Local evidence: `cargo check -p xtask --offline`, formatter check, `mdbook
+  build docs/book`, and `cargo run -p xtask --offline --locked -- check-figures`
+  pass with `SSOT_IN_SYNC` and 7/7 references. The latest hosted PR #32 rerun
+  passes build, Rust workspace, Python bindings, deployment, and CodeRabbit.
+  Its replicated benchmark gate fails on a beam-transmission CPU regression
+  (+0.08%/+0.21% at size 16384), so the PR remains open and no hosted-green
+  result is claimed.
+
+### H-087 — portal fluence quantity boundary (implemented, PR #32)
+
+- `helios-simulation::frame_portal_fluence` now carries the transmitted portal
+  fluence as Aequitas `EnergyPerArea<T>` through Hyperion's dimensionless
+  transmission product before converting at the established scalar frame API.
+  The direct Aequitas pin is `3ae0b6b`; implementation commit `b2a9ebe`.
+- This closes the remaining quantity-conversion seam in the portal workflow;
+  the dense fluence frame remains representation storage, not a second metric
+  owner. The direct provider pin is now the merged Aequitas revision
+  `e0fc5f3`. Existing full-transmission, Beer–Lambert, closed-leaf, f32, and
+  invalid-optical-depth regressions remain the behavioral oracle.
+- PR #32 remains open with implementation head `31147f0` and PM follow-up
+  `1f55d9d`. A local focused `helios-simulation`
+  Nextest attempt could not start because active peer CFDrs/Leto builds held
+  the shared Atlas lock; no local package-gate result is claimed. Hosted build,
+  Rust workspace, Python, deployment, and review checks pass, but the
+  replicated benchmark gate fails on the beam-transmission CPU regression
+  described above.
+
 ### G-29 — DICOM charset dependency (externally blocked)
 
 - `dicom-encoding` 0.10.0 declares `encoding` 0.2.33 unconditionally and uses

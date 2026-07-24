@@ -81,8 +81,8 @@ gaia = { git = "https://github.com/ryancinsight/gaia", default-features = false 
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.
 hephaestus-core = { git = "https://github.com/ryancinsight/hephaestus" }
 hephaestus-wgpu = { git = "https://github.com/ryancinsight/hephaestus" }
-moirai = { git = "https://github.com/ryancinsight/Moirai.git" }
-moirai-parallel = { git = "https://github.com/ryancinsight/Moirai.git", package = "moirai-parallel", default-features = false, features = ["parallel"] }
+moirai = { path = "../moirai/moirai" }
+moirai-parallel = { path = "../moirai/moirai-parallel", default-features = false, features = ["parallel"] }
 # Tensors, autodiff, optimizers, neural surrogates.
 coeus-core = { git = "https://github.com/ryancinsight/Coeus.git" }
 coeus-tensor = { git = "https://github.com/ryancinsight/Coeus.git" }
@@ -97,7 +97,7 @@ consus-hdf5 = { git = "https://github.com/ryancinsight/consus", features = ["std
 consus-io = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
 consus-compression = { git = "https://github.com/ryancinsight/consus", features = ["std", "deflate"] }
 # Numeric datatype SSOT (Scalar seam: RealField/FloatElement/NumericElement).
-aequitas = { git = "https://github.com/ryancinsight/aequitas", rev = "ce3ef7a6ea26a025b91df99034cadbbcf9b01330", default-features = false, features = ["std"] }
+aequitas = { git = "https://github.com/ryancinsight/aequitas", rev = "e0fc5f32f07fbf0bde6a7a7086d085983195abad", default-features = false, features = ["std"] }
 proteus = { git = "https://github.com/ryancinsight/proteus", rev = "bb51ac414f74fb47d8001310206c5aea2e3a160c" }
 hyperion = { git = "https://github.com/ryancinsight/hyperion", rev = "7b4561b9b51949c8ca59ee2d6f4294cd085ca8a4" }
 eunomia = { git = "https://github.com/ryancinsight/eunomia" }

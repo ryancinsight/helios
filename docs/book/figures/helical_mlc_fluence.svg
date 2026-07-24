@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" font-family="sans-serif" font-size="12" role="img" aria-label="Helical MLC leaf-open-time sinogram (21 leaves x 40 projections)">
+  <title>Helical MLC leaf-open-time sinogram</title>
+  <desc>Binary fluence map of the modulated open-leaves band across 40 projections in the tomotherapy_workflow.rs example. Open = leaves 6..14 inclusive (a central 9-leaf target aperture). Source: helios-simulation/examples/tomotherapy_workflow.rs (fractions array).</desc>
+  <rect x="60" y="40" width="400" height="240" fill="#fff" stroke="#222"/>
+  <!-- 21 leaves x 40 projections; cell width 400/40=10, height 240/21~=11.4 -->
+  <!-- Center band (leaves 6..14) is open across all projections -->
+  <g fill="#3b6fa0" stroke="none">
+    <!-- 40 projections columns, leaves 6..14 (9 leaves) are open -->
+    <rect x="60" y="40+6*240/21" width="400" height="9*240/21"/>
+  </g>
+  <!-- Closed leaves at top/bottom: outline reticule -->
+  <g stroke="#bbb" stroke-width="0.5" fill="none">
+    <line x1="60" y1="40+6*240/21" x2="460" y2="40+6*240/21"/>
+    <line x1="60" y1="40+15*240/21" x2="460" y2="40+15*240/21"/>
+  </g>
+  <text x="60" y="34" font-size="13" font-weight="bold">MLC leaf-open sinogram &#8212; 21 leaves &#215; 40 projections</text>
+  <text x="60" y="294" font-size="10" fill="#222">leaves 0..5  (closed)</text>
+  <text x="60" y="306" font-size="10" fill="#234" font-weight="bold">leaves 6..14 (open target aperture)</text>
+  <text x="460" y="294" font-size="10" fill="#222" text-anchor="end">projection 40 (last)</text>
+  <text x="60" y="14" font-size="10" fill="#555">source: helios-simulation/examples/tomotherapy_workflow.rs  &#183;  LeafOpenTimeSinogram::from_fractions(40, 21, fractions)</text>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" font-family="sans-serif" font-size="12" role="img" aria-label="Helios layered architecture on the Atlas stack">
+  <title>Helios layered architecture</title>
+  <desc>Six-layer top-down stack: helios-simulation -> {helios-solver, helios-planning, helios-imaging, helios-analysis} -> helios-physics -> helios-domain -> helios-math -> helios-core -> Atlas (eunomia/leto/hypatia/etc.). Source: helios/README.md.</desc>
+  <g font-family="sans-serif">
+    <rect x="80" y="20"  width="320" height="32" fill="#cfe0f1" stroke="#234"/>
+    <text x="240" y="40" text-anchor="middle" font-size="13" font-weight="bold">helios-simulation  (end-to-end workflows)</text>
+
+    <rect x="80" y="58"  width="320" height="32" fill="#dfe8d8" stroke="#345"/>
+    <text x="240" y="78" text-anchor="middle" font-size="11">helios-solver  &#183;  helios-planning  &#183;  helios-imaging  &#183;  helios-analysis</text>
+
+    <rect x="80" y="96"  width="320" height="32" fill="#f6e8c1" stroke="#567"/>
+    <text x="240" y="116" text-anchor="middle" font-size="11">helios-physics  (attenuation, Compton, TERMA, scatter)</text>
+
+    <rect x="80" y="134" width="320" height="32" fill="#eedddc" stroke="#789"/>
+    <text x="240" y="154" text-anchor="middle" font-size="11">helios-domain  (VoxelGrid, Volume, MLC, helical delivery)</text>
+
+    <rect x="80" y="172" width="320" height="32" fill="#ddd5e8" stroke="#345"/>
+    <text x="240" y="192" text-anchor="middle" font-size="11">helios-math  (Scalar seam, Point3, Vector3 via leto/eunomia)</text>
+
+    <rect x="80" y="210" width="320" height="32" fill="#dadcdf" stroke="#222"/>
+    <text x="240" y="230" text-anchor="middle" font-size="11">helios-core  (EnergyMeV, HounsfieldUnit, VoxelSpacingMm, errors)</text>
+
+    <rect x="80" y="248" width="320" height="58" fill="#f0f0f0" stroke="#222"/>
+    <text x="240" y="266" text-anchor="middle" font-size="11" font-weight="bold">Atlas stack</text>
+    <text x="240" y="282" text-anchor="middle" font-size="10" fill="#345">eunomia  &#183;  leto  &#183;  hermes-simd  &#183;  moirai-parallel  &#183;  hephaestus-core  &#183;  ritk-image  &#183;  consus-hdf5  &#183;  hyperion  &#183;  apollo</text>
+    <text x="240" y="296" text-anchor="middle" font-size="10" fill="#345">gaia  &#183;  proteus  &#183;  aequitas  &#183;  tyche  &#183;  asclepius  &#183;  coeus-core  &#183;  coeus-tensor  &#183;  mnemosyne-core  &#183;  themis</text>
+  </g>
+  <text x="240" y="332" text-anchor="middle" font-size="10" fill="#555">source: helios/README.md &#183; ARCHITECTURE.md &#183; Cargo.toml [workspace.dependencies]</text>
+</svg>
