@@ -140,7 +140,6 @@ checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
 [[package]]
 name = "apollo-fft"
 version = "0.25.0"
-source = "git+https://github.com/ryancinsight/apollo.git#1bfd1c9f5b39f0b7502f241ff95ef5196ca20202"
 dependencies = [
  "apollo-fft-macros",
  "apollo-leto-interop",
@@ -162,7 +161,6 @@ dependencies = [
 [[package]]
 name = "apollo-fft-macros"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/apollo.git#1bfd1c9f5b39f0b7502f241ff95ef5196ca20202"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -172,7 +170,6 @@ dependencies = [
 [[package]]
 name = "apollo-leto-interop"
 version = "0.17.0"
-source = "git+https://github.com/ryancinsight/apollo.git#1bfd1c9f5b39f0b7502f241ff95ef5196ca20202"
 dependencies = [
  "leto",
 ]
@@ -584,6 +581,7 @@ dependencies = [
  "coeus-sparse",
  "coeus-tensor",
  "eunomia 0.7.0",
+ "leto",
  "leto-ops",
  "melinoe",
  "smallvec",
@@ -1523,7 +1521,7 @@ dependencies = [
 
 [[package]]
 name = "hermes-simd"
-version = "0.4.1"
+version = "0.5.0"
 dependencies = [
  "eunomia 0.7.0",
  "hermes-simd-core",
@@ -1535,7 +1533,7 @@ dependencies = [
 
 [[package]]
 name = "hermes-simd-core"
-version = "0.4.1"
+version = "0.5.0"
 dependencies = [
  "bytemuck",
  "eunomia 0.7.0",
@@ -1546,7 +1544,7 @@ dependencies = [
 
 [[package]]
 name = "hermes-simd-intrinsics"
-version = "0.4.1"
+version = "0.5.0"
 dependencies = [
  "eunomia 0.7.0",
  "hermes-simd-core",
@@ -1554,7 +1552,7 @@ dependencies = [
 
 [[package]]
 name = "hermes-simd-macros"
-version = "0.4.1"
+version = "0.5.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1563,7 +1561,7 @@ dependencies = [
 
 [[package]]
 name = "hermes-simd-types"
-version = "0.4.1"
+version = "0.5.0"
 dependencies = [
  "hermes-simd-core",
  "hermes-simd-intrinsics",
@@ -1909,6 +1907,7 @@ dependencies = [
  "hermes-simd",
  "leto",
  "moirai",
+ "serde",
  "themis",
  "thiserror 2.0.18",
 ]
@@ -1984,7 +1983,7 @@ dependencies = [
 
 [[package]]
 name = "mnemosyne"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "eunomia 0.7.0",
  "mnemosyne-arena",
@@ -2009,7 +2008,7 @@ dependencies = [
 
 [[package]]
 name = "mnemosyne-backend"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "mnemosyne-core",
 ]
@@ -2040,7 +2039,7 @@ dependencies = [
 
 [[package]]
 name = "mnemosyne-heap"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "melinoe",
  "mnemosyne-arena",
@@ -2053,7 +2052,7 @@ dependencies = [
 
 [[package]]
 name = "mnemosyne-local"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "melinoe",
  "mnemosyne-arena",
@@ -2181,6 +2180,7 @@ name = "moirai-parallel"
 version = "0.4.0"
 dependencies = [
  "melinoe",
+ "moirai-core",
  "moirai-executor",
 ]
 
