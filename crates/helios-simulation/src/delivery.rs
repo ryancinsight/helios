@@ -9,11 +9,17 @@
 //! accumulation (per-leaf beamlet ray-trace) builds on.
 
 use aequitas::systems::si::{
-    quantities::{Dimensionless, EnergyPerArea, Length},
+    quantities::{Angle, Dimensionless, EnergyPerArea, Length},
     units::Millimeter,
 };
 use helios_domain::{FieldAperture, HelicalDelivery, LeafOpenTimeSinogram, MlcModel};
 use helios_math::{GeometryScalar, NumericElement, Point3, Scalar};
+
+#[cfg(test)]
+use aequitas::systems::si::{
+    quantities::Time,
+    units::{Radian, Second},
+};
 
 /// The machine state and delivered fluence at one projection of a helical
 /// delivery.
@@ -22,7 +28,7 @@ pub struct DeliveryFrame<T: Scalar> {
     /// Projection index.
     pub projection: usize,
     /// Gantry angle (rad).
-    pub gantry_angle_rad: T,
+    pub gantry_angle_rad: Angle<T>,
     /// Couch position in millimetres.
     pub couch: Length<T>,
     /// Effective transmitted fluence per leaf (leakage + tongue-and-groove
@@ -45,7 +51,7 @@ pub fn simulate_helical_delivery<T: Scalar>(
         .map(|p| DeliveryFrame {
             projection: p,
             gantry_angle_rad: delivery.gantry_angle_rad(p),
-            couch: Length::from_unit::<Millimeter>(delivery.couch_position_mm(p)),
+            couch: delivery.couch_position_mm(p),
             leaf_fluence: effective[p * leaves..(p + 1) * leaves]
                 .iter()
                 .copied()
@@ -119,7 +125,15 @@ mod tests {
     use eunomia::assert_relative_eq;
 
     fn delivery() -> HelicalDelivery<f64> {
-        HelicalDelivery::new(51, 25.0, 0.4, 10.0, 0.0, 0.0).expect("delivery")
+        HelicalDelivery::new(
+            51,
+            Length::from_unit::<Millimeter>(25.0),
+            Dimensionless::from_base(0.4),
+            Time::from_unit::<Second>(10.0),
+            Angle::from_unit::<Radian>(0.0),
+            Length::from_unit::<Millimeter>(0.0),
+        )
+        .expect("delivery")
     }
 
     fn length(value: f64) -> Length<f64> {
@@ -140,13 +154,13 @@ mod tests {
         for (p, frame) in frames.iter().enumerate() {
             assert_eq!(frame.projection, p);
             assert_relative_eq!(
-                frame.gantry_angle_rad,
-                del.gantry_angle_rad(p),
+                frame.gantry_angle_rad.in_unit::<Radian>(),
+                del.gantry_angle_rad(p).in_unit::<Radian>(),
                 epsilon = 1e-12
             );
             assert_relative_eq!(
                 frame.couch.in_unit::<Millimeter>(),
-                del.couch_position_mm(p),
+                del.couch_position_mm(p).in_unit::<Millimeter>(),
                 epsilon = 1e-12
             );
             assert_eq!(frame.leaf_fluence.len(), 4);
@@ -197,7 +211,15 @@ mod tests {
     fn delivery_is_generic_over_scalar_f32() {
         let lot = LeafOpenTimeSinogram::from_fractions(1, 3, vec![1.0_f32, 0.0, 1.0]).unwrap();
         let mlc = MlcModel::new(0.0_f32, 0.1).unwrap();
-        let del = HelicalDelivery::<f32>::new(51, 25.0, 0.4, 10.0, 0.0, 0.0).unwrap();
+        let del = HelicalDelivery::<f32>::new(
+            51,
+            Length::from_unit::<Millimeter>(25.0),
+            Dimensionless::from_base(0.4),
+            Time::from_unit::<Second>(10.0),
+            Angle::from_unit::<Radian>(0.0),
+            Length::from_unit::<Millimeter>(0.0),
+        )
+        .unwrap();
         let frames = simulate_helical_delivery(&del, &lot, &mlc);
         assert_relative_eq!(
             *frames[0].leaf_fluence[0].as_base(),
@@ -209,7 +231,7 @@ mod tests {
     fn open_frame() -> DeliveryFrame<f64> {
         DeliveryFrame {
             projection: 3,
-            gantry_angle_rad: 1.2,
+            gantry_angle_rad: Angle::from_unit::<Radian>(1.2),
             couch: length(4.0),
             leaf_fluence: vec![fluence(1.0); 9],
         }
@@ -218,8 +240,12 @@ mod tests {
     #[test]
     fn wide_aperture_leaves_fluence_unchanged() {
         // Aperture far larger than the leaf bank → every leaf fully open (× 1).
-        let ap = FieldAperture::rectangular(Point3::new(0.0, 4.0, 0.0), [500.0, 500.0, 500.0], 2.0)
-            .unwrap();
+        let ap = FieldAperture::rectangular(
+            Point3::new(0.0, 4.0, 0.0),
+            [500.0, 500.0, 500.0],
+            Length::from_unit::<Millimeter>(2.0),
+        )
+        .unwrap();
         let out = collimate_frames(&[open_frame()], &ap, length(5.0));
         assert!(out[0].leaf_fluence.iter().all(|f| *f.as_base() == 1.0));
     }
@@ -229,8 +255,12 @@ mod tests {
         // 9 leaves, 5 mm pitch → lateral offsets −20..+20 mm. Field half-width
         // 10 mm, 2 mm penumbra: the ±10 mm edge lands on leaves 2 and 6 (→ 50 %),
         // interior leaves 3–5 fully open, and leaves 0–1 / 7–8 fully blocked.
-        let ap = FieldAperture::rectangular(Point3::new(0.0, 4.0, 0.0), [10.0, 500.0, 500.0], 2.0)
-            .unwrap();
+        let ap = FieldAperture::rectangular(
+            Point3::new(0.0, 4.0, 0.0),
+            [10.0, 500.0, 500.0],
+            Length::from_unit::<Millimeter>(2.0),
+        )
+        .unwrap();
         let out = collimate_frames(&[open_frame()], &ap, length(5.0));
         let f = &out[0].leaf_fluence;
         assert_relative_eq!(*f[4].as_base(), 1.0, epsilon = 1e-12); // centre, open
@@ -245,15 +275,23 @@ mod tests {
         );
         // Machine state is preserved.
         assert_eq!(out[0].projection, 3);
-        assert_relative_eq!(out[0].gantry_angle_rad, 1.2, epsilon = 1e-15);
+        assert_relative_eq!(
+            out[0].gantry_angle_rad.in_unit::<Radian>(),
+            1.2,
+            epsilon = 1e-15
+        );
         assert_relative_eq!(out[0].couch.in_unit::<Millimeter>(), 4.0, epsilon = 1e-15);
     }
 
     #[test]
     fn collimation_never_increases_fluence() {
         // Transmission ∈ [0,1], so each leaf's fluence can only be reduced.
-        let ap = FieldAperture::rectangular(Point3::new(3.0, 4.0, 0.0), [6.0, 500.0, 500.0], 1.5)
-            .unwrap();
+        let ap = FieldAperture::rectangular(
+            Point3::new(3.0, 4.0, 0.0),
+            [6.0, 500.0, 500.0],
+            Length::from_unit::<Millimeter>(1.5),
+        )
+        .unwrap();
         let frame = DeliveryFrame {
             leaf_fluence: vec![0.9, 0.3, 1.0, 0.7, 0.5, 0.8, 0.2, 1.0, 0.6]
                 .into_iter()

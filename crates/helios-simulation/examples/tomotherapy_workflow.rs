@@ -16,8 +16,8 @@
 use std::path::{Path, PathBuf};
 
 use aequitas::systems::si::{
-    quantities::{AbsorbedDose, AreaPerMass, Length},
-    units::{Gray, Millimeter, SquareCentimeterPerGram},
+    quantities::{AbsorbedDose, Angle, AreaPerMass, Dimensionless, Length, MassDensity, Time},
+    units::{GramPerCubicCentimeter, Gray, Millimeter, Radian, Second, SquareCentimeterPerGram},
 };
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, Dvh};
 use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel, Volume, VoxelGrid};
@@ -104,7 +104,12 @@ fn main() {
     let ct = ct_phantom();
     let coefficient = MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(0.06))
         .expect("valid water mass attenuation");
-    let mu = attenuation_map(&ct, coefficient, 1.0).expect("fixture calibration is finite");
+    let mu = attenuation_map(
+        &ct,
+        coefficient,
+        MassDensity::from_unit::<GramPerCubicCentimeter>(1.0),
+    )
+    .expect("fixture calibration is finite");
 
     // 2. Imaging: Radon → FBP.
     let angles: Vec<f64> = (0..180)
@@ -122,7 +127,15 @@ fn main() {
 
     // 3. Therapy: helical MLC delivery → dose.
     let (leaves, projections) = (21, 40);
-    let delivery = HelicalDelivery::new(51, 20.0, 0.3, 10.0, 0.0, 0.0).unwrap();
+    let delivery = HelicalDelivery::new(
+        51,
+        Length::from_unit::<Millimeter>(20.0),
+        Dimensionless::from_base(0.3),
+        Time::from_unit::<Second>(10.0),
+        Angle::from_unit::<Radian>(0.0),
+        Length::from_unit::<Millimeter>(0.0),
+    )
+    .unwrap();
     // Modulated fluence: a central band of open leaves (a simple target aperture).
     let mut fractions = vec![0.0; projections * leaves];
     for p in 0..projections {

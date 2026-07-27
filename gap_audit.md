@@ -4,6 +4,34 @@ Physics, numerics, accuracy, architecture, and integration gaps. Closed by
 evidence, not silence. Each gap: ID, description, class, current evidence tier,
 target closure.
 
+## Aequitas metric audit refresh (2026-07-27)
+
+The current `main` branch had stale closed-ledger claims: the typed helical
+delivery and collimation implementations existed on a non-ancestor branch but
+were absent from the live source. The omission reintroduced raw physical
+scalars in public contracts. H-093 restores the existing provider-first
+implementation and migrates the current branch's callers without a scalar
+compatibility path.
+
+- `helios-domain::HelicalDelivery` stores and returns Aequitas `Length`,
+  `Dimensionless`, `Time`, `Angle`, and `Velocity`; `FieldAperture` stores its
+  penumbra as `Length`.
+- `helios-simulation::HelicalProjection`, `DeliveryFrame`, acquisition
+  geometry inputs, and delivery/dose/portal angle boundaries now preserve the
+  typed values through public APIs. Conversion to millimetres/radians occurs
+  only at the Gaia/scalar trigonometry kernels.
+- Focused `cargo check`, warning-denied Clippy, configured Nextest, doctest,
+  and direct rustfmt checks completed offline. Cargo emitted only the existing
+  unused local-patch warnings from the dirty shared provider manifest; those
+  manifest and lockfile changes are outside H-093 and remain uncommitted.
+
+The remaining audit boundary is unchanged: scalar dense voxel storage,
+optical-depth/gamma values, fractions, indices, and probabilities are not
+dimensional public metrics. H-093 is closed by the source/type audit and the
+focused value-semantic gates; a full locked workspace gate still depends on
+the shared provider graph represented by the pre-existing dirty manifest and
+lockfile.
+
 ## Aequitas metric gap audit (2026-07-23)
 
 The dose field itself remains `helios_domain::Volume<T>` storage. This audit

@@ -1,11 +1,17 @@
 //! Helical MVCT acquisition: rotate the beam per projection and forward-project.
 
-use aequitas::systems::si::quantities::Dimensionless;
+use aequitas::systems::si::{
+    quantities::{Angle, Dimensionless, Length},
+    units::{Millimeter, Radian},
+};
 use helios_domain::{HelicalDelivery, Volume};
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
 use helios_solver::forward_project_ray;
 use hyperion::{quantity::OpticalDepth, TransportError};
 use moirai_parallel::Adaptive;
+
+#[cfg(test)]
+use aequitas::systems::si::quantities::Time;
 
 /// One projection of a helical acquisition: the delivery state (gantry angle,
 /// couch position) and the resulting central-ray measurement.
@@ -14,9 +20,9 @@ pub struct HelicalProjection<T: GeometryScalar> {
     /// Projection index.
     pub projection: usize,
     /// Gantry angle at this projection (rad).
-    pub gantry_angle_rad: T,
+    pub gantry_angle_rad: Angle<T>,
     /// Couch position at this projection (mm).
-    pub couch_mm: T,
+    pub couch_mm: Length<T>,
     /// Central-ray optical depth `∫μ dl` (dimensionless).
     pub optical_depth: T,
     /// Central-ray transmitted fraction `exp(−∫μ dl)`.
@@ -49,8 +55,8 @@ pub fn simulate_helical_sinogram<T: GeometryScalar + Send + Sync>(
     delivery: &HelicalDelivery<T>,
     mu: &Volume<T>,
     num_projections: usize,
-    source_distance_mm: T,
-    step_mm: T,
+    source_distance_mm: Length<T>,
+    step_mm: Length<T>,
 ) -> Result<Vec<HelicalProjection<T>>, TransportError<T>> {
     let zero = <T as NumericElement>::ZERO;
     let grid = *mu.grid();
@@ -62,19 +68,21 @@ pub fn simulate_helical_sinogram<T: GeometryScalar + Send + Sync>(
         moirai_parallel::map_collect_index_with::<Adaptive, _, _>(num_projections, |projection| {
             let gantry_angle_rad = delivery.gantry_angle_rad(projection);
             let couch_mm = delivery.couch_position_mm(projection);
+            let angle = gantry_angle_rad.in_unit::<Radian>();
+            let couch = couch_mm.in_unit::<Millimeter>();
 
             // Beam direction rotates in the axial plane; z fixed at the couch slice.
-            let direction = Vector3::new(gantry_angle_rad.cos(), gantry_angle_rad.sin(), zero);
+            let direction = Vector3::new(angle.cos(), angle.sin(), zero);
             // Aim point: axial centre at the couch z; source sits behind isocentre.
             let origin = Point3::new(
-                centre.x - direction.x * source_distance_mm,
-                centre.y - direction.y * source_distance_mm,
-                couch_mm - direction.z * source_distance_mm,
+                centre.x - direction.x * source_distance_mm.in_unit::<Millimeter>(),
+                centre.y - direction.y * source_distance_mm.in_unit::<Millimeter>(),
+                couch - direction.z * source_distance_mm.in_unit::<Millimeter>(),
             );
 
             let optical_depth = Ray::try_new(origin, direction)
                 .ok()
-                .and_then(|ray| forward_project_ray(mu, &ray, step_mm))
+                .and_then(|ray| forward_project_ray(mu, &ray, step_mm.in_unit::<Millimeter>()))
                 .unwrap_or(zero);
             let transmission = OpticalDepth::new(Dimensionless::from_base(optical_depth))?
                 .transmission()
@@ -108,13 +116,27 @@ mod tests {
 
     // 4 projections/rotation so projection 1 is a clean 90° turn; couch centred.
     fn delivery() -> HelicalDelivery<f64> {
-        HelicalDelivery::new(4, 25.0, 0.2, 10.0, 0.0, 8.0).expect("delivery")
+        HelicalDelivery::new(
+            4,
+            Length::from_unit::<Millimeter>(25.0),
+            Dimensionless::from_base(0.2),
+            Time::from_unit::<aequitas::systems::si::units::Second>(10.0),
+            Angle::from_unit::<Radian>(0.0),
+            Length::from_unit::<Millimeter>(8.0),
+        )
+        .expect("delivery")
     }
 
     #[test]
     fn sinogram_has_one_entry_per_projection() {
-        let sino = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 12, 500.0, 0.5)
-            .expect("valid attenuation volume");
+        let sino = simulate_helical_sinogram(
+            &delivery(),
+            &uniform_cube(0.05),
+            12,
+            Length::from_unit::<Millimeter>(500.0),
+            Length::from_unit::<Millimeter>(0.5),
+        )
+        .expect("valid attenuation volume");
         assert_eq!(sino.len(), 12);
         assert!(sino.iter().enumerate().all(|(i, p)| p.projection == i));
     }
@@ -123,8 +145,14 @@ mod tests {
     fn axial_central_ray_measures_mu_times_chord() {
         // Projection 0: θ=0 → +x ray through the cube centre. Chord = 16 mm =
         // 1.6 cm, μ = 0.05 → τ = 0.08; transmission = exp(-0.08).
-        let sino = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 4, 500.0, 0.25)
-            .expect("valid attenuation volume");
+        let sino = simulate_helical_sinogram(
+            &delivery(),
+            &uniform_cube(0.05),
+            4,
+            Length::from_unit::<Millimeter>(500.0),
+            Length::from_unit::<Millimeter>(0.25),
+        )
+        .expect("valid attenuation volume");
         assert_relative_eq!(sino[0].optical_depth, 0.05 * 1.6, epsilon = 1e-9);
         assert_relative_eq!(
             sino[0].transmission,
@@ -137,8 +165,14 @@ mod tests {
     fn rotational_symmetry_of_a_uniform_cube() {
         // For a uniform cube the central-ray line integral is the same at 0° and
         // 90° (equal chords), independent of the couch advance.
-        let sino = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 4, 500.0, 0.25)
-            .expect("valid attenuation volume");
+        let sino = simulate_helical_sinogram(
+            &delivery(),
+            &uniform_cube(0.05),
+            4,
+            Length::from_unit::<Millimeter>(500.0),
+            Length::from_unit::<Millimeter>(0.25),
+        )
+        .expect("valid attenuation volume");
         assert_relative_eq!(
             sino[0].optical_depth,
             sino[1].optical_depth,
@@ -148,18 +182,33 @@ mod tests {
 
     #[test]
     fn couch_advances_monotonically_across_projections() {
-        let sino = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 20, 500.0, 1.0)
-            .expect("valid attenuation volume");
+        let sino = simulate_helical_sinogram(
+            &delivery(),
+            &uniform_cube(0.05),
+            20,
+            Length::from_unit::<Millimeter>(500.0),
+            Length::from_unit::<Millimeter>(1.0),
+        )
+        .expect("valid attenuation volume");
         for pair in sino.windows(2) {
-            assert!(pair[1].couch_mm > pair[0].couch_mm, "couch must advance");
+            assert!(
+                pair[1].couch_mm.in_unit::<Millimeter>() > pair[0].couch_mm.in_unit::<Millimeter>(),
+                "couch must advance"
+            );
         }
     }
 
     #[test]
     fn empty_region_transmits_fully() {
         // Zero-μ volume → no attenuation → τ=0, transmission=1 everywhere.
-        let sino = simulate_helical_sinogram(&delivery(), &uniform_cube(0.0), 6, 500.0, 0.5)
-            .expect("valid attenuation volume");
+        let sino = simulate_helical_sinogram(
+            &delivery(),
+            &uniform_cube(0.0),
+            6,
+            Length::from_unit::<Millimeter>(500.0),
+            Length::from_unit::<Millimeter>(0.5),
+        )
+        .expect("valid attenuation volume");
         for p in &sino {
             assert_relative_eq!(p.optical_depth, 0.0, epsilon = 1e-12);
             assert_relative_eq!(p.transmission, 1.0, epsilon = 1e-12);
@@ -172,9 +221,23 @@ mod tests {
             VoxelGrid::<f32>::axis_aligned([9, 9, 9], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
                 .unwrap();
         let mu = Volume::from_shape_fn(grid, |_| 0.05_f32);
-        let del = HelicalDelivery::<f32>::new(4, 25.0, 0.2, 10.0, 0.0, 8.0).unwrap();
-        let sino =
-            simulate_helical_sinogram(&del, &mu, 4, 500.0, 0.25).expect("valid attenuation volume");
+        let del = HelicalDelivery::<f32>::new(
+            4,
+            Length::from_unit::<Millimeter>(25.0),
+            Dimensionless::from_base(0.2),
+            Time::from_unit::<aequitas::systems::si::units::Second>(10.0),
+            Angle::from_unit::<Radian>(0.0),
+            Length::from_unit::<Millimeter>(8.0),
+        )
+        .unwrap();
+        let sino = simulate_helical_sinogram(
+            &del,
+            &mu,
+            4,
+            Length::from_unit::<Millimeter>(500.0),
+            Length::from_unit::<Millimeter>(0.25),
+        )
+        .expect("valid attenuation volume");
         assert_relative_eq!(sino[0].optical_depth, 0.05_f32 * 1.6, epsilon = 1e-4);
     }
 
@@ -184,18 +247,36 @@ mod tests {
         // exercises the parallel path. The index-ordered collect makes the result
         // identical run-to-run (no data race; each projection is an independent
         // read) — the differential guarantee vs a sequential run.
-        let a = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 256, 500.0, 0.5)
-            .expect("valid attenuation volume");
-        let b = simulate_helical_sinogram(&delivery(), &uniform_cube(0.05), 256, 500.0, 0.5)
-            .expect("valid attenuation volume");
+        let a = simulate_helical_sinogram(
+            &delivery(),
+            &uniform_cube(0.05),
+            256,
+            Length::from_unit::<Millimeter>(500.0),
+            Length::from_unit::<Millimeter>(0.5),
+        )
+        .expect("valid attenuation volume");
+        let b = simulate_helical_sinogram(
+            &delivery(),
+            &uniform_cube(0.05),
+            256,
+            Length::from_unit::<Millimeter>(500.0),
+            Length::from_unit::<Millimeter>(0.5),
+        )
+        .expect("valid attenuation volume");
         assert_eq!(a, b);
         assert!(a.iter().enumerate().all(|(i, p)| p.projection == i));
     }
 
     #[test]
     fn negative_projected_optical_depth_is_rejected() {
-        let error = simulate_helical_sinogram(&delivery(), &uniform_cube(-0.05), 1, 500.0, 0.25)
-            .expect_err("negative optical depth must fail");
+        let error = simulate_helical_sinogram(
+            &delivery(),
+            &uniform_cube(-0.05),
+            1,
+            Length::from_unit::<Millimeter>(500.0),
+            Length::from_unit::<Millimeter>(0.25),
+        )
+        .expect_err("negative optical depth must fail");
         assert!(matches!(
             error,
             TransportError::InvalidValue {

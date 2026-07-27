@@ -28,8 +28,8 @@
 //! [← LINAC-Based Step-and-Shoot Delivery](../../docs/book/workflow_linac.md)
 
 use aequitas::systems::si::{
-    quantities::{AreaPerMass, EnergyPerArea, Length},
-    units::{Gray, Millimeter, SquareCentimeterPerGram},
+    quantities::{Angle, AreaPerMass, EnergyPerArea, Length, MassDensity},
+    units::{GramPerCubicCentimeter, Gray, Millimeter, Radian, SquareCentimeterPerGram},
 };
 use helios_analysis::Dvh;
 use helios_domain::{Volume, VoxelGrid};
@@ -57,7 +57,7 @@ fn make_frame(projection: usize, gantry_deg: f64, fluence_per_leaf: f64) -> Deli
     let gantry_rad = gantry_deg.to_radians();
     DeliveryFrame {
         projection,
-        gantry_angle_rad: gantry_rad,
+        gantry_angle_rad: Angle::from_unit::<Radian>(gantry_rad),
         couch: Length::from_unit::<Millimeter>(0.0),
         leaf_fluence: vec![EnergyPerArea::from_base(fluence_per_leaf); N_LEAVES],
     }
@@ -78,8 +78,8 @@ fn main() {
     ))
     .expect("valid μ/ρ");
     // Water density = 1.0 g/cm³
-    let water_density_g_cm3 = 1.0_f64;
-    let phantom = attenuation_map(&water_phantom(), mu_over_rho, water_density_g_cm3)
+    let water_density = MassDensity::from_unit::<GramPerCubicCentimeter>(1.0_f64);
+    let phantom = attenuation_map(&water_phantom(), mu_over_rho, water_density)
         .expect("fixture calibration is finite");
 
     // ── 2. Construct 4-field box delivery frames ──────────────────────────────

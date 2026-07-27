@@ -13,8 +13,8 @@
 //! gap_audit G-16/G-18).
 
 use aequitas::systems::si::{
-    quantities::{AbsorbedDose, AreaPerMass, Length},
-    units::{Millimeter, SquareCentimeterPerGram},
+    quantities::{AbsorbedDose, Angle, AreaPerMass, Dimensionless, Length, MassDensity, Time},
+    units::{GramPerCubicCentimeter, Millimeter, Radian, Second, SquareCentimeterPerGram},
 };
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, spherical_mask, Dvh};
 use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel, Volume, VoxelGrid};
@@ -31,6 +31,18 @@ const NX: usize = 31;
 const NZ: usize = 5;
 const SPACING: f64 = 2.0;
 const CENTRE_MM: f64 = (NX as f64 - 1.0) * SPACING / 2.0; // 30 mm
+
+fn delivery() -> HelicalDelivery<f64> {
+    HelicalDelivery::new(
+        51,
+        Length::from_unit::<Millimeter>(20.0),
+        Dimensionless::from_base(0.3),
+        Time::from_unit::<Second>(10.0),
+        Angle::from_unit::<Radian>(0.0),
+        Length::from_unit::<Millimeter>(0.0),
+    )
+    .unwrap()
+}
 
 fn water_mass_attenuation() -> MassAttenuation<f64> {
     MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(0.06))
@@ -60,8 +72,12 @@ fn ct_phantom() -> Volume<f64> {
 fn shared_mu_drives_imaging_and_delivery_end_to_end() {
     // ── Shared physics: CT → μ (μ/ρ = 0.06 cm²/g, water 1.0 g/cm³). ──
     let ct = ct_phantom();
-    let mu =
-        attenuation_map(&ct, water_mass_attenuation(), 1.0).expect("fixture calibration is finite");
+    let mu = attenuation_map(
+        &ct,
+        water_mass_attenuation(),
+        MassDensity::from_unit::<GramPerCubicCentimeter>(1.0),
+    )
+    .expect("fixture calibration is finite");
     // Sanity: water μ = 0.06·1.0; bone μ = 0.06·1.8 (HU 800 → density 1.8); air ≈ 0.
     assert!((mu.get(15, 15, 2).unwrap() - 0.108).abs() < 1e-9); // centre = bone
     assert!(mu.get(0, 0, 2).unwrap().abs() < 1e-6); // corner = air
@@ -105,7 +121,7 @@ fn shared_mu_drives_imaging_and_delivery_end_to_end() {
     // ── Therapy branch: helical MLC delivery → dose. ──
     let leaves = 9;
     let projections = 20;
-    let delivery = HelicalDelivery::new(51, 20.0, 0.3, 10.0, 0.0, 0.0).unwrap();
+    let delivery = delivery();
     let lot =
         LeafOpenTimeSinogram::from_fractions(projections, leaves, vec![1.0; projections * leaves])
             .unwrap();
@@ -166,12 +182,16 @@ fn beam_following_poly_energetic_dose_end_to_end() {
     // per-frame terma → beam-following, poly-energetic (beam-hardened) collapsed
     // cone → dose. Oracles are analytical / self-consistent (no external engine).
     let ct = ct_phantom();
-    let mu =
-        attenuation_map(&ct, water_mass_attenuation(), 1.0).expect("fixture calibration is finite");
+    let mu = attenuation_map(
+        &ct,
+        water_mass_attenuation(),
+        MassDensity::from_unit::<GramPerCubicCentimeter>(1.0),
+    )
+    .expect("fixture calibration is finite");
 
     let leaves = 9;
     let projections = 20;
-    let delivery = HelicalDelivery::new(51, 20.0, 0.3, 10.0, 0.0, 0.0).unwrap();
+    let delivery = delivery();
     let lot =
         LeafOpenTimeSinogram::from_fractions(projections, leaves, vec![1.0; projections * leaves])
             .unwrap();
@@ -267,12 +287,16 @@ fn per_structure_plan_evaluation_over_delivered_dose() {
     // masked DVH → gEUD → TCP (target) / NTCP (OAR). Oracles are clinical-
     // plausibility + probability well-formedness (no external engine).
     let ct = ct_phantom();
-    let mu =
-        attenuation_map(&ct, water_mass_attenuation(), 1.0).expect("fixture calibration is finite");
+    let mu = attenuation_map(
+        &ct,
+        water_mass_attenuation(),
+        MassDensity::from_unit::<GramPerCubicCentimeter>(1.0),
+    )
+    .expect("fixture calibration is finite");
     let grid = *mu.grid();
 
     let (leaves, projections) = (9, 20);
-    let delivery = HelicalDelivery::new(51, 20.0, 0.3, 10.0, 0.0, 0.0).unwrap();
+    let delivery = delivery();
     let lot =
         LeafOpenTimeSinogram::from_fractions(projections, leaves, vec![1.0; projections * leaves])
             .unwrap();

@@ -30,8 +30,8 @@
 //! [← Adaptive Radiotherapy with MVCT](../../docs/book/workflow_adaptive.md)
 
 use aequitas::systems::si::{
-    quantities::{AbsorbedDose, AreaPerMass, EnergyPerArea, Length},
-    units::{Gray, Millimeter, SquareCentimeterPerGram},
+    quantities::{AbsorbedDose, Angle, AreaPerMass, EnergyPerArea, Length, MassDensity},
+    units::{GramPerCubicCentimeter, Gray, Millimeter, Radian, SquareCentimeterPerGram},
 };
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, Dvh};
 use helios_domain::{Volume, VoxelGrid};
@@ -86,7 +86,7 @@ fn build_attenuation_map(ct: &Volume<f64>) -> Volume<f64> {
             MU_WATER_CM,
         ))
         .expect("valid μ/ρ"),
-        1.0_f64,
+        MassDensity::from_unit::<GramPerCubicCentimeter>(1.0_f64),
     )
     .expect("fixture calibration is finite")
 }
@@ -97,7 +97,7 @@ fn four_field_box(fluence: f64) -> Vec<DeliveryFrame<f64>> {
         .enumerate()
         .map(|(idx, &deg)| DeliveryFrame {
             projection: idx,
-            gantry_angle_rad: deg.to_radians(),
+            gantry_angle_rad: Angle::from_unit::<Radian>(deg.to_radians()),
             couch: Length::from_unit::<Millimeter>(0.0),
             leaf_fluence: vec![EnergyPerArea::from_base(fluence); N_LEAVES],
         })

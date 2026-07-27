@@ -27,8 +27,8 @@
 
 use crate::delivery::DeliveryFrame;
 use aequitas::systems::si::{
-    quantities::{AbsorbedDose, Length},
-    units::Millimeter,
+    quantities::{AbsorbedDose, Angle, Length},
+    units::{Millimeter, Radian},
 };
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
@@ -324,12 +324,13 @@ pub(crate) fn beamlet_ray<T: GeometryScalar>(
 /// The gantry basis `(centre, dir, perp)` for a frame's gantry angle over `grid`.
 pub(crate) fn gantry_basis<T: GeometryScalar>(
     grid: &helios_domain::VoxelGrid<T>,
-    gantry_angle_rad: T,
+    gantry_angle_rad: Angle<T>,
 ) -> (Point3<T>, Vector3<T>, Vector3<T>) {
     let zero = <T as NumericElement>::ZERO;
     let [nx, ny, nz] = grid.dims();
     let centre = grid.voxel_center((nx - 1) / 2, (ny - 1) / 2, (nz - 1) / 2);
-    let (cos, sin) = (gantry_angle_rad.cos(), gantry_angle_rad.sin());
+    let angle = gantry_angle_rad.in_unit::<Radian>();
+    let (cos, sin) = (angle.cos(), angle.sin());
     (
         centre,
         Vector3::new(cos, sin, zero),
@@ -357,6 +358,10 @@ mod tests {
         Length::from_unit::<Millimeter>(value)
     }
 
+    fn angle(value: f64) -> Angle<f64> {
+        Angle::from_unit::<Radian>(value)
+    }
+
     fn fluence(value: f64) -> aequitas::systems::si::quantities::EnergyPerArea<f64> {
         aequitas::systems::si::quantities::EnergyPerArea::from_base(value)
     }
@@ -364,7 +369,7 @@ mod tests {
     fn frame(gantry_angle_rad: f64, couch_mm: f64, w: f64) -> DeliveryFrame<f64> {
         DeliveryFrame {
             projection: 0,
-            gantry_angle_rad,
+            gantry_angle_rad: angle(gantry_angle_rad),
             couch: length(couch_mm),
             leaf_fluence: vec![fluence(w)],
         }
@@ -489,7 +494,7 @@ mod tests {
         let mu = uniform_cube(0.05);
         let f = DeliveryFrame {
             projection: 0,
-            gantry_angle_rad: 0.0,
+            gantry_angle_rad: angle(0.0),
             couch: length(8.0),
             leaf_fluence: vec![fluence(1.0), fluence(1.0), fluence(1.0)],
         };
@@ -526,7 +531,7 @@ mod tests {
         let mu = Volume::from_shape_fn(grid, |_| 0.05_f32);
         let f = DeliveryFrame {
             projection: 0,
-            gantry_angle_rad: 0.0_f32,
+            gantry_angle_rad: Angle::from_unit::<Radian>(0.0_f32),
             couch: Length::from_unit::<Millimeter>(8.0_f32),
             leaf_fluence: vec![aequitas::systems::si::quantities::EnergyPerArea::from_base(
                 2.0_f32,
@@ -553,7 +558,7 @@ mod tests {
         let mu = uniform_cube(0.05);
         let f = DeliveryFrame {
             projection: 0,
-            gantry_angle_rad: 0.0,
+            gantry_angle_rad: angle(0.0),
             couch: length(8.0),
             leaf_fluence: vec![fluence(1.0), fluence(1.0), fluence(1.0)],
         };
@@ -593,7 +598,7 @@ mod tests {
         // Single lit leaf at +6 mm offset (leaf 2 of 3 at 6 mm pitch).
         let f = DeliveryFrame {
             projection: 0,
-            gantry_angle_rad: 0.0,
+            gantry_angle_rad: angle(0.0),
             couch: length(0.0),
             leaf_fluence: vec![fluence(0.0), fluence(0.0), fluence(1.0)],
         };

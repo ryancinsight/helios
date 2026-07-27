@@ -19,6 +19,9 @@ use helios_math::{GeometryScalar, NumericElement};
 use helios_solver::forward_project_ray;
 use hyperion::{quantity::OpticalDepth, TransportError};
 
+#[cfg(test)]
+use aequitas::systems::si::{quantities::Angle, units::Radian};
+
 /// Portal exit fluence per MLC leaf for one delivery `frame` through `mu`.
 ///
 /// Returns a vector aligned with `frame.leaf_fluence`: entry `l` is the delivered
@@ -80,7 +83,7 @@ mod tests {
     fn single_leaf_frame(fluence: f64) -> DeliveryFrame<f64> {
         DeliveryFrame {
             projection: 0,
-            gantry_angle_rad: 0.0,
+            gantry_angle_rad: Angle::from_unit::<Radian>(0.0),
             couch: Length::from_unit::<Millimeter>(8.0),
             leaf_fluence: vec![EnergyPerArea::from_base(fluence)],
         }
@@ -136,7 +139,7 @@ mod tests {
         // A closed leaf (0 fluence) among open ones reads exactly 0.
         let frame = DeliveryFrame {
             projection: 0,
-            gantry_angle_rad: 0.0,
+            gantry_angle_rad: Angle::from_unit::<Radian>(0.0),
             couch: length(8.0),
             leaf_fluence: vec![1.0, 0.0, 1.0]
                 .into_iter()
@@ -179,7 +182,7 @@ mod tests {
         let mu = Volume::from_shape_fn(grid, |_| 0.05_f32);
         let frame = DeliveryFrame {
             projection: 0,
-            gantry_angle_rad: 0.0_f32,
+            gantry_angle_rad: Angle::from_unit::<Radian>(0.0_f32),
             couch: Length::from_unit::<Millimeter>(8.0_f32),
             leaf_fluence: vec![EnergyPerArea::from_base(2.0_f32)],
         };

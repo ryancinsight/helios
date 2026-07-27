@@ -9,6 +9,13 @@ under a Breaking subsection.
 
 ### Changed
 
+- `helios-domain` restores typed Aequitas contracts for helical delivery
+  kinematics and collimation penumbra. `helios-simulation` carries typed angle,
+  length, time, and velocity values through helical projection, delivery,
+  acquisition, dose, and portal APIs, converting only at scalar geometry
+  kernels. See [ADR 0012](docs/adr/0012-helical-delivery-quantities.md) and
+  [H-093](backlog.md).
+
 - `helios-analysis` now separates raw MVCT image statistics from dose-semantic
   metrics: `dose_roi_statistics` and `dose_volume_rmse` return typed Aequitas
   `AbsorbedDose` values, while contrast, CNR, and raw image APIs retain their

@@ -6,10 +6,11 @@
 //! — independent of gantry angle (the collimator rotates with the gantry). Its
 //! open region is a gaia `Aabb`; [`transmission`](FieldAperture::transmission)
 //! is `1` deep inside, `0` deep outside, and `0.5` on the geometric edge,
-//! ramping linearly across a `penumbra_mm` band (the finite-source field-edge
+//! ramping linearly across a penumbra band (the finite-source field-edge
 //! blur). This is the field-shaping factor a delivery applies to each beamlet's
 //! fluence.
 
+use aequitas::systems::si::quantities::Length;
 use helios_core::HeliosError;
 use helios_math::{Aabb, GeometryScalar, NumericElement, Point3};
 
@@ -18,7 +19,7 @@ use helios_math::{Aabb, GeometryScalar, NumericElement, Point3};
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct FieldAperture<T: GeometryScalar> {
     open: Aabb<T>,
-    penumbra_mm: T,
+    penumbra: Length<T>,
 }
 
 /// `|x|` for a `GeometryScalar`, via the ordered field (exact, no `f64` round-trip).
@@ -46,13 +47,14 @@ impl<T: GeometryScalar> FieldAperture<T> {
     /// half-width (mm).
     ///
     /// # Errors
-    /// [`HeliosError::InvalidDomainValue`] if `penumbra_mm` is not finite and
+    /// [`HeliosError::InvalidDomainValue`] if `penumbra` is not finite and
     /// positive, or the box is degenerate (`min > max` on any axis).
-    pub fn new(open: Aabb<T>, penumbra_mm: T) -> Result<Self, HeliosError> {
-        if !(penumbra_mm.to_f64().is_finite() && penumbra_mm > <T as NumericElement>::ZERO) {
+    pub fn new(open: Aabb<T>, penumbra: Length<T>) -> Result<Self, HeliosError> {
+        let penumbra_m = penumbra.into_base();
+        if !(penumbra_m.to_f64().is_finite() && penumbra_m > <T as NumericElement>::ZERO) {
             return Err(HeliosError::InvalidDomainValue {
-                field: "FieldAperture::penumbra_mm",
-                value: penumbra_mm.to_f64(),
+                field: "FieldAperture::penumbra",
+                value: penumbra_m.to_f64(),
                 reason: "penumbra half-width must be finite and positive",
             });
         }
@@ -63,18 +65,18 @@ impl<T: GeometryScalar> FieldAperture<T> {
                 reason: "aperture box has min greater than max on some axis",
             });
         }
-        Ok(Self { open, penumbra_mm })
+        Ok(Self { open, penumbra })
     }
 
     /// Build a rectangular aperture centred at `centre` with per-axis half-widths
-    /// `half` (mm) and penumbra `penumbra_mm`.
+    /// `half` (mm) and typed penumbra width.
     ///
     /// # Errors
     /// As [`new`](Self::new); also if any half-width is negative.
     pub fn rectangular(
         centre: Point3<T>,
         half: [T; 3],
-        penumbra_mm: T,
+        penumbra: Length<T>,
     ) -> Result<Self, HeliosError> {
         let zero = <T as NumericElement>::ZERO;
         if half.iter().any(|&h| h < zero) {
@@ -86,7 +88,7 @@ impl<T: GeometryScalar> FieldAperture<T> {
         }
         let min = Point3::new(centre.x - half[0], centre.y - half[1], centre.z - half[2]);
         let max = Point3::new(centre.x + half[0], centre.y + half[1], centre.z + half[2]);
-        Self::new(Aabb::new(min, max), penumbra_mm)
+        Self::new(Aabb::new(min, max), penumbra)
     }
 
     /// The open-field gaia `Aabb`.
@@ -128,14 +130,17 @@ impl<T: GeometryScalar> FieldAperture<T> {
 
     /// Beamlet transmission at `p` (collimator coordinates): `1` deep inside the
     /// field, `0` deep outside, `0.5` on the geometric edge, ramping linearly
-    /// across the `±penumbra_mm` band. Always in `[0, 1]`.
+    /// across the `±penumbra` band. Always in `[0, 1]`.
     #[must_use]
     pub fn transmission(&self, p: &Point3<T>) -> T {
         let half = <T as GeometryScalar>::from_f64(0.5);
         let two = <T as GeometryScalar>::from_f64(2.0);
         let sdf = self.signed_distance(p);
+        // Aequitas stores SI base metres; collimator coordinates in this
+        // geometry module remain millimetres.
+        let penumbra_mm = self.penumbra.into_base() * <T as GeometryScalar>::from_f64(1.0e3);
         // 0.5 at sdf=0; +0.5 per penumbra inside; −0.5 per penumbra outside.
-        let t = half - sdf * (two * self.penumbra_mm).recip();
+        let t = half - sdf * (two * penumbra_mm).recip();
         let zero = <T as NumericElement>::ZERO;
         let one = <T as NumericElement>::ONE;
         if t < zero {
@@ -155,7 +160,12 @@ mod tests {
 
     // 20 mm × 20 mm × 20 mm field centred at the origin, 2 mm penumbra.
     fn aperture() -> FieldAperture<f64> {
-        FieldAperture::rectangular(Point3::new(0.0, 0.0, 0.0), [10.0, 10.0, 10.0], 2.0).unwrap()
+        FieldAperture::rectangular(
+            Point3::new(0.0, 0.0, 0.0),
+            [10.0, 10.0, 10.0],
+            Length::from_base(2.0e-3),
+        )
+        .unwrap()
     }
 
     #[test]
@@ -229,19 +239,28 @@ mod tests {
     #[test]
     fn invalid_penumbra_and_box_are_typed_errors() {
         let unit = Point3::new(0.0, 0.0, 0.0);
-        assert!(FieldAperture::rectangular(unit, [10.0, 10.0, 10.0], 0.0).is_err());
-        assert!(FieldAperture::rectangular(unit, [10.0, 10.0, 10.0], -1.0).is_err());
+        assert!(
+            FieldAperture::rectangular(unit, [10.0, 10.0, 10.0], Length::from_base(0.0)).is_err()
+        );
+        assert!(
+            FieldAperture::rectangular(unit, [10.0, 10.0, 10.0], Length::from_base(-1.0e-3),)
+                .is_err()
+        );
         assert!(FieldAperture::new(
             Aabb::new(Point3::new(5.0, 0.0, 0.0), Point3::new(-5.0, 1.0, 1.0)),
-            2.0
+            Length::from_base(2.0e-3)
         )
         .is_err());
     }
 
     #[test]
     fn aperture_is_generic_over_scalar_f32() {
-        let a = FieldAperture::rectangular(Point3::new(0.0_f32, 0.0, 0.0), [5.0, 5.0, 5.0], 1.0)
-            .unwrap();
+        let a = FieldAperture::rectangular(
+            Point3::new(0.0_f32, 0.0, 0.0),
+            [5.0, 5.0, 5.0],
+            Length::from_base(1.0e-3_f32),
+        )
+        .unwrap();
         assert_relative_eq!(
             a.transmission(&Point3::new(0.0, 0.0, 0.0)),
             1.0,
