@@ -222,7 +222,10 @@ mod tests {
 
     #[test]
     fn gpu_matches_helios_solver_attenuation_map() {
-        use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
+        use aequitas::systems::si::{
+            quantities::{AreaPerMass, MassDensity},
+            units::{GramPerCubicCentimeter, SquareCentimeterPerGram},
+        };
         use helios_math::Point3;
         use hyperion::coefficient::MassAttenuation;
 
@@ -245,8 +248,12 @@ mod tests {
             MU_OVER_RHO,
         ))
         .expect("μ/ρ ≥ 0");
-        let reference = helios_solver::attenuation_map(&ct, mass_atten, WATER_DENSITY)
-            .expect("fixture calibration is finite");
+        let reference = helios_solver::attenuation_map(
+            &ct,
+            mass_atten,
+            MassDensity::from_unit::<GramPerCubicCentimeter>(WATER_DENSITY),
+        )
+        .expect("fixture calibration is finite");
 
         let mut hu_flat = Vec::with_capacity(4 * 3 * 2);
         for k in 0..2 {

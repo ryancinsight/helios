@@ -32,7 +32,11 @@
 //!
 //! Part VI — GPU Acceleration
 
-use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
+use aequitas::systems::si::{
+    quantities::AreaPerMass,
+    quantities::MassDensity,
+    units::{GramPerCubicCentimeter, SquareCentimeterPerGram},
+};
 use helios_domain::{Volume, VoxelGrid};
 use helios_gpu::{default_device, GpuAttenuationMapper};
 use helios_math::Point3;
@@ -65,7 +69,7 @@ fn main() {
         }
     });
 
-    let water_rho = 1.0_f64;
+    let water_rho = MassDensity::from_unit::<GramPerCubicCentimeter>(1.0_f64);
     let mu_over_rho = MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(
         0.0636_f64,
     ))

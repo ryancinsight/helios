@@ -40,7 +40,10 @@
 //! cargo run -p helios-solver --example collapsed_cone_3d
 //! ```
 
-use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
+use aequitas::systems::si::{
+    quantities::{AreaPerMass, MassDensity},
+    units::{GramPerCubicCentimeter, SquareCentimeterPerGram},
+};
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Point3;
 use helios_solver::{
@@ -84,14 +87,14 @@ fn main() {
         0.0636_f64,
     ))
     .expect("valid mass attenuation");
-    let water_rho = 1.0_f64; // g/cm³
+    let water_rho = MassDensity::from_unit::<GramPerCubicCentimeter>(1.0_f64); // g/cm³
 
     let mu = attenuation_map(&ct_hu, mu_over_rho, water_rho)
         .expect("water calibration produces finite attenuation");
 
     let mu_center = mu.get(nx / 2, ny / 2, nz / 2).unwrap();
     println!("Stage 1 — CT → μ map (Compton-dominated 6 MV approximation)");
-    println!("  Water μ/ρ = 0.0636 cm²/g, ρ = {water_rho:.1} g/cm³");
+    println!("  Water μ/ρ = 0.0636 cm²/g, ρ = {:.1} g/cm³", water_rho.in_unit::<GramPerCubicCentimeter>());
     println!("  Resulting μ at phantom center = {mu_center:.5} cm⁻¹\n");
 
     // ── 3. Primary fluence — Beer–Lambert along +x ────────────────────────────

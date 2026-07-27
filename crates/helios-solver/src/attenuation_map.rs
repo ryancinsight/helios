@@ -67,8 +67,9 @@ impl<T: fmt::Debug> core::error::Error for AttenuationMapError<T> {}
 pub fn attenuation_map<T: Scalar>(
     ct_hu: &Volume<T>,
     mass_attenuation: MassAttenuation<T>,
-    water_density_g_cm3: T,
+    water_density: DensityQuantity<T>,
 ) -> Result<Volume<T>, AttenuationMapError<T>> {
+    let water_density_g_cm3: T = water_density.in_unit::<GramPerCubicCentimeter>();
     let grid = *ct_hu.grid();
     let values = ct_hu
         .as_slice()
@@ -112,8 +113,12 @@ mod tests {
     fn uniform_water_maps_to_constant_mu() {
         // All HU = 0 (water) → μ = (μ/ρ)·ρ_water = 0.06·1.0 everywhere.
         let ct = Volume::from_shape_fn(grid(), |_| 0.0);
-        let mu = attenuation_map(&ct, water_mass_attenuation(), 1.0)
-            .expect("fixture calibration is finite");
+        let mu = attenuation_map(
+            &ct,
+            water_mass_attenuation(),
+            DensityQuantity::from_unit::<GramPerCubicCentimeter>(1.0),
+        )
+        .expect("fixture calibration is finite");
         for i in 0..3 {
             for j in 0..4 {
                 for k in 0..5 {
@@ -132,8 +137,12 @@ mod tests {
             vec![-1000.0, 1000.0],
         )
         .unwrap();
-        let mu = attenuation_map(&ct, water_mass_attenuation(), 1.0)
-            .expect("fixture calibration is finite");
+        let mu = attenuation_map(
+            &ct,
+            water_mass_attenuation(),
+            DensityQuantity::from_unit::<GramPerCubicCentimeter>(1.0),
+        )
+        .expect("fixture calibration is finite");
         assert_relative_eq!(mu.get(0, 0, 0).unwrap(), 0.0, epsilon = 1e-15);
         assert_relative_eq!(mu.get(1, 0, 0).unwrap(), 0.12, epsilon = 1e-15);
     }
@@ -146,7 +155,7 @@ mod tests {
             -800.0 + 120.0 * idx[0] as f64 + 90.0 * idx[1] as f64 + 60.0 * idx[2] as f64
         });
         let mass_atten = water_mass_attenuation();
-        let water_density = 1.0;
+        let water_density = DensityQuantity::from_unit::<GramPerCubicCentimeter>(1.0);
         let mu =
             attenuation_map(&ct, mass_atten, water_density).expect("fixture calibration is finite");
         for i in 0..3 {
@@ -154,7 +163,10 @@ mod tests {
                 for k in 0..5 {
                     let hu = ct.get(i, j, k).unwrap();
                     let expected = mass_atten.in_unit::<SquareCentimeterPerGram>()
-                        * mass_density_from_hu(hu, water_density);
+                        * mass_density_from_hu(
+                            hu,
+                            water_density.in_unit::<GramPerCubicCentimeter>(),
+                        );
                     assert_relative_eq!(mu.get(i, j, k).unwrap(), expected, epsilon = 1e-15);
                 }
             }
@@ -164,8 +176,12 @@ mod tests {
     #[test]
     fn output_grid_matches_input() {
         let ct = Volume::from_shape_fn(grid(), |_| 0.0);
-        let mu = attenuation_map(&ct, water_mass_attenuation(), 1.0)
-            .expect("fixture calibration is finite");
+        let mu = attenuation_map(
+            &ct,
+            water_mass_attenuation(),
+            DensityQuantity::from_unit::<GramPerCubicCentimeter>(1.0),
+        )
+        .expect("fixture calibration is finite");
         assert_eq!(mu.grid().dims(), ct.grid().dims());
     }
 
@@ -178,15 +194,24 @@ mod tests {
         let coefficient =
             MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(0.06_f32))
                 .unwrap();
-        let mu = attenuation_map(&ct, coefficient, 1.0).expect("fixture calibration is finite");
+        let mu = attenuation_map(
+            &ct,
+            coefficient,
+            DensityQuantity::<f32>::from_unit::<GramPerCubicCentimeter>(1.0_f32),
+        )
+        .expect("fixture calibration is finite");
         assert_relative_eq!(mu.get(0, 0, 0).unwrap(), 0.06_f32, epsilon = 1e-6);
     }
 
     #[test]
     fn invalid_reference_density_preserves_the_proteus_error() {
         let ct = Volume::from_shape_fn(grid(), |_| 0.0);
-        let error = attenuation_map(&ct, water_mass_attenuation(), -1.0)
-            .expect_err("negative calibrated density must be rejected");
+        let error = attenuation_map(
+            &ct,
+            water_mass_attenuation(),
+            DensityQuantity::from_unit::<GramPerCubicCentimeter>(-1.0_f64),
+        )
+        .expect_err("negative calibrated density must be rejected");
         assert!(matches!(error, AttenuationMapError::InvalidDensity(_)));
     }
 }
