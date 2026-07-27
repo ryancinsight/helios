@@ -8,6 +8,16 @@
 
 ## Owner: Codex
 
+## Codex — H-093 restore typed helical and collimation contracts [arch] [major] — in progress
+
+- [x] Confirm the typed implementation commits are not ancestors of current
+      `main` and that live Helios APIs have reverted to raw physical scalars.
+- [ ] Port the existing typed implementation and migrate all current callers;
+      retain millimetre geometry only at the Gaia kernel boundary.
+- [ ] Run focused source, format, Clippy, Nextest, doctest, and audit checks;
+      record any provider-graph blocker without changing peer lock work.
+- [ ] Commit and push the verified correction and advance the Atlas audit.
+
 ## Codex — H-092 image-quality physical semantics [arch] [minor] — done
 
 - [x] Share ROI and volume-error arithmetic between raw MVCT and typed-dose
