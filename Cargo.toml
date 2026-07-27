@@ -125,91 +125,6 @@ apollo = { git = "https://github.com/ryancinsight/apollo", package = "apollo-fft
 # This is the local development wiring; the git-dep declarations above remain the
 # release SSOT. When gaia's leto migration is merged+published (a `refactor!`
 # breaking change also updating kwavers), these patches can be dropped.
-[patch."https://github.com/ryancinsight/leto"]
-leto = { path = "../leto/crates/leto" }
-leto-ops = { path = "../leto/crates/leto-ops" }
-
-[patch."https://github.com/ryancinsight/leto.git"]
-leto = { path = "../leto/crates/leto" }
-leto-ops = { path = "../leto/crates/leto-ops" }
-
-[patch."https://github.com/ryancinsight/eunomia"]
-eunomia = { path = "../eunomia/crates/eunomia" }
-
-[patch."https://github.com/ryancinsight/gaia"]
-gaia = { path = "../gaia" }
-
-[patch."https://github.com/ryancinsight/ritk"]
-ritk-dicom = { path = "../ritk/crates/ritk-dicom" }
-
-[patch."https://github.com/ryancinsight/consus"]
-consus-core = { path = "../consus/crates/consus-core" }
-consus-hdf5 = { path = "../consus/crates/consus-hdf5" }
-consus-io = { path = "../consus/crates/consus-io" }
-consus-compression = { path = "../consus/crates/consus-compression" }
-
-[patch."https://github.com/ryancinsight/Coeus.git"]
-coeus-core = { path = "../coeus/crates/coeus-core" }
-coeus-tensor = { path = "../coeus/crates/coeus-tensor" }
-coeus-autograd = { path = "../coeus/crates/coeus-autograd" }
-coeus-ops = { path = "../coeus/crates/coeus-ops" }
-
-[patch."https://github.com/ryancinsight/asclepius"]
-asclepius = { path = "../asclepius/crates/asclepius" }
-asclepius-coeus = { path = "../asclepius/crates/asclepius-coeus" }
-
-[patch."https://github.com/ryancinsight/hephaestus"]
-hephaestus-core = { path = "../hephaestus/crates/hephaestus-core" }
-hephaestus-wgpu = { path = "../hephaestus/crates/hephaestus-wgpu" }
-
-# The GPU stack (hephaestus-wgpu → leto[parallel,mnemosyne-memory]) transitively
-# pulls the mnemosyne/moirai/hermes cluster; redirect those git sources to the
-# local synchronized checkout too (matching hephaestus's own root patches) so the
-# whole graph resolves to one consistent, buildable source set (fixes the
-# leto→mnemosyne(git 1e014d25)→themis ^0.8 skew, G-10).
-[patch."https://github.com/ryancinsight/Mnemosyne.git"]
-mnemosyne = { path = "../mnemosyne/crates/mnemosyne" }
-mnemosyne-core = { path = "../mnemosyne/crates/mnemosyne-core" }
-mnemosyne-arena = { path = "../mnemosyne/crates/mnemosyne-arena" }
-mnemosyne-local = { path = "../mnemosyne/crates/mnemosyne-local" }
-mnemosyne-heap = { path = "../mnemosyne/crates/mnemosyne-heap" }
-
-[patch."https://github.com/ryancinsight/Moirai.git"]
-moirai = { path = "../moirai/moirai" }
-moirai-core = { path = "../moirai/moirai-core" }
-moirai-scheduler = { path = "../moirai/moirai-scheduler" }
-moirai-parallel = { path = "../moirai/moirai-parallel" }
-moirai-gpu = { path = "../moirai/moirai-gpu" }
-moirai-sync = { path = "../moirai/moirai-sync" }
-moirai-async = { path = "../moirai/moirai-async" }
-moirai-executor = { path = "../moirai/moirai-executor" }
-moirai-transport = { path = "../moirai/moirai-transport" }
-moirai-iter = { path = "../moirai/moirai-iter" }
-moirai-pal = { path = "../moirai/moirai-pal" }
-moirai-utils = { path = "../moirai/moirai-utils" }
-
-[patch."https://github.com/ryancinsight/hermes.git"]
-hermes-simd = { path = "../hermes/crates/hermes-simd" }
-
-# themis/melinoe: hephaestus-core (patched to local path) depends on the git
-# themis which in turn requires melinoe ^0.7.0; redirect both to the local
-# synchronized checkouts so the whole graph resolves against ONE melinoe version
-# (0.9.x), and hephaestus/helios-gpu compile cleanly from this workspace root.
-[patch."https://github.com/ryancinsight/themis"]
-themis = { path = "../themis" }
-
-[patch."https://github.com/ryancinsight/melinoe.git"]
-melinoe = { path = "../melinoe" }
-
-[patch."https://github.com/ryancinsight/aequitas"]
-aequitas = { path = "../aequitas" }
-
-[patch."https://github.com/ryancinsight/proteus"]
-proteus = { path = "../proteus" }
-
-[patch."https://github.com/ryancinsight/hyperion"]
-hyperion = { path = "../hyperion" }
-
 [profile.dev]
 opt-level = 1
 
@@ -221,3 +136,10 @@ opt-level = 3
 lto = "thin"
 codegen-units = 1
 strip = "symbols"
+
+# ATLAS-PATH-DEP-AUDIT-2 round-2 (2026-07-27): targeted catalog-driven
+# [patch] blocks per per-consumer audit-format residual. Each URL-suffix
+# appears once with the FULL subkey set for the sibling's workspace
+# members; cargo treats unused subkeys as warnings only.
+
+# ATLAS-PATH-DEP-AUDIT-2 round-4 closure

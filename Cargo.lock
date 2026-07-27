@@ -21,7 +21,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 name = "aequitas"
 version = "0.1.0"
 dependencies = [
- "eunomia 0.7.0",
+ "eunomia",
  "typenum",
 ]
 
@@ -144,7 +144,7 @@ dependencies = [
  "apollo-fft-macros",
  "apollo-leto-interop",
  "bytemuck",
- "eunomia 0.7.0",
+ "eunomia",
  "half",
  "hermes-simd",
  "leto",
@@ -185,7 +185,7 @@ name = "asclepius"
 version = "0.1.0"
 dependencies = [
  "aequitas",
- "eunomia 0.7.0",
+ "eunomia",
 ]
 
 [[package]]
@@ -554,7 +554,7 @@ name = "coeus-core"
 version = "0.9.0"
 dependencies = [
  "bytemuck",
- "eunomia 0.7.0",
+ "eunomia",
  "hermes-simd",
  "mnemosyne",
  "moirai",
@@ -580,7 +580,7 @@ dependencies = [
  "coeus-leto",
  "coeus-sparse",
  "coeus-tensor",
- "eunomia 0.7.0",
+ "eunomia",
  "leto",
  "leto-ops",
  "melinoe",
@@ -1030,15 +1030,6 @@ dependencies = [
 
 [[package]]
 name = "eunomia"
-version = "0.6.0"
-source = "git+https://github.com/ryancinsight/eunomia.git?rev=2a6cb2ce381d3ddffc8f6f5542c5f3383329012a#2a6cb2ce381d3ddffc8f6f5542c5f3383329012a"
-dependencies = [
- "bytemuck",
- "libm",
-]
-
-[[package]]
-name = "eunomia"
 version = "0.7.0"
 dependencies = [
  "bytemuck",
@@ -1194,7 +1185,7 @@ name = "gaia"
 version = "0.3.0"
 dependencies = [
  "anyhow",
- "eunomia 0.7.0",
+ "eunomia",
  "geometry-predicates",
  "hashbrown 0.15.5",
  "indexmap",
@@ -1344,7 +1335,7 @@ dependencies = [
  "aequitas",
  "asclepius",
  "criterion",
- "eunomia 0.7.0",
+ "eunomia",
  "helios-core",
  "helios-domain",
  "helios-imaging",
@@ -1356,7 +1347,7 @@ name = "helios-core"
 version = "0.1.0"
 dependencies = [
  "aequitas",
- "eunomia 0.7.0",
+ "eunomia",
  "proptest",
  "thiserror 2.0.18",
  "tracing",
@@ -1366,10 +1357,11 @@ dependencies = [
 name = "helios-domain"
 version = "0.1.0"
 dependencies = [
+ "aequitas",
  "consus-core",
  "consus-hdf5",
  "consus-io",
- "eunomia 0.7.0",
+ "eunomia",
  "helios-core",
  "helios-math",
  "leto",
@@ -1384,7 +1376,7 @@ dependencies = [
  "aequitas",
  "bytemuck",
  "criterion",
- "eunomia 0.7.0",
+ "eunomia",
  "helios-core",
  "helios-domain",
  "helios-math",
@@ -1400,7 +1392,7 @@ name = "helios-imaging"
 version = "0.1.0"
 dependencies = [
  "aequitas",
- "eunomia 0.7.0",
+ "eunomia",
  "helios-analysis",
  "helios-core",
  "helios-domain",
@@ -1414,7 +1406,7 @@ dependencies = [
 name = "helios-math"
 version = "0.1.0"
 dependencies = [
- "eunomia 0.7.0",
+ "eunomia",
  "gaia",
  "helios-core",
  "leto",
@@ -1425,7 +1417,7 @@ name = "helios-physics"
 version = "0.1.0"
 dependencies = [
  "aequitas",
- "eunomia 0.7.0",
+ "eunomia",
  "helios-core",
  "helios-math",
  "hyperion",
@@ -1442,7 +1434,7 @@ dependencies = [
  "coeus-autograd",
  "coeus-core",
  "coeus-tensor",
- "eunomia 0.7.0",
+ "eunomia",
  "helios-core",
  "helios-math",
 ]
@@ -1462,7 +1454,7 @@ name = "helios-simulation"
 version = "0.1.0"
 dependencies = [
  "aequitas",
- "eunomia 0.7.0",
+ "eunomia",
  "helios-analysis",
  "helios-core",
  "helios-domain",
@@ -1481,7 +1473,7 @@ version = "0.1.0"
 dependencies = [
  "aequitas",
  "criterion",
- "eunomia 0.7.0",
+ "eunomia",
  "helios-core",
  "helios-domain",
  "helios-math",
@@ -1494,6 +1486,7 @@ dependencies = [
 name = "hephaestus-core"
 version = "0.18.0"
 dependencies = [
+ "aequitas",
  "bytemuck",
  "leto",
  "themis",
@@ -1506,7 +1499,7 @@ version = "0.18.0"
 dependencies = [
  "aequitas",
  "bytemuck",
- "eunomia 0.7.0",
+ "eunomia",
  "hephaestus-core",
  "leto",
  "leto-ops",
@@ -1523,7 +1516,7 @@ dependencies = [
 name = "hermes-simd"
 version = "0.5.0"
 dependencies = [
- "eunomia 0.7.0",
+ "eunomia",
  "hermes-simd-core",
  "hermes-simd-intrinsics",
  "hermes-simd-macros",
@@ -1536,7 +1529,7 @@ name = "hermes-simd-core"
 version = "0.5.0"
 dependencies = [
  "bytemuck",
- "eunomia 0.7.0",
+ "eunomia",
  "mnemosyne",
  "rkyv 0.7.46",
  "themis",
@@ -1546,7 +1539,7 @@ dependencies = [
 name = "hermes-simd-intrinsics"
 version = "0.5.0"
 dependencies = [
- "eunomia 0.7.0",
+ "eunomia",
  "hermes-simd-core",
 ]
 
@@ -1578,7 +1571,7 @@ name = "hyperion"
 version = "0.1.0"
 dependencies = [
  "aequitas",
- "eunomia 0.7.0",
+ "eunomia",
  "proteus",
 ]
 
@@ -1892,7 +1885,7 @@ version = "0.40.0"
 dependencies = [
  "aequitas",
  "bytemuck",
- "eunomia 0.7.0",
+ "eunomia",
  "mnemosyne",
  "serde",
  "thiserror 2.0.18",
@@ -1903,7 +1896,7 @@ name = "leto-ops"
 version = "0.40.0"
 dependencies = [
  "bytemuck",
- "eunomia 0.7.0",
+ "eunomia",
  "hermes-simd",
  "leto",
  "moirai",
@@ -1985,7 +1978,7 @@ dependencies = [
 name = "mnemosyne"
 version = "0.6.0"
 dependencies = [
- "eunomia 0.7.0",
+ "eunomia",
  "mnemosyne-arena",
  "mnemosyne-backend",
  "mnemosyne-core",
@@ -2000,7 +1993,7 @@ dependencies = [
 name = "mnemosyne-arena"
 version = "0.3.0"
 dependencies = [
- "eunomia 0.7.0",
+ "eunomia",
  "mnemosyne-backend",
  "mnemosyne-core",
  "themis",
@@ -2577,7 +2570,7 @@ name = "proteus"
 version = "0.1.0"
 dependencies = [
  "aequitas",
- "eunomia 0.7.0",
+ "eunomia",
 ]
 
 [[package]]
@@ -3392,9 +3385,8 @@ dependencies = [
 [[package]]
 name = "tyche-core"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/tyche?rev=0fc810befc6df43a5e24139080489313d31b0f87#0fc810befc6df43a5e24139080489313d31b0f87"
 dependencies = [
- "eunomia 0.6.0",
+ "eunomia",
 ]
 
 [[package]]
@@ -4000,3 +3992,59 @@ name = "zmij"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
+
+[[patch.unused]]
+name = "hephaestus-cuda"
+version = "0.18.0"
+
+[[patch.unused]]
+name = "consus-zarr"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "athena-core"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "iris"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "coeus-optim"
+version = "0.9.0"
+
+[[patch.unused]]
+name = "horae"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "hephaestus-cuda"
+version = "0.18.0"
+
+[[patch.unused]]
+name = "coeus-optim"
+version = "0.9.0"
+
+[[patch.unused]]
+name = "consus-npy"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "consus-onnx"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "consus-zarr"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "ritk-core"
+version = "0.9.0"
+
+[[patch.unused]]
+name = "ritk-io"
+version = "0.2.0"
+
+[[patch.unused]]
+name = "ritk-registration"
+version = "0.53.0"
