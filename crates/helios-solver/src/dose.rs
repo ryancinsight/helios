@@ -153,6 +153,16 @@ mod tests {
     use eunomia::assert_relative_eq;
     use helios_math::Point3;
 
+    /// The scalar widths this crate's generic kernels are instantiated for.
+    ///
+    /// Naming the set in one place is the point of the exercise: a generic kernel
+    /// exercised at a single concrete type leaves every other monomorphization a
+    /// caller can build unverified. Admitting a new scalar type is one `impl`
+    /// line here, and every generic test below inherits it.
+    trait ShippedScalar: Scalar + UnitScalar + eunomia::RelativeEq<Epsilon = Self> {}
+    impl ShippedScalar for f32 {}
+    impl ShippedScalar for f64 {}
+
     fn grid() -> VoxelGrid<f64> {
         // 2 mm spacing along x → 0.2 cm per column.
         VoxelGrid::axis_aligned([6, 2, 2], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
@@ -266,15 +276,55 @@ mod tests {
         }
     }
 
+    /// Relative tolerance, in ulps of `T`, for a Beer-Lambert transmission.
+    ///
+    /// The value accumulates optical depth across three voxels, converts spacing
+    /// to centimetres once, evaluates `exp`, then scales by the incident
+    /// fluence. Each arithmetic step contributes at most one rounding of
+    /// relative size `T::EPSILON`, and `exp` is not required by IEEE 754 to be
+    /// correctly rounded, so it is budgeted at several ulps rather than one.
+    /// Sixteen bounds that chain on both shipped widths — 1.9e-6 for `f32`,
+    /// 3.6e-15 for `f64` — and is tighter than the 1e-5 absolute bound the
+    /// single-precision-only predecessor used, so it cannot mask a divergence
+    /// the old assertion would have caught.
+    const TRANSMISSION_ULPS: f64 = 16.0;
+
+    /// Asserts the analytical Beer-Lambert transmission in one scalar width.
+    ///
+    /// Written once and instantiated per shipped scalar type below: a generic
+    /// kernel verified at a single concrete type leaves every other
+    /// monomorphization callers can build unverified.
+    fn primary_fluence_matches_beer_lambert<T: ShippedScalar>() {
+        let zero = T::from_f64(0.0);
+        let spacing_mm = T::from_f64(2.0);
+        let grid =
+            VoxelGrid::<T>::axis_aligned([4, 1, 1], [spacing_mm; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
+
+        let mu = T::from_f64(0.3);
+        let incident = T::from_f64(5.0);
+        let volume = Volume::from_shape_fn(grid, |_| mu);
+        let psi = primary_fluence_parallel_x(&volume, incident).expect("valid attenuation volume");
+
+        // Column 3 sits behind three voxels: 3 x 2 mm = 0.6 cm of path.
+        let depth_cm = T::from_f64(3.0) * spacing_mm * T::from_f64(MM_PER_CM).recip();
+        let expected = incident * (-(mu * depth_cm)).exp();
+
+        assert_relative_eq!(
+            psi.get(3, 0, 0).unwrap(),
+            expected,
+            max_relative = T::EPSILON * T::from_f64(TRANSMISSION_ULPS)
+        );
+    }
+
     #[test]
-    fn primary_fluence_is_generic_over_scalar_f32() {
-        let g =
-            VoxelGrid::<f32>::axis_aligned([4, 1, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap();
-        let mu = Volume::from_shape_fn(g, |_| 0.3_f32);
-        let psi = primary_fluence_parallel_x(&mu, 5.0_f32).expect("valid attenuation volume");
-        let expected = 5.0_f32 * (-0.3_f32 * 3.0 * 0.2).exp(); // column 3, depth 0.6 cm
-        assert_relative_eq!(psi.get(3, 0, 0).unwrap(), expected, epsilon = 1e-5);
+    fn primary_fluence_matches_beer_lambert_in_single_precision() {
+        primary_fluence_matches_beer_lambert::<f32>();
+    }
+
+    #[test]
+    fn primary_fluence_matches_beer_lambert_in_double_precision() {
+        primary_fluence_matches_beer_lambert::<f64>();
     }
 
     #[test]
