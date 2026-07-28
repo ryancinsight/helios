@@ -126,6 +126,7 @@ pub fn oriented_forward_scatter<T: GeometryScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use crate::{
         anisotropic_scatter_superposition, forward_peaked_kernel, symmetric_deposition_kernel,
     };
@@ -218,23 +219,61 @@ mod tests {
         assert_relative_eq!(dose.sum(), 1.0, max_relative = 0.02);
     }
 
+    /// Asserts forward peaking along an off-axis beam in one scalar width.
+    ///
+    /// This is an ordering property, not a value comparison, so it needs no
+    /// tolerance: downstream dose must exceed upstream dose by construction, and a
+    /// bound would only weaken the claim.
+    fn oriented_scatter_peaks_downstream_of_the_source<T>()
+    where
+        T: ShippedScalar + helios_math::GeometryScalar,
+    {
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
+        let one = cast(1.0);
+        let spacing = cast(2.0);
+        let grid = VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], P3::new(zero, zero, zero))
+            .expect("valid axis-aligned grid");
+
+        let terma = Volume::from_shape_fn(grid, |idx| if idx == [4, 4, 4] { one } else { zero });
+        let (forward, centre) = forward_peaked_kernel(cast(0.1), one, cast(0.2), 1, 3);
+        let lateral = symmetric_deposition_kernel(cast(0.3), cast(0.2), 1);
+
+        // Diagonal beam in the xy plane, unit length.
+        let component = one / cast(2.0).sqrt();
+        let beam = Vector3::new(component, component, zero);
+        let dose = oriented_forward_scatter(&terma, beam, &forward, centre, &lateral, spacing);
+
+        let source = grid.voxel_center(4, 4, 4);
+        let reach = cast(4.0);
+        let downstream = dose
+            .sample_world(P3::new(
+                source.x + beam.x * reach,
+                source.y + beam.y * reach,
+                source.z,
+            ))
+            .expect("downstream sample inside the grid");
+        let upstream = dose
+            .sample_world(P3::new(
+                source.x - beam.x * reach,
+                source.y - beam.y * reach,
+                source.z,
+            ))
+            .expect("upstream sample inside the grid");
+
+        assert!(
+            downstream > upstream,
+            "forward-peaked scatter must deposit more downstream than upstream"
+        );
+    }
+
     #[test]
-    fn oriented_scatter_is_generic_over_scalar_f32() {
-        let g = VoxelGrid::<f32>::axis_aligned([9, 9, 9], [2.0, 2.0, 2.0], P3::new(0.0, 0.0, 0.0))
-            .unwrap();
-        let terma = Volume::from_shape_fn(g, |idx| if idx == [4, 4, 4] { 1.0_f32 } else { 0.0 });
-        let (fp, centre) = forward_peaked_kernel(0.1_f32, 1.0, 0.2, 1, 3);
-        let lat = symmetric_deposition_kernel(0.3_f32, 0.2, 1);
-        let inv = 1.0_f32 / 2.0_f32.sqrt();
-        let beam = Vector3::new(inv, inv, 0.0);
-        let dose = oriented_forward_scatter(&terma, beam, &fp, centre, &lat, 2.0);
-        let src = g.voxel_center(4, 4, 4);
-        let down = dose
-            .sample_world(P3::new(src.x + beam.x * 4.0, src.y + beam.y * 4.0, src.z))
-            .unwrap();
-        let up = dose
-            .sample_world(P3::new(src.x - beam.x * 4.0, src.y - beam.y * 4.0, src.z))
-            .unwrap();
-        assert!(down > up);
+    fn oriented_scatter_peaks_downstream_of_the_source_in_single_precision() {
+        oriented_scatter_peaks_downstream_of_the_source::<f32>();
+    }
+
+    #[test]
+    fn oriented_scatter_peaks_downstream_of_the_source_in_double_precision() {
+        oriented_scatter_peaks_downstream_of_the_source::<f64>();
     }
 }

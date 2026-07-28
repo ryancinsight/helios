@@ -276,6 +276,7 @@ pub fn anisotropic_scatter_superposition<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
     use helios_math::Point3;
 
@@ -444,40 +445,92 @@ mod tests {
         assert_eq!(k, vec![0.0, 0.0, 1.0, 0.0]); // centred delta at radius_up = 2
     }
 
-    #[test]
-    fn poly_kernel_is_generic_over_scalar_f32() {
-        let (mono, _) = forward_peaked_kernel(0.1_f32, 0.5, 0.2, 1, 2);
-        let (poly, _) = poly_forward_peaked_kernel(
-            &[SpectralComponent {
-                range_up_cm: 0.1_f32,
-                range_down_cm: 0.5,
-                weight: 2.0,
-            }],
-            0.2,
+    fn single_component_poly_matches_the_monoenergetic_kernel<T: ShippedScalar>() {
+        let (mono, _) = forward_peaked_kernel(
+            T::from_f64(0.1),
+            T::from_f64(0.5),
+            T::from_f64(0.2),
             1,
             2,
         );
-        for (a, b) in poly.iter().zip(&mono) {
-            assert_relative_eq!(a, b, epsilon = 1e-6);
+        let (poly, _) = poly_forward_peaked_kernel(
+            &[SpectralComponent {
+                range_up_cm: T::from_f64(0.1),
+                range_down_cm: T::from_f64(0.5),
+                weight: T::from_f64(2.0),
+            }],
+            T::from_f64(0.2),
+            1,
+            2,
+        );
+
+        // One spectral component reduces to the monoenergetic kernel: the weight
+        // divides out in normalization, so only that division separates the two.
+        for (from_poly, from_mono) in poly.iter().zip(&mono) {
+            assert_relative_eq!(
+                from_poly,
+                from_mono,
+                max_relative = T::EPSILON * T::from_f64(WEIGHT_NORMALIZATION_ULPS)
+            );
         }
     }
 
     #[test]
-    fn anisotropic_is_generic_over_scalar_f32_and_axis_selectable() {
-        let g =
-            VoxelGrid::<f32>::axis_aligned([7, 7, 7], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap();
-        let terma = Volume::from_shape_fn(g, |idx| if idx == [3, 3, 3] { 1.0_f32 } else { 0.0 });
-        let (fp, centre) = forward_peaked_kernel(0.1_f32, 1.0, 0.2, 1, 2);
-        let lat = symmetric_deposition_kernel(0.3_f32, 0.2, 1);
+    fn single_component_poly_matches_the_monoenergetic_kernel_in_single_precision() {
+        single_component_poly_matches_the_monoenergetic_kernel::<f32>();
+    }
+
+    #[test]
+    fn single_component_poly_matches_the_monoenergetic_kernel_in_double_precision() {
+        single_component_poly_matches_the_monoenergetic_kernel::<f64>();
+    }
+
+    /// A single spectral component's weight cancels in normalization, so the poly
+    /// kernel differs from the monoenergetic one only by that division. Eight ulps
+    /// bounds a handful of roundings.
+    const WEIGHT_NORMALIZATION_ULPS: f64 = 8.0;
+
+    /// Mirror symmetry across the beam axis compares two sums built from the same
+    /// kernel taps in mirrored order. Reordering a sum of `n` terms perturbs it by
+    /// at most `n * T::EPSILON`; these kernels have single-digit tap counts, so 16
+    /// ulps bounds the reordering with margin.
+    const MIRROR_SYMMETRY_ULPS: f64 = 16.0;
+
+    /// Asserts beam-axis selection and transverse symmetry in one scalar width.
+    fn anisotropic_scatter_is_symmetric_across_the_beam_axis<T: ShippedScalar>() {
+        let zero = T::from_f64(0.0);
+        let one = T::from_f64(1.0);
+        let spacing = T::from_f64(2.0);
+        let grid =
+            VoxelGrid::<T>::axis_aligned([7, 7, 7], [spacing; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
+
+        let terma = Volume::from_shape_fn(grid, |idx| if idx == [3, 3, 3] { one } else { zero });
+        let (forward, centre) =
+            forward_peaked_kernel(T::from_f64(0.1), one, T::from_f64(0.2), 1, 2);
+        let lateral = symmetric_deposition_kernel(T::from_f64(0.3), T::from_f64(0.2), 1);
+
         // Beam along y: anisotropy shows on the j axis, not i.
-        let dose = anisotropic_scatter_superposition(&terma, 1, &fp, centre, &lat);
-        assert!(dose.get(3, 4, 3).unwrap() > dose.get(3, 2, 3).unwrap());
+        let dose = anisotropic_scatter_superposition(&terma, 1, &forward, centre, &lateral);
+        assert!(
+            dose.get(3, 4, 3).unwrap() > dose.get(3, 2, 3).unwrap(),
+            "forward peaking must favour +y over -y"
+        );
         assert_relative_eq!(
             dose.get(2, 3, 3).unwrap(),
             dose.get(4, 3, 3).unwrap(),
-            epsilon = 1e-6
+            max_relative = T::EPSILON * T::from_f64(MIRROR_SYMMETRY_ULPS)
         );
+    }
+
+    #[test]
+   fn anisotropic_scatter_is_symmetric_across_the_beam_axis_in_single_precision() {
+        anisotropic_scatter_is_symmetric_across_the_beam_axis::<f32>();
+    }
+
+    #[test]
+   fn anisotropic_scatter_is_symmetric_across_the_beam_axis_in_double_precision() {
+        anisotropic_scatter_is_symmetric_across_the_beam_axis::<f64>();
     }
 
     #[test]
@@ -580,15 +633,40 @@ mod tests {
         assert_relative_eq!(k[0], k[6], epsilon = 1e-15);
     }
 
+    /// Energy conservation sums the whole 5x5x5 dose grid, so 125 additions
+    /// accumulate against a unit total; worst-case growth is `n * T::EPSILON` with
+    /// `n = 125`. Two hundred fifty-six ulps bounds that, and is still an order of
+    /// magnitude tighter than the 1e-5 absolute bound it replaces.
+    const ENERGY_CONSERVATION_ULPS: f64 = 256.0;
+
+    /// Asserts interior point-source energy conservation in one scalar width.
+    fn scatter_superposition_conserves_interior_energy<T: ShippedScalar>() {
+        let zero = T::from_f64(0.0);
+        let one = T::from_f64(1.0);
+        let spacing = T::from_f64(2.0);
+        let grid =
+            VoxelGrid::<T>::axis_aligned([5, 5, 5], [spacing; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
+
+        let terma = Volume::from_shape_fn(grid, |idx| if idx == [2, 2, 2] { one } else { zero });
+        let kernel = symmetric_deposition_kernel(T::from_f64(0.5), T::from_f64(0.2), 2);
+        let dose = scatter_superposition(&terma, &kernel, &kernel, &kernel);
+
+        // A normalized kernel redistributes a unit interior source without loss.
+        assert_relative_eq!(
+            dose.sum(),
+            one,
+            max_relative = T::EPSILON * T::from_f64(ENERGY_CONSERVATION_ULPS)
+        );
+    }
+
     #[test]
-    fn scatter_is_generic_over_scalar_f32() {
-        let g =
-            VoxelGrid::<f32>::axis_aligned([5, 5, 5], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap();
-        let terma = Volume::from_shape_fn(g, |idx| if idx == [2, 2, 2] { 1.0_f32 } else { 0.0 });
-        let k = symmetric_deposition_kernel(0.5_f32, 0.2, 2);
-        let dose = scatter_superposition(&terma, &k, &k, &k);
-        // Interior point source: energy conserved.
-        assert_relative_eq!(dose.sum(), 1.0_f32, epsilon = 1e-5);
+   fn scatter_superposition_conserves_interior_energy_in_single_precision() {
+        scatter_superposition_conserves_interior_energy::<f32>();
+    }
+
+    #[test]
+   fn scatter_superposition_conserves_interior_energy_in_double_precision() {
+        scatter_superposition_conserves_interior_energy::<f64>();
     }
 }
