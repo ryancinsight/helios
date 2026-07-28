@@ -9,6 +9,11 @@ under a Breaking subsection.
 
 ### Changed
 
+- `helios-gpu::GpuAttenuationMapper::new` now accepts Aequitas `AreaPerMass`
+  and `MassDensity` inputs instead of raw cm-based `f32` scalars. Conversion
+  to the fused GPU kernel's cm units remains at the explicit formula boundary.
+  See [ADR 0013](docs/adr/0013-gpu-attenuation-quantities.md).
+
 - `helios-domain` restores typed Aequitas contracts for helical delivery
   kinematics and collimation penumbra. `helios-simulation` carries typed angle,
   length, time, and velocity values through helical projection, delivery,

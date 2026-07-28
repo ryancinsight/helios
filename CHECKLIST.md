@@ -4,6 +4,22 @@
 **Current phase:** Phase 2 (Execution). Sprint 1 domain core complete
 (`helios-core`/`math`/`domain`); Sprint 2 opened with `helios-physics`.
 
+## Codex — H-094 typed GPU attenuation inputs [arch] [major] — done 2026-07-27
+
+- [x] Replace raw mass-attenuation and water-density constructor scalars with
+      Aequitas `AreaPerMass<f32>` and `MassDensity<f32>`.
+- [x] Migrate the GPU tests and attenuation example; keep cm-based extraction
+      only at the explicit fused-kernel formula boundary.
+- [x] Add ADR 0013 and synchronize the child audit, backlog, checklist, and
+      changelog without staging the peer-owned lockfile.
+- [x] Run package check with tests/examples, Nextest, warning-denied Clippy,
+      doctests, Rustdoc, rustfmt, and diff checks.
+
+Evidence: `helios-gpu` check with tests/examples passes; Nextest passes 10/10;
+warning-denied Clippy, doctests, and Rustdoc pass; touched-file formatting and
+diff checks pass. Existing shared-graph patch warnings and the dirty lockfile
+are outside H-094.
+
 ## Owner: claude-helios
 
 ## Owner: Codex

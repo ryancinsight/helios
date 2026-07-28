@@ -14,6 +14,10 @@
 //! contract (the clamp uses WGSL `max`, whose NaN ordering is
 //! implementation-defined).
 
+use aequitas::systems::si::{
+    quantities::{AreaPerMass, MassDensity},
+    units::{GramPerCubicCentimeter, SquareCentimeterPerGram},
+};
 use bytemuck::{Pod, Zeroable};
 use hephaestus_core::{
     Binding, BindingDecl, DispatchGrid, HephaestusError, KernelDevice, KernelInterface,
@@ -95,14 +99,19 @@ pub struct GpuAttenuationMapper<D: KernelDevice<Dialect = Wgsl>> {
 
 impl<D: KernelDevice<Dialect = Wgsl>> GpuAttenuationMapper<D> {
     /// Prepare the mapper for a beam energy's water mass-attenuation
-    /// coefficient `mu_over_rho_cm2_g` (cm²/g) and reference water density
-    /// `water_density_g_cm3` (g/cm³).
+    /// coefficient and reference water density.
     ///
     /// # Errors
     /// Returns [`HephaestusError::DispatchFailed`] when a coefficient is
     /// non-finite or negative, or the backend's typed failure when pipeline
     /// preparation fails.
-    pub fn new(device: D, mu_over_rho_cm2_g: f32, water_density_g_cm3: f32) -> Result<Self> {
+    pub fn new(
+        device: D,
+        mass_attenuation: AreaPerMass<f32>,
+        water_density: MassDensity<f32>,
+    ) -> Result<Self> {
+        let mu_over_rho_cm2_g = mass_attenuation.in_unit::<SquareCentimeterPerGram>();
+        let water_density_g_cm3 = water_density.in_unit::<GramPerCubicCentimeter>();
         if !mu_over_rho_cm2_g.is_finite() || mu_over_rho_cm2_g < 0.0 {
             return Err(HephaestusError::DispatchFailed {
                 message: format!(
@@ -174,12 +183,17 @@ mod tests {
 
     // NIST-representative water μ/ρ at ~1 MeV and unit water density; tests
     // verify the defining relation, not these specific magnitudes.
-    const MU_OVER_RHO: f32 = 0.0707;
-    const WATER_DENSITY: f32 = 1.0;
+    fn mu_over_rho() -> AreaPerMass<f32> {
+        AreaPerMass::from_unit::<SquareCentimeterPerGram>(0.0707)
+    }
+
+    fn water_density() -> MassDensity<f32> {
+        MassDensity::from_unit::<GramPerCubicCentimeter>(1.0)
+    }
 
     fn cpu_reference(hu: f32) -> f32 {
         // μ = (μ/ρ)·ρ_water·max(1 + HU/1000, 0), computed in f32 like the GPU.
-        MU_OVER_RHO * WATER_DENSITY * (1.0_f32 + hu / 1000.0).max(0.0)
+        0.0707_f32 * (1.0_f32 + hu / 1000.0).max(0.0)
     }
 
     #[test]
@@ -188,7 +202,8 @@ mod tests {
             eprintln!("no GPU adapter — skipping HU→μ closed-form test");
             return;
         };
-        let mapper = GpuAttenuationMapper::new(device, MU_OVER_RHO, WATER_DENSITY).expect("mapper");
+        let mapper =
+            GpuAttenuationMapper::new(device, mu_over_rho(), water_density()).expect("mapper");
         // Air (−1000, clamps to exactly 0), below-air (clamped), lung, water,
         // soft tissue, trabecular and cortical bone, metal.
         let hu = [
@@ -245,13 +260,13 @@ mod tests {
         });
 
         let mass_atten = MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(
-            MU_OVER_RHO,
+            0.0707_f32,
         ))
         .expect("μ/ρ ≥ 0");
         let reference = helios_solver::attenuation_map(
             &ct,
             mass_atten,
-            MassDensity::from_unit::<GramPerCubicCentimeter>(WATER_DENSITY),
+            MassDensity::from_unit::<GramPerCubicCentimeter>(1.0_f32),
         )
         .expect("fixture calibration is finite");
 
@@ -263,7 +278,8 @@ mod tests {
                 }
             }
         }
-        let mapper = GpuAttenuationMapper::new(device, MU_OVER_RHO, WATER_DENSITY).expect("mapper");
+        let mapper =
+            GpuAttenuationMapper::new(device, mu_over_rho(), water_density()).expect("mapper");
         let mut got = vec![0.0_f32; hu_flat.len()];
         mapper.map_into(&hu_flat, &mut got).expect("gpu HU→μ");
 
@@ -288,7 +304,8 @@ mod tests {
         let Ok(device) = default_device() else {
             return;
         };
-        let mapper = GpuAttenuationMapper::new(device, MU_OVER_RHO, WATER_DENSITY).expect("mapper");
+        let mapper =
+            GpuAttenuationMapper::new(device, mu_over_rho(), water_density()).expect("mapper");
         let mut out = [0.0_f32; 3];
         let err = mapper.map_into(&[0.0; 4], &mut out).unwrap_err();
         assert!(matches!(err, HephaestusError::LengthMismatch { .. }));
@@ -299,9 +316,30 @@ mod tests {
         let Ok(device) = default_device() else {
             return;
         };
-        assert!(GpuAttenuationMapper::new(device.clone(), f32::NAN, 1.0).is_err());
-        assert!(GpuAttenuationMapper::new(device.clone(), -0.1, 1.0).is_err());
-        assert!(GpuAttenuationMapper::new(device, 0.0707, 0.0).is_err());
+        assert!(
+            GpuAttenuationMapper::new(
+                device.clone(),
+                AreaPerMass::from_unit::<SquareCentimeterPerGram>(f32::NAN),
+                water_density(),
+            )
+            .is_err()
+        );
+        assert!(
+            GpuAttenuationMapper::new(
+                device.clone(),
+                AreaPerMass::from_unit::<SquareCentimeterPerGram>(-0.1),
+                water_density(),
+            )
+            .is_err()
+        );
+        assert!(
+            GpuAttenuationMapper::new(
+                device,
+                mu_over_rho(),
+                MassDensity::from_unit::<GramPerCubicCentimeter>(0.0),
+            )
+            .is_err()
+        );
     }
 
     #[test]
@@ -309,7 +347,8 @@ mod tests {
         let Ok(device) = default_device() else {
             return;
         };
-        let mapper = GpuAttenuationMapper::new(device, MU_OVER_RHO, WATER_DENSITY).expect("mapper");
+        let mapper =
+            GpuAttenuationMapper::new(device, mu_over_rho(), water_density()).expect("mapper");
         let mut out: [f32; 0] = [];
         mapper.map_into(&[], &mut out).expect("empty is a no-op");
     }

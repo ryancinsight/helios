@@ -32,6 +32,21 @@ focused value-semantic gates; a full locked workspace gate still depends on
 the shared provider graph represented by the pre-existing dirty manifest and
 lockfile.
 
+## Live GPU attenuation refresh (2026-07-27)
+
+`HELIOS-AEQ-MET-05` closed a live public boundary missed by the earlier audit:
+`helios-gpu::GpuAttenuationMapper::new` accepted mass attenuation and water
+density as raw `f32` values even though the CPU attenuation path already used
+typed Aequitas/provider quantities. The constructor now accepts Aequitas
+`AreaPerMass<f32>` and `MassDensity<f32>`; conversion to the cm-based GPU
+kernel units occurs once at the explicit formula boundary. Tests and the GPU
+example use the typed constructors, with no scalar compatibility facade.
+
+`helios-gpu` check with tests/examples, Nextest (10/10), warning-denied
+Clippy, doctests, Rustdoc, rustfmt, and diff checks pass against the shared
+offline graph. Existing unused local-patch warnings and the dirty peer
+lockfile remain outside this metric slice.
+
 ## Aequitas metric gap audit (2026-07-23)
 
 The dose field itself remains `helios_domain::Volume<T>` storage. This audit
@@ -54,6 +69,7 @@ and attenuation, and `AreaPerMass` for mass attenuation. `EnergyMeV` and
 | `HELIOS-AEQ-MET-02` | `helios-analysis/src/gamma.rs` accepted `dta_mm`, normalization dose, low-dose cutoff, and search radius as raw `T`; gamma volume and pass rate are dimensionless. | Type distances as `Length`, dose thresholds as `AbsorbedDose`, and keep the result storage scalar/dimensionless. | Helios | **RESOLVED.** `gamma_index_3d`, `gamma_index_3d_local`, and `gamma_pass_rate` now type physical criteria with Aequitas while retaining the Low gamma kernel, local/global normalization, grid checks, scalar gamma field, and scalar pass rate. Focused value-semantic gamma tests and all in-tree callers migrate; ADR 0007 records the breaking boundary. |
 | `HELIOS-AEQ-MET-03` | `helios-simulation/src/delivery.rs` stored leaf fluence as `T`; `total_delivered_fluence` returned `T`. `portal.rs` constructed `EnergyPerArea` internally and converted it back. `dose_accumulation.rs` accepted `*_mm` geometry and sampling values as `T`. | Carry fluence as `EnergyPerArea` and geometry distances as `Length` through delivery, portal, and dose accumulation. | Helios | **RESOLVED.** `DeliveryFrame`, collimation, portal transmission, total fluence, and dose geometry now use Aequitas quantities. Typed values convert once to the existing millimetre ray/voxel kernel; closed-leaf zero, Beer–Lambert darkening, fluence linearity, geometry-limit, f32, example, and end-to-end regressions pass. ADR 0008 records the breaking boundary. |
 | `HELIOS-AEQ-MET-04` | `helios-analysis/src/image_quality.rs` returns raw intensity/RMSE values, while the same analysis can operate on dose volumes. | Decide the semantic input at the analysis boundary: retain raw image intensity for MVCT, but return `AbsorbedDose` statistics when the API contract is dose-specific. | Helios | **RESOLVED.** Shared ROI/RMSE value kernels now back raw MVCT `roi_statistics`/`volume_rmse` and typed-dose `dose_roi_statistics`/`dose_volume_rmse`; the clinical validation example uses typed dose means/stddev and converts only for dimensionless contrast/CNR. Value tests cover f64/f32 and Gray outputs; ADR 0009 records the partition. |
+| `HELIOS-AEQ-MET-05` | `helios-gpu/src/attenuation.rs` accepted mass attenuation `mu_over_rho_cm2_g` and reference water density `water_density_g_cm3` as raw `f32` at `GpuAttenuationMapper::new`, despite the CPU attenuation boundary using Aequitas/provider quantities. | Accept typed Aequitas `AreaPerMass<f32>` and `MassDensity<f32>`; extract cm²/g and g/cm³ only at the GPU formula boundary and migrate tests/examples without a scalar facade. | Helios, Aequitas | **RESOLVED in this increment.** `GpuAttenuationMapper::new` carries typed coefficient/density inputs and preserves the fused clamp law. Check with tests/examples, Nextest 10/10, warning-denied Clippy, doctests, Rustdoc, rustfmt, and diff checks pass. See [ADR 0013](docs/adr/0013-gpu-attenuation-quantities.md). |
 
 ### Explicit non-gaps and constraints
 

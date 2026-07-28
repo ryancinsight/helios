@@ -38,7 +38,7 @@ use aequitas::systems::si::{
     units::{GramPerCubicCentimeter, SquareCentimeterPerGram},
 };
 use helios_domain::{Volume, VoxelGrid};
-use helios_gpu::{default_device, GpuAttenuationMapper};
+use helios_gpu::{GpuAttenuationMapper, default_device};
 use helios_math::Point3;
 use helios_solver::attenuation_map;
 use hyperion::coefficient::MassAttenuation;
@@ -96,8 +96,12 @@ fn main() {
         Ok(device) => {
             println!("\nGPU device acquired\n");
 
-            let mapper = GpuAttenuationMapper::new(device, 0.0636_f32, 1.0_f32)
-                .expect("valid GPU attenuation mapper");
+            let mapper = GpuAttenuationMapper::new(
+                device,
+                AreaPerMass::from_unit::<SquareCentimeterPerGram>(0.0636_f32),
+                MassDensity::from_unit::<GramPerCubicCentimeter>(1.0_f32),
+            )
+            .expect("valid GPU attenuation mapper");
 
             // Convert phantom to f32 for GPU dispatch (hephaestus is f32 precision)
             let hu_f32: Vec<f32> = phantom_hu.as_slice().iter().map(|&v| v as f32).collect();
