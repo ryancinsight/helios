@@ -151,17 +151,8 @@ pub fn dose_convolution_x<T: Scalar>(terma: &Volume<T>, kernel: &[T]) -> Volume<
 mod tests {
     use super::*;
     use eunomia::assert_relative_eq;
+    use helios_math::ShippedScalar;
     use helios_math::Point3;
-
-    /// The scalar widths this crate's generic kernels are instantiated for.
-    ///
-    /// Naming the set in one place is the point of the exercise: a generic kernel
-    /// exercised at a single concrete type leaves every other monomorphization a
-    /// caller can build unverified. Admitting a new scalar type is one `impl`
-    /// line here, and every generic test below inherits it.
-    trait ShippedScalar: Scalar + UnitScalar + eunomia::RelativeEq<Epsilon = Self> {}
-    impl ShippedScalar for f32 {}
-    impl ShippedScalar for f64 {}
 
     fn grid() -> VoxelGrid<f64> {
         // 2 mm spacing along x → 0.2 cm per column.

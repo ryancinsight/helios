@@ -95,6 +95,7 @@ mod tests {
     use super::*;
     use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
     use eunomia::assert_relative_eq;
+    use helios_math::ShippedScalar;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
 
@@ -186,22 +187,51 @@ mod tests {
         assert_eq!(mu.grid().dims(), ct.grid().dims());
     }
 
-    #[test]
-    fn engine_is_generic_over_scalar_f32() {
-        let g =
-            VoxelGrid::<f32>::axis_aligned([2, 2, 2], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap();
-        let ct = Volume::from_shape_fn(g, |_| 0.0_f32);
-        let coefficient =
-            MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(0.06_f32))
-                .unwrap();
+    /// `mu = (mu/rho) * rho` at unit density is one product plus the HU-to-density
+    /// calibration of a zero CT value, so at most a few roundings separate the
+    /// result from the mass-attenuation input. Four ulps of `T` bounds that.
+    const MASS_TO_LINEAR_ULPS: f64 = 4.0;
+
+    /// Asserts mass-to-linear attenuation conversion in one scalar width.
+    fn attenuation_map_scales_mass_coefficient_by_density<T: ShippedScalar>() {
+        let zero = T::from_f64(0.0);
+        let unit = T::from_f64(1.0);
+        let grid = VoxelGrid::<T>::axis_aligned(
+            [2, 2, 2],
+            [unit; 3],
+            Point3::new(zero, zero, zero),
+        )
+        .expect("valid axis-aligned grid");
+
+        let mass_coefficient = T::from_f64(0.06);
+        let ct = Volume::from_shape_fn(grid, |_| zero);
+        let coefficient = MassAttenuation::new(AreaPerMass::from_unit::<
+            SquareCentimeterPerGram,
+        >(mass_coefficient))
+        .expect("positive mass-attenuation coefficient");
         let mu = attenuation_map(
             &ct,
             coefficient,
-            DensityQuantity::<f32>::from_unit::<GramPerCubicCentimeter>(1.0_f32),
+            DensityQuantity::<T>::from_unit::<GramPerCubicCentimeter>(unit),
         )
         .expect("fixture calibration is finite");
-        assert_relative_eq!(mu.get(0, 0, 0).unwrap(), 0.06_f32, epsilon = 1e-6);
+
+        // At 1 g/cm^3 the linear coefficient equals the mass coefficient.
+        assert_relative_eq!(
+            mu.get(0, 0, 0).unwrap(),
+            mass_coefficient,
+            max_relative = T::EPSILON * T::from_f64(MASS_TO_LINEAR_ULPS)
+        );
+    }
+
+    #[test]
+    fn attenuation_map_scales_mass_coefficient_by_density_in_single_precision() {
+        attenuation_map_scales_mass_coefficient_by_density::<f32>();
+    }
+
+    #[test]
+    fn attenuation_map_scales_mass_coefficient_by_density_in_double_precision() {
+        attenuation_map_scales_mass_coefficient_by_density::<f64>();
     }
 
     #[test]

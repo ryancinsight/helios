@@ -101,6 +101,7 @@ pub fn forward_project_ray<T: GeometryScalar>(
 mod tests {
     use super::*;
     use eunomia::assert_relative_eq;
+    use helios_math::ShippedScalar;
     use helios_math::{Ray, Vector3};
 
     fn axis_grid() -> VoxelGrid<f64> {
@@ -178,18 +179,53 @@ mod tests {
         assert_relative_eq!(tau, 0.12, epsilon = 1e-12);
     }
 
-    #[test]
-    fn projector_is_generic_over_scalar_f32() {
-        let g =
-            VoxelGrid::<f32>::axis_aligned([11, 3, 3], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap();
-        let mu = Volume::from_shape_fn(g, |_| 0.06_f32);
+    /// The projected optical depth is a running sum of per-step contributions
+    /// along the ray. A sum of `n` terms grows relative error as `n * T::EPSILON`
+    /// in the worst case; this fixture marches a 2 cm extent at a 0.5 mm step, so
+    /// `n` is on the order of 40. Sixty-four ulps bounds that with margin while
+    /// staying well below the 1e-5 absolute bound it replaces, which was ~8e-5
+    /// relative at this magnitude.
+    const PROJECTION_ULPS: f64 = 64.0;
+
+    /// Asserts ray-marched optical depth in one scalar width.
+    fn forward_projection_accumulates_uniform_optical_depth<
+        T: ShippedScalar + helios_math::GeometryScalar,
+    >() {
+        // Both FloatElement and GeometryScalar define `from_f64`; name the one
+        // that performs the literal conversion so the call is unambiguous.
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
+        let spacing = cast(2.0);
+        let grid =
+            VoxelGrid::<T>::axis_aligned([11, 3, 3], [spacing; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
+
+        let mu = cast(0.06);
+        let volume = Volume::from_shape_fn(grid, |_| mu);
         let ray = Ray::try_new(
-            Point3::new(-5.0_f32, 2.0, 2.0),
-            Vector3::new(1.0_f32, 0.0, 0.0),
+            Point3::new(cast(-5.0), spacing, spacing),
+            Vector3::new(cast(1.0), zero, zero),
         )
-        .unwrap();
-        let tau = forward_project_ray(&mu, &ray, 0.5_f32).expect("hit");
-        assert_relative_eq!(tau, 0.06_f32 * 2.0, epsilon = 1e-5);
+        .expect("non-degenerate ray direction");
+
+        let tau =
+            forward_project_ray(&volume, &ray, cast(0.5)).expect("ray hits the volume");
+
+        // Uniform mu over a 2 cm traversal: tau = mu * 2.
+        assert_relative_eq!(
+            tau,
+            mu * cast(2.0),
+            max_relative = T::EPSILON * cast(PROJECTION_ULPS)
+        );
+    }
+
+    #[test]
+    fn forward_projection_accumulates_uniform_optical_depth_in_single_precision() {
+        forward_projection_accumulates_uniform_optical_depth::<f32>();
+    }
+
+    #[test]
+    fn forward_projection_accumulates_uniform_optical_depth_in_double_precision() {
+        forward_projection_accumulates_uniform_optical_depth::<f64>();
     }
 }

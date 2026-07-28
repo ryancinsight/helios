@@ -180,6 +180,7 @@ fn deposit_terma_impl<T: GeometryScalar + UnitScalar>(
 mod tests {
     use super::*;
     use eunomia::assert_relative_eq;
+    use helios_math::ShippedScalar;
     use helios_domain::VoxelGrid;
     use helios_math::{Point3, Vector3};
 
@@ -338,24 +339,74 @@ mod tests {
         assert_eq!(dose.as_slice(), before);
     }
 
-    #[test]
-    fn deposition_is_generic_over_scalar_f32() {
+    /// Absorbed fraction `1 - exp(-mu*L)` is a subtractive cancellation: at
+    /// `mu*L = 0.08` the result is ~0.0769, so the relative error of `exp` is
+    /// amplified by `1/0.0769`, roughly 13x. Budgeting `exp` at a few ulps
+    /// (IEEE 754 does not require it correctly rounded) and applying that
+    /// amplification gives a few tens of ulps; 64 bounds it.
+    const ABSORBED_FRACTION_ULPS: f64 = 64.0;
+
+    /// The energy-conservation check compares the returned total against a sum
+    /// over the 9x9x9 dose grid, so it carries both the cancellation above and
+    /// the accumulation over the deposited voxels. Twice the single-value budget
+    /// covers the independent second computation.
+    const ENERGY_BALANCE_ULPS: f64 = 128.0;
+
+    /// Asserts ray TERMA deposition and its energy balance in one scalar width.
+    fn ray_deposition_conserves_absorbed_energy<T: ShippedScalar + helios_math::GeometryScalar>() {
+        // Both FloatElement and GeometryScalar define `from_f64`; name the one
+        // that performs the literal conversion so the call is unambiguous.
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
+        let spacing = cast(2.0);
         let grid =
-            VoxelGrid::<f32>::axis_aligned([9, 9, 9], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap();
-        let mu = Volume::from_shape_fn(grid, |_| 0.05_f32);
-        let mut dose = Volume::zeros(*mu.grid());
+            VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
+
+        let mu = cast(0.05);
+        let attenuation = Volume::from_shape_fn(grid, |_| mu);
+        let mut dose = Volume::zeros(*attenuation.grid());
         let ray = Ray::try_new(
-            Point3::new(-50.0_f32, 8.0, 8.0),
-            Vector3::new(1.0_f32, 0.0, 0.0),
+            Point3::new(cast(-50.0), cast(8.0), cast(8.0)),
+            Vector3::new(cast(1.0), zero, zero),
         )
-        .unwrap();
-        let total = deposit_ray_terma(&mut dose, &mu, &ray, 1.0_f32, 0.25)
-            .expect("valid attenuation volume")
-            .into_base();
-        let expected = 1.0_f32 - (-0.05_f32 * 1.6).exp();
-        assert_relative_eq!(total, expected, epsilon = 1e-6);
-        assert_relative_eq!(dose.sum(), total, epsilon = 1e-5);
+        .expect("non-degenerate ray direction");
+
+        let total = deposit_ray_terma(
+            &mut dose,
+            &attenuation,
+            &ray,
+            cast(1.0),
+            cast(0.25),
+        )
+        .expect("valid attenuation volume")
+        .into_base();
+
+        // Absorbed fraction over the 1.6 cm traversed path.
+        let path_cm = cast(1.6);
+        let expected = cast(1.0) - (-(mu * path_cm)).exp();
+        assert_relative_eq!(
+            total,
+            expected,
+            max_relative = T::EPSILON * cast(ABSORBED_FRACTION_ULPS)
+        );
+
+        // Energy conservation: what the kernel reports equals what it deposited.
+        assert_relative_eq!(
+            dose.sum(),
+            total,
+            max_relative = T::EPSILON * cast(ENERGY_BALANCE_ULPS)
+        );
+    }
+
+    #[test]
+    fn ray_deposition_conserves_absorbed_energy_in_single_precision() {
+        ray_deposition_conserves_absorbed_energy::<f32>();
+    }
+
+    #[test]
+    fn ray_deposition_conserves_absorbed_energy_in_double_precision() {
+        ray_deposition_conserves_absorbed_energy::<f64>();
     }
 
     #[test]

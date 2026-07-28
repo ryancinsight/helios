@@ -34,6 +34,31 @@ pub use eunomia::RealField as Scalar;
 // one vocabulary source.
 pub use eunomia::{CastFrom, CastTo, FloatElement, NumericElement};
 
+/// The scalar widths Helios kernels are shipped and verified for.
+///
+/// [`Scalar`] alone is the seam kernels are *written* against; this trait names
+/// the concrete set they are *instantiated* against. The distinction matters
+/// because a generic kernel exercised at a single concrete type leaves every
+/// other monomorphization a caller can build unverified — so generic tests bind
+/// `T: ShippedScalar` and are instantiated once per implementor.
+///
+/// The bounds are the union of what a generic kernel and its assertions need:
+/// [`Scalar`] for the arithmetic, [`eunomia::UnitScalar`] for kernels taking
+/// Aequitas quantities, and [`eunomia::RelativeEq`] with a native `Epsilon` so a
+/// tolerance can be derived from `T::EPSILON` rather than written as a literal.
+///
+/// Admitting a new width is one `impl` line here, and every generic test across
+/// the workspace inherits it. The set is exactly `eunomia::RealField`'s
+/// implementors: `f16` and `bf16` are absent because `RealField` has no impl for
+/// them, so they are not instantiable rather than merely untested.
+pub trait ShippedScalar:
+    Scalar + eunomia::UnitScalar + eunomia::RelativeEq<Epsilon = Self>
+{
+}
+
+impl ShippedScalar for f32 {}
+impl ShippedScalar for f64 {}
+
 /// Linear-algebra substrate from leto, re-exported as the Helios vocabulary.
 /// Gated on the `geometry` feature (numeric/physics layers do not need it).
 /// leto's geometry types live in the `leto::geometry` module.
