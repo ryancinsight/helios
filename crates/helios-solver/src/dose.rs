@@ -21,13 +21,14 @@ use aequitas::systems::si::{
     quantities::{Length, ReciprocalLength},
     units::{Centimeter, PerCentimeter},
 };
+use eunomia::UnitScalar;
 use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Scalar;
 use hyperion::{
+    TransportError,
     coefficient::{InteractionCoefficient, LinearAttenuation},
     quantity::{OpticalDepth, PathLength},
-    TransportError,
 };
 
 /// Attenuated primary energy fluence for a parallel beam entering along **+x**.
@@ -45,7 +46,7 @@ use hyperion::{
 ///
 /// Returns [`TransportError`] when an attenuation coefficient is negative or
 /// non-finite, or when an optical-depth product or partial sum is non-finite.
-pub fn primary_fluence_parallel_x<T: Scalar>(
+pub fn primary_fluence_parallel_x<T: Scalar + UnitScalar>(
     mu: &Volume<T>,
     incident_fluence: T,
 ) -> Result<Volume<T>, TransportError<T>> {

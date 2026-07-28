@@ -22,6 +22,7 @@ use aequitas::systems::si::{
     quantities::{Angle, Dimensionless, Length, Time, Velocity},
     units::{Millimeter, Radian, Second},
 };
+use eunomia::UnitScalar;
 use helios_core::HeliosError;
 use helios_math::{NumericElement, Scalar};
 
@@ -39,7 +40,7 @@ pub struct HelicalDelivery<T: Scalar> {
     start_couch_mm: Length<T>,
 }
 
-impl<T: Scalar> HelicalDelivery<T> {
+impl<T: Scalar + UnitScalar> HelicalDelivery<T> {
     /// Construct a helical delivery.
     ///
     /// - `projections_per_rotation`: gantry projections per full rotation (51 on
@@ -235,42 +236,50 @@ mod tests {
 
     #[test]
     fn rejects_invalid_parameters() {
-        assert!(HelicalDelivery::new(
-            0,
-            Length::from_unit::<Millimeter>(25.0),
-            Dimensionless::from_base(0.4),
-            Time::from_unit::<Second>(10.0),
-            angle(0.0),
-            Length::from_unit::<Millimeter>(0.0),
-        )
-        .is_err());
-        assert!(HelicalDelivery::new(
-            51,
-            Length::from_unit::<Millimeter>(0.0),
-            Dimensionless::from_base(0.4),
-            Time::from_unit::<Second>(10.0),
-            angle(0.0),
-            Length::from_unit::<Millimeter>(0.0),
-        )
-        .is_err());
-        assert!(HelicalDelivery::new(
-            51,
-            Length::from_unit::<Millimeter>(25.0),
-            Dimensionless::from_base(-0.4),
-            Time::from_unit::<Second>(10.0),
-            angle(0.0),
-            Length::from_unit::<Millimeter>(0.0),
-        )
-        .is_err());
-        assert!(HelicalDelivery::new(
-            51,
-            Length::from_unit::<Millimeter>(25.0),
-            Dimensionless::from_base(0.4),
-            Time::from_unit::<Second>(f64::NAN),
-            angle(0.0),
-            Length::from_unit::<Millimeter>(0.0),
-        )
-        .is_err());
+        assert!(
+            HelicalDelivery::new(
+                0,
+                Length::from_unit::<Millimeter>(25.0),
+                Dimensionless::from_base(0.4),
+                Time::from_unit::<Second>(10.0),
+                angle(0.0),
+                Length::from_unit::<Millimeter>(0.0),
+            )
+            .is_err()
+        );
+        assert!(
+            HelicalDelivery::new(
+                51,
+                Length::from_unit::<Millimeter>(0.0),
+                Dimensionless::from_base(0.4),
+                Time::from_unit::<Second>(10.0),
+                angle(0.0),
+                Length::from_unit::<Millimeter>(0.0),
+            )
+            .is_err()
+        );
+        assert!(
+            HelicalDelivery::new(
+                51,
+                Length::from_unit::<Millimeter>(25.0),
+                Dimensionless::from_base(-0.4),
+                Time::from_unit::<Second>(10.0),
+                angle(0.0),
+                Length::from_unit::<Millimeter>(0.0),
+            )
+            .is_err()
+        );
+        assert!(
+            HelicalDelivery::new(
+                51,
+                Length::from_unit::<Millimeter>(25.0),
+                Dimensionless::from_base(0.4),
+                Time::from_unit::<Second>(f64::NAN),
+                angle(0.0),
+                Length::from_unit::<Millimeter>(0.0),
+            )
+            .is_err()
+        );
     }
 
     #[test]

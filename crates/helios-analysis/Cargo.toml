@@ -14,12 +14,12 @@ workspace = true
 [dependencies]
 aequitas = { workspace = true }
 asclepius = { workspace = true }
+eunomia = { workspace = true }
 helios-core = { workspace = true }
 helios-math = { workspace = true }
 helios-domain = { workspace = true }
 
 [dev-dependencies]
-eunomia = { workspace = true }
 criterion = { workspace = true }
 helios-imaging = { workspace = true }
 

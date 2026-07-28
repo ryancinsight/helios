@@ -12,6 +12,7 @@ use aequitas::systems::si::{
     quantities::{Angle, Dimensionless, EnergyPerArea, Length},
     units::Millimeter,
 };
+use eunomia::UnitScalar;
 use helios_domain::{FieldAperture, HelicalDelivery, LeafOpenTimeSinogram, MlcModel};
 use helios_math::{GeometryScalar, NumericElement, Point3, Scalar};
 
@@ -40,7 +41,7 @@ pub struct DeliveryFrame<T: Scalar> {
 /// of `leaf_open_times`, with the gantry/couch state from `delivery` and the
 /// per-leaf effective fluence from `mlc`.
 #[must_use]
-pub fn simulate_helical_delivery<T: Scalar>(
+pub fn simulate_helical_delivery<T: Scalar + UnitScalar>(
     delivery: &HelicalDelivery<T>,
     leaf_open_times: &LeafOpenTimeSinogram<T>,
     mlc: &MlcModel<T>,
@@ -85,7 +86,7 @@ pub fn total_delivered_fluence<T: Scalar>(frames: &[DeliveryFrame<T>]) -> Energy
 /// the field edge are partially transmitted. Returns new frames; the machine state
 /// (gantry, couch) is preserved.
 #[must_use]
-pub fn collimate_frames<T: GeometryScalar>(
+pub fn collimate_frames<T: GeometryScalar + UnitScalar>(
     frames: &[DeliveryFrame<T>],
     aperture: &FieldAperture<T>,
     leaf_width: Length<T>,

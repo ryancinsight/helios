@@ -9,15 +9,16 @@
 //! fluence, and attenuation multiplies each reading by `exp(−τ)`.
 
 use crate::delivery::DeliveryFrame;
-use crate::dose_accumulation::{beamlet_ray, gantry_basis, BeamGeometry};
+use crate::dose_accumulation::{BeamGeometry, beamlet_ray, gantry_basis};
 use aequitas::systems::si::{
     quantities::{Dimensionless, EnergyPerArea, Length},
     units::Millimeter,
 };
+use eunomia::UnitScalar;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement};
 use helios_solver::forward_project_ray;
-use hyperion::{quantity::OpticalDepth, TransportError};
+use hyperion::{TransportError, quantity::OpticalDepth};
 
 #[cfg(test)]
 use aequitas::systems::si::{quantities::Angle, units::Radian};
@@ -34,7 +35,7 @@ use aequitas::systems::si::{quantities::Angle, units::Radian};
 ///
 /// Returns [`TransportError`] if a beamlet produces a negative or non-finite
 /// optical depth.
-pub fn frame_portal_fluence<T: GeometryScalar>(
+pub fn frame_portal_fluence<T: GeometryScalar + UnitScalar>(
     frame: &DeliveryFrame<T>,
     mu: &Volume<T>,
     geometry: BeamGeometry<T>,

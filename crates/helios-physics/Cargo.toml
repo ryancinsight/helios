@@ -13,6 +13,7 @@ workspace = true
 
 [dependencies]
 aequitas = { workspace = true }
+eunomia = { workspace = true }
 hyperion = { workspace = true }
 helios-core = { workspace = true }
 # Physics needs only the Scalar seam, not the geometry vocabulary. A direct path

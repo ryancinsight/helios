@@ -15,6 +15,7 @@ use aequitas::systems::si::{
     quantities::{AbsorbedDose, Length},
     units::Millimeter,
 };
+use eunomia::UnitScalar;
 use helios_core::HeliosError;
 use helios_domain::Volume;
 use helios_math::{NumericElement, Scalar};
@@ -44,7 +45,7 @@ fn require_positive_finite<T: Scalar>(value: T, field: &'static str) -> Result<(
 /// # Errors
 /// Returns [`HeliosError`] if the two volumes do not share an identical grid, or
 /// if any criterion is non-finite or non-positive.
-pub fn gamma_index_3d<T: Scalar>(
+pub fn gamma_index_3d<T: Scalar + UnitScalar>(
     reference: &Volume<T>,
     evaluated: &Volume<T>,
     dose_diff_criterion: T,
@@ -73,7 +74,7 @@ pub fn gamma_index_3d<T: Scalar>(
 ///
 /// # Errors
 /// As [`gamma_index_3d`], with `low_dose_cutoff` required finite and positive.
-pub fn gamma_index_3d_local<T: Scalar>(
+pub fn gamma_index_3d_local<T: Scalar + UnitScalar>(
     reference: &Volume<T>,
     evaluated: &Volume<T>,
     dose_diff_criterion: T,
@@ -104,7 +105,7 @@ enum Norm<T: Scalar> {
 
 /// Shared gamma computation for [`gamma_index_3d`] (global) and
 /// [`gamma_index_3d_local`] (local), selected by `norm`.
-fn gamma_impl<T: Scalar>(
+fn gamma_impl<T: Scalar + UnitScalar>(
     reference: &Volume<T>,
     evaluated: &Volume<T>,
     dose_diff_criterion: T,
@@ -410,15 +411,17 @@ mod tests {
         .unwrap();
         assert_relative_eq!(local.get(2, 2, 2).unwrap(), 0.0, epsilon = 1e-15);
         // Bad cutoff is rejected.
-        assert!(gamma_index_3d_local(
-            &reference,
-            &evaluated,
-            0.03,
-            distance(2.0),
-            absorbed(-1.0),
-            distance(4.0),
-        )
-        .is_err());
+        assert!(
+            gamma_index_3d_local(
+                &reference,
+                &evaluated,
+                0.03,
+                distance(2.0),
+                absorbed(-1.0),
+                distance(4.0),
+            )
+            .is_err()
+        );
     }
 
     #[test]

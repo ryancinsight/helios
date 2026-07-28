@@ -15,6 +15,7 @@
 //! Result units are m² per electron.
 
 use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
+use eunomia::UnitScalar;
 use helios_core::constants::{
     AVOGADRO_PER_MOL, CLASSICAL_ELECTRON_RADIUS_M, ELECTRON_REST_ENERGY_MEV,
 };
@@ -75,7 +76,7 @@ pub fn electrons_per_gram<T: Scalar>(z_over_a: T) -> T {
 /// reproduces the tabulated total `μ/ρ` closely (the test validates against the
 /// NIST value at 1 MeV) — a derived coefficient, not a fabricated table entry.
 #[must_use]
-pub fn compton_mass_attenuation<T: Scalar>(
+pub fn compton_mass_attenuation<T: Scalar + UnitScalar>(
     photon_energy_mev: T,
     electrons_per_gram: T,
 ) -> MassAttenuation<T> {
@@ -151,7 +152,7 @@ pub fn compton_mean_energy_transfer_fraction<T: Scalar>(energy_mev: T) -> T {
 /// coefficient. Under charged-particle equilibrium and negligible bremsstrahlung
 /// (water at MV), kerma ≈ dose, so this is the dose-relevant Compton coefficient.
 #[must_use]
-pub fn compton_mass_energy_transfer<T: Scalar>(
+pub fn compton_mass_energy_transfer<T: Scalar + UnitScalar>(
     energy_mev: T,
     electrons_per_gram: T,
 ) -> MassAttenuation<T> {

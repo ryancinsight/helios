@@ -11,13 +11,14 @@ use aequitas::systems::si::{
     quantities::{AbsorbedDose, Length, ReciprocalLength},
     units::{Centimeter, PerCentimeter},
 };
+use eunomia::UnitScalar;
 use helios_core::constants::MM_PER_CM;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray};
 use hyperion::{
+    TransportError,
     coefficient::{InteractionCoefficient, LinearAttenuation},
     quantity::{OpticalDepth, PathLength},
-    TransportError,
 };
 
 /// Nearest voxel index along one axis for a continuous index `coord`, clamped to
@@ -26,11 +27,7 @@ use hyperion::{
 fn nearest<T: GeometryScalar>(coord: T, n: usize) -> usize {
     let half = <T as GeometryScalar>::from_f64(0.5);
     let r = (coord + half).floor().to_f64();
-    if r <= 0.0 {
-        0
-    } else {
-        (r as usize).min(n - 1)
-    }
+    if r <= 0.0 { 0 } else { (r as usize).min(n - 1) }
 }
 
 /// Deposit primary-beam energy along `ray` into `dose`, returning the total
@@ -58,7 +55,7 @@ fn nearest<T: GeometryScalar>(coord: T, n: usize) -> usize {
 /// or non-finite, or when an optical-depth product or partial sum is non-finite.
 /// Validation completes before `dose` is mutated, so an error leaves the output
 /// unchanged.
-pub fn deposit_ray_terma<T: GeometryScalar>(
+pub fn deposit_ray_terma<T: GeometryScalar + UnitScalar>(
     dose: &mut Volume<T>,
     mu: &Volume<T>,
     ray: &Ray<T>,
@@ -83,7 +80,7 @@ pub fn deposit_ray_terma<T: GeometryScalar>(
 /// Returns the same typed transport failures as [`deposit_ray_terma`]. The
 /// returned total is an Aequitas [`AbsorbedDose`] quantity; voxel storage keeps
 /// the established scalar `Volume` boundary.
-pub fn deposit_ray_terma_diverging<T: GeometryScalar>(
+pub fn deposit_ray_terma_diverging<T: GeometryScalar + UnitScalar>(
     dose: &mut Volume<T>,
     mu: &Volume<T>,
     ray: &Ray<T>,
@@ -97,7 +94,7 @@ pub fn deposit_ray_terma_diverging<T: GeometryScalar>(
 
 /// Shared ray-march for [`deposit_ray_terma`] and [`deposit_ray_terma_diverging`];
 /// `falloff = Some((focal, sad))` applies the inverse-square divergence factor.
-fn deposit_terma_impl<T: GeometryScalar>(
+fn deposit_terma_impl<T: GeometryScalar + UnitScalar>(
     dose: &mut Volume<T>,
     mu: &Volume<T>,
     ray: &Ray<T>,

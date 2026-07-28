@@ -6,10 +6,11 @@ use aequitas::systems::si::{
     quantities::MassDensity as DensityQuantity,
     units::{GramPerCubicCentimeter, PerCentimeter},
 };
+use eunomia::UnitScalar;
 use helios_domain::Volume;
 use helios_math::Scalar;
 use helios_physics::mass_density_from_hu;
-use hyperion::{coefficient::MassAttenuation, TransportError};
+use hyperion::{TransportError, coefficient::MassAttenuation};
 use proteus::{InvalidProperty, MassDensity};
 
 /// Failure while converting a CT volume into linear attenuation.
@@ -64,7 +65,7 @@ impl<T: fmt::Debug> core::error::Error for AttenuationMapError<T> {}
 /// Returns [`AttenuationMapError::InvalidDensity`] if CT calibration produces a
 /// non-finite or negative density, and [`AttenuationMapError::Transport`] if the
 /// mass-to-linear attenuation product is non-finite.
-pub fn attenuation_map<T: Scalar>(
+pub fn attenuation_map<T: Scalar + UnitScalar>(
     ct_hu: &Volume<T>,
     mass_attenuation: MassAttenuation<T>,
     water_density: DensityQuantity<T>,

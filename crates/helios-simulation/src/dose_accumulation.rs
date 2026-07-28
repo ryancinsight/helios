@@ -30,12 +30,12 @@ use aequitas::systems::si::{
     quantities::{AbsorbedDose, Angle, Length},
     units::{Millimeter, Radian},
 };
+use eunomia::UnitScalar;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
 use helios_solver::{
-    deposit_ray_terma, deposit_ray_terma_diverging, forward_peaked_kernel,
+    SpectralComponent, deposit_ray_terma, deposit_ray_terma_diverging, forward_peaked_kernel,
     oriented_forward_scatter, poly_forward_peaked_kernel, symmetric_deposition_kernel,
-    SpectralComponent,
 };
 use hyperion::TransportError;
 
@@ -72,7 +72,7 @@ pub enum BeamGeometry<T: GeometryScalar> {
 ///
 /// Returns [`TransportError`] when a sampled attenuation coefficient violates
 /// Hyperion's transport contract. Validation is transactional per beamlet.
-pub fn accumulate_delivered_dose<T: GeometryScalar>(
+pub fn accumulate_delivered_dose<T: GeometryScalar + UnitScalar>(
     frames: &[DeliveryFrame<T>],
     mu: &Volume<T>,
     geometry: BeamGeometry<T>,
@@ -91,7 +91,7 @@ pub fn accumulate_delivered_dose<T: GeometryScalar>(
 /// forward unit direction (the gantry central axis) — the SSOT deposition loop
 /// shared by the isotropic accumulation and the per-frame anisotropic path, so
 /// the beamlet geometry lives in exactly one place.
-fn deposit_frame_terma<T: GeometryScalar>(
+fn deposit_frame_terma<T: GeometryScalar + UnitScalar>(
     dose: &mut Volume<T>,
     frame: &DeliveryFrame<T>,
     mu: &Volume<T>,
@@ -225,7 +225,7 @@ impl<T: GeometryScalar> CollapsedCone<T> {
 ///
 /// Returns [`TransportError`] under the same attenuation contract as
 /// [`accumulate_delivered_dose`].
-pub fn accumulate_delivered_dose_anisotropic<T: GeometryScalar>(
+pub fn accumulate_delivered_dose_anisotropic<T: GeometryScalar + UnitScalar>(
     frames: &[DeliveryFrame<T>],
     mu: &Volume<T>,
     geometry: BeamGeometry<T>,
@@ -266,7 +266,7 @@ pub(crate) struct Beamlet<T: GeometryScalar> {
 ///
 /// `centre` is the grid axial centre; `dir`/`perp` the gantry basis (central-axis
 /// and in-plane lateral). Returns `None` if the resulting direction is degenerate.
-pub(crate) fn beamlet_ray<T: GeometryScalar>(
+pub(crate) fn beamlet_ray<T: GeometryScalar + UnitScalar>(
     centre: Point3<T>,
     dir: Vector3<T>,
     perp: Vector3<T>,
@@ -322,7 +322,7 @@ pub(crate) fn beamlet_ray<T: GeometryScalar>(
 }
 
 /// The gantry basis `(centre, dir, perp)` for a frame's gantry angle over `grid`.
-pub(crate) fn gantry_basis<T: GeometryScalar>(
+pub(crate) fn gantry_basis<T: GeometryScalar + UnitScalar>(
     grid: &helios_domain::VoxelGrid<T>,
     gantry_angle_rad: Angle<T>,
 ) -> (Point3<T>, Vector3<T>, Vector3<T>) {

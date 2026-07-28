@@ -4,10 +4,11 @@ use aequitas::systems::si::{
     quantities::{Angle, Dimensionless, Length},
     units::{Millimeter, Radian},
 };
+use eunomia::UnitScalar;
 use helios_domain::{HelicalDelivery, Volume};
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
 use helios_solver::forward_project_ray;
-use hyperion::{quantity::OpticalDepth, TransportError};
+use hyperion::{TransportError, quantity::OpticalDepth};
 use moirai_parallel::Adaptive;
 
 #[cfg(test)]
@@ -51,7 +52,7 @@ pub struct HelicalProjection<T: GeometryScalar> {
 ///
 /// Returns [`TransportError`] if a projected optical depth is negative or
 /// non-finite.
-pub fn simulate_helical_sinogram<T: GeometryScalar + Send + Sync>(
+pub fn simulate_helical_sinogram<T: GeometryScalar + UnitScalar + Send + Sync>(
     delivery: &HelicalDelivery<T>,
     mu: &Volume<T>,
     num_projections: usize,
