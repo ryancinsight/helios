@@ -208,6 +208,7 @@ impl<T: Scalar> Dvh<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
@@ -320,14 +321,36 @@ mod tests {
         assert_relative_eq!(ramp.homogeneity_index(), 96.0 / 50.0, epsilon = 1e-12);
     }
 
-    #[test]
-    fn dvh_is_generic_over_scalar_f32() {
-        let g =
-            VoxelGrid::<f32>::axis_aligned([2, 2, 2], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
-                .expect("grid");
-        let dose = Volume::from_shape_fn(g, |_| 1.0_f32);
+    /// The mean of a uniform volume is a sum of eight identical values divided by
+    /// eight, so at most nine roundings separate it from the constant. Sixteen
+    /// ulps of `T` bounds that.
+    const UNIFORM_MEAN_ULPS: f64 = 16.0;
+
+    /// Asserts the DVH mean of a uniform dose in one scalar width.
+    fn dvh_mean_of_a_uniform_dose_is_that_dose<T: ShippedScalar>() {
+        let zero = T::from_f64(0.0);
+        let unit = T::from_f64(1.0);
+        let grid = VoxelGrid::<T>::axis_aligned([2, 2, 2], [unit; 3], Point3::new(zero, zero, zero))
+            .expect("valid axis-aligned grid");
+
+        let dose = Volume::from_shape_fn(grid, |_| unit);
         let dvh = Dvh::from_volume(&dose);
-        assert_relative_eq!(dvh.mean().into_base(), 1.0_f32, epsilon = 1e-6);
+
+        assert_relative_eq!(
+            dvh.mean().into_base(),
+            unit,
+            max_relative = T::EPSILON * T::from_f64(UNIFORM_MEAN_ULPS)
+        );
+    }
+
+    #[test]
+    fn dvh_mean_of_a_uniform_dose_is_that_dose_in_single_precision() {
+        dvh_mean_of_a_uniform_dose_is_that_dose::<f32>();
+    }
+
+    #[test]
+    fn dvh_mean_of_a_uniform_dose_is_that_dose_in_double_precision() {
+        dvh_mean_of_a_uniform_dose_is_that_dose::<f64>();
     }
 
     #[test]

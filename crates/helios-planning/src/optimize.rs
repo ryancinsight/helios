@@ -116,6 +116,7 @@ pub fn optimize_beam_weights<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
 
     /// Identity influence: `n` voxels, `n` beamlets, `A = I`.
@@ -187,14 +188,47 @@ mod tests {
         assert_relative_eq!(x[1], 2.0, epsilon = 1e-4); // 8/4
     }
 
+    /// Distance from the exact solution tolerated after a fixed iteration budget.
+    ///
+    /// Unlike the rounding tolerances elsewhere in this workspace, this one is
+    /// **not** derived from `T::EPSILON`: the residual here is algorithmic, not
+    /// numerical. With an identity influence matrix each weight converges
+    /// geometrically as `(1 - step)^n`, so 300 steps at `step = 0.5` leave a
+    /// mathematical residual far below any float width, and the same bound is
+    /// therefore correct for every shipped width. Deriving it from epsilon would
+    /// assert a precision the iteration count does not deliver, and tightening it
+    /// toward epsilon would test the step schedule rather than the optimizer.
+    const CONVERGENCE_TOLERANCE: f64 = 1.0e-3;
+
+    /// Asserts the optimizer recovers a separable prescription in one width.
+    fn optimizer_recovers_a_separable_prescription<T: ShippedScalar>() {
+        let zero = T::from_f64(0.0);
+        let one = T::from_f64(1.0);
+
+        // Identity influence: each beamlet drives exactly one voxel, so the
+        // optimum is the prescription itself.
+        let mut rows = vec![zero; 4];
+        rows[0] = one;
+        rows[3] = one;
+        let influence =
+            DoseInfluence::from_rows(2, 2, rows).expect("2x2 influence matrix is well formed");
+
+        let prescription = [T::from_f64(1.5), T::from_f64(0.5)];
+        let weights = optimize_beam_weights(&influence, &prescription, 300, T::from_f64(0.5));
+
+        let tolerance = T::from_f64(CONVERGENCE_TOLERANCE);
+        for (got, want) in weights.iter().zip(&prescription) {
+            assert_relative_eq!(got, want, epsilon = tolerance);
+        }
+    }
+
     #[test]
-    fn optimizer_is_generic_over_scalar_f32() {
-        let mut data = vec![0.0_f32; 4];
-        data[0] = 1.0;
-        data[3] = 1.0;
-        let a = DoseInfluence::from_rows(2, 2, data).unwrap();
-        let x = optimize_beam_weights(&a, &[1.5_f32, 0.5], 300, 0.5);
-        assert_relative_eq!(x[0], 1.5_f32, epsilon = 1e-3);
-        assert_relative_eq!(x[1], 0.5_f32, epsilon = 1e-3);
+    fn optimizer_recovers_a_separable_prescription_in_single_precision() {
+        optimizer_recovers_a_separable_prescription::<f32>();
+    }
+
+    #[test]
+    fn optimizer_recovers_a_separable_prescription_in_double_precision() {
+        optimizer_recovers_a_separable_prescription::<f64>();
     }
 }

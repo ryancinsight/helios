@@ -223,6 +223,7 @@ pub fn gamma_pass_rate<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
@@ -424,22 +425,45 @@ mod tests {
         );
     }
 
-    #[test]
-    fn gamma_is_generic_over_scalar_f32() {
-        let dose = Volume::from_shape_fn(
-            VoxelGrid::<f32>::axis_aligned([3, 3, 3], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap(),
-            |_| 1.0_f32,
-        );
+    /// A dose distribution compared against itself has gamma identically zero at
+    /// every interior point, since both the dose-difference and distance terms
+    /// vanish. The result is compared against zero, where a relative bound is
+    /// vacuous, so the assertion is absolute; 16 ulps of `T` covers the search
+    /// arithmetic that produces the minimum.
+    const SELF_COMPARISON_ULPS: f64 = 16.0;
+
+    /// Asserts gamma vanishes for a self-comparison in one scalar width.
+    fn gamma_of_a_distribution_against_itself_vanishes<T: ShippedScalar>() {
+        let zero = T::from_f64(0.0);
+        let unit = T::from_f64(1.0);
+        let grid = VoxelGrid::<T>::axis_aligned([3, 3, 3], [unit; 3], Point3::new(zero, zero, zero))
+            .expect("valid axis-aligned grid");
+
+        let dose = Volume::from_shape_fn(grid, |_| unit);
         let gamma = gamma_index_3d(
             &dose,
             &dose,
-            0.03_f32,
-            Length::from_unit::<Millimeter>(2.0_f32),
-            AbsorbedDose::from_base(5.0_f32),
-            Length::from_unit::<Millimeter>(4.0_f32),
+            T::from_f64(0.03),
+            Length::from_unit::<Millimeter>(T::from_f64(2.0)),
+            AbsorbedDose::from_base(T::from_f64(5.0)),
+            Length::from_unit::<Millimeter>(T::from_f64(4.0)),
         )
-        .expect("valid");
-        assert_relative_eq!(gamma.get(1, 1, 1).unwrap(), 0.0_f32, epsilon = 1e-6);
+        .expect("valid gamma criteria and matching grids");
+
+        assert_relative_eq!(
+            gamma.get(1, 1, 1).unwrap(),
+            zero,
+            epsilon = T::EPSILON * T::from_f64(SELF_COMPARISON_ULPS)
+        );
+    }
+
+    #[test]
+    fn gamma_of_a_distribution_against_itself_vanishes_in_single_precision() {
+        gamma_of_a_distribution_against_itself_vanishes::<f32>();
+    }
+
+    #[test]
+    fn gamma_of_a_distribution_against_itself_vanishes_in_double_precision() {
+        gamma_of_a_distribution_against_itself_vanishes::<f64>();
     }
 }

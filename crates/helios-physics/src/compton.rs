@@ -248,18 +248,35 @@ mod tests {
         );
     }
 
+    /// Agreement required between the single- and double-precision Klein-Nishina
+    /// paths, in ulps of the narrower type.
+    ///
+    /// This is a differential bound, not a rounding bound: the two evaluations run
+    /// the same expression at different widths, so the discrepancy is whatever the
+    /// narrower evaluation accumulated. The closed form applies roughly a dozen
+    /// multiplies, divides, and one `ln` to the fine-structure ratio, and the
+    /// fixture deliberately sits at E = 0.1 MeV where alpha is about 0.2, away from
+    /// the near-alpha-zero cancellation. Five hundred ulps of `f32` (about 6e-5)
+    /// bounds that chain; it is stated as a multiple of epsilon rather than the
+    /// former bare 1e-4 so the basis is visible and scales if the width changes.
+    const KLEIN_NISHINA_CROSS_WIDTH_ULPS: f32 = 500.0;
+
     #[test]
-    fn cross_section_is_generic_over_scalar_f32() {
-        // Evaluate at a well-conditioned energy (E = 0.1 MeV, α ≈ 0.2 — no near-α=0
-        // cancellation) and check the f32 path reproduces the f64 physics and stays
-        // below Thomson. Differential f32-vs-f64 within f32 precision.
-        let sigma_kn_f32 = klein_nishina_cross_section(0.1_f32);
-        let sigma_kn_f64 = klein_nishina_cross_section(0.1_f64);
-        assert!(sigma_kn_f32 < thomson_cross_section::<f32>());
+    fn single_precision_cross_section_tracks_the_double_precision_reference() {
+        let narrow = klein_nishina_cross_section(0.1_f32);
+        let wide = klein_nishina_cross_section(0.1_f64);
+
+        // Compton scattering never exceeds the Thomson limit.
+        assert!(
+            narrow < thomson_cross_section::<f32>(),
+            "Klein-Nishina must stay below the Thomson cross-section"
+        );
+
+        // The two widths must agree to the narrower one's accumulated precision.
         assert_relative_eq!(
-            f64::from(sigma_kn_f32) / sigma_kn_f64,
+            f64::from(narrow) / wide,
             1.0,
-            max_relative = 1e-4
+            max_relative = f64::from(f32::EPSILON * KLEIN_NISHINA_CROSS_WIDTH_ULPS)
         );
     }
 
