@@ -166,6 +166,7 @@ impl<T: Scalar> MlcModel<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
 
     #[test]
@@ -231,10 +232,40 @@ mod tests {
         assert_relative_eq!(eff[2], 0.95, epsilon = 1e-15);
     }
 
+    /// The fluence model returns a leaf transmission directly or one linear
+    /// interpolation between transmission and unity, so a handful of roundings
+    /// separate the result from its inputs. Eight ulps of `T` bounds that.
+    const LEAF_FLUENCE_ULPS: f64 = 8.0;
+
+    /// Asserts MLC leaf transmission and open-fraction fluence in one width.
+    fn mlc_fluence_interpolates_between_leaf_and_open<T: ShippedScalar>() {
+        let leaf_transmission = T::from_f64(0.01);
+        let zero = T::from_f64(0.0);
+        let model = MlcModel::new(leaf_transmission, T::from_f64(0.1))
+            .expect("transmission and penumbra within range");
+        let tolerance = T::EPSILON * T::from_f64(LEAF_FLUENCE_ULPS);
+
+        // Fully blocked: only leaf transmission passes.
+        assert_relative_eq!(
+            model.effective_fluence(zero, zero, zero),
+            leaf_transmission,
+            max_relative = tolerance
+        );
+        // Fully open at unit offset: 0.9 of the incident fluence.
+        assert_relative_eq!(
+            model.effective_fluence(T::from_f64(1.0), zero, zero),
+            T::from_f64(0.9),
+            max_relative = tolerance
+        );
+    }
+
     #[test]
-    fn mlc_is_generic_over_scalar_f32() {
-        let m = MlcModel::new(0.01_f32, 0.1).unwrap();
-        assert_relative_eq!(m.effective_fluence(0.0_f32, 0.0, 0.0), 0.01, epsilon = 1e-6);
-        assert_relative_eq!(m.effective_fluence(1.0_f32, 0.0, 0.0), 0.9, epsilon = 1e-6);
+    fn mlc_fluence_interpolates_between_leaf_and_open_in_single_precision() {
+        mlc_fluence_interpolates_between_leaf_and_open::<f32>();
+    }
+
+    #[test]
+    fn mlc_fluence_interpolates_between_leaf_and_open_in_double_precision() {
+        mlc_fluence_interpolates_between_leaf_and_open::<f64>();
     }
 }

@@ -177,6 +177,7 @@ impl<T: Scalar> Volume<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
 
     fn affine_grid() -> VoxelGrid<f64> {
@@ -244,19 +245,47 @@ mod tests {
         );
     }
 
-    #[test]
-    fn volume_is_generic_over_scalar_f32() {
-        let g =
-            VoxelGrid::<f32>::axis_aligned([2, 2, 2], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
-                .expect("valid f32 grid");
-        let vol = Volume::from_shape_fn(g, |idx| idx[0] as f32 + idx[1] as f32 + idx[2] as f32);
-        // Midpoint of an affine field: (0.5+0.5+0.5) = 1.5.
+    /// Trilinear interpolation of an affine field is exact in exact arithmetic,
+    /// so the error is only the eight weighted products and their summation.
+    /// Sixteen ulps of `T` bounds that.
+    const TRILINEAR_ULPS: f64 = 16.0;
+
+    /// Asserts trilinear sampling reproduces an affine field in one width.
+    fn trilinear_sampling_reproduces_an_affine_field<T>()
+    where
+        T: ShippedScalar + helios_math::GeometryScalar,
+    {
+        // GeometryScalar and FloatElement both define `from_f64`; name the
+        // one that performs the literal conversion so the call is unambiguous.
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
+        let unit = cast(1.0);
+        let grid = VoxelGrid::<T>::axis_aligned([2, 2, 2], [unit; 3], Point3::new(zero, zero, zero))
+            .expect("valid axis-aligned grid");
+
+        // f(i,j,k) = i + j + k is affine, so trilinear interpolation is exact.
+        let volume = Volume::from_shape_fn(grid, |idx| {
+            cast(idx[0] as f64) + cast(idx[1] as f64) + cast(idx[2] as f64)
+        });
+
+        let half = cast(0.5);
         assert_relative_eq!(
-            vol.sample_trilinear(Point3::new(0.5_f32, 0.5, 0.5))
-                .unwrap(),
-            1.5_f32,
-            epsilon = 1e-6
+            volume
+                .sample_trilinear(Point3::new(half, half, half))
+                .expect("midpoint lies inside the grid"),
+            cast(1.5),
+            max_relative = T::EPSILON * cast(TRILINEAR_ULPS)
         );
+    }
+
+    #[test]
+    fn trilinear_sampling_reproduces_an_affine_field_in_single_precision() {
+        trilinear_sampling_reproduces_an_affine_field::<f32>();
+    }
+
+    #[test]
+    fn trilinear_sampling_reproduces_an_affine_field_in_double_precision() {
+        trilinear_sampling_reproduces_an_affine_field::<f64>();
     }
 
     #[test]

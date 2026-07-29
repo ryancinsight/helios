@@ -156,6 +156,7 @@ impl<T: GeometryScalar> FieldAperture<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
 
     // 20 mm × 20 mm × 20 mm field centred at the origin, 2 mm penumbra.
@@ -253,28 +254,59 @@ mod tests {
         .is_err());
     }
 
-    #[test]
-    fn aperture_is_generic_over_scalar_f32() {
-        let a = FieldAperture::rectangular(
-            Point3::new(0.0_f32, 0.0, 0.0),
-            [5.0, 5.0, 5.0],
-            Length::from_base(1.0e-3_f32),
+    /// Aperture transmission evaluates a penumbra profile. The three sampled
+    /// points are its plateau, its half-value edge, and its cut-off; only the
+    /// edge carries evaluation error, and sixteen ulps of `T` bounds it. The
+    /// cut-off is compared against zero, where a relative bound is vacuous, so
+    /// that assertion keeps an absolute epsilon derived from the same budget.
+    const APERTURE_ULPS: f64 = 16.0;
+
+    /// Asserts aperture plateau, half-edge, and cut-off in one scalar width.
+    fn aperture_transmission_falls_from_plateau_to_cutoff<T>()
+    where
+        T: ShippedScalar + helios_math::GeometryScalar,
+    {
+        // GeometryScalar and FloatElement both define `from_f64`; name the
+        // one that performs the literal conversion so the call is unambiguous.
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
+        let half_width = cast(5.0);
+        let aperture = FieldAperture::rectangular(
+            Point3::new(zero, zero, zero),
+            [half_width; 3],
+            Length::from_base(cast(1.0e-3)),
         )
-        .unwrap();
+        .expect("positive aperture extent and penumbra");
+        let tolerance = T::EPSILON * cast(APERTURE_ULPS);
+
+        // Centre: fully open.
         assert_relative_eq!(
-            a.transmission(&Point3::new(0.0, 0.0, 0.0)),
-            1.0,
-            epsilon = 1e-6
+            aperture.transmission(&Point3::new(zero, zero, zero)),
+            cast(1.0),
+            max_relative = tolerance
         );
+        // On the edge: half transmission by symmetry of the penumbra.
         assert_relative_eq!(
-            a.transmission(&Point3::new(5.0, 0.0, 0.0)),
-            0.5,
-            epsilon = 1e-6
+            aperture.transmission(&Point3::new(half_width, zero, zero)),
+            cast(0.5),
+            max_relative = tolerance
         );
+        // Far outside: fully blocked. Relative tolerance cannot express nearness
+        // to zero, so this one is absolute.
         assert_relative_eq!(
-            a.transmission(&Point3::new(20.0, 0.0, 0.0)),
-            0.0,
-            epsilon = 1e-6
+            aperture.transmission(&Point3::new(cast(20.0), zero, zero)),
+            zero,
+            epsilon = tolerance
         );
+    }
+
+    #[test]
+    fn aperture_transmission_falls_from_plateau_to_cutoff_in_single_precision() {
+        aperture_transmission_falls_from_plateau_to_cutoff::<f32>();
+    }
+
+    #[test]
+    fn aperture_transmission_falls_from_plateau_to_cutoff_in_double_precision() {
+        aperture_transmission_falls_from_plateau_to_cutoff::<f64>();
     }
 }
