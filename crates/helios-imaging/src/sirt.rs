@@ -93,7 +93,7 @@ mod tests {
     use crate::sirt_reconstruction;
     use helios_analysis::{roi_statistics, volume_relative_l2_error};
     use helios_domain::{Volume, VoxelGrid};
-    use helios_math::Point3;
+    use helios_math::{Point3, ShippedScalar};
 
     fn recon_grid() -> VoxelGrid<f64> {
         VoxelGrid::axis_aligned([21, 21, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0)).unwrap()
@@ -178,34 +178,68 @@ mod tests {
         assert!((0..21).all(|i| (0..21).all(|j| x.get(i, j, 0).unwrap().abs() < 1e-12)));
     }
 
-    #[test]
-    fn sirt_is_generic_over_scalar_f32() {
-        let grid = VoxelGrid::<f32>::axis_aligned(
+    /// Interior-mean accuracy tolerated after a fixed SIRT iteration budget.
+    ///
+    /// An **algorithmic** bound, not a rounding one: 30 SIRT iterations over 30
+    /// views leave a reconstruction residual far above any float width, so the
+    /// same bound holds for every shipped width and deriving it from `T::EPSILON`
+    /// would assert a precision the iteration count does not deliver.
+    const INTERIOR_MEAN_TOLERANCE: f64 = 0.15;
+
+    /// Asserts SIRT recovers a disk phantom's interior mean in one scalar width.
+    fn sirt_recovers_the_interior_mean<T>()
+    where
+        T: ShippedScalar + helios_math::GeometryScalar,
+    {
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
+        let grid = VoxelGrid::<T>::axis_aligned(
             [15, 15, 1],
-            [2.0, 2.0, 2.0],
-            Point3::new(0.0, 0.0, 0.0),
+            [cast(2.0); 3],
+            Point3::new(zero, zero, zero),
         )
-        .unwrap();
-        let phantom = Volume::from_shape_fn(grid, |idx| {
-            let (dx, dy) = (idx[0] as f32 * 2.0 - 14.0, idx[1] as f32 * 2.0 - 14.0);
-            if (dx * dx + dy * dy).sqrt() <= 10.0 {
-                0.04
+        .expect("valid axis-aligned grid");
+
+        let mu = cast(0.04);
+        let radius = cast(10.0);
+        let phantom = Volume::from_shape_fn(grid, move |idx| {
+            let dx = cast(idx[0] as f64 * 2.0 - 14.0);
+            let dy = cast(idx[1] as f64 * 2.0 - 14.0);
+            if (dx * dx + dy * dy).sqrt() <= radius {
+                mu
             } else {
-                0.0
+                zero
             }
         });
-        let ang: Vec<f32> = (0..30)
-            .map(|a| a as f32 * std::f32::consts::PI / 30.0)
+
+        let angles: Vec<T> = (0..30)
+            .map(|a| cast(a as f64 * std::f64::consts::PI / 30.0))
             .collect();
-        let off: Vec<f32> = (0..31).map(|j| -20.0 + j as f32 * 40.0 / 30.0).collect();
-        let b = parallel_beam_radon(&phantom, &ang, &off, 400.0, 0.5);
-        let x = sirt_reconstruction(&b, &grid, 400.0, 0.5, 30, 1.0);
-        // Interior mean recovers μ₀ within the 15% reconstruction tolerance.
-        let interior = roi_statistics(&x, [5, 5, 0], [10, 10, 1]);
+        let offsets: Vec<T> = (0..31)
+            .map(|j| cast(-20.0 + j as f64 * 40.0 / 30.0))
+            .collect();
+        let sinogram =
+            parallel_beam_radon(&phantom, &angles, &offsets, cast(400.0), cast(0.5));
+        let recon =
+            sirt_reconstruction(&sinogram, &grid, cast(400.0), cast(0.5), 30, cast(1.0));
+
+        let interior = roi_statistics(&recon, [5, 5, 0], [10, 10, 1]);
+        let relative_error = (interior.mean - mu).abs() / mu;
         assert!(
-            (interior.mean - 0.04_f32).abs() / 0.04 < 0.15,
-            "f32 interior mean {} not within 15% of μ₀",
-            interior.mean
+            relative_error < cast(INTERIOR_MEAN_TOLERANCE),
+            "interior mean {:?} is not within {}% of the phantom attenuation",
+            interior.mean,
+            INTERIOR_MEAN_TOLERANCE * 100.0
         );
+    }
+
+    #[test]
+    fn sirt_recovers_the_interior_mean_in_single_precision() {
+        sirt_recovers_the_interior_mean::<f32>();
+    }
+
+    #[test]
+    fn sirt_recovers_the_interior_mean_in_double_precision() {
+        sirt_recovers_the_interior_mean::<f64>();
     }
 }

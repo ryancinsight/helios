@@ -162,6 +162,7 @@ pub fn register_translation_ncc<T: GeometryScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
 
@@ -204,21 +205,45 @@ mod tests {
         );
     }
 
-    #[test]
-    fn registration_is_generic_over_scalar_f32() {
+    /// Asserts sum-of-squares translation recovery in one scalar width.
+    ///
+    /// The result is an integer voxel offset, so this assertion is exact and
+    /// carries no tolerance: any bound would be meaningless on a discrete search
+    /// result, and an off-by-one would be a defect rather than a rounding effect.
+    fn translation_registration_recovers_a_known_shift<T>()
+    where
+        T: ShippedScalar + helios_math::GeometryScalar,
+    {
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
+        let spacing = cast(2.0);
         let grid =
-            VoxelGrid::<f32>::axis_aligned([9, 9, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap();
-        let bowl_f32 = |cx: f32, cy: f32| {
+            VoxelGrid::<T>::axis_aligned([9, 9, 1], [spacing; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
+
+        // Quadratic bowl centred at (cx, cy): its minimum locates the shift.
+        let bowl = |cx: f64, cy: f64| {
             Volume::from_shape_fn(grid, move |idx| {
-                let (di, dj) = (idx[0] as f32 - cx, idx[1] as f32 - cy);
+                let di = cast(idx[0] as f64 - cx);
+                let dj = cast(idx[1] as f64 - cy);
                 di * di + dj * dj
             })
         };
+
         assert_eq!(
-            register_translation(&bowl_f32(3.0, 3.0), &bowl_f32(5.0, 2.0), [3, 3, 0]),
+            register_translation(&bowl(3.0, 3.0), &bowl(5.0, 2.0), [3, 3, 0]),
             [2, -1, 0]
         );
+    }
+
+    #[test]
+    fn translation_registration_recovers_a_known_shift_in_single_precision() {
+        translation_registration_recovers_a_known_shift::<f32>();
+    }
+
+    #[test]
+    fn translation_registration_recovers_a_known_shift_in_double_precision() {
+        translation_registration_recovers_a_known_shift::<f64>();
     }
 
     // Low-texture phantom: flat background 1.0 with a single bright voxel at
@@ -260,23 +285,45 @@ mod tests {
         );
     }
 
-    #[test]
-    fn ncc_is_generic_over_scalar_f32() {
+    /// Asserts normalized cross-correlation translation recovery in one width.
+    ///
+    /// Exact for the same reason as the sum-of-squares case: the search returns an
+    /// integer voxel offset.
+    fn ncc_registration_recovers_a_known_shift<T>()
+    where
+        T: ShippedScalar + helios_math::GeometryScalar,
+    {
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
+        let spacing = cast(2.0);
         let grid =
-            VoxelGrid::<f32>::axis_aligned([9, 9, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap();
-        let spike_f32 = |sx: usize, sy: usize| {
+            VoxelGrid::<T>::axis_aligned([9, 9, 1], [spacing; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
+
+        // Single bright voxel on a unit background; correlation peaks on the shift.
+        let spike = |sx: usize, sy: usize| {
             Volume::from_shape_fn(grid, move |idx| {
                 if idx[0] == sx && idx[1] == sy {
-                    10.0_f32
+                    cast(10.0)
                 } else {
-                    1.0
+                    cast(1.0)
                 }
             })
         };
+
         assert_eq!(
-            register_translation_ncc(&spike_f32(3, 3), &spike_f32(5, 2), [3, 3, 0]),
+            register_translation_ncc(&spike(3, 3), &spike(5, 2), [3, 3, 0]),
             [2, -1, 0]
         );
+    }
+
+    #[test]
+    fn ncc_registration_recovers_a_known_shift_in_single_precision() {
+        ncc_registration_recovers_a_known_shift::<f32>();
+    }
+
+    #[test]
+    fn ncc_registration_recovers_a_known_shift_in_double_precision() {
+        ncc_registration_recovers_a_known_shift::<f64>();
     }
 }

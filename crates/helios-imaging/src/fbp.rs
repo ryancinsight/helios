@@ -85,6 +85,7 @@ pub fn filtered_back_projection<T: GeometryScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use crate::radon::parallel_beam_radon;
     use eunomia::assert_relative_eq;
     use helios_math::Point3;
@@ -253,42 +254,76 @@ mod tests {
         assert_relative_eq!(k[base + 3], k[base - 3], epsilon = 1e-15);
     }
 
-    #[test]
-    fn reconstruction_is_generic_over_scalar_f32() {
-        // f32 disk phantom, radon, FBP — the pipeline is generic over Scalar.
+    /// Reconstruction accuracy tolerated at the centre of a uniform disk.
+    ///
+    /// This is a **reconstruction** bound, not a rounding bound, so it is not
+    /// derived from `T::EPSILON`. Filtered back-projection from 90 views over 121
+    /// offsets onto a coarser 41x41 grid carries discretization and ramp-filter
+    /// error orders of magnitude above any float width, and the same bound is
+    /// therefore correct for every shipped width. Tightening it toward epsilon
+    /// would test the sampling geometry rather than the reconstruction.
+    const RECONSTRUCTION_TOLERANCE: f64 = 0.2;
+
+    /// Asserts FBP recovers a disk phantom's attenuation in one scalar width.
+    fn filtered_back_projection_recovers_disk_attenuation<T>()
+    where
+        T: ShippedScalar + helios_math::GeometryScalar,
+    {
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
         let n = 161;
-        let spacing = 0.5_f32;
-        let grid = VoxelGrid::<f32>::axis_aligned(
+        let spacing = cast(0.5);
+        let grid = VoxelGrid::<T>::axis_aligned(
             [n, n, 1],
-            [spacing, spacing, spacing],
-            Point3::new(0.0, 0.0, 0.0),
+            [spacing; 3],
+            Point3::new(zero, zero, zero),
         )
-        .unwrap();
-        let c = (n - 1) as f32 * spacing / 2.0;
+        .expect("valid axis-aligned grid");
+
+        let mu = cast(0.04);
+        let centre_offset = cast((n - 1) as f64 * 0.5 / 2.0);
+        let radius = cast(25.0);
         let phantom = Volume::from_shape_fn(grid, move |idx| {
-            let dx = idx[0] as f32 * spacing - c;
-            let dy = idx[1] as f32 * spacing - c;
-            if (dx * dx + dy * dy).sqrt() <= 25.0 {
-                0.04_f32
+            let dx = cast(idx[0] as f64) * spacing - centre_offset;
+            let dy = cast(idx[1] as f64) * spacing - centre_offset;
+            if (dx * dx + dy * dy).sqrt() <= radius {
+                mu
             } else {
-                0.0
+                zero
             }
         });
-        let angles: Vec<f32> = (0..90)
-            .map(|a| a as f32 * std::f32::consts::PI / 90.0)
+
+        let angles: Vec<T> = (0..90)
+            .map(|a| cast(a as f64 * std::f64::consts::PI / 90.0))
             .collect();
-        let offsets: Vec<f32> = (0..121).map(|j| -45.0 + j as f32 * 90.0 / 120.0).collect();
-        let sino = parallel_beam_radon(&phantom, &angles, &offsets, 400.0, 0.5);
-        let recon = filtered_back_projection(
-            &sino,
-            &VoxelGrid::<f32>::axis_aligned(
-                [41, 41, 1],
-                [2.0, 2.0, 2.0],
-                Point3::new(0.0, 0.0, 0.0),
-            )
-            .unwrap(),
+        let offsets: Vec<T> = (0..121)
+            .map(|j| cast(-45.0 + j as f64 * 90.0 / 120.0))
+            .collect();
+        let sinogram =
+            parallel_beam_radon(&phantom, &angles, &offsets, cast(400.0), cast(0.5));
+
+        let recon_grid = VoxelGrid::<T>::axis_aligned(
+            [41, 41, 1],
+            [cast(2.0); 3],
+            Point3::new(zero, zero, zero),
+        )
+        .expect("valid reconstruction grid");
+        let recon = filtered_back_projection(&sinogram, &recon_grid);
+
+        assert_relative_eq!(
+            recon.get(20, 20, 0).unwrap(),
+            mu,
+            max_relative = cast(RECONSTRUCTION_TOLERANCE)
         );
-        let centre = recon.get(20, 20, 0).unwrap();
-        assert_relative_eq!(centre, 0.04_f32, max_relative = 0.2);
+    }
+
+    #[test]
+    fn filtered_back_projection_recovers_disk_attenuation_in_single_precision() {
+        filtered_back_projection_recovers_disk_attenuation::<f32>();
+    }
+
+    #[test]
+    fn filtered_back_projection_recovers_disk_attenuation_in_double_precision() {
+        filtered_back_projection_recovers_disk_attenuation::<f64>();
     }
 }

@@ -76,6 +76,7 @@ pub fn add_quantum_noise<T: GeometryScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
 
     // Constant-τ sinogram of `n` readings (1 angle × n offsets), for statistics.
     fn constant_sinogram(tau: f64, n: usize) -> Sinogram<f64> {
@@ -157,16 +158,55 @@ mod tests {
         );
     }
 
+    /// Departure from the clean sinogram tolerated at the high-flux limit.
+    ///
+    /// This is a **statistical** bound, not a rounding one, so it is not derived
+    /// from `T::EPSILON`. Quantum noise on `N` detected photons has relative
+    /// standard deviation `1/sqrt(N)`; at flux 1e12 through optical depth 0.5,
+    /// `N ~ 6e11`, so one sigma is about 1.3e-6. A bound of 1e-3 is several
+    /// hundred sigma, chosen deliberately loose so a seeded draw cannot flake,
+    /// and it is still three orders of magnitude below the 0.5 signal.
+    const HIGH_FLUX_TOLERANCE: f64 = 1.0e-3;
+
+    /// Asserts noise determinism and the high-flux limit in one scalar width.
+    fn quantum_noise_is_seeded_and_vanishes_at_high_flux<T>()
+    where
+        T: ShippedScalar + helios_math::GeometryScalar,
+    {
+        // GeometryScalar and FloatElement both define `from_f64`; name the
+        // one that performs the literal conversion so the call is unambiguous.
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let offsets: Vec<T> = (0..64).map(|i| cast(i as f64)).collect();
+        let optical_depth = cast(0.5);
+        let clean = Sinogram::from_readings(
+            vec![cast(0.0)],
+            offsets,
+            vec![optical_depth; 64],
+        )
+        .expect("well-formed sinogram readings");
+
+        // Same seed, same draw: the generator is reproducible.
+        let first = add_quantum_noise(&clean, 1.0e4, 99).expect("valid optical depths");
+        let second = add_quantum_noise(&clean, 1.0e4, 99).expect("valid optical depths");
+        assert_eq!(first, second);
+
+        // As flux grows the noisy sinogram converges on the clean one.
+        let high_flux = add_quantum_noise(&clean, 1.0e12, 99).expect("valid optical depths");
+        let departure = (high_flux.get(0, 0) - optical_depth).abs();
+        assert!(
+            departure < cast(HIGH_FLUX_TOLERANCE),
+            "high-flux departure {departure:?} exceeds the statistical bound"
+        );
+    }
+
     #[test]
-    fn noise_model_is_generic_over_scalar_f32() {
-        let offsets: Vec<f32> = (0..64).map(|i| i as f32).collect();
-        let clean = Sinogram::from_readings(vec![0.0_f32], offsets, vec![0.5_f32; 64]).unwrap();
-        let a = add_quantum_noise(&clean, 1.0e4, 99).expect("valid optical depths");
-        let b = add_quantum_noise(&clean, 1.0e4, 99).expect("valid optical depths");
-        assert_eq!(a, b);
-        // High flux → near-clean.
-        let hi = add_quantum_noise(&clean, 1.0e12, 99).expect("valid optical depths");
-        assert!((hi.get(0, 0) - 0.5_f32).abs() < 1e-3);
+    fn quantum_noise_is_seeded_and_vanishes_at_high_flux_in_single_precision() {
+        quantum_noise_is_seeded_and_vanishes_at_high_flux::<f32>();
+    }
+
+    #[test]
+    fn quantum_noise_is_seeded_and_vanishes_at_high_flux_in_double_precision() {
+        quantum_noise_is_seeded_and_vanishes_at_high_flux::<f64>();
     }
 
     #[test]
