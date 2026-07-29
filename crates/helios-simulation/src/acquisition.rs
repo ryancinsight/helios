@@ -104,6 +104,7 @@ pub fn simulate_helical_sinogram<T: GeometryScalar + UnitScalar + Send + Sync>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
@@ -216,30 +217,63 @@ mod tests {
         }
     }
 
-    #[test]
-    fn simulation_is_generic_over_scalar_f32() {
-        let grid =
-            VoxelGrid::<f32>::axis_aligned([9, 9, 9], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap();
-        let mu = Volume::from_shape_fn(grid, |_| 0.05_f32);
-        let del = HelicalDelivery::<f32>::new(
+    /// Sinogram optical depth is a ray-marched accumulation at a 0.25 mm step over
+    /// the traversed 1.6 cm, so on the order of 64 additions contribute. Worst-case
+    /// growth is `n * T::EPSILON`, and 256 ulps of `T` bounds that. The former
+    /// 1e-4 absolute bound was ~1250 ulps of `f32` at this magnitude, so this
+    /// tightens the assertion while making its basis explicit.
+    const SINOGRAM_ACCUMULATION_ULPS: f64 = 256.0;
+
+    /// Asserts sinogram optical depth through a uniform slab in one scalar width.
+    fn helical_sinogram_accumulates_uniform_optical_depth<T>()
+    where
+        T: ShippedScalar + helios_math::GeometryScalar,
+    {
+        // GeometryScalar and FloatElement both define `from_f64`; name the
+        // one that performs the literal conversion so the call is unambiguous.
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
+        let spacing = cast(2.0);
+        let grid = VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], Point3::new(zero, zero, zero))
+            .expect("valid axis-aligned grid");
+
+        let mu = cast(0.05);
+        let attenuation = Volume::from_shape_fn(grid, |_| mu);
+        let delivery = HelicalDelivery::<T>::new(
             4,
-            Length::from_unit::<Millimeter>(25.0),
-            Dimensionless::from_base(0.2),
-            Time::from_unit::<aequitas::systems::si::units::Second>(10.0),
-            Angle::from_unit::<Radian>(0.0),
-            Length::from_unit::<Millimeter>(8.0),
+            Length::from_unit::<Millimeter>(cast(25.0)),
+            Dimensionless::from_base(cast(0.2)),
+            Time::from_unit::<aequitas::systems::si::units::Second>(cast(10.0)),
+            Angle::from_unit::<Radian>(zero),
+            Length::from_unit::<Millimeter>(cast(8.0)),
         )
-        .unwrap();
-        let sino = simulate_helical_sinogram(
-            &del,
-            &mu,
+        .expect("valid helical geometry");
+
+        let sinogram = simulate_helical_sinogram(
+            &delivery,
+            &attenuation,
             4,
-            Length::from_unit::<Millimeter>(500.0),
-            Length::from_unit::<Millimeter>(0.25),
+            Length::from_unit::<Millimeter>(cast(500.0)),
+            Length::from_unit::<Millimeter>(cast(0.25)),
         )
         .expect("valid attenuation volume");
-        assert_relative_eq!(sino[0].optical_depth, 0.05_f32 * 1.6, epsilon = 1e-4);
+
+        // Uniform mu over the 1.6 cm traversed path.
+        assert_relative_eq!(
+            sinogram[0].optical_depth,
+            mu * cast(1.6),
+            max_relative = T::EPSILON * cast(SINOGRAM_ACCUMULATION_ULPS)
+        );
+    }
+
+    #[test]
+    fn helical_sinogram_accumulates_uniform_optical_depth_in_single_precision() {
+        helical_sinogram_accumulates_uniform_optical_depth::<f32>();
+    }
+
+    #[test]
+    fn helical_sinogram_accumulates_uniform_optical_depth_in_double_precision() {
+        helical_sinogram_accumulates_uniform_optical_depth::<f64>();
     }
 
     #[test]

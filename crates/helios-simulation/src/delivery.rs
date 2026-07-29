@@ -123,6 +123,7 @@ pub fn collimate_frames<T: GeometryScalar + UnitScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
 
     fn delivery() -> HelicalDelivery<f64> {
@@ -208,25 +209,46 @@ mod tests {
         assert_relative_eq!(*total.as_base(), 10.0, epsilon = 1e-13);
     }
 
-    #[test]
-    fn delivery_is_generic_over_scalar_f32() {
-        let lot = LeafOpenTimeSinogram::from_fractions(1, 3, vec![1.0_f32, 0.0, 1.0]).unwrap();
-        let mlc = MlcModel::new(0.0_f32, 0.1).unwrap();
-        let del = HelicalDelivery::<f32>::new(
+    /// Leaf fluence for a fully open leaf is one penumbra evaluation scaled by the
+    /// open-time fraction, so a handful of roundings separate it from the expected
+    /// 0.95. Sixteen ulps of `T` bounds that.
+    const LEAF_FLUENCE_ULPS: f64 = 16.0;
+
+    /// Asserts delivered leaf fluence for an open leaf in one scalar width.
+    fn helical_delivery_reports_open_leaf_fluence<T: ShippedScalar>() {
+        let zero = T::from_f64(0.0);
+        let one = T::from_f64(1.0);
+        let sinogram = LeafOpenTimeSinogram::from_fractions(1, 3, vec![one, zero, one])
+            .expect("open-time fractions within range");
+        let mlc = MlcModel::new(zero, T::from_f64(0.1))
+            .expect("transmission and penumbra within range");
+        let delivery = HelicalDelivery::<T>::new(
             51,
-            Length::from_unit::<Millimeter>(25.0),
-            Dimensionless::from_base(0.4),
-            Time::from_unit::<Second>(10.0),
-            Angle::from_unit::<Radian>(0.0),
-            Length::from_unit::<Millimeter>(0.0),
+            Length::from_unit::<Millimeter>(T::from_f64(25.0)),
+            Dimensionless::from_base(T::from_f64(0.4)),
+            Time::from_unit::<Second>(T::from_f64(10.0)),
+            Angle::from_unit::<Radian>(zero),
+            Length::from_unit::<Millimeter>(zero),
         )
-        .unwrap();
-        let frames = simulate_helical_delivery(&del, &lot, &mlc);
+        .expect("valid helical geometry");
+
+        let frames = simulate_helical_delivery(&delivery, &sinogram, &mlc);
+
         assert_relative_eq!(
             *frames[0].leaf_fluence[0].as_base(),
-            0.95_f32,
-            epsilon = 1e-6
+            T::from_f64(0.95),
+            max_relative = T::EPSILON * T::from_f64(LEAF_FLUENCE_ULPS)
         );
+    }
+
+    #[test]
+    fn helical_delivery_reports_open_leaf_fluence_in_single_precision() {
+        helical_delivery_reports_open_leaf_fluence::<f32>();
+    }
+
+    #[test]
+    fn helical_delivery_reports_open_leaf_fluence_in_double_precision() {
+        helical_delivery_reports_open_leaf_fluence::<f64>();
     }
 
     fn open_frame() -> DeliveryFrame<f64> {

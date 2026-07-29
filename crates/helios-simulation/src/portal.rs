@@ -70,6 +70,7 @@ pub fn frame_portal_fluence<T: GeometryScalar + UnitScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
@@ -175,33 +176,63 @@ mod tests {
         );
     }
 
-    #[test]
-    fn portal_is_generic_over_scalar_f32() {
-        let grid =
-            VoxelGrid::<f32>::axis_aligned([9, 9, 9], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap();
-        let mu = Volume::from_shape_fn(grid, |_| 0.05_f32);
+    /// Portal fluence is Beer-Lambert transmission through the traversed path,
+    /// scaled by the incident leaf fluence: an accumulation over the ray, one
+    /// `exp`, and one product. `exp` is not required by IEEE 754 to be correctly
+    /// rounded, so 64 ulps of `T` bounds the chain including the accumulation.
+    const PORTAL_TRANSMISSION_ULPS: f64 = 64.0;
+
+    /// Asserts portal transmission through a uniform slab in one scalar width.
+    fn portal_fluence_follows_beer_lambert<T>()
+    where
+        T: ShippedScalar + helios_math::GeometryScalar,
+    {
+        // GeometryScalar and FloatElement both define `from_f64`; name the
+        // one that performs the literal conversion so the call is unambiguous.
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
+        let spacing = cast(2.0);
+        let grid = VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], Point3::new(zero, zero, zero))
+            .expect("valid axis-aligned grid");
+
+        let mu = cast(0.05);
+        let attenuation = Volume::from_shape_fn(grid, |_| mu);
+        let incident = cast(2.0);
         let frame = DeliveryFrame {
             projection: 0,
-            gantry_angle_rad: Angle::from_unit::<Radian>(0.0_f32),
-            couch: Length::from_unit::<Millimeter>(8.0_f32),
-            leaf_fluence: vec![EnergyPerArea::from_base(2.0_f32)],
+            gantry_angle_rad: Angle::from_unit::<Radian>(zero),
+            couch: Length::from_unit::<Millimeter>(cast(8.0)),
+            leaf_fluence: vec![EnergyPerArea::from_base(incident)],
         };
+
         let portal = frame_portal_fluence(
             &frame,
-            &mu,
+            &attenuation,
             BeamGeometry::Parallel {
-                standoff: Length::from_unit::<Millimeter>(500.0_f32),
+                standoff: Length::from_unit::<Millimeter>(cast(500.0)),
             },
-            Length::from_unit::<Millimeter>(2.0_f32),
-            Length::from_unit::<Millimeter>(0.25_f32),
+            Length::from_unit::<Millimeter>(spacing),
+            Length::from_unit::<Millimeter>(cast(0.25)),
         )
         .expect("valid attenuation volume");
+
+        // 1.6 cm of uniform mu between the source and the detector.
+        let expected = incident * (-(mu * cast(1.6))).exp();
         assert_relative_eq!(
             *portal[0].as_base(),
-            2.0_f32 * (-0.05_f32 * 1.6).exp(),
-            epsilon = 1e-5
+            expected,
+            max_relative = T::EPSILON * cast(PORTAL_TRANSMISSION_ULPS)
         );
+    }
+
+    #[test]
+    fn portal_fluence_follows_beer_lambert_in_single_precision() {
+        portal_fluence_follows_beer_lambert::<f32>();
+    }
+
+    #[test]
+    fn portal_fluence_follows_beer_lambert_in_double_precision() {
+        portal_fluence_follows_beer_lambert::<f64>();
     }
 
     #[test]
