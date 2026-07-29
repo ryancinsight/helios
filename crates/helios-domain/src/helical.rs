@@ -403,4 +403,27 @@ mod tests {
             epsilon = 1e-4
         );
     }
+
+    #[test]
+    fn kinematics_are_generic_over_scalar_f64() {
+        let d = HelicalDelivery::<f64>::new(
+            51,
+            Length::from_unit::<Millimeter>(25.0),
+            Dimensionless::from_base(0.4),
+            Time::from_unit::<Second>(10.0),
+            Angle::from_unit::<Radian>(0.0),
+            Length::from_unit::<Millimeter>(0.0),
+        )
+        .unwrap();
+        assert_relative_eq!(
+            d.couch_travel_per_rotation_mm().in_unit::<Millimeter>(),
+            10.0_f64,
+            epsilon = 1e-12
+        );
+        assert_relative_eq!(
+            d.gantry_angle_rad(51).in_unit::<Radian>(),
+            core::f64::consts::TAU,
+            epsilon = 1e-12
+        );
+    }
 }

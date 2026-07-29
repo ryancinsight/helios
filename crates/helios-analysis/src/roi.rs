@@ -99,4 +99,14 @@ mod tests {
         assert!(mask([2, 2, 0]));
         assert!(!mask([0, 0, 0]));
     }
+
+    #[test]
+    fn roi_masks_are_generic_over_scalar_f64() {
+        let g =
+            VoxelGrid::<f64>::axis_aligned([5, 5, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
+                .unwrap();
+        let mask = spherical_mask(g, Point3::new(4.0_f64, 4.0, 0.0), 2.5);
+        assert!(mask([2, 2, 0]));
+        assert!(!mask([0, 0, 0]));
+    }
 }

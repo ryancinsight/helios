@@ -323,4 +323,20 @@ mod tests {
         let dose_rmse = dose_volume_rmse(&vol, &vol).unwrap();
         assert_relative_eq!(dose_rmse.into_base(), 0.0_f32, epsilon = 1e-6);
     }
+
+    #[test]
+    fn metrics_are_generic_over_scalar_f64() {
+        let vol = Volume::from_shape_vec(
+            VoxelGrid::<f64>::axis_aligned([1, 1, 2], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
+                .unwrap(),
+            vec![2.0_f64, 4.0],
+        )
+        .unwrap();
+        let s = roi_statistics(&vol, [0, 0, 0], [1, 1, 2]);
+        assert_relative_eq!(s.std, 1.0_f64, epsilon = 1e-12);
+        assert_relative_eq!(michelson_contrast(3.0_f64, 1.0), 0.5, epsilon = 1e-14);
+
+        let dose_rmse = dose_volume_rmse(&vol, &vol).unwrap();
+        assert_relative_eq!(dose_rmse.into_base(), 0.0_f64, epsilon = 1e-12);
+    }
 }
