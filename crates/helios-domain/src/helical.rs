@@ -215,6 +215,7 @@ impl<T: Scalar + UnitScalar> HelicalDelivery<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
 
     fn angle(value: f64) -> Angle<f64> {
@@ -381,49 +382,48 @@ mod tests {
         }
     }
 
-    #[test]
-    fn kinematics_are_generic_over_scalar_f32() {
-        let d = HelicalDelivery::<f32>::new(
+    /// Couch travel is pitch x field width (0.4 x 25 mm), and the gantry angle
+    /// after a full rotation is a division by the slice count scaled by `TAU`.
+    /// Both are short chains, but the angle accumulates over 51 slices and `TAU`
+    /// itself is a rounded constant, so 64 ulps of `T` covers them. The
+    /// predecessor pair used 1e-4 for `f32` -- roughly 840 ulps -- and 1e-12 for
+    /// `f64`, so this is tighter at both widths.
+    const KINEMATIC_ULPS: f64 = 64.0;
+
+    /// Asserts helical couch travel and gantry angle in one scalar width.
+    fn helical_kinematics_match_closed_form<T: ShippedScalar>() {
+        let delivery = HelicalDelivery::<T>::new(
             51,
-            Length::from_unit::<Millimeter>(25.0),
-            Dimensionless::from_base(0.4),
-            Time::from_unit::<Second>(10.0),
-            Angle::from_unit::<Radian>(0.0),
-            Length::from_unit::<Millimeter>(0.0),
+            Length::from_unit::<Millimeter>(T::from_f64(25.0)),
+            Dimensionless::from_base(T::from_f64(0.4)),
+            Time::from_unit::<Second>(T::from_f64(10.0)),
+            Angle::from_unit::<Radian>(T::from_f64(0.0)),
+            Length::from_unit::<Millimeter>(T::from_f64(0.0)),
         )
-        .unwrap();
+        .expect("valid helical delivery parameters");
+        let tolerance = T::EPSILON * T::from_f64(KINEMATIC_ULPS);
+
+        // Pitch 0.4 over a 25 mm field advances the couch 10 mm per rotation.
         assert_relative_eq!(
-            d.couch_travel_per_rotation_mm().in_unit::<Millimeter>(),
-            10.0_f32,
-            epsilon = 1e-4
+            delivery.couch_travel_per_rotation_mm().in_unit::<Millimeter>(),
+            T::from_f64(10.0),
+            max_relative = tolerance
         );
+        // One full rotation over all 51 slices returns to TAU.
         assert_relative_eq!(
-            d.gantry_angle_rad(51).in_unit::<Radian>(),
-            core::f32::consts::TAU,
-            epsilon = 1e-4
+            delivery.gantry_angle_rad(51).in_unit::<Radian>(),
+            T::TAU,
+            max_relative = tolerance
         );
     }
 
     #[test]
-    fn kinematics_are_generic_over_scalar_f64() {
-        let d = HelicalDelivery::<f64>::new(
-            51,
-            Length::from_unit::<Millimeter>(25.0),
-            Dimensionless::from_base(0.4),
-            Time::from_unit::<Second>(10.0),
-            Angle::from_unit::<Radian>(0.0),
-            Length::from_unit::<Millimeter>(0.0),
-        )
-        .unwrap();
-        assert_relative_eq!(
-            d.couch_travel_per_rotation_mm().in_unit::<Millimeter>(),
-            10.0_f64,
-            epsilon = 1e-12
-        );
-        assert_relative_eq!(
-            d.gantry_angle_rad(51).in_unit::<Radian>(),
-            core::f64::consts::TAU,
-            epsilon = 1e-12
-        );
+    fn helical_kinematics_match_closed_form_in_single_precision() {
+        helical_kinematics_match_closed_form::<f32>();
+    }
+
+    #[test]
+    fn helical_kinematics_match_closed_form_in_double_precision() {
+        helical_kinematics_match_closed_form::<f64>();
     }
 }

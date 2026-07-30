@@ -206,6 +206,7 @@ pub fn volume_relative_l2_error<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use aequitas::systems::si::units::Gray;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
@@ -308,35 +309,47 @@ mod tests {
         assert!(volume_relative_l2_error(&a, &zero_truth).is_err());
     }
 
-    #[test]
-    fn metrics_are_generic_over_scalar_f32() {
-        let vol = Volume::from_shape_vec(
-            VoxelGrid::<f32>::axis_aligned([1, 1, 2], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap(),
-            vec![2.0_f32, 4.0],
-        )
-        .unwrap();
-        let s = roi_statistics(&vol, [0, 0, 0], [1, 1, 2]);
-        assert_relative_eq!(s.std, 1.0_f32, epsilon = 1e-6);
-        assert_relative_eq!(michelson_contrast(3.0_f32, 1.0), 0.5, epsilon = 1e-7);
+    /// The standard deviation of `{2, 4}` is exactly 1, reached through a mean,
+    /// two squared deviations, a division, and a square root -- a handful of
+    /// roundings. Michelson contrast of `(3, 1)` is one subtraction over one
+    /// addition. Sixteen ulps of `T` bounds either chain.
+    const METRIC_ULPS: f64 = 16.0;
 
-        let dose_rmse = dose_volume_rmse(&vol, &vol).unwrap();
-        assert_relative_eq!(dose_rmse.into_base(), 0.0_f32, epsilon = 1e-6);
+    /// Asserts the ROI metrics in one scalar width.
+    fn roi_metrics_match_closed_form<T: ShippedScalar>() {
+        let zero = T::from_f64(0.0);
+        let unit = T::from_f64(1.0);
+        let grid =
+            VoxelGrid::<T>::axis_aligned([1, 1, 2], [unit; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
+        let volume = Volume::from_shape_vec(grid, vec![T::from_f64(2.0), T::from_f64(4.0)])
+            .expect("two values for a two-voxel grid");
+        let tolerance = T::EPSILON * T::from_f64(METRIC_ULPS);
+
+        // std({2, 4}) = 1 exactly.
+        let stats = roi_statistics(&volume, [0, 0, 0], [1, 1, 2]);
+        assert_relative_eq!(stats.std, unit, max_relative = tolerance);
+
+        // (3 - 1) / (3 + 1) = 0.5 exactly.
+        assert_relative_eq!(
+            michelson_contrast(T::from_f64(3.0), unit),
+            T::from_f64(0.5),
+            max_relative = tolerance
+        );
+
+        // A volume against itself has no error at all, so this one is exact and a
+        // relative bound cannot express nearness to zero.
+        let dose_rmse = dose_volume_rmse(&volume, &volume).expect("matching grids");
+        assert_relative_eq!(dose_rmse.into_base(), zero, epsilon = tolerance);
     }
 
     #[test]
-    fn metrics_are_generic_over_scalar_f64() {
-        let vol = Volume::from_shape_vec(
-            VoxelGrid::<f64>::axis_aligned([1, 1, 2], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap(),
-            vec![2.0_f64, 4.0],
-        )
-        .unwrap();
-        let s = roi_statistics(&vol, [0, 0, 0], [1, 1, 2]);
-        assert_relative_eq!(s.std, 1.0_f64, epsilon = 1e-12);
-        assert_relative_eq!(michelson_contrast(3.0_f64, 1.0), 0.5, epsilon = 1e-14);
+    fn roi_metrics_match_closed_form_in_single_precision() {
+        roi_metrics_match_closed_form::<f32>();
+    }
 
-        let dose_rmse = dose_volume_rmse(&vol, &vol).unwrap();
-        assert_relative_eq!(dose_rmse.into_base(), 0.0_f64, epsilon = 1e-12);
+    #[test]
+    fn roi_metrics_match_closed_form_in_double_precision() {
+        roi_metrics_match_closed_form::<f64>();
     }
 }

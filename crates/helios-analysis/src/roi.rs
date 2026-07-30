@@ -43,6 +43,7 @@ pub fn box_mask<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use crate::Dvh;
     use eunomia::assert_relative_eq;
     use helios_domain::Volume;
@@ -90,23 +91,33 @@ mod tests {
         assert_eq!(roi.count(), 9);
     }
 
-    #[test]
-    fn roi_masks_are_generic_over_scalar_f32() {
-        let g =
-            VoxelGrid::<f32>::axis_aligned([5, 5, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap();
-        let mask = spherical_mask(g, Point3::new(4.0_f32, 4.0, 0.0), 2.5);
-        assert!(mask([2, 2, 0]));
-        assert!(!mask([0, 0, 0]));
+    /// Asserts spherical ROI membership in one scalar width.
+    ///
+    /// Membership is a boolean predicate, so this carries no tolerance: the two
+    /// sampled voxels sit well inside and well outside the radius, and a bound on
+    /// a boolean would assert nothing. A voxel flipping side is a defect, not a
+    /// rounding effect.
+    fn spherical_mask_selects_voxels_within_the_radius<T: ShippedScalar>() {
+        let zero = T::from_f64(0.0);
+        let spacing = T::from_f64(2.0);
+        let grid =
+            VoxelGrid::<T>::axis_aligned([5, 5, 1], [spacing; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
+
+        let centre = Point3::new(T::from_f64(4.0), T::from_f64(4.0), zero);
+        let mask = spherical_mask(grid, centre, T::from_f64(2.5));
+
+        assert!(mask([2, 2, 0]), "the centre voxel must be inside the sphere");
+        assert!(!mask([0, 0, 0]), "the far corner must be outside the sphere");
     }
 
     #[test]
-    fn roi_masks_are_generic_over_scalar_f64() {
-        let g =
-            VoxelGrid::<f64>::axis_aligned([5, 5, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap();
-        let mask = spherical_mask(g, Point3::new(4.0_f64, 4.0, 0.0), 2.5);
-        assert!(mask([2, 2, 0]));
-        assert!(!mask([0, 0, 0]));
+    fn spherical_mask_selects_voxels_within_the_radius_in_single_precision() {
+        spherical_mask_selects_voxels_within_the_radius::<f32>();
+    }
+
+    #[test]
+    fn spherical_mask_selects_voxels_within_the_radius_in_double_precision() {
+        spherical_mask_selects_voxels_within_the_radius::<f64>();
     }
 }

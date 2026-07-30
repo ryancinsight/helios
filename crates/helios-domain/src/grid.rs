@@ -181,6 +181,7 @@ impl<T: Scalar> VoxelGrid<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
     use helios_math::Vector3;
 
@@ -226,7 +227,15 @@ mod tests {
         assert_eq!(g.voxel_center(0, 0, 0), Point3::new(10.0, 20.0, 30.0));
     }
 
-    fn oriented_grid_preserves_index_world_contract<T: Scalar>(tolerance: T) {
+    /// The index-to-world contract applies a rotation, a scale, and a translation,
+    /// then inverts them, so the round trip accumulates roughly a dozen roundings
+    /// through the quaternion. Sixty-four ulps of `T` bounds it -- derived here
+    /// rather than passed in, so neither instantiation can be handed a tolerance
+    /// that happens to pass.
+    const INDEX_WORLD_ULPS: f64 = 64.0;
+
+    fn oriented_grid_preserves_index_world_contract<T: ShippedScalar>() {
+        let tolerance = T::EPSILON * T::from_f64(INDEX_WORLD_ULPS);
         let zero = T::from_f64(0.0);
         let one = T::from_f64(1.0);
         let rotation = UnitQuaternion::try_from_rotation_columns(
@@ -258,13 +267,13 @@ mod tests {
     }
 
     #[test]
-    fn oriented_grid_preserves_f32_index_world_contract() {
-        oriented_grid_preserves_index_world_contract(1.0e-5_f32);
+    fn oriented_grid_preserves_index_world_contract_in_single_precision() {
+        oriented_grid_preserves_index_world_contract::<f32>();
     }
 
     #[test]
-    fn oriented_grid_preserves_f64_index_world_contract() {
-        oriented_grid_preserves_index_world_contract(1.0e-12_f64);
+    fn oriented_grid_preserves_index_world_contract_in_double_precision() {
+        oriented_grid_preserves_index_world_contract::<f64>();
     }
 
     #[test]
