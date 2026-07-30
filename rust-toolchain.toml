@@ -1,3 +1,9 @@
+# Pinned build toolchain, uniform with the rest of the Atlas stack.
+#
+# Every stack repository shares one CARGO_TARGET_DIR, and rustc rejects
+# artifacts written by a different compiler version (E0514), so a repository
+# one patch release ahead recompiles — and invalidates — the whole shared
+# dependency graph on every switch between it and its siblings.
 [toolchain]
-channel = "1.97.1"
+channel = "1.97.0"
 components = ["rustfmt", "clippy"]
