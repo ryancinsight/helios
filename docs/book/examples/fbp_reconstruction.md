@@ -1,5 +1,10 @@
 # Example: FBP Reconstruction
 
+<!-- generated-figure-start -->
+![Figure 7.2 — Example: FBP Reconstruction](../figures/ch07/fig02_example_fbp_reconstruction.svg)
+*Figure 7.2 — Example: FBP Reconstruction*
+<!-- generated-figure-end -->
+
 **Crate**: `helios-imaging`  
 **Run**: `cargo run -p helios-imaging --example fbp_reconstruction`  
 **Source**: [`crates/helios-imaging/examples/fbp_reconstruction.rs`](../../../crates/helios-imaging/examples/fbp_reconstruction.rs)

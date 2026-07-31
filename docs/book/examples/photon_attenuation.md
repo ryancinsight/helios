@@ -1,5 +1,10 @@
 # Example: Photon Attenuation Physics
 
+<!-- generated-figure-start -->
+![Figure 5.2 — Example: Photon Attenuation Physics](../figures/ch05/fig02_example_photon_attenuation_physics.svg)
+*Figure 5.2 — Example: Photon Attenuation Physics*
+<!-- generated-figure-end -->
+
 **Crate**: `helios-physics`  
 **Run**: `cargo run -p helios-physics --example photon_attenuation`  
 **Source**: [`crates/helios-physics/examples/photon_attenuation.rs`](../../../crates/helios-physics/examples/photon_attenuation.rs)
@@ -53,7 +58,6 @@ vendor-independent baseline before scanner-specific stoichiometric calibration.
 
 This example underwrites the deterministic figure committed to the book:
 
-![Beer–Lambert transmission vs depth in water](../figures/photon_attenuation_depth.svg)
 ![Hounsfield-unit to relative-electron-density calibration](../figures/ct_calibration_curve.svg)
 
 The figure values match the printed `transmission_at(depth)` and

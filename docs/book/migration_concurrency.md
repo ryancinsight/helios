@@ -1,5 +1,10 @@
 # Chapter 32 — Moirai: Concurrency
 
+<!-- generated-figure-start -->
+![Figure 29.1 — Moirai: Concurrency](figures/ch29/fig01_29_moirai_concurrency.svg)
+*Figure 29.1 — Moirai: Concurrency*
+<!-- generated-figure-end -->
+
 Helios migrates parallel execution from `rayon::ParIter`, bespoke
 `std::thread::spawn`, and partial `tokio` usage to **Moirai**'s unified
 executor.  Moirai unifies what tokio does for async (DICOM streaming)

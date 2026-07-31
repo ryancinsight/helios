@@ -1,5 +1,10 @@
 # Example: Compton Scattering Physics
 
+<!-- generated-figure-start -->
+![Figure 9.2 — Example: Compton Scattering Physics](../figures/ch09/fig02_example_compton_scattering_physics.svg)
+*Figure 9.2 — Example: Compton Scattering Physics*
+<!-- generated-figure-end -->
+
 > **Source:** `crates/helios-physics/examples/compton_physics.rs`
 >
 > **Run:** `cargo run -p helios-physics --example compton_physics`

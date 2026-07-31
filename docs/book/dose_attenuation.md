@@ -1,5 +1,10 @@
 # Chapter 9 — Mass Attenuation and Photon Cross Sections
 
+<!-- generated-figure-start -->
+![Figure 9.1 — Mass Attenuation and Photon Cross Sections](figures/ch09/fig01_9_mass_attenuation_and_photon_cross_sections.svg)
+*Figure 9.1 — Mass Attenuation and Photon Cross Sections*
+<!-- generated-figure-end -->
+
 The helios-physics crate provides MassAttenuation models that convert
 Hounsfield units to linear attenuation coefficients (μ, cm⁻¹):
 

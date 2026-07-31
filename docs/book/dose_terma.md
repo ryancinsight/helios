@@ -1,5 +1,10 @@
 # Chapter 10 — Terma and Energy Deposition
 
+<!-- generated-figure-start -->
+![Figure 10.1 — Terma and Energy Deposition](figures/ch10/fig01_10_terma_and_energy_deposition.svg)
+*Figure 10.1 — Terma and Energy Deposition*
+<!-- generated-figure-end -->
+
 **Terma** (Total Energy Released per unit MAss) is the primary quantity
 from which dose is convolved:
 

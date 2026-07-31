@@ -1,5 +1,10 @@
 # Chapter 31 — Mnemosyne and Themis: Memory
 
+<!-- generated-figure-start -->
+![Figure 28.1 — Mnemosyne and Themis: Memory](figures/ch28/fig01_28_mnemosyne_and_themis_memory.svg)
+*Figure 28.1 — Mnemosyne and Themis: Memory*
+<!-- generated-figure-end -->
+
 Helios migrates from `std::alloc` (jemalloc/mimalloc on production) to
 **Mnemosyne** arenas plus **Themis** NUMA placement.  Two crates compose:
 Mnemosyne reuses memory in type-erased arenas; Themis binds the arenas to

@@ -1,5 +1,10 @@
 # Example: LINAC Dose Accumulation
 
+<!-- generated-figure-start -->
+![Figure 18.2 — Example: LINAC Dose Accumulation](../figures/ch18/fig02_example_linac_dose_accumulation.svg)
+*Figure 18.2 — Example: LINAC Dose Accumulation*
+<!-- generated-figure-end -->
+
 > **Source:** `crates/helios-simulation/examples/linac_dose_accumulation.rs`
 >
 > **Run:** `cargo run -p helios-simulation --example linac_dose_accumulation`

@@ -1,5 +1,10 @@
 # Example: Regression and Analytical Validation
 
+<!-- generated-figure-start -->
+![Figure 36.2 — Example: Regression and Analytical Validation](../figures/ch36/fig02_example_regression_and_analytical_validation.svg)
+*Figure 36.2 — Example: Regression and Analytical Validation*
+<!-- generated-figure-end -->
+
 > **Source:** `crates/helios-analysis/examples/validation_regression.rs`
 >
 > **Run:** `cargo run -p helios-analysis --example validation_regression`

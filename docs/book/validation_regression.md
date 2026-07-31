@@ -1,5 +1,10 @@
 # Chapter 24 — Analytical Solutions and Regression Tests
 
+<!-- generated-figure-start -->
+![Figure 36.1 — Analytical Solutions and Regression Tests](figures/ch36/fig01_36_analytical_solutions_and_regression_tests.svg)
+*Figure 36.1 — Analytical Solutions and Regression Tests*
+<!-- generated-figure-end -->
+
 Every physics primitive in Helios has at least one analytical oracle test.
 
 ## Radon Transform Oracle

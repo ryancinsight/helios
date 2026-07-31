@@ -1,5 +1,10 @@
 # Example: Validating Foundation Units
 
+<!-- generated-figure-start -->
+![Figure 1.2 — Example: Validating Foundation Units](../figures/ch01/fig02_example_validating_foundation_units.svg)
+*Figure 1.2 — Example: Validating Foundation Units*
+<!-- generated-figure-end -->
+
 **Crate**: `helios-core`  
 **Run**: `cargo run -p helios-core --example validate_foundation_units`  
 **Source**: [`crates/helios-core/examples/validate_foundation_units.rs`](../../../crates/helios-core/examples/validate_foundation_units.rs)

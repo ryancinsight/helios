@@ -1,5 +1,10 @@
 # Chapter 11 — Collapsed-Cone Convolution
 
+<!-- generated-figure-start -->
+![Figure 11.1 — Collapsed-Cone Convolution](figures/ch11/fig01_11_collapsed_cone_convolution.svg)
+*Figure 11.1 — Collapsed-Cone Convolution*
+<!-- generated-figure-end -->
+
 The CollapsedCone solver in helios-simulation converts terma to dose
 by convolving with a poly-energetic pencil-beam kernel:
 

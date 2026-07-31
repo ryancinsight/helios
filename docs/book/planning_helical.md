@@ -1,5 +1,10 @@
 # Chapter 14 — Helical Delivery and Sinogram
 
+<!-- generated-figure-start -->
+![Figure 14.1 — Helical Delivery and Sinogram](figures/ch14/fig01_14_helical_delivery_and_sinogram.svg)
+*Figure 14.1 — Helical Delivery and Sinogram*
+<!-- generated-figure-end -->
+
 TomoTherapy delivers dose helically: the gantry rotates while the couch
 translates, producing a helical trajectory of the beam relative to the patient.
 

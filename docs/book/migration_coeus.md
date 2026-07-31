@@ -1,5 +1,10 @@
 # Chapter 35 — Coeus: Tensors and Autodiff
 
+<!-- generated-figure-start -->
+![Figure 32.1 — Coeus: Tensors and Autodiff](figures/ch32/fig01_32_coeus_tensors_and_autodiff.svg)
+*Figure 32.1 — Coeus: Tensors and Autodiff*
+<!-- generated-figure-end -->
+
 Helios uses **Coeus** as the autodiff-aware tensor crate.  Coeus replaces
 `burn::Tensor`, `tch`, and `candle-core` with a single first-party
 trait frontier (built on `eunomia::RealField`) and an autodiff tape that

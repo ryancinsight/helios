@@ -1,5 +1,10 @@
 # Chapter 33 — Apollo: FFT and Spectral Methods
 
+<!-- generated-figure-start -->
+![Figure 30.1 — Apollo: FFT](figures/ch30/fig01_30_apollo_fft.svg)
+*Figure 30.1 — Apollo: FFT*
+<!-- generated-figure-end -->
+
 Helios uses spectral methods for collapsed-cone poly-energetic dose
 calculation, regularized FBP reconstruction, and certain adjoint
 reconstruction paths.  These migrate from `rustfft` (and `realfft` for

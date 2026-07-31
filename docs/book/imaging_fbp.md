@@ -1,5 +1,10 @@
 # Chapter 7 — Filtered Back Projection
 
+<!-- generated-figure-start -->
+![Figure 7.1 — Filtered Back Projection](figures/ch07/fig01_7_filtered_back_projection.svg)
+*Figure 7.1 — Filtered Back Projection*
+<!-- generated-figure-end -->
+
 Filtered back projection (FBP) reconstructs a 2-D image from a sinogram by:
 
 1. **Ramp filtering** each projection in the Fourier domain: |ω| · P̂(θ, ω)

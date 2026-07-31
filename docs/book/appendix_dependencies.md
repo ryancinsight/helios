@@ -1,5 +1,10 @@
 # Appendix A — Atlas Crate Dependency Map
 
+<!-- generated-figure-start -->
+![Figure A.1 — A. Atlas Crate Dependency Map](figures/appendix/fig01_a_atlas_crate_dependency_map.svg)
+*Figure A.1 — A. Atlas Crate Dependency Map*
+<!-- generated-figure-end -->
+
 Helios is an Atlas domain consumer. Dependency direction runs from workflow
 orchestration toward domain vocabulary and provider-owned infrastructure.
 

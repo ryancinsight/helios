@@ -1,5 +1,10 @@
 # Chapter 8 — MVCT and Correction Workflows
 
+<!-- generated-figure-start -->
+![Figure 8.1 — MVCT and Correction Workflows](figures/ch08/fig01_8_mvct_and_correction_workflows.svg)
+*Figure 8.1 — MVCT and Correction Workflows*
+<!-- generated-figure-end -->
+
 Megavoltage CT (MVCT) is acquired on a TomoTherapy unit using the 3.5 MV treatment
 beam before each fraction for patient setup verification.
 

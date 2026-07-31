@@ -1,5 +1,10 @@
 # Chapter 12 — Beam Hardening and Poly-Energetic Spectra
 
+<!-- generated-figure-start -->
+![Figure 12.1 — Beam Hardening and Poly-Energetic Spectra](figures/ch12/fig01_12_beam_hardening_and_poly_energetic_spectra.svg)
+*Figure 12.1 — Beam Hardening and Poly-Energetic Spectra*
+<!-- generated-figure-end -->
+
 Real photon beams are poly-energetic: a 6 MV treatment beam contains photons
 from ~0.1 MeV to 6 MeV. As the beam penetrates tissue, low-energy photons are
 preferentially absorbed (beam hardening), shifting the mean energy upward.

@@ -1,5 +1,10 @@
 # Example: Collapsed-Cone 3-D Dose Engine
 
+<!-- generated-figure-start -->
+![Figure 11.2 — Example: Collapsed-Cone 3-D Dose Engine](../figures/ch11/fig02_example_collapsed_cone_3_d_dose_engine.svg)
+*Figure 11.2 — Example: Collapsed-Cone 3-D Dose Engine*
+<!-- generated-figure-end -->
+
 **Crate**: `helios-solver`  
 **Run**: `cargo run -p helios-solver --example collapsed_cone_3d`  
 **Source**: [`crates/helios-solver/examples/collapsed_cone_3d.rs`](../../../crates/helios-solver/examples/collapsed_cone_3d.rs)

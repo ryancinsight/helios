@@ -1,5 +1,10 @@
 # Chapter 1 — Physics Domain Types and Safety Boundaries
 
+<!-- generated-figure-start -->
+![Figure 1.1 — Physics Domain Types and Safety Boundaries](figures/ch01/fig01_1_physics_domain_types_and_safety_boundaries.svg)
+*Figure 1.1 — Physics Domain Types and Safety Boundaries*
+<!-- generated-figure-end -->
+
 Helios enforces physical validity at the type level through **validating newtypes** in
 `helios-core`.  Each domain quantity is a distinct type that cannot be constructed
 from an arbitrary float — it must pass a domain-specific validation contract.

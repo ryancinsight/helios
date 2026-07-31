@@ -1,5 +1,10 @@
 # Chapter 17 — TomoTherapy End-to-End Workflow
 
+<!-- generated-figure-start -->
+![Figure 17.1 — TomoTherapy End-to-End Workflow](figures/ch17/fig01_17_tomotherapy_end_to_end_workflow.svg)
+*Figure 17.1 — TomoTherapy End-to-End Workflow*
+<!-- generated-figure-end -->
+
 This chapter presents the complete helical TomoTherapy delivery and verification
 pipeline — from CT imaging through dose calculation to plan QA.
 

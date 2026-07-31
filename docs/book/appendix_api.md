@@ -1,5 +1,10 @@
 # Appendix C — API Reference Index
 
+<!-- generated-figure-start -->
+![Figure C.3 — C. API Reference Index](figures/appendix/fig03_c_api_reference_index.svg)
+*Figure C.3 — C. API Reference Index*
+<!-- generated-figure-end -->
+
 The Rustdoc output is the authoritative API reference:
 
 ```bash

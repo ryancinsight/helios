@@ -1,5 +1,10 @@
 # Example: GPU Attenuation Map and Forward Projection
 
+<!-- generated-figure-start -->
+![Figure 21.2 — Example: GPU Attenuation Map and Forward Projection](../figures/ch21/fig02_example_gpu_attenuation_map_and_forward_projection.svg)
+*Figure 21.2 — Example: GPU Attenuation Map and Forward Projection*
+<!-- generated-figure-end -->
+
 **Crate**: `helios-gpu`  
 **Run**: `cargo run -p helios-gpu --example gpu_attenuation_projection`  
 **Source**: [`crates/helios-gpu/examples/gpu_attenuation_projection.rs`](../../../crates/helios-gpu/examples/gpu_attenuation_projection.rs)

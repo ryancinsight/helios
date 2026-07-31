@@ -1,5 +1,10 @@
 # Chapter 26 — Migration Overview: ndarray/nalgebra/burn → Atlas
 
+<!-- generated-figure-start -->
+![Figure 23.1 — Migration Overview](figures/ch23/fig01_23_migration_overview.svg)
+*Figure 23.1 — Migration Overview*
+<!-- generated-figure-end -->
+
 Helios is one of two primary consumers of the Atlas stack (the other is
 kwavers).  This Part documents the destination crates, the principles they
 encode, and the per-crate migration surface that each module touches.
@@ -80,5 +85,5 @@ and governs the cleanup pass that closes it.
 
 - [`cfdrs` Atlas Part](../../../CFDrs/docs/book/migration_overview.md)
   — the CFDrs-mirror version of this Part.
-- [`kwavers` Atlas Part](../../../kwavers/docs/book/migration_overview.md)
-  — Atlas Part in kwavers (Part VI).
+- [`kwavers` Book](../../../kwavers/docs/book/README.md)
+  — kwavers Atlas migration reference (Part VI).

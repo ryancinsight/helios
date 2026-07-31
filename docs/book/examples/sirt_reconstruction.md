@@ -1,5 +1,10 @@
 # Example: SIRT Iterative CT Reconstruction
 
+<!-- generated-figure-start -->
+![Figure 8.2 — Example: SIRT Iterative Reconstruction](../figures/ch08/fig02_example_sirt_iterative_reconstruction.svg)
+*Figure 8.2 — Example: SIRT Iterative Reconstruction*
+<!-- generated-figure-end -->
+
 **Crate**: `helios-imaging`  
 **Run**: `cargo run -p helios-imaging --example sirt_reconstruction`  
 **Source**: [`crates/helios-imaging/examples/sirt_reconstruction.rs`](../../../crates/helios-imaging/examples/sirt_reconstruction.rs)

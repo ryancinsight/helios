@@ -1,5 +1,10 @@
 # Example: DVH Analysis
 
+<!-- generated-figure-start -->
+![Figure 15.2 — Example: DVH Analysis](../figures/ch15/fig02_example_dvh_analysis.svg)
+*Figure 15.2 — Example: DVH Analysis*
+<!-- generated-figure-end -->
+
 **Crate**: `helios-analysis`  
 **Run**: `cargo run -p helios-analysis --example dvh_analysis`  
 **Source**: [`crates/helios-analysis/examples/dvh_analysis.rs`](../../../crates/helios-analysis/examples/dvh_analysis.rs)
@@ -49,7 +54,6 @@ Key metrics per ICRU-83 and AAPM TG-119:
 The histogram plot below mirrors the differential DVH of the synthetic
 Gaussian phantom (peak 63 Gy, σ = 25 mm, 31³ voxels) used by this example:
 
-![Differential DVH (Gaussian dose phantom)](../figures/dvh_curve.svg)
 
 ## Book Chapter
 

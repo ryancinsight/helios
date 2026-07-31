@@ -1,5 +1,10 @@
 # Chapter 21 — GPU-Accelerated Dose Kernels
 
+<!-- generated-figure-start -->
+![Figure 21.1 — GPU-Accelerated Dose Kernels](figures/ch21/fig01_21_gpu_accelerated_dose_kernels.svg)
+*Figure 21.1 — GPU-Accelerated Dose Kernels*
+<!-- generated-figure-end -->
+
 The collapsed-cone dose engine can be accelerated with GPU ray-marching
 kernels dispatched through hephaestus-wgpu.
 

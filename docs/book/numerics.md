@@ -1,5 +1,10 @@
 # Chapter 3 — Scalar Fields and Numeric Abstractions
 
+<!-- generated-figure-start -->
+![Figure 3.1 — Scalar Fields and Numeric Abstractions](figures/ch03/fig01_3_scalar_fields_and_numeric_abstractions.svg)
+*Figure 3.1 — Scalar Fields and Numeric Abstractions*
+<!-- generated-figure-end -->
+
 Helios uses `helios_math::Scalar`, a re-export of
 `eunomia::RealField`, as its canonical real-number seam. The same generic
 kernel can therefore be instantiated for each scalar type supported by Eunomia

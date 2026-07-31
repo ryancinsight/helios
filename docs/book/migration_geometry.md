@@ -1,5 +1,10 @@
 # Chapter 29 — Leto: Geometry — VoxelGrid, MLC, Beam Isometries
 
+<!-- generated-figure-start -->
+![Figure 26.1 — Leto: Geometry](figures/ch26/fig01_26_leto_geometry.svg)
+*Figure 26.1 — Leto: Geometry*
+<!-- generated-figure-end -->
+
 Helios geometry — voxel grids, multi-leaf collimator (MLC) leaf positions,
 beam isometries, helical delivery carousels — migrates from
 `nalgebra::Point3`/`Vector3`/`Isometry3` to the matching **Leto** types.

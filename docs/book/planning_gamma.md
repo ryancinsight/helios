@@ -1,5 +1,10 @@
 # Chapter 16 — Gamma Index and Plan Verification
 
+<!-- generated-figure-start -->
+![Figure 16.1 — Gamma Index and Plan Verification](figures/ch16/fig01_16_gamma_index_and_plan_verification.svg)
+*Figure 16.1 — Gamma Index and Plan Verification*
+<!-- generated-figure-end -->
+
 The gamma index is the standard plan QA metric for 3D dose comparison:
 
 ```text

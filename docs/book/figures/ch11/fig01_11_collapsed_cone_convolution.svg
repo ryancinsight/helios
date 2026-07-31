@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="340" viewBox="0 0 800 340" role="img" aria-label="11. Collapsed-Cone Convolution">
+  <rect width="800" height="340" fill="#f8fafc"/>
+<text x="400" y="40.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#111827">
+  <tspan x="400" dy="0">11. Collapsed-Cone Convolution</tspan>
+</text>
+  <rect x="250" y="115" width="300" height="40" rx="4" fill="#fee2e2" stroke="#dc2626" stroke-width="1"/>
+<text x="400" y="138.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#7f1d1d">
+  <tspan x="400" dy="0">Beam</tspan>
+</text>
+  <rect x="250" y="165" width="300" height="40" rx="4" fill="#fecaca" stroke="#dc2626" stroke-width="1"/>
+<text x="400" y="188.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#7f1d1d">
+  <tspan x="400" dy="0">TERMA</tspan>
+</text>
+  <rect x="250" y="215" width="300" height="40" rx="4" fill="#fca5a5" stroke="#dc2626" stroke-width="1"/>
+<text x="400" y="238.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#7f1d1d">
+  <tspan x="400" dy="0">Dose</tspan>
+</text>
+  <line x1="320" y1="110" x2="320" y2="250" stroke="#64748b" stroke-width="2" marker-end="url(#arrowhead)" stroke-dasharray="4"/>
+  <line x1="400" y1="110" x2="400" y2="250" stroke="#64748b" stroke-width="2" marker-end="url(#arrowhead)" stroke-dasharray="4"/>
+  <line x1="480" y1="110" x2="480" y2="250" stroke="#64748b" stroke-width="2" marker-end="url(#arrowhead)" stroke-dasharray="4"/>
+<text x="400" y="310.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#374151">
+  <tspan x="400" dy="0">Figure 11.1 — Collapsed-Cone Convolution</tspan>
+</text>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#64748b"/>
+    </marker>
+  </defs>
+</svg>

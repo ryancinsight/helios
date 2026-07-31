@@ -1,5 +1,10 @@
 # Chapter 19 — Adaptive Radiotherapy with MVCT
 
+<!-- generated-figure-start -->
+![Figure 19.1 — Adaptive Radiotherapy with MVCT](figures/ch19/fig01_19_adaptive_radiotherapy_with_mvct.svg)
+*Figure 19.1 — Adaptive Radiotherapy with MVCT*
+<!-- generated-figure-end -->
+
 Adaptive radiotherapy (ART) modifies the treatment plan based on daily
 MVCT imaging to account for anatomical changes during the course.
 

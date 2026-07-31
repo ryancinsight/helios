@@ -1,5 +1,10 @@
 # Example: IGRT Setup Correction via Translation Registration
 
+<!-- generated-figure-start -->
+![Figure 8.3 — Example: IGRT Setup Correction via Registration](../figures/ch08/fig03_example_igrt_setup_correction_via_registration.svg)
+*Figure 8.3 — Example: IGRT Setup Correction via Registration*
+<!-- generated-figure-end -->
+
 **Crate**: `helios-imaging`  
 **Run**: `cargo run -p helios-imaging --example mvct_registration`  
 **Source**: [`crates/helios-imaging/examples/mvct_registration.rs`](../../../crates/helios-imaging/examples/mvct_registration.rs)

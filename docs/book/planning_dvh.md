@@ -1,5 +1,10 @@
 # Chapter 15 — Dose-Volume Histograms
 
+<!-- generated-figure-start -->
+![Figure 15.1 — Dose-Volume Histograms](figures/ch15/fig01_15_dose_volume_histograms.svg)
+*Figure 15.1 — Dose-Volume Histograms*
+<!-- generated-figure-end -->
+
 The DVH summarises the volumetric dose distribution of a target or organ:
 
 ```rust

@@ -1,5 +1,10 @@
 # Example: Gamma Index Comparison
 
+<!-- generated-figure-start -->
+![Figure 16.2 — Example: Gamma Index Comparison](../figures/ch16/fig02_example_gamma_index_comparison.svg)
+*Figure 16.2 — Example: Gamma Index Comparison*
+<!-- generated-figure-end -->
+
 **Crate**: `helios-analysis`  
 **Run**: `cargo run -p helios-analysis --example gamma_index`  
 **Source**: [`crates/helios-analysis/examples/gamma_index.rs`](../../../crates/helios-analysis/examples/gamma_index.rs)

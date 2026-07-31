@@ -1,5 +1,10 @@
 # Chapter 23 — Reference Phantoms and Ground Truth
 
+<!-- generated-figure-start -->
+![Figure 35.1 — Reference Phantoms and Ground Truth](figures/ch35/fig01_35_reference_phantoms_and_ground_truth.svg)
+*Figure 35.1 — Reference Phantoms and Ground Truth*
+<!-- generated-figure-end -->
+
 Helios includes synthetic test phantoms for validation and regression testing.
 
 ## Water Cylinder Phantom

@@ -1,5 +1,10 @@
 # Chapter 6 — Parallel-Beam Radon Transform
 
+<!-- generated-figure-start -->
+![Figure 6.1 — Parallel-Beam Radon Transform](figures/ch06/fig01_6_parallel_beam_radon_transform.svg)
+*Figure 6.1 — Parallel-Beam Radon Transform*
+<!-- generated-figure-end -->
+
 The Radon transform forward-projects a 2-D attenuation map μ(x, y) along
 parallel rays at 
 _angles uniformly-spaced rotation angles:

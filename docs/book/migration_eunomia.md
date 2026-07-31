@@ -1,5 +1,10 @@
 # Chapter 27 — Eunomia: Numeric Trait Unification
 
+<!-- generated-figure-start -->
+![Figure 24.1 — Eunomia: Numeric Traits](figures/ch24/fig01_24_eunomia_numeric_traits.svg)
+*Figure 24.1 — Eunomia: Numeric Traits*
+<!-- generated-figure-end -->
+
 Every Atlas crate depends on [`eunomia::RealField`] for scalar arithmetic and
 on [`eunomia::ComplexField`] when complex spectral kernels appear.  Eunomia
 is the **trait frontier** — a one-crate abstraction that the rest of the

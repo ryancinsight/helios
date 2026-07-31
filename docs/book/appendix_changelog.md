@@ -1,5 +1,10 @@
 # Appendix D — Changelog
 
+<!-- generated-figure-start -->
+![Figure D.4 — D. Changelog](figures/appendix/fig04_d_changelog.svg)
+*Figure D.4 — D. Changelog*
+<!-- generated-figure-end -->
+
 The repository [CHANGELOG](../../CHANGELOG.md) is the single source of truth for
 released and unreleased user-visible changes. It records the provider migrations,
 API changes, verification evidence, and example additions for each delivery

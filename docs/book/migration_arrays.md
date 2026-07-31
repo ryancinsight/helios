@@ -1,5 +1,10 @@
 # Chapter 28 — Leto: Arrays and Linear Algebra
 
+<!-- generated-figure-start -->
+![Figure 25.1 — Leto: Arrays and Linalg](figures/ch25/fig01_25_leto_arrays_and_linalg.svg)
+*Figure 25.1 — Leto: Arrays and Linalg*
+<!-- generated-figure-end -->
+
 The bulk of helios's tensor arithmetic — CT volumes, attenuation maps,
 dose grids, sparse system matrices — migrates from `ndarray::Array*` and
 `nalgebra::DMatrix` to **Leto's** unified `NdArray` and `CsrMatrix` types.

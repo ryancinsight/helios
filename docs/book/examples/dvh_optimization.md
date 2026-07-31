@@ -1,5 +1,10 @@
 # Example: DVH-Constrained Beam-Weight Optimization
 
+<!-- generated-figure-start -->
+![Figure 15.3 — Example: DVH-Constrained Beam-Weight Optimization](../figures/ch15/fig03_example_dvh_constrained_beam_weight_optimization.svg)
+*Figure 15.3 — Example: DVH-Constrained Beam-Weight Optimization*
+<!-- generated-figure-end -->
+
 **Crate**: `helios-planning`  
 **Run**: `cargo run -p helios-planning --example dvh_optimization`  
 **Source**: [`crates/helios-planning/examples/dvh_optimization.rs`](../../../crates/helios-planning/examples/dvh_optimization.rs)

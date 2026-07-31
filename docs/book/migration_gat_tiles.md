@@ -1,5 +1,10 @@
 # Chapter 34 — Leto: GAT-Based Tiling and Lending Iterators
 
+<!-- generated-figure-start -->
+![Figure 31.1 — Leto: GAT Tiling](figures/ch31/fig01_31_leto_gat_tiling.svg)
+*Figure 31.1 — Leto: GAT Tiling*
+<!-- generated-figure-end -->
+
 Helios iterates over volumetric data in **tiles** (sliding windows,
 rotational/projection haloes, beam-rotation carousels) at multiple
 granularities.  The legacy approach allocates a `Vec<Tile>` per call and

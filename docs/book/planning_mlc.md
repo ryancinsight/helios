@@ -1,5 +1,10 @@
 # Chapter 13 — MLC Models and Leaf Sequencing
 
+<!-- generated-figure-start -->
+![Figure 13.1 — MLC Models and Leaf Sequencing](figures/ch13/fig01_13_mlc_models_and_leaf_sequencing.svg)
+*Figure 13.1 — MLC Models and Leaf Sequencing*
+<!-- generated-figure-end -->
+
 The Multi-Leaf Collimator (MLC) is the binary modulator in a TomoTherapy
 machine. Each of the 64 binary leaves (1.0 cm width at isocentre) is either
 open or closed during delivery.

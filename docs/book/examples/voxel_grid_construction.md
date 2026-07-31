@@ -1,5 +1,10 @@
 # Example: VoxelGrid and Volume Construction
 
+<!-- generated-figure-start -->
+![Figure 2.2 — Example: VoxelGrid and Volume Construction](../figures/ch02/fig02_example_voxelgrid_and_volume_construction.svg)
+*Figure 2.2 — Example: VoxelGrid and Volume Construction*
+<!-- generated-figure-end -->
+
 **Crate**: `helios-domain`  
 **Run**: `cargo run -p helios-domain --example voxel_grid_construction`  
 **Source**: [`crates/helios-domain/examples/voxel_grid_construction.rs`](../../../crates/helios-domain/examples/voxel_grid_construction.rs)

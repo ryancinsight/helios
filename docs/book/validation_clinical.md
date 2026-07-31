@@ -1,5 +1,10 @@
 # Chapter 25 — Clinical Protocol Compliance
 
+<!-- generated-figure-start -->
+![Figure 37.1 — Clinical Protocol Compliance](figures/ch37/fig01_37_clinical_protocol_compliance.svg)
+*Figure 37.1 — Clinical Protocol Compliance*
+<!-- generated-figure-end -->
+
 Helios validation targets the following published clinical benchmarks.
 
 ## TG-119 (IMRT Commissioning)

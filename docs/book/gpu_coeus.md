@@ -1,5 +1,10 @@
 # Chapter 22 — Coeus Tensor Operations for Dose Grids
 
+<!-- generated-figure-start -->
+![Figure 22.1 — Coeus Tensor Operations for Dose Grids](figures/ch22/fig01_22_coeus_tensor_operations_for_dose_grids.svg)
+*Figure 22.1 — Coeus Tensor Operations for Dose Grids*
+<!-- generated-figure-end -->
+
 coeus-core provides the tensor substrate for GPU-resident dose grids.
 All operations are expressed through the ComputeBackend trait, making
 them portable across CPU (MoiraiBackend) and GPU backends.

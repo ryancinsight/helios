@@ -1,5 +1,10 @@
 # Chapter 18 — LINAC-Based Step-and-Shoot Delivery
 
+<!-- generated-figure-start -->
+![Figure 18.1 — LINAC-Based Step-and-Shoot Delivery](figures/ch18/fig01_18_linac_based_step_and_shoot_delivery.svg)
+*Figure 18.1 — LINAC-Based Step-and-Shoot Delivery*
+<!-- generated-figure-end -->
+
 Linear accelerator (LINAC) IMRT delivers dose through a sequence of static
 beam apertures (step-and-shoot) or dynamically moving MLC leaves (sliding window).
 

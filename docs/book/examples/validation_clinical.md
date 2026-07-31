@@ -1,5 +1,10 @@
 # Example: Clinical Protocol Validation
 
+<!-- generated-figure-start -->
+![Figure 37.2 — Example: Clinical Protocol Validation](../figures/ch37/fig02_example_clinical_protocol_validation.svg)
+*Figure 37.2 — Example: Clinical Protocol Validation*
+<!-- generated-figure-end -->
+
 **Crate**: `helios-analysis`  
 **Run**: `cargo run --example validation_clinical -p helios-analysis`  
 **Source**: [`crates/helios-analysis/examples/validation_clinical.rs`](../../../crates/helios-analysis/examples/validation_clinical.rs)

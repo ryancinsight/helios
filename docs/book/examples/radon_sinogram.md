@@ -1,5 +1,10 @@
 # Example: Radon Sinogram
 
+<!-- generated-figure-start -->
+![Figure 6.2 — Example: Radon Sinogram](../figures/ch06/fig02_example_radon_sinogram.svg)
+*Figure 6.2 — Example: Radon Sinogram*
+<!-- generated-figure-end -->
+
 **Crate**: `helios-imaging`  
 **Run**: `cargo run -p helios-imaging --example radon_sinogram`  
 **Source**: [`crates/helios-imaging/examples/radon_sinogram.rs`](../../../crates/helios-imaging/examples/radon_sinogram.rs)
@@ -49,7 +54,6 @@ ray-march implementation.
 The figure below mirrors the θ = 0 chord profile that the example asserts
 within 5 % of the analytical `p(s) = μ₀ · 2√(R² − s²) / 10` oracle:
 
-![Single-angle (θ = 0) sinogram profile for a 30 mm radius disk phantom](../figures/radon_sinogram_disk.svg)
 
 ## Book Chapter
 

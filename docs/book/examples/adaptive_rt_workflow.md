@@ -1,5 +1,10 @@
 # Example: Adaptive Radiotherapy Workflow
 
+<!-- generated-figure-start -->
+![Figure 19.2 — Example: Adaptive RT Workflow](../figures/ch19/fig02_example_adaptive_rt_workflow.svg)
+*Figure 19.2 — Example: Adaptive RT Workflow*
+<!-- generated-figure-end -->
+
 > **Source:** `crates/helios-simulation/examples/adaptive_rt_workflow.rs`
 >
 > **Run:** `cargo run -p helios-simulation --example adaptive_rt_workflow`
