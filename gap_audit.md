@@ -32,6 +32,31 @@ focused value-semantic gates; a full locked workspace gate still depends on
 the shared provider graph represented by the pre-existing dirty manifest and
 lockfile.
 
+## Scatter-kernel physical inputs (H-095, 2026-07-31)
+
+The audit found a public Aequitas gap in `helios-solver`: exponential,
+symmetric, forward-peaked, poly-energetic, and oriented scatter APIs accepted
+physical ranges and sampling pitches as raw `T`, while
+`SpectralComponent` also exposed a raw relative weight. `helios-simulation`
+repeated the untyped ranges in `CollapsedCone` constructors and stored the
+oriented sampling step as a scalar.
+
+H-095 closes the gap by carrying `Length<T>` through all public range and
+sampling-pitch boundaries and `Dimensionless<T>` through spectral weights.
+Scalar conversion remains only at the centimetre exponential formula and
+millimetre voxel-mesh boundaries; dense taps and dose fields remain scalar
+storage. The public unit-suffixed names were removed rather than retained as
+forwarding shims. Eunomia compatibility is real-only: these transport kernels
+have no phasor, Fourier, or imaginary-valued physical contract, so no complex
+quantity extension is required.
+
+Evidence: targeted `cargo check -p helios-solver -p helios-simulation
+--all-targets --offline` passes after migrating tests, examples, and the
+benchmark. Focused Nextest, warning-denied Clippy, doctest, Rustdoc, and the
+full locked-workspace gate remain closure checks. The latter also depends on
+the pre-existing dirty shared provider manifest/lockfile and peer workspace
+changes, which are outside this item.
+
 ## Live GPU attenuation refresh (2026-07-27)
 
 `HELIOS-AEQ-MET-05` closed a live public boundary missed by the earlier audit:

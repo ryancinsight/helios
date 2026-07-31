@@ -14,15 +14,17 @@
 
 use aequitas::systems::si::{
     quantities::{AbsorbedDose, Angle, AreaPerMass, Dimensionless, Length, MassDensity, Time},
-    units::{GramPerCubicCentimeter, Millimeter, Radian, Second, SquareCentimeterPerGram},
+    units::{
+        Centimeter, GramPerCubicCentimeter, Millimeter, Radian, Second, SquareCentimeterPerGram,
+    },
 };
-use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, spherical_mask, Dvh};
+use helios_analysis::{Dvh, gamma_index_3d, gamma_pass_rate, roi_statistics, spherical_mask};
 use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel, Volume, VoxelGrid};
 use helios_imaging::{filtered_back_projection, parallel_beam_radon, register_translation};
 use helios_math::Point3;
 use helios_simulation::{
-    accumulate_delivered_dose, accumulate_delivered_dose_anisotropic, simulate_helical_delivery,
-    BeamGeometry, CollapsedCone, SpectralComponent,
+    BeamGeometry, CollapsedCone, SpectralComponent, accumulate_delivered_dose,
+    accumulate_delivered_dose_anisotropic, simulate_helical_delivery,
 };
 use helios_solver::{attenuation_map, scatter_superposition, symmetric_deposition_kernel};
 use hyperion::coefficient::MassAttenuation;
@@ -47,6 +49,14 @@ fn delivery() -> HelicalDelivery<f64> {
 fn water_mass_attenuation() -> MassAttenuation<f64> {
     MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(0.06))
         .expect("valid water mass attenuation")
+}
+
+fn length_cm(value: f64) -> Length<f64> {
+    Length::from_unit::<Centimeter>(value)
+}
+
+fn relative_weight(value: f64) -> Dimensionless<f64> {
+    Dimensionless::from_base(value)
 }
 
 // CT phantom (HU): air outside a 24 mm water cylinder, with an 8 mm bone insert
@@ -139,7 +149,7 @@ fn shared_mu_drives_imaging_and_delivery_end_to_end() {
         Length::from_unit::<Millimeter>(0.5),
     )
     .expect("attenuation map satisfies Hyperion's transport contract");
-    let kernel = symmetric_deposition_kernel(0.5_f64, 0.2, 1);
+    let kernel = symmetric_deposition_kernel(length_cm(0.5), length_cm(0.2), 1);
     let dose = scatter_superposition(&terma, &kernel, &kernel, &kernel);
 
     // The delivery deposited energy into the patient, and dose is non-negative.
@@ -202,20 +212,21 @@ fn beam_following_poly_energetic_dose_end_to_end() {
     };
 
     // Two-component (soft/hard) forward-peaked spectrum, re-oriented per gantry angle.
-    let voxel_cm = SPACING / 10.0; // 0.2 cm
+    let voxel_spacing = length_cm(SPACING / 10.0); // 0.2 cm
     let spectrum = [
         SpectralComponent {
-            range_up_cm: 0.10,
-            range_down_cm: 0.35,
-            weight: 0.7,
+            range_up: length_cm(0.10),
+            range_down: length_cm(0.35),
+            weight: relative_weight(0.7),
         },
         SpectralComponent {
-            range_up_cm: 0.05,
-            range_down_cm: 0.90,
-            weight: 0.3,
+            range_up: length_cm(0.05),
+            range_down: length_cm(0.90),
+            weight: relative_weight(0.3),
         },
     ];
-    let cone = CollapsedCone::poly_forward_peaked(&spectrum, 0.5, voxel_cm, 2, 3, 1);
+    let cone =
+        CollapsedCone::poly_forward_peaked(&spectrum, length_cm(0.5), voxel_spacing, 2, 3, 1);
     let dose = accumulate_delivered_dose_anisotropic(
         &frames,
         &mu,
@@ -305,8 +316,15 @@ fn per_structure_plan_evaluation_over_delivered_dose() {
     let geom = BeamGeometry::PointSource {
         source_axis: Length::from_unit::<Millimeter>(850.0),
     };
-    let voxel_cm = SPACING / 10.0;
-    let cone = CollapsedCone::forward_peaked(0.1, 0.6, 0.5, voxel_cm, 2, 3, 1);
+    let cone = CollapsedCone::forward_peaked(
+        length_cm(0.1),
+        length_cm(0.6),
+        length_cm(0.5),
+        length_cm(SPACING / 10.0),
+        2,
+        3,
+        1,
+    );
     let dose = accumulate_delivered_dose_anisotropic(
         &frames,
         &mu,

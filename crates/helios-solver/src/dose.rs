@@ -91,14 +91,22 @@ pub fn primary_fluence_parallel_x<T: Scalar + UnitScalar>(
 
 /// Build a normalized forward (downstream) exponential dose-deposition kernel.
 ///
-/// `kernel[d] ∝ exp(-d·voxel_cm / range_cm)` for `d ∈ [0, taps)`, normalized so
-/// `Σ kernel = 1` (energy-conserving). `range_cm` is the characteristic
-/// deposition range (electron transport scale); `voxel_cm` the voxel spacing
-/// along the beam. Returns an empty vector when `taps == 0`.
+/// `kernel[d] ∝ exp(-d·voxel_spacing / range)` for `d ∈ [0, taps)`, normalized so
+/// `Σ kernel = 1` (energy-conserving). `range` is the characteristic deposition
+/// range (electron transport scale); `voxel_spacing` is the voxel spacing along
+/// the beam. Both values retain their Aequitas units through this API and are
+/// converted to centimetres only at the exponential formula boundary. Returns
+/// an empty vector when `taps == 0`.
 #[must_use]
-pub fn exponential_deposition_kernel<T: Scalar>(range_cm: T, voxel_cm: T, taps: usize) -> Vec<T> {
+pub fn exponential_deposition_kernel<T: Scalar>(
+    range: Length<T>,
+    voxel_spacing: Length<T>,
+    taps: usize,
+) -> Vec<T> {
     let mut kernel = Vec::with_capacity(taps);
     let mut sum = <T as helios_math::NumericElement>::ZERO;
+    let range_cm = range.into_base() * T::from_f64(100.0);
+    let voxel_cm = voxel_spacing.into_base() * T::from_f64(100.0);
     let inv_range = range_cm.recip();
     for d in 0..taps {
         let distance = T::from_f64(d as f64) * voxel_cm;
@@ -151,13 +159,17 @@ pub fn dose_convolution_x<T: Scalar>(terma: &Volume<T>, kernel: &[T]) -> Volume<
 mod tests {
     use super::*;
     use eunomia::assert_relative_eq;
-    use helios_math::ShippedScalar;
     use helios_math::Point3;
+    use helios_math::ShippedScalar;
 
     fn grid() -> VoxelGrid<f64> {
         // 2 mm spacing along x → 0.2 cm per column.
         VoxelGrid::axis_aligned([6, 2, 2], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
             .expect("grid")
+    }
+
+    fn length_cm(value: f64) -> Length<f64> {
+        Length::from_base(value * 0.01)
     }
 
     #[test]
@@ -224,7 +236,7 @@ mod tests {
 
     #[test]
     fn exponential_kernel_is_normalized() {
-        let kernel = exponential_deposition_kernel(0.5_f64, 0.2, 8);
+        let kernel = exponential_deposition_kernel(length_cm(0.5), length_cm(0.2), 8);
         let sum: f64 = kernel.iter().sum();
         assert_relative_eq!(sum, 1.0, epsilon = 1e-15);
         assert_eq!(kernel.len(), 8);
@@ -239,7 +251,7 @@ mod tests {
             .unwrap();
         let mu = Volume::from_shape_fn(g, |_| 0.3);
         let terma = primary_fluence_parallel_x(&mu, 1.0).expect("valid attenuation volume");
-        let kernel = exponential_deposition_kernel(1.0_f64, 0.2, 20);
+        let kernel = exponential_deposition_kernel(length_cm(1.0), length_cm(0.2), 20);
         let dose = dose_convolution_x(&terma, &kernel);
 
         // Find the peak; it must be deeper than the surface (build-up) and the

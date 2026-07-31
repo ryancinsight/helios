@@ -16,19 +16,27 @@
 //! every axis is the identity (dose = terma), the differential oracle against the
 //! primary-only reference.
 
+use aequitas::systems::si::quantities::{Dimensionless, Length};
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{NumericElement, Scalar};
 
-/// Symmetric normalized deposition kernel `k[d] ∝ exp(−|offset|·voxel_cm / range_cm)`
+/// Symmetric normalized deposition kernel `k[d] ∝ exp(−|offset|·voxel_spacing / range)`
 /// over offsets `[−radius, radius]` (length `2·radius + 1`), normalized so `Σ = 1`.
 ///
-/// `range_cm` is the characteristic scatter/transport range; `voxel_cm` the voxel
-/// spacing along the axis. `radius = 0` returns `[1]` (the identity / no-spread
-/// kernel).
+/// `range` is the characteristic scatter/transport range; `voxel_spacing` is the
+/// voxel spacing along the axis. Both values retain their Aequitas units through
+/// this API and are converted to centimetres only at the exponential formula
+/// boundary. `radius = 0` returns `[1]` (the identity / no-spread kernel).
 #[must_use]
-pub fn symmetric_deposition_kernel<T: Scalar>(range_cm: T, voxel_cm: T, radius: usize) -> Vec<T> {
+pub fn symmetric_deposition_kernel<T: Scalar>(
+    range: Length<T>,
+    voxel_spacing: Length<T>,
+    radius: usize,
+) -> Vec<T> {
     let zero = <T as NumericElement>::ZERO;
     let taps = 2 * radius + 1;
+    let range_cm = range.into_base() * T::from_f64(100.0);
+    let voxel_cm = voxel_spacing.into_base() * T::from_f64(100.0);
     let inv_range = range_cm.recip();
     let mut kernel = Vec::with_capacity(taps);
     let mut sum = zero;
@@ -140,23 +148,26 @@ pub fn scatter_superposition<T: Scalar>(
 }
 
 /// Forward-peaked (anisotropic) deposition kernel along the beam axis:
-/// `k[d] ∝ exp(−|offset|·voxel_cm / range)` with **different ranges upstream vs
-/// downstream** — `range_down_cm` (beam direction, secondary-electron forward
-/// transport) and `range_up_cm` (backscatter, physically much shorter). Offsets
+/// `k[d] ∝ exp(−|offset|·voxel_spacing / range)` with **different ranges upstream
+/// vs downstream** — `range_down` (beam direction, secondary-electron forward
+/// transport) and `range_up` (backscatter, physically much shorter). Offsets
 /// span `[−radius_up, +radius_down]`; the returned `usize` is the zero-offset
 /// index (`radius_up`). Normalized so `Σ = 1` (energy-conserving in the
 /// interior). Equal ranges and radii reduce to
 /// [`symmetric_deposition_kernel`] exactly (the differential oracle).
 #[must_use]
 pub fn forward_peaked_kernel<T: Scalar>(
-    range_up_cm: T,
-    range_down_cm: T,
-    voxel_cm: T,
+    range_up: Length<T>,
+    range_down: Length<T>,
+    voxel_spacing: Length<T>,
     radius_up: usize,
     radius_down: usize,
 ) -> (Vec<T>, usize) {
     let zero = <T as NumericElement>::ZERO;
     let taps = radius_up + radius_down + 1;
+    let range_up_cm = range_up.into_base() * T::from_f64(100.0);
+    let range_down_cm = range_down.into_base() * T::from_f64(100.0);
+    let voxel_cm = voxel_spacing.into_base() * T::from_f64(100.0);
     let (inv_up, inv_down) = (range_up_cm.recip(), range_down_cm.recip());
     let mut kernel = Vec::with_capacity(taps);
     let mut sum = zero;
@@ -179,19 +190,19 @@ pub fn forward_peaked_kernel<T: Scalar>(
 
 /// One spectral component of a poly-energetic beam for
 /// [`poly_forward_peaked_kernel`]: its forward-peaked upstream/downstream
-/// transport ranges (cm) and its relative energy-fluence `weight`.
+/// transport ranges and its relative energy-fluence `weight`.
 ///
-/// Higher-energy components carry farther downstream (larger `range_down_cm`),
+/// Higher-energy components carry farther downstream (larger `range_down`),
 /// so a spectrum weighted toward high energy is more forward-peaked — the
 /// beam-hardening signature.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SpectralComponent<T: Scalar> {
-    /// Upstream (backscatter) transport range (cm).
-    pub range_up_cm: T,
-    /// Downstream (forward) transport range (cm).
-    pub range_down_cm: T,
+    /// Upstream (backscatter) transport range.
+    pub range_up: Length<T>,
+    /// Downstream (forward) transport range.
+    pub range_down: Length<T>,
     /// Relative energy-fluence weight (need not be pre-normalized).
-    pub weight: T,
+    pub weight: Dimensionless<T>,
 }
 
 /// Poly-energetic forward-peaked deposition kernel: the energy-fluence-weighted
@@ -210,7 +221,7 @@ pub struct SpectralComponent<T: Scalar> {
 #[must_use]
 pub fn poly_forward_peaked_kernel<T: Scalar>(
     components: &[SpectralComponent<T>],
-    voxel_cm: T,
+    voxel_spacing: Length<T>,
     radius_up: usize,
     radius_down: usize,
 ) -> (Vec<T>, usize) {
@@ -219,20 +230,21 @@ pub fn poly_forward_peaked_kernel<T: Scalar>(
     let mut acc = vec![zero; taps];
     let mut total_weight = zero;
     for component in components {
-        if component.weight <= zero {
+        let weight = component.weight.into_base();
+        if weight <= zero {
             continue; // non-positive weight contributes nothing.
         }
         let (mono, _) = forward_peaked_kernel(
-            component.range_up_cm,
-            component.range_down_cm,
-            voxel_cm,
+            component.range_up,
+            component.range_down,
+            voxel_spacing,
             radius_up,
             radius_down,
         );
         for (a, &m) in acc.iter_mut().zip(&mono) {
-            *a += m * component.weight;
+            *a += m * weight;
         }
-        total_weight += component.weight;
+        total_weight += weight;
     }
     if total_weight > zero {
         let inv = total_weight.recip();
@@ -276,9 +288,9 @@ pub fn anisotropic_scatter_superposition<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
     use helios_math::Point3;
+    use helios_math::ShippedScalar;
 
     fn reference_convolve_axis(
         vol: &Volume<f64>,
@@ -314,12 +326,21 @@ mod tests {
         Volume::from_shape_fn(grid(), |idx| if idx == [3, 3, 3] { 1.0 } else { 0.0 })
     }
 
+    fn length_cm<T: ShippedScalar>(value: T) -> Length<T> {
+        Length::from_base(value * T::from_f64(0.01))
+    }
+
+    fn relative_weight<T: ShippedScalar>(value: T) -> Dimensionless<T> {
+        Dimensionless::from_base(value)
+    }
+
     #[test]
     fn forward_peaked_reduces_to_symmetric_for_equal_ranges() {
         // Equal up/down ranges and radii → identical taps and centre to the
         // symmetric kernel (differential oracle for the asymmetric constructor).
-        let sym = symmetric_deposition_kernel(0.5_f64, 0.2, 2);
-        let (fp, centre) = forward_peaked_kernel(0.5_f64, 0.5, 0.2, 2, 2);
+        let sym = symmetric_deposition_kernel(length_cm(0.5), length_cm(0.2), 2);
+        let (fp, centre) =
+            forward_peaked_kernel(length_cm(0.5), length_cm(0.5), length_cm(0.2), 2, 2);
         assert_eq!(centre, 2);
         assert_eq!(fp.len(), sym.len());
         for (a, b) in fp.iter().zip(&sym) {
@@ -347,8 +368,9 @@ mod tests {
         // (+x) of the point source must receive strictly more dose than one step
         // upstream (−x) — the defining collapsed-cone anisotropy. Laterally the
         // spread stays symmetric.
-        let (fp, centre) = forward_peaked_kernel(0.1_f64, 1.0, 0.2, 1, 3);
-        let lat = symmetric_deposition_kernel(0.3_f64, 0.2, 1);
+        let (fp, centre) =
+            forward_peaked_kernel(length_cm(0.1), length_cm(1.0), length_cm(0.2), 1, 3);
+        let lat = symmetric_deposition_kernel(length_cm(0.3), length_cm(0.2), 1);
         let dose = anisotropic_scatter_superposition(&point_terma(), 0, &fp, centre, &lat);
         let down = dose.get(4, 3, 3).unwrap(); // +x of the source at (3,3,3)
         let up = dose.get(2, 3, 3).unwrap(); // −x
@@ -365,17 +387,18 @@ mod tests {
     fn anisotropic_kernel_conserves_interior_point_energy() {
         // Source far enough from every boundary that no tail truncates: the total
         // dose equals the total terma (Σ=1 normalization on every axis).
-        let (fp, centre) = forward_peaked_kernel(0.2_f64, 0.6, 0.2, 1, 2);
-        let lat = symmetric_deposition_kernel(0.4_f64, 0.2, 1);
+        let (fp, centre) =
+            forward_peaked_kernel(length_cm(0.2), length_cm(0.6), length_cm(0.2), 1, 2);
+        let lat = symmetric_deposition_kernel(length_cm(0.4), length_cm(0.2), 1);
         let dose = anisotropic_scatter_superposition(&point_terma(), 0, &fp, centre, &lat);
         assert_relative_eq!(dose.sum(), 1.0, epsilon = 1e-13);
     }
 
-    fn spectral(range_up_cm: f64, range_down_cm: f64, weight: f64) -> SpectralComponent<f64> {
+    fn spectral(range_up: f64, range_down: f64, weight: f64) -> SpectralComponent<f64> {
         SpectralComponent {
-            range_up_cm,
-            range_down_cm,
-            weight,
+            range_up: length_cm(range_up),
+            range_down: length_cm(range_down),
+            weight: relative_weight(weight),
         }
     }
 
@@ -383,8 +406,10 @@ mod tests {
     fn single_component_poly_reduces_to_the_monoenergetic_kernel() {
         // A one-component spectrum (any positive weight) is the monoenergetic
         // kernel exactly — the weight cancels in the Σ=1 renormalization.
-        let (mono, mc) = forward_peaked_kernel(0.15_f64, 0.6, 0.2, 1, 3);
-        let (poly, pc) = poly_forward_peaked_kernel(&[spectral(0.15, 0.6, 3.7)], 0.2, 1, 3);
+        let (mono, mc) =
+            forward_peaked_kernel(length_cm(0.15), length_cm(0.6), length_cm(0.2), 1, 3);
+        let (poly, pc) =
+            poly_forward_peaked_kernel(&[spectral(0.15, 0.6, 3.7)], length_cm(0.2), 1, 3);
         assert_eq!(mc, pc);
         assert_eq!(mono.len(), poly.len());
         for (a, b) in poly.iter().zip(&mono) {
@@ -398,8 +423,8 @@ mod tests {
         // unchanged, and the kernel is normalized.
         let comps = [spectral(0.1, 0.4, 1.0), spectral(0.2, 1.2, 2.0)];
         let scaled = [spectral(0.1, 0.4, 10.0), spectral(0.2, 1.2, 20.0)];
-        let (ka, _) = poly_forward_peaked_kernel(&comps, 0.2, 1, 3);
-        let (kb, _) = poly_forward_peaked_kernel(&scaled, 0.2, 1, 3);
+        let (ka, _) = poly_forward_peaked_kernel(&comps, length_cm(0.2), 1, 3);
+        let (kb, _) = poly_forward_peaked_kernel(&scaled, length_cm(0.2), 1, 3);
         for (a, b) in ka.iter().zip(&kb) {
             assert_relative_eq!(a, b, epsilon = 1e-15);
         }
@@ -419,13 +444,13 @@ mod tests {
         };
         let (mostly_soft, c) = poly_forward_peaked_kernel(
             &[spectral(0.2, 0.3, 9.0), spectral(0.05, 1.5, 1.0)],
-            0.2,
+            length_cm(0.2),
             2,
             2,
         );
         let (mostly_hard, _) = poly_forward_peaked_kernel(
             &[spectral(0.2, 0.3, 1.0), spectral(0.05, 1.5, 9.0)],
-            0.2,
+            length_cm(0.2),
             2,
             2,
         );
@@ -440,26 +465,26 @@ mod tests {
 
     #[test]
     fn empty_spectrum_is_the_identity_kernel() {
-        let (k, centre) = poly_forward_peaked_kernel::<f64>(&[], 0.2, 2, 1);
+        let (k, centre) = poly_forward_peaked_kernel::<f64>(&[], length_cm(0.2), 2, 1);
         assert_eq!(centre, 2);
         assert_eq!(k, vec![0.0, 0.0, 1.0, 0.0]); // centred delta at radius_up = 2
     }
 
     fn single_component_poly_matches_the_monoenergetic_kernel<T: ShippedScalar>() {
         let (mono, _) = forward_peaked_kernel(
-            T::from_f64(0.1),
-            T::from_f64(0.5),
-            T::from_f64(0.2),
+            length_cm(T::from_f64(0.1)),
+            length_cm(T::from_f64(0.5)),
+            length_cm(T::from_f64(0.2)),
             1,
             2,
         );
         let (poly, _) = poly_forward_peaked_kernel(
             &[SpectralComponent {
-                range_up_cm: T::from_f64(0.1),
-                range_down_cm: T::from_f64(0.5),
-                weight: T::from_f64(2.0),
+                range_up: length_cm(T::from_f64(0.1)),
+                range_down: length_cm(T::from_f64(0.5)),
+                weight: relative_weight(T::from_f64(2.0)),
             }],
-            T::from_f64(0.2),
+            length_cm(T::from_f64(0.2)),
             1,
             2,
         );
@@ -506,9 +531,18 @@ mod tests {
                 .expect("valid axis-aligned grid");
 
         let terma = Volume::from_shape_fn(grid, |idx| if idx == [3, 3, 3] { one } else { zero });
-        let (forward, centre) =
-            forward_peaked_kernel(T::from_f64(0.1), one, T::from_f64(0.2), 1, 2);
-        let lateral = symmetric_deposition_kernel(T::from_f64(0.3), T::from_f64(0.2), 1);
+        let (forward, centre) = forward_peaked_kernel(
+            length_cm(T::from_f64(0.1)),
+            length_cm(one),
+            length_cm(T::from_f64(0.2)),
+            1,
+            2,
+        );
+        let lateral = symmetric_deposition_kernel(
+            length_cm(T::from_f64(0.3)),
+            length_cm(T::from_f64(0.2)),
+            1,
+        );
 
         // Beam along y: anisotropy shows on the j axis, not i.
         let dose = anisotropic_scatter_superposition(&terma, 1, &forward, centre, &lateral);
@@ -524,12 +558,12 @@ mod tests {
     }
 
     #[test]
-   fn anisotropic_scatter_is_symmetric_across_the_beam_axis_in_single_precision() {
+    fn anisotropic_scatter_is_symmetric_across_the_beam_axis_in_single_precision() {
         anisotropic_scatter_is_symmetric_across_the_beam_axis::<f32>();
     }
 
     #[test]
-   fn anisotropic_scatter_is_symmetric_across_the_beam_axis_in_double_precision() {
+    fn anisotropic_scatter_is_symmetric_across_the_beam_axis_in_double_precision() {
         anisotropic_scatter_is_symmetric_across_the_beam_axis::<f64>();
     }
 
@@ -575,7 +609,7 @@ mod tests {
     fn symmetric_kernel_spreads_symmetrically() {
         // Spread the point terma along x only; the two x-neighbours of the centre
         // receive equal dose (kernel symmetry), and both are < the centre.
-        let kx = symmetric_deposition_kernel(0.4_f64, 0.2, 2);
+        let kx = symmetric_deposition_kernel(length_cm(0.4), length_cm(0.2), 2);
         let dose = scatter_superposition(&point_terma(), &kx, &[1.0], &[1.0]);
         let left = dose.get(2, 3, 3).unwrap();
         let right = dose.get(4, 3, 3).unwrap();
@@ -587,7 +621,7 @@ mod tests {
     fn normalized_kernel_conserves_point_energy_in_interior() {
         // The centre is >= radius from every boundary, so no tail is truncated:
         // the total dose must equal the total terma (energy conservation).
-        let k = symmetric_deposition_kernel(0.5_f64, 0.2, 2);
+        let k = symmetric_deposition_kernel(length_cm(0.5), length_cm(0.2), 2);
         let dose = scatter_superposition(&point_terma(), &k, &k, &k);
         assert_relative_eq!(dose.sum(), 1.0, epsilon = 1e-13);
     }
@@ -596,7 +630,7 @@ mod tests {
     fn off_axis_neighbour_receives_lateral_penumbra() {
         // A diagonal neighbour of the point source gets non-zero dose only because
         // the kernel spreads on all three axes (penumbra).
-        let k = symmetric_deposition_kernel(0.5_f64, 0.2, 1);
+        let k = symmetric_deposition_kernel(length_cm(0.5), length_cm(0.2), 1);
         let dose = scatter_superposition(&point_terma(), &k, &k, &k);
         assert!(
             dose.get(4, 4, 4).unwrap() > 0.0,
@@ -606,7 +640,7 @@ mod tests {
 
     #[test]
     fn superposition_is_linear_in_terma() {
-        let k = symmetric_deposition_kernel(0.4_f64, 0.2, 2);
+        let k = symmetric_deposition_kernel(length_cm(0.4), length_cm(0.2), 2);
         let terma = point_terma();
         let scaled = Volume::from_shape_fn(*terma.grid(), |idx| {
             3.0 * terma.get(idx[0], idx[1], idx[2]).unwrap()
@@ -623,7 +657,7 @@ mod tests {
 
     #[test]
     fn symmetric_kernel_is_normalized_and_peaked_at_centre() {
-        let k = symmetric_deposition_kernel(0.5_f64, 0.2, 3);
+        let k = symmetric_deposition_kernel(length_cm(0.5), length_cm(0.2), 3);
         assert_eq!(k.len(), 7);
         let sum: f64 = k.iter().sum();
         assert_relative_eq!(sum, 1.0, epsilon = 1e-15);
@@ -649,7 +683,11 @@ mod tests {
                 .expect("valid axis-aligned grid");
 
         let terma = Volume::from_shape_fn(grid, |idx| if idx == [2, 2, 2] { one } else { zero });
-        let kernel = symmetric_deposition_kernel(T::from_f64(0.5), T::from_f64(0.2), 2);
+        let kernel = symmetric_deposition_kernel(
+            length_cm(T::from_f64(0.5)),
+            length_cm(T::from_f64(0.2)),
+            2,
+        );
         let dose = scatter_superposition(&terma, &kernel, &kernel, &kernel);
 
         // A normalized kernel redistributes a unit interior source without loss.
@@ -661,12 +699,12 @@ mod tests {
     }
 
     #[test]
-   fn scatter_superposition_conserves_interior_energy_in_single_precision() {
+    fn scatter_superposition_conserves_interior_energy_in_single_precision() {
         scatter_superposition_conserves_interior_energy::<f32>();
     }
 
     #[test]
-   fn scatter_superposition_conserves_interior_energy_in_double_precision() {
+    fn scatter_superposition_conserves_interior_energy_in_double_precision() {
         scatter_superposition_conserves_interior_energy::<f64>();
     }
 }

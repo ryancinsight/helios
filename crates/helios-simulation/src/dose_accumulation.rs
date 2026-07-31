@@ -132,33 +132,32 @@ pub struct CollapsedCone<T: GeometryScalar> {
     beam_kernel: Vec<T>,
     beam_center: usize,
     lateral: Vec<T>,
-    sample_step_mm: T,
+    sample_step: Length<T>,
 }
 
 impl<T: GeometryScalar> CollapsedCone<T> {
     /// Build a forward-peaked cone: exponential deposition with distinct upstream
-    /// (`range_up_cm`) and downstream (`range_down_cm`) ranges along the beam and a
-    /// symmetric `lateral_range_cm` across it. `voxel_cm` is the sampling pitch in
-    /// cm (the trilinear step is `voxel_cm × 10` mm); the radii bound each kernel's
-    /// tap support. Equal up/down ranges give an isotropic (direction-independent)
-    /// cone.
+    /// (`range_up`) and downstream (`range_down`) ranges along the beam and a
+    /// symmetric `lateral_range` across it. `voxel_spacing` is the sampling pitch;
+    /// the radii bound each kernel's tap support. Equal up/down ranges give an
+    /// isotropic (direction-independent) cone.
     #[must_use]
     pub fn forward_peaked(
-        range_up_cm: T,
-        range_down_cm: T,
-        lateral_range_cm: T,
-        voxel_cm: T,
+        range_up: Length<T>,
+        range_down: Length<T>,
+        lateral_range: Length<T>,
+        voxel_spacing: Length<T>,
         radius_up: usize,
         radius_down: usize,
         lateral_radius: usize,
     ) -> Self {
         let (beam_kernel, beam_center) =
-            forward_peaked_kernel(range_up_cm, range_down_cm, voxel_cm, radius_up, radius_down);
+            forward_peaked_kernel(range_up, range_down, voxel_spacing, radius_up, radius_down);
         Self::from_beam_kernel(
             beam_kernel,
             beam_center,
-            lateral_range_cm,
-            voxel_cm,
+            lateral_range,
+            voxel_spacing,
             lateral_radius,
         )
     }
@@ -171,19 +170,19 @@ impl<T: GeometryScalar> CollapsedCone<T> {
     #[must_use]
     pub fn poly_forward_peaked(
         components: &[SpectralComponent<T>],
-        lateral_range_cm: T,
-        voxel_cm: T,
+        lateral_range: Length<T>,
+        voxel_spacing: Length<T>,
         radius_up: usize,
         radius_down: usize,
         lateral_radius: usize,
     ) -> Self {
         let (beam_kernel, beam_center) =
-            poly_forward_peaked_kernel(components, voxel_cm, radius_up, radius_down);
+            poly_forward_peaked_kernel(components, voxel_spacing, radius_up, radius_down);
         Self::from_beam_kernel(
             beam_kernel,
             beam_center,
-            lateral_range_cm,
-            voxel_cm,
+            lateral_range,
+            voxel_spacing,
             lateral_radius,
         )
     }
@@ -194,17 +193,17 @@ impl<T: GeometryScalar> CollapsedCone<T> {
     fn from_beam_kernel(
         beam_kernel: Vec<T>,
         beam_center: usize,
-        lateral_range_cm: T,
-        voxel_cm: T,
+        lateral_range: Length<T>,
+        voxel_spacing: Length<T>,
         lateral_radius: usize,
     ) -> Self {
-        let lateral = symmetric_deposition_kernel(lateral_range_cm, voxel_cm, lateral_radius);
-        let sample_step_mm = voxel_cm * <T as GeometryScalar>::from_f64(10.0);
+        let lateral = symmetric_deposition_kernel(lateral_range, voxel_spacing, lateral_radius);
+        let sample_step = voxel_spacing;
         Self {
             beam_kernel,
             beam_center,
             lateral,
-            sample_step_mm,
+            sample_step,
         }
     }
 }
@@ -244,7 +243,7 @@ pub fn accumulate_delivered_dose_anisotropic<T: GeometryScalar + UnitScalar>(
             &cone.beam_kernel,
             cone.beam_center,
             &cone.lateral,
-            cone.sample_step_mm,
+            cone.sample_step,
         );
         for (a, d) in acc.iter_mut().zip(frame_dose.as_slice()) {
             *a += *d;
@@ -341,9 +340,9 @@ pub(crate) fn gantry_basis<T: GeometryScalar + UnitScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
+    use helios_math::ShippedScalar;
 
     // Uniform-μ cube: 9³ voxels, 2 mm spacing → node box [0,16] mm, centre 8 mm,
     // axial chord 16 mm = 1.6 cm.
@@ -357,6 +356,14 @@ mod tests {
     // beamlet is on the central axis (zero lateral offset).
     fn length(value: f64) -> Length<f64> {
         Length::from_unit::<Millimeter>(value)
+    }
+
+    fn length_cm(value: f64) -> Length<f64> {
+        Length::from_base(value * 0.01)
+    }
+
+    fn relative_weight(value: f64) -> aequitas::systems::si::quantities::Dimensionless<f64> {
+        aequitas::systems::si::quantities::Dimensionless::from_base(value)
     }
 
     fn angle(value: f64) -> Angle<f64> {
@@ -541,8 +548,9 @@ mod tests {
         let cast = <T as helios_math::FloatElement>::from_f64;
         let zero = cast(0.0);
         let spacing = cast(2.0);
-        let grid = VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], Point3::new(zero, zero, zero))
-            .expect("valid axis-aligned grid");
+        let grid =
+            VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
 
         let mu = cast(0.05);
         let attenuation = Volume::from_shape_fn(grid, |_| mu);
@@ -701,7 +709,7 @@ mod tests {
         );
 
         // Spread kernel: the off-line voxel now receives scattered dose.
-        let k = symmetric_deposition_kernel(0.5_f64, 0.2, 1);
+        let k = symmetric_deposition_kernel(length_cm(0.5), length_cm(0.2), 1);
         let dose = scatter_superposition(&terma, &k, &k, &k);
         assert!(
             dose.get(4, 3, 4).unwrap() > 0.0,
@@ -738,11 +746,20 @@ mod tests {
             standoff: length(500.0),
         };
         let frames = [frame(0.0, 8.0, 2.0)];
-        let voxel_cm = 0.2;
+        let voxel_spacing = length_cm(0.2);
 
-        let cone = CollapsedCone::forward_peaked(0.4, 0.4, 0.3, voxel_cm, 1, 1, 1);
-        let (beam_k, _) = forward_peaked_kernel(0.4, 0.4, voxel_cm, 1, 1);
-        let lat = symmetric_deposition_kernel(0.3, voxel_cm, 1);
+        let cone = CollapsedCone::forward_peaked(
+            length_cm(0.4),
+            length_cm(0.4),
+            length_cm(0.3),
+            voxel_spacing,
+            1,
+            1,
+            1,
+        );
+        let (beam_k, _) =
+            forward_peaked_kernel(length_cm(0.4), length_cm(0.4), voxel_spacing, 1, 1);
+        let lat = symmetric_deposition_kernel(length_cm(0.3), voxel_spacing, 1);
 
         let terma = accumulate_delivered_dose(&frames, &mu, geom, length(2.0), length(0.25))
             .expect("valid attenuation volume");
@@ -781,9 +798,25 @@ mod tests {
             standoff: length(500.0),
         };
         let frames = [frame(0.0, 8.0, 2.0)];
-        let voxel_cm = 0.2;
-        let iso = CollapsedCone::forward_peaked(0.4, 0.4, 0.3, voxel_cm, 2, 2, 1);
-        let fwd = CollapsedCone::forward_peaked(0.1, 1.0, 0.3, voxel_cm, 2, 2, 1);
+        let voxel_spacing = length_cm(0.2);
+        let iso = CollapsedCone::forward_peaked(
+            length_cm(0.4),
+            length_cm(0.4),
+            length_cm(0.3),
+            voxel_spacing,
+            2,
+            2,
+            1,
+        );
+        let fwd = CollapsedCone::forward_peaked(
+            length_cm(0.1),
+            length_cm(1.0),
+            length_cm(0.3),
+            voxel_spacing,
+            2,
+            2,
+            1,
+        );
 
         let d_iso = accumulate_delivered_dose_anisotropic(
             &frames,
@@ -820,16 +853,24 @@ mod tests {
             standoff: length(500.0),
         };
         let frames = [frame(0.0, 8.0, 2.0)];
-        let voxel_cm = 0.2;
-        let mono = CollapsedCone::forward_peaked(0.1, 1.0, 0.3, voxel_cm, 2, 3, 1);
+        let voxel_spacing = length_cm(0.2);
+        let mono = CollapsedCone::forward_peaked(
+            length_cm(0.1),
+            length_cm(1.0),
+            length_cm(0.3),
+            voxel_spacing,
+            2,
+            3,
+            1,
+        );
         let poly = CollapsedCone::poly_forward_peaked(
             &[SpectralComponent {
-                range_up_cm: 0.1,
-                range_down_cm: 1.0,
-                weight: 5.0,
+                range_up: length_cm(0.1),
+                range_down: length_cm(1.0),
+                weight: relative_weight(5.0),
             }],
-            0.3,
-            voxel_cm,
+            length_cm(0.3),
+            voxel_spacing,
             2,
             3,
             1,
@@ -874,27 +915,27 @@ mod tests {
             standoff: length(500.0),
         };
         let frames = [frame(0.0, 8.0, 2.0)];
-        let voxel_cm = 0.2;
+        let voxel_spacing = length_cm(0.2);
         let soft = SpectralComponent {
-            range_up_cm: 0.2,
-            range_down_cm: 0.3,
-            weight: 1.0,
+            range_up: length_cm(0.2),
+            range_down: length_cm(0.3),
+            weight: relative_weight(1.0),
         };
         let hard = SpectralComponent {
-            range_up_cm: 0.05,
-            range_down_cm: 1.5,
-            weight: 1.0,
+            range_up: length_cm(0.05),
+            range_down: length_cm(1.5),
+            weight: relative_weight(1.0),
         };
         let mostly_soft = CollapsedCone::poly_forward_peaked(
             &[
                 SpectralComponent {
-                    weight: 9.0,
+                    weight: relative_weight(9.0),
                     ..soft
                 },
                 hard,
             ],
-            0.3,
-            voxel_cm,
+            length_cm(0.3),
+            voxel_spacing,
             2,
             2,
             1,
@@ -903,12 +944,12 @@ mod tests {
             &[
                 soft,
                 SpectralComponent {
-                    weight: 9.0,
+                    weight: relative_weight(9.0),
                     ..hard
                 },
             ],
-            0.3,
-            voxel_cm,
+            length_cm(0.3),
+            voxel_spacing,
             2,
             2,
             1,
@@ -945,8 +986,15 @@ mod tests {
         let geom = BeamGeometry::Parallel {
             standoff: length(500.0),
         };
-        let voxel_cm = 0.2;
-        let cone = CollapsedCone::forward_peaked(0.1, 1.0, 0.3, voxel_cm, 2, 2, 1);
+        let cone = CollapsedCone::forward_peaked(
+            length_cm(0.1),
+            length_cm(1.0),
+            length_cm(0.3),
+            length_cm(0.2),
+            2,
+            2,
+            1,
+        );
         let d1 = accumulate_delivered_dose_anisotropic(
             &[frame(0.0, 8.0, 1.0)],
             &mu,

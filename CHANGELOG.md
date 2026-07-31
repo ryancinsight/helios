@@ -9,6 +9,14 @@ under a Breaking subsection.
 
 ### Changed
 
+- `helios-solver` scatter/deposition kernels and
+  `helios-simulation::CollapsedCone` now accept Aequitas `Length` values for
+  physical ranges and sampling pitches, and `Dimensionless` values for
+  spectral weights. Unit conversion remains at the real scalar formula and
+  voxel-mesh boundaries; no complex unit is introduced for the real transport
+  law. See [ADR 0014](docs/adr/0014-scatter-kernel-quantities.md) and
+  [H-095](backlog.md).
+
 - `helios-gpu::GpuAttenuationMapper::new` now accepts Aequitas `AreaPerMass`
   and `MassDensity` inputs instead of raw cm-based `f32` scalars. Conversion
   to the fused GPU kernel's cm units remains at the explicit formula boundary.

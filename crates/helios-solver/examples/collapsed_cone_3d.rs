@@ -41,8 +41,8 @@
 //! ```
 
 use aequitas::systems::si::{
-    quantities::{AreaPerMass, MassDensity},
-    units::{GramPerCubicCentimeter, SquareCentimeterPerGram},
+    quantities::{AreaPerMass, Length, MassDensity},
+    units::{Centimeter, GramPerCubicCentimeter, SquareCentimeterPerGram},
 };
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Point3;
@@ -94,7 +94,10 @@ fn main() {
 
     let mu_center = mu.get(nx / 2, ny / 2, nz / 2).unwrap();
     println!("Stage 1 — CT → μ map (Compton-dominated 6 MV approximation)");
-    println!("  Water μ/ρ = 0.0636 cm²/g, ρ = {:.1} g/cm³", water_rho.in_unit::<GramPerCubicCentimeter>());
+    println!(
+        "  Water μ/ρ = 0.0636 cm²/g, ρ = {:.1} g/cm³",
+        water_rho.in_unit::<GramPerCubicCentimeter>()
+    );
     println!("  Resulting μ at phantom center = {mu_center:.5} cm⁻¹\n");
 
     // ── 3. Primary fluence — Beer–Lambert along +x ────────────────────────────
@@ -124,6 +127,7 @@ fn main() {
         let mu_v = mu.get(idx[0], idx[1], idx[2]).expect("within grid");
         psi * mu_v * voxel_cm
     });
+    let voxel_spacing = Length::from_unit::<Centimeter>(voxel_cm);
 
     let terma_total: f64 = (0..nx)
         .flat_map(|i| (0..ny).flat_map(move |j| (0..nz).map(move |k| (i, j, k))))
@@ -136,7 +140,8 @@ fn main() {
     //
     // Exponential kernel: characteristic electron transport range 0.5 cm.
     let range_cm = 0.5_f64;
-    let kernel = exponential_deposition_kernel(range_cm, voxel_cm, 8);
+    let range = Length::from_unit::<Centimeter>(range_cm);
+    let kernel = exponential_deposition_kernel(range, voxel_spacing, 8);
 
     println!("Stage 4 — 1-D dose convolution");
     println!(
@@ -168,9 +173,9 @@ fn main() {
     // ── 6. 3-D scatter superposition ─────────────────────────────────────────
     //
     // Separable symmetric kernels: tight lateral (0.3 cm) and relaxed axial (0.5 cm).
-    let kx = symmetric_deposition_kernel(0.5_f64, voxel_cm, 3);
-    let ky = symmetric_deposition_kernel(0.3_f64, voxel_cm, 2);
-    let kz = symmetric_deposition_kernel(0.3_f64, voxel_cm, 2);
+    let kx = symmetric_deposition_kernel(Length::from_unit::<Centimeter>(0.5), voxel_spacing, 3);
+    let ky = symmetric_deposition_kernel(Length::from_unit::<Centimeter>(0.3), voxel_spacing, 2);
+    let kz = symmetric_deposition_kernel(Length::from_unit::<Centimeter>(0.3), voxel_spacing, 2);
 
     let dose_3d = scatter_superposition(&terma, &kx, &ky, &kz);
 

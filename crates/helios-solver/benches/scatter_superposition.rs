@@ -6,7 +6,8 @@
 //! body. Baselines are recorded in the corresponding CHANGELOG/commit entry.
 #![allow(missing_docs)] // criterion_group! generates an undocumented harness item.
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use aequitas::systems::si::{quantities::Length, units::Centimeter};
+use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Point3;
 use helios_solver::{scatter_superposition, symmetric_deposition_kernel};
@@ -19,7 +20,11 @@ fn bench_scatter(c: &mut Criterion) {
         // Non-uniform terma so no arithmetic short-circuits.
         let terma =
             Volume::from_shape_fn(grid, |idx| (idx[0] * 7 + idx[1] * 3 + idx[2]) as f64 * 1e-4);
-        let kernel = symmetric_deposition_kernel(0.6_f64, 0.2, 2); // 5 taps/axis
+        let kernel = symmetric_deposition_kernel(
+            Length::from_unit::<Centimeter>(0.6),
+            Length::from_unit::<Centimeter>(0.2),
+            2,
+        ); // 5 taps/axis
 
         group.throughput(Throughput::Elements((n * n * n) as u64));
         group.bench_with_input(BenchmarkId::from_parameter(n), &n, |b, _| {

@@ -17,15 +17,18 @@ use std::path::{Path, PathBuf};
 
 use aequitas::systems::si::{
     quantities::{AbsorbedDose, Angle, AreaPerMass, Dimensionless, Length, MassDensity, Time},
-    units::{GramPerCubicCentimeter, Gray, Millimeter, Radian, Second, SquareCentimeterPerGram},
+    units::{
+        Centimeter, GramPerCubicCentimeter, Gray, Millimeter, Radian, Second,
+        SquareCentimeterPerGram,
+    },
 };
-use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, Dvh};
+use helios_analysis::{Dvh, gamma_index_3d, gamma_pass_rate, roi_statistics};
 use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel, Volume, VoxelGrid};
 use helios_imaging::{filtered_back_projection, parallel_beam_radon};
 use helios_math::Point3;
 use helios_simulation::{
-    accumulate_delivered_dose_anisotropic, simulate_helical_delivery, BeamGeometry, CollapsedCone,
-    SpectralComponent,
+    BeamGeometry, CollapsedCone, SpectralComponent, accumulate_delivered_dose_anisotropic,
+    simulate_helical_delivery,
 };
 use helios_solver::attenuation_map;
 use hyperion::coefficient::MassAttenuation;
@@ -149,20 +152,27 @@ fn main() {
     // Beam-following, poly-energetic collapsed cone: a two-component (soft/hard)
     // spectrum, forward-peaked (longer downstream range) and re-oriented to each
     // frame's gantry direction. Beam hardening + forward transport shape the dose.
-    let voxel_cm = SPACING / 10.0;
+    let voxel_spacing = Length::from_unit::<Centimeter>(SPACING / 10.0);
     let spectrum = [
         SpectralComponent {
-            range_up_cm: 0.10,
-            range_down_cm: 0.35,
-            weight: 0.7,
+            range_up: Length::from_unit::<Centimeter>(0.10),
+            range_down: Length::from_unit::<Centimeter>(0.35),
+            weight: Dimensionless::from_base(0.7),
         }, // soft component
         SpectralComponent {
-            range_up_cm: 0.05,
-            range_down_cm: 0.90,
-            weight: 0.3,
+            range_up: Length::from_unit::<Centimeter>(0.05),
+            range_down: Length::from_unit::<Centimeter>(0.90),
+            weight: Dimensionless::from_base(0.3),
         }, // hard component (reaches farther downstream)
     ];
-    let cone = CollapsedCone::poly_forward_peaked(&spectrum, 0.6, voxel_cm, 2, 3, 2);
+    let cone = CollapsedCone::poly_forward_peaked(
+        &spectrum,
+        Length::from_unit::<Centimeter>(0.6),
+        voxel_spacing,
+        2,
+        3,
+        2,
+    );
     let dose = accumulate_delivered_dose_anisotropic(
         &frames,
         &mu,

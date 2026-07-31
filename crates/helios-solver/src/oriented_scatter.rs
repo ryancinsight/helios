@@ -15,11 +15,12 @@
 //! [`anisotropic_scatter_superposition`](crate::anisotropic_scatter_superposition)
 //! up to trilinear-at-node exactness (the differential oracle).
 
+use aequitas::systems::si::quantities::Length;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{GeometryScalar, NumericElement, Point3, Vector3};
 
 /// Convolve `vol` with the 1-D `kernel` (zero-offset index `center`), sampled
-/// along the unit `direction` at `sample_step_mm` spacing, by trilinear gather:
+/// along the unit `direction` at `sample_step` spacing, by trilinear gather:
 ///
 /// ```text
 /// out(p) = Σ_t kernel[t] · vol.sample_world(p − (t − center)·step·direction)
@@ -38,12 +39,13 @@ pub fn directional_convolve<T: GeometryScalar>(
     kernel: &[T],
     center: usize,
     direction: Vector3<T>,
-    sample_step_mm: T,
+    sample_step: Length<T>,
 ) -> Volume<T> {
     let grid: VoxelGrid<T> = *vol.grid();
     let [nx, ny, nz] = grid.dims();
     let zero = <T as NumericElement>::ZERO;
     let center_f = <T as GeometryScalar>::from_f64(center as f64);
+    let sample_step_mm = sample_step.into_base() * <T as GeometryScalar>::from_f64(1000.0);
 
     let mut out = vec![zero; nx * ny * nz];
     let mut idx = 0usize;
@@ -96,12 +98,12 @@ fn lateral_basis<T: GeometryScalar>(beam: Vector3<T>) -> (Vector3<T>, Vector3<T>
 /// Beam-frame collapsed-cone dose from a `terma` field: the forward-peaked
 /// `(beam_kernel, beam_center)` convolved along the (arbitrary) unit `beam_dir`,
 /// then the symmetric `lateral` kernel convolved across both directions
-/// perpendicular to the beam. `sample_step_mm` is the physical sampling pitch
-/// along every direction (the `voxel_cm` the kernels were built with, ×10).
+/// perpendicular to the beam. `sample_step` is the physical sampling pitch
+/// along every direction.
 ///
 /// This is the gantry-following anisotropy: more energy carried downstream than
 /// upstream **along the actual beam**, symmetric penumbra laterally, at any
-/// gantry angle. With `beam_dir` a grid axis and `sample_step_mm` that axis's
+/// gantry angle. With `beam_dir` a grid axis and `sample_step` that axis's
 /// pitch it reduces to
 /// [`anisotropic_scatter_superposition`](crate::anisotropic_scatter_superposition)
 /// (up to trilinear-at-node exactness).
@@ -112,26 +114,26 @@ pub fn oriented_forward_scatter<T: GeometryScalar>(
     beam_kernel: &[T],
     beam_center: usize,
     lateral: &[T],
-    sample_step_mm: T,
+    sample_step: Length<T>,
 ) -> Volume<T> {
     let beam = beam_dir.normalize();
     let (u, v) = lateral_basis(beam);
     let lateral_center = lateral.len() / 2;
 
-    let after_beam = directional_convolve(terma, beam_kernel, beam_center, beam, sample_step_mm);
-    let after_u = directional_convolve(&after_beam, lateral, lateral_center, u, sample_step_mm);
-    directional_convolve(&after_u, lateral, lateral_center, v, sample_step_mm)
+    let after_beam = directional_convolve(terma, beam_kernel, beam_center, beam, sample_step);
+    let after_u = directional_convolve(&after_beam, lateral, lateral_center, u, sample_step);
+    directional_convolve(&after_u, lateral, lateral_center, v, sample_step)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use crate::{
         anisotropic_scatter_superposition, forward_peaked_kernel, symmetric_deposition_kernel,
     };
     use eunomia::assert_relative_eq;
     use helios_math::Point3 as P3;
+    use helios_math::ShippedScalar;
 
     fn grid() -> VoxelGrid<f64> {
         VoxelGrid::axis_aligned([9, 9, 9], [2.0, 2.0, 2.0], P3::new(0.0, 0.0, 0.0)).expect("grid")
@@ -141,18 +143,33 @@ mod tests {
         Volume::from_shape_fn(grid(), |idx| if idx == [4, 4, 4] { 1.0 } else { 0.0 })
     }
 
+    fn length_cm<T: ShippedScalar>(value: T) -> Length<T> {
+        Length::from_base(value * T::from_f64(0.01))
+    }
+
+    fn length_mm<T: ShippedScalar>(value: T) -> Length<T> {
+        Length::from_base(value * T::from_f64(0.001))
+    }
+
     #[test]
     fn axis_aligned_reduces_to_the_separable_anisotropic_scatter() {
         // beam = +x, sample step = x pitch (2 mm) ⇒ every sample lands on a node ⇒
         // trilinear is exact ⇒ the oriented result must match the grid-axis
         // separable form (the differential oracle) to trilinear precision.
-        let (fp, centre) = forward_peaked_kernel(0.15_f64, 0.6, 0.2, 1, 3);
-        let lat = symmetric_deposition_kernel(0.4_f64, 0.2, 1);
+        let (fp, centre) =
+            forward_peaked_kernel(length_cm(0.15), length_cm(0.6), length_cm(0.2), 1, 3);
+        let lat = symmetric_deposition_kernel(length_cm(0.4), length_cm(0.2), 1);
         let terma = point_terma();
 
         let separable = anisotropic_scatter_superposition(&terma, 0, &fp, centre, &lat);
-        let oriented =
-            oriented_forward_scatter(&terma, Vector3::new(1.0, 0.0, 0.0), &fp, centre, &lat, 2.0);
+        let oriented = oriented_forward_scatter(
+            &terma,
+            Vector3::new(1.0, 0.0, 0.0),
+            &fp,
+            centre,
+            &lat,
+            length_mm(2.0),
+        );
 
         for i in 0..9 {
             for j in 0..9 {
@@ -173,11 +190,13 @@ mod tests {
         // downstream (+beam) vs upstream (−beam) in world space: forward-peaking
         // must put strictly more dose downstream, and the two lateral flanks
         // (±perp) must stay symmetric.
-        let (fp, centre) = forward_peaked_kernel(0.1_f64, 1.0, 0.2, 1, 3);
-        let lat = symmetric_deposition_kernel(0.3_f64, 0.2, 1);
+        let (fp, centre) =
+            forward_peaked_kernel(length_cm(0.1), length_cm(1.0), length_cm(0.2), 1, 3);
+        let lat = symmetric_deposition_kernel(length_cm(0.3), length_cm(0.2), 1);
         let inv = 1.0 / 2.0_f64.sqrt();
         let beam = Vector3::new(inv, inv, 0.0);
-        let dose = oriented_forward_scatter(&point_terma(), beam, &fp, centre, &lat, 2.0);
+        let dose =
+            oriented_forward_scatter(&point_terma(), beam, &fp, centre, &lat, length_mm(2.0));
 
         let src = grid().voxel_center(4, 4, 4);
         let d = 4.0; // mm along the beam
@@ -205,8 +224,9 @@ mod tests {
         // Σ=1 kernels + trilinear gather conserve interior energy up to boundary
         // truncation and interpolation diffusion. The source sits at the grid
         // centre, far from every face; assert conservation within 2 %.
-        let (fp, centre) = forward_peaked_kernel(0.2_f64, 0.5, 0.2, 1, 2);
-        let lat = symmetric_deposition_kernel(0.3_f64, 0.2, 1);
+        let (fp, centre) =
+            forward_peaked_kernel(length_cm(0.2), length_cm(0.5), length_cm(0.2), 1, 2);
+        let lat = symmetric_deposition_kernel(length_cm(0.3), length_cm(0.2), 1);
         let inv = 1.0 / 2.0_f64.sqrt();
         let dose = oriented_forward_scatter(
             &point_terma(),
@@ -214,7 +234,7 @@ mod tests {
             &fp,
             centre,
             &lat,
-            2.0,
+            length_mm(2.0),
         );
         assert_relative_eq!(dose.sum(), 1.0, max_relative = 0.02);
     }
@@ -236,13 +256,22 @@ mod tests {
             .expect("valid axis-aligned grid");
 
         let terma = Volume::from_shape_fn(grid, |idx| if idx == [4, 4, 4] { one } else { zero });
-        let (forward, centre) = forward_peaked_kernel(cast(0.1), one, cast(0.2), 1, 3);
-        let lateral = symmetric_deposition_kernel(cast(0.3), cast(0.2), 1);
+        let length_cm = |value: T| Length::from_base(value * cast(0.01));
+        let length_mm = |value: T| Length::from_base(value * cast(0.001));
+        let (forward, centre) = forward_peaked_kernel(
+            length_cm(cast(0.1)),
+            length_cm(one),
+            length_cm(cast(0.2)),
+            1,
+            3,
+        );
+        let lateral = symmetric_deposition_kernel(length_cm(cast(0.3)), length_cm(cast(0.2)), 1);
 
         // Diagonal beam in the xy plane, unit length.
         let component = one / cast(2.0).sqrt();
         let beam = Vector3::new(component, component, zero);
-        let dose = oriented_forward_scatter(&terma, beam, &forward, centre, &lateral, spacing);
+        let dose =
+            oriented_forward_scatter(&terma, beam, &forward, centre, &lateral, length_mm(spacing));
 
         let source = grid.voxel_center(4, 4, 4);
         let reach = cast(4.0);
