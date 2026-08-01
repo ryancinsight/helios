@@ -1,5 +1,17 @@
 # Helios Checklist (tactical)
 
+## Codex — H-096 typed helical acquisition outcomes [arch] [major] — in progress 2026-07-31
+
+- [ ] Carry `HelicalProjection` optical depth and transmission as Aequitas
+      `Dimensionless<T>`; keep Hyperion `OpticalDepth` as the real transport
+      law and extract scalar values only at the ray kernel boundary.
+- [ ] Migrate acquisition tests and direct consumers with value-semantic
+      assertions across `f32` and `f64`; no complex or imaginary unit applies
+      to this real Beer–Lambert contract.
+- [ ] Update the Helios gap audit and release artifacts after the peer-dirty
+      audit file is reconciled; run focused check, Nextest, Clippy, doctest,
+      Rustdoc, and formatting gates.
+
 **Sprint target version:** `0.1.0` (oriented-grid provider convergence)
 **Current phase:** Phase 2 (Execution). Sprint 1 domain core complete
 (`helios-core`/`math`/`domain`); Sprint 2 opened with `helios-physics`.
