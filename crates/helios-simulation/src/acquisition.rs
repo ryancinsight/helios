@@ -24,10 +24,10 @@ pub struct HelicalProjection<T: GeometryScalar> {
     pub gantry_angle_rad: Angle<T>,
     /// Couch position at this projection (mm).
     pub couch_mm: Length<T>,
-    /// Central-ray optical depth `∫μ dl` (dimensionless).
-    pub optical_depth: T,
+    /// Central-ray optical depth `∫μ dl`.
+    pub optical_depth: Dimensionless<T>,
     /// Central-ray transmitted fraction `exp(−∫μ dl)`.
-    pub transmission: T,
+    pub transmission: Dimensionless<T>,
 }
 
 /// Simulate a helical acquisition of `num_projections` over the attenuation
@@ -85,10 +85,10 @@ pub fn simulate_helical_sinogram<T: GeometryScalar + UnitScalar + Send + Sync>(
                 .ok()
                 .and_then(|ray| forward_project_ray(mu, &ray, step_mm.in_unit::<Millimeter>()))
                 .unwrap_or(zero);
-            let transmission = OpticalDepth::new(Dimensionless::from_base(optical_depth))?
+            let optical_depth = Dimensionless::from_base(optical_depth);
+            let transmission = OpticalDepth::new(optical_depth)?
                 .transmission()
-                .into_quantity()
-                .into_base();
+                .into_quantity();
 
             Ok(HelicalProjection {
                 projection,
@@ -104,10 +104,10 @@ pub fn simulate_helical_sinogram<T: GeometryScalar + UnitScalar + Send + Sync>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
+    use helios_math::ShippedScalar;
 
     // Uniform-μ cube: 9³ voxels, 2 mm spacing → node extent 16 mm = 1.6 cm/axis.
     fn uniform_cube(mu_val: f64) -> Volume<f64> {
@@ -155,9 +155,13 @@ mod tests {
             Length::from_unit::<Millimeter>(0.25),
         )
         .expect("valid attenuation volume");
-        assert_relative_eq!(sino[0].optical_depth, 0.05 * 1.6, epsilon = 1e-9);
         assert_relative_eq!(
-            sino[0].transmission,
+            sino[0].optical_depth.into_base(),
+            0.05 * 1.6,
+            epsilon = 1e-9
+        );
+        assert_relative_eq!(
+            sino[0].transmission.into_base(),
             (-0.05 * 1.6_f64).exp(),
             epsilon = 1e-9
         );
@@ -176,8 +180,8 @@ mod tests {
         )
         .expect("valid attenuation volume");
         assert_relative_eq!(
-            sino[0].optical_depth,
-            sino[1].optical_depth,
+            sino[0].optical_depth.into_base(),
+            sino[1].optical_depth.into_base(),
             max_relative = 1e-6
         );
     }
@@ -212,8 +216,8 @@ mod tests {
         )
         .expect("valid attenuation volume");
         for p in &sino {
-            assert_relative_eq!(p.optical_depth, 0.0, epsilon = 1e-12);
-            assert_relative_eq!(p.transmission, 1.0, epsilon = 1e-12);
+            assert_relative_eq!(p.optical_depth.into_base(), 0.0, epsilon = 1e-12);
+            assert_relative_eq!(p.transmission.into_base(), 1.0, epsilon = 1e-12);
         }
     }
 
@@ -234,8 +238,9 @@ mod tests {
         let cast = <T as helios_math::FloatElement>::from_f64;
         let zero = cast(0.0);
         let spacing = cast(2.0);
-        let grid = VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], Point3::new(zero, zero, zero))
-            .expect("valid axis-aligned grid");
+        let grid =
+            VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
 
         let mu = cast(0.05);
         let attenuation = Volume::from_shape_fn(grid, |_| mu);
@@ -260,7 +265,7 @@ mod tests {
 
         // Uniform mu over the 1.6 cm traversed path.
         assert_relative_eq!(
-            sinogram[0].optical_depth,
+            sinogram[0].optical_depth.into_base(),
             mu * cast(1.6),
             max_relative = T::EPSILON * cast(SINOGRAM_ACCUMULATION_ULPS)
         );

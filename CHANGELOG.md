@@ -9,6 +9,13 @@ under a Breaking subsection.
 
 ### Changed
 
+- **Breaking**: `helios-simulation::HelicalProjection` now exposes optical
+  depth and transmitted fraction as Aequitas `Dimensionless<T>` values. The
+  ray kernel remains scalar and Hyperion remains the Beer–Lambert law owner;
+  no imaginary or complex unit applies to this real acquisition contract. See
+  [ADR 0015](docs/adr/0015-helical-acquisition-outcomes.md) and
+  [H-096](backlog.md).
+
 - `helios-solver` scatter/deposition kernels and
   `helios-simulation::CollapsedCone` now accept Aequitas `Length` values for
   physical ranges and sampling pitches, and `Dimensionless` values for

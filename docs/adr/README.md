@@ -18,3 +18,4 @@
 | [0012](0012-helical-delivery-quantities.md) | Type Helical Delivery Kinematic Metrics | — |
 | [0013](0013-gpu-attenuation-quantities.md) | Typed GPU attenuation inputs | — |
 | [0014](0014-scatter-kernel-quantities.md) | Type scatter-kernel physical inputs | — |
+| [0015](0015-helical-acquisition-outcomes.md) | Type helical acquisition outcomes | — |
