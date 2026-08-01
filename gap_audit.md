@@ -4,6 +4,14 @@ Physics, numerics, accuracy, architecture, and integration gaps. Closed by
 evidence, not silence. Each gap: ID, description, class, current evidence tier,
 target closure.
 
+## Eunomia complex compatibility refresh (2026-07-28)
+
+The live Helios source contains no `Complex`, `Complex32`, `Complex64`, or
+imaginary-valued public physical contract. Its Aequitas migration therefore
+needs no complex-unit extension or consumer wrapper. Eunomia's complex support
+is relevant to other numerical consumers, but no Helios metric crosses that
+boundary.
+
 ## Aequitas metric audit refresh (2026-07-27)
 
 The current `main` branch had stale closed-ledger claims: the typed helical
