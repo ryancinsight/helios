@@ -22,7 +22,10 @@ stale package name because the workflow pinned an older Atlas provider graph;
 the action and graph now pin Atlas
 `11581413ddd1da6fd849dd2c4ad11fdbb6ce673a`, whose Moirai/Mnemosyne graph uses
 the current package names. This is workflow/provider integration hygiene, not
-an Aequitas metric change. The hosted CI rerun is the closure evidence.
+an Aequitas metric change. The current Coeus graph also makes autodiff
+`backward()` fallible; `helios-planning` now maps that provider error to the
+typed `HeliosError::Autodiff` variant instead of discarding it. The hosted CI
+rerun is the remaining closure evidence.
 
 ## Eunomia complex compatibility refresh (2026-07-28)
 

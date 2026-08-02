@@ -38,7 +38,8 @@ fn scalar_const(value: f64, backend: &MoiraiBackend) -> Var<f64, MoiraiBackend> 
 ///
 /// # Errors
 /// [`HeliosError::InvalidDomainValue`] if `x`/`prescription` lengths do not match
-/// `influence.dims()`.
+/// `influence.dims()`, or [`HeliosError::Autodiff`] if the backend cannot
+/// propagate the tape.
 pub fn objective_gradient_autodiff(
     influence: &DoseInfluence<f64>,
     x: &[f64],
@@ -74,7 +75,9 @@ pub fn objective_gradient_autodiff(
 
     let r = sub(&matmul(&a, &xv), &d);
     let loss = sum(&mul(&r, &r)); // ‖r‖² — tape gradient wrt x is 2·Aᵀr.
-    loss.backward();
+    loss.backward().map_err(|error| HeliosError::Autodiff {
+        reason: error.to_string(),
+    })?;
 
     let grad = xv.grad().ok_or(HeliosError::InvalidDomainValue {
         field: "objective_gradient_autodiff::grad",
@@ -113,7 +116,8 @@ pub struct DvhPenalty<'a> {
 ///
 /// # Errors
 /// [`HeliosError::InvalidDomainValue`] on any length mismatch with
-/// `influence.dims()`.
+/// `influence.dims()`, or [`HeliosError::Autodiff`] if the backend cannot
+/// propagate the tape.
 pub fn dvh_objective_gradient_autodiff(
     influence: &DoseInfluence<f64>,
     x: &[f64],
@@ -168,7 +172,9 @@ pub fn dvh_objective_gradient_autodiff(
         &mul(&sum(&mul(&over, &over)), &wo),
     );
     let value = loss.tensor.as_slice()[0];
-    loss.backward();
+    loss.backward().map_err(|error| HeliosError::Autodiff {
+        reason: error.to_string(),
+    })?;
 
     let grad = xv.grad().ok_or(HeliosError::InvalidDomainValue {
         field: "dvh_objective_gradient_autodiff::grad",
@@ -240,7 +246,8 @@ pub struct EudPenalty {
 ///
 /// # Errors
 /// [`HeliosError::InvalidDomainValue`] if `x`'s length differs from the beamlet
-/// count, or `penalty.a == 0`.
+/// count, or `penalty.a == 0`; [`HeliosError::Autodiff`] if the backend cannot
+/// propagate the tape.
 pub fn eud_objective_gradient_autodiff(
     influence: &DoseInfluence<f64>,
     x: &[f64],
@@ -292,7 +299,9 @@ pub fn eud_objective_gradient_autodiff(
     let loss = mul(&mul(&hinge, &hinge), &weight);
 
     let value = loss.tensor.as_slice()[0];
-    loss.backward();
+    loss.backward().map_err(|error| HeliosError::Autodiff {
+        reason: error.to_string(),
+    })?;
     let grad = xv.grad().ok_or(HeliosError::InvalidDomainValue {
         field: "eud_objective_gradient_autodiff::grad",
         value: f64::NAN,

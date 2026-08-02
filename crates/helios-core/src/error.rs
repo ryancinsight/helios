@@ -44,6 +44,14 @@ pub enum HeliosError {
         /// Description of the write/read/parse failure.
         reason: String,
     },
+
+    /// A differentiable planning operation failed in the configured autodiff
+    /// backend.
+    #[error("autodiff error: {reason}")]
+    Autodiff {
+        /// Backend-provided failure detail.
+        reason: String,
+    },
 }
 
 /// Convenience alias for fallible Helios operations.

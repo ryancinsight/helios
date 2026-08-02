@@ -17,6 +17,9 @@ under a Breaking subsection.
   Pin that checkout to the current Atlas provider graph so historical baseline
   path dependencies resolve against the same package names.
 
+- Propagate Coeus autodiff `backward()` failures through the typed
+  `HeliosError::Autodiff` boundary instead of discarding backend errors.
+
 - **Breaking**: `helios-imaging::Sinogram`, `parallel_beam_radon`, and
   `sirt_reconstruction` now carry projection angles, detector offsets, source
   distance, and ray-march step as Aequitas `Angle`/`Length` values. Scalar
