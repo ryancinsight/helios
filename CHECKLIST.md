@@ -9,6 +9,8 @@
 - [x] Convert committed Moirai path dependencies to the git/package contract;
       standalone offline imaging compilation now resolves the current
       `moirai-runtime`/`moirai-parallel` and `mnemosyne-memory` packages.
+- [x] Refresh the immutable Atlas action and provider-graph pin so the
+      historical baseline uses the current `mnemosyne-memory` package graph.
 - [ ] Re-run the hosted workflow and close H-098 after the workflow reaches its
       actual Rust, Python, and benchmark gates.
 

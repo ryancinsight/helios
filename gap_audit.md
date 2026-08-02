@@ -17,7 +17,11 @@ H-098 removes the three stale Coeus checkout steps while retaining the
 manifest-driven action, and converts Helios's committed Moirai path
 dependencies to the provider's git/package contract. The standalone locked
 imaging check now resolves against Moirai's current `moirai-runtime` and
-`moirai-parallel` packages. This is workflow/provider integration hygiene, not
+`moirai-parallel` packages. The historical baseline then exposed the same
+stale package name because the workflow pinned an older Atlas provider graph;
+the action and graph now pin Atlas
+`11581413ddd1da6fd849dd2c4ad11fdbb6ce673a`, whose Moirai/Mnemosyne graph uses
+the current package names. This is workflow/provider integration hygiene, not
 an Aequitas metric change. The hosted CI rerun is the closure evidence.
 
 ## Eunomia complex compatibility refresh (2026-07-28)

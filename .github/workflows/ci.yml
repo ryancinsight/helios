@@ -18,11 +18,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
+      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@11581413ddd1da6fd849dd2c4ad11fdbb6ce673a
         with:
           manifest: Cargo.toml
           destination: ..
-          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
+          atlas_ref: 11581413ddd1da6fd849dd2c4ad11fdbb6ce673a
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -78,11 +78,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
+      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@11581413ddd1da6fd849dd2c4ad11fdbb6ce673a
         with:
           manifest: Cargo.toml
           destination: ..
-          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
+          atlas_ref: 11581413ddd1da6fd849dd2c4ad11fdbb6ce673a
 
       - uses: actions/setup-python@v6
         with:
@@ -146,18 +146,18 @@ jobs:
           path: atlas-tool
 
       - name: Checkout candidate path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@11581413ddd1da6fd849dd2c4ad11fdbb6ce673a
         with:
           manifest: helios-candidate/Cargo.toml
           destination: .
-          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
+          atlas_ref: 11581413ddd1da6fd849dd2c4ad11fdbb6ce673a
 
       - name: Checkout historical baseline path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@11581413ddd1da6fd849dd2c4ad11fdbb6ce673a
         with:
           manifest: helios-baseline/Cargo.toml
           destination: .
-          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
+          atlas_ref: 11581413ddd1da6fd849dd2c4ad11fdbb6ce673a
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable

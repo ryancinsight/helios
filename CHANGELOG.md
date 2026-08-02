@@ -14,6 +14,8 @@ under a Breaking subsection.
   Convert committed Moirai path dependencies to the current git/package
   contract so locked resolution uses `moirai-runtime`, `moirai-parallel`, and
   `mnemosyne-memory` consistently.
+  Pin that checkout to the current Atlas provider graph so historical baseline
+  path dependencies resolve against the same package names.
 
 - **Breaking**: `helios-imaging::Sinogram`, `parallel_beam_radon`, and
   `sirt_reconstruction` now carry projection angles, detector offsets, source
