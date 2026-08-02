@@ -12,6 +12,45 @@ needs no complex-unit extension or consumer wrapper. Eunomia's complex support
 is relevant to other numerical consumers, but no Helios metric crosses that
 boundary.
 
+## Radon imaging geometry (H-097, 2026-08-02)
+
+The live imaging audit found a remaining public Aequitas gap in
+`helios-imaging`: `Sinogram` stored projection angles and detector offsets as
+raw `T`, while Radon and SIRT accepted raw source distance and ray-march step.
+The documentation named radians and millimetres, but the type system did not
+enforce those dimensions.
+
+H-097 carries `Angle<T>` and `Length<T>` through `Sinogram`, Radon, FBP, SIRT,
+the quantum-noise path, all affected examples, the analysis validation example,
+and the end-to-end workflow. Scalar extraction is confined to radians for
+trigonometry, millimetres for ray/grid geometry, and centimetres for the FBP
+ramp filter. Dense voxel-grid coordinates and line-integral readings remain
+scalar kernel storage.
+
+This imaging law is real-valued. It has no phasor or Fourier-valued physical
+field, so Eunomia complex values do not require an imaginary length unit or a
+consumer wrapper. Complex compatibility remains the existing Eunomia rule:
+complex components share one real physical unit when a numerical domain
+actually needs a phasor.
+
+The earlier provider rev-pin removal left the committed lockfile without the
+current git source identities. H-097 refreshes that derived lock state so the
+standalone `--locked` gate is executable again.
+
+Evidence: `cargo check --offline --locked -p helios-imaging --all-targets`,
+warning-denied Clippy, `cargo test --doc`, Rustdoc, and the analysis
+`validation_regression` example check pass. Nextest run
+`26905c71-03f1-447a-be77-df0c84278c3c` passes all 33 `helios-imaging` tests,
+including the analytical disk oracle and f32/f64 reconstruction paths.
+
+The downstream `cargo nextest -p helios-analysis -p helios-simulation` gate
+does not reach test execution: `mnemosyne-memory` exits from `rustc` with code
+1 and no diagnostic. The simulation example check reaches the provider graph
+but is rejected by Moirai's existing `missing_docs` errors for public fields in
+`moirai-executor/src/metrics/mod.rs` and `moirai-executor/src/task/mod.rs`.
+These are external provider integration blockers, not failures of the typed
+Radon contract; they remain open in the provider-owned audit path.
+
 ## Aequitas metric audit refresh (2026-07-27)
 
 The current `main` branch had stale closed-ledger claims: the typed helical
@@ -103,6 +142,8 @@ and attenuation, and `AreaPerMass` for mass attenuation. `EnergyMeV` and
 | `HELIOS-AEQ-MET-03` | `helios-simulation/src/delivery.rs` stored leaf fluence as `T`; `total_delivered_fluence` returned `T`. `portal.rs` constructed `EnergyPerArea` internally and converted it back. `dose_accumulation.rs` accepted `*_mm` geometry and sampling values as `T`. | Carry fluence as `EnergyPerArea` and geometry distances as `Length` through delivery, portal, and dose accumulation. | Helios | **RESOLVED.** `DeliveryFrame`, collimation, portal transmission, total fluence, and dose geometry now use Aequitas quantities. Typed values convert once to the existing millimetre ray/voxel kernel; closed-leaf zero, Beer–Lambert darkening, fluence linearity, geometry-limit, f32, example, and end-to-end regressions pass. ADR 0008 records the breaking boundary. |
 | `HELIOS-AEQ-MET-04` | `helios-analysis/src/image_quality.rs` returns raw intensity/RMSE values, while the same analysis can operate on dose volumes. | Decide the semantic input at the analysis boundary: retain raw image intensity for MVCT, but return `AbsorbedDose` statistics when the API contract is dose-specific. | Helios | **RESOLVED.** Shared ROI/RMSE value kernels now back raw MVCT `roi_statistics`/`volume_rmse` and typed-dose `dose_roi_statistics`/`dose_volume_rmse`; the clinical validation example uses typed dose means/stddev and converts only for dimensionless contrast/CNR. Value tests cover f64/f32 and Gray outputs; ADR 0009 records the partition. |
 | `HELIOS-AEQ-MET-05` | `helios-gpu/src/attenuation.rs` accepted mass attenuation `mu_over_rho_cm2_g` and reference water density `water_density_g_cm3` as raw `f32` at `GpuAttenuationMapper::new`, despite the CPU attenuation boundary using Aequitas/provider quantities. | Accept typed Aequitas `AreaPerMass<f32>` and `MassDensity<f32>`; extract cm²/g and g/cm³ only at the GPU formula boundary and migrate tests/examples without a scalar facade. | Helios, Aequitas | **RESOLVED in this increment.** `GpuAttenuationMapper::new` carries typed coefficient/density inputs and preserves the fused clamp law. Check with tests/examples, Nextest 10/10, warning-denied Clippy, doctests, Rustdoc, rustfmt, and diff checks pass. See [ADR 0013](docs/adr/0013-gpu-attenuation-quantities.md). |
+
+| `HELIOS-AEQ-MET-06` | `helios-imaging::Sinogram`, `parallel_beam_radon`, and `sirt_reconstruction` accepted projection angles, detector offsets, source distance, and ray step as raw `T` despite their radian/millimetre contract. | Carry Aequitas `Angle<T>` and `Length<T>` through the public imaging boundary; extract only at trigonometry, mesh, and filter formula boundaries. | Helios, Aequitas | **RESOLVED in H-097.** Radon, FBP, SIRT, noise, examples, analysis validation, and the end-to-end workflow use typed geometry; the standalone locked gate and focused value-semantic suites are the closure evidence. See [ADR 0016](docs/adr/0016-radon-geometry-quantities.md). |
 
 ### Explicit non-gaps and constraints
 

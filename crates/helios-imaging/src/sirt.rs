@@ -14,22 +14,23 @@
 
 use crate::backproject::back_project_rows;
 use crate::radon::{parallel_beam_radon, Sinogram};
+use aequitas::systems::si::quantities::Length;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{GeometryScalar, NumericElement};
 
 /// Reconstruct the attenuation slice from `sinogram` by `iterations` of SIRT onto
 /// the `recon` grid.
 ///
-/// `source_distance_mm`/`step_mm` parameterize the forward projector used each
+/// `source_distance`/`step` parameterize the forward projector used each
 /// iteration (must match how the sinogram was formed); `relaxation` is the SIRT
 /// step `λ` (stable for `0 < λ < 2`; `1.0` is the standard choice). Reconstructed
 /// values are non-negative linear attenuation `μ` (cm⁻¹).
 #[must_use]
-pub fn sirt_reconstruction<T: GeometryScalar>(
+pub fn sirt_reconstruction<T: GeometryScalar + eunomia::UnitScalar>(
     sinogram: &Sinogram<T>,
     recon: &VoxelGrid<T>,
-    source_distance_mm: T,
-    step_mm: T,
+    source_distance: Length<T>,
+    step: Length<T>,
     iterations: usize,
     relaxation: T,
 ) -> Volume<T> {
@@ -43,7 +44,7 @@ pub fn sirt_reconstruction<T: GeometryScalar>(
     // Row normalization R⁻¹ = 1/(A·1): forward-project a unit volume → each ray's
     // chord length. Column normalization is the back-projected all-ones sinogram.
     let ones_vol = Volume::from_shape_fn(*recon, |_| one);
-    let a_ones = parallel_beam_radon(&ones_vol, angles, offsets, source_distance_mm, step_mm);
+    let a_ones = parallel_beam_radon(&ones_vol, angles, offsets, source_distance, step);
     let r_inv: Vec<T> = (0..n)
         .map(|idx| {
             let v = a_ones.get(idx / n_off, idx % n_off);
@@ -60,7 +61,7 @@ pub fn sirt_reconstruction<T: GeometryScalar>(
     let mut x = Volume::zeros(*recon);
     for _ in 0..iterations {
         // Row residual R⁻¹ ⊙ (b − A x).
-        let ax = parallel_beam_radon(&x, angles, offsets, source_distance_mm, step_mm);
+        let ax = parallel_beam_radon(&x, angles, offsets, source_distance, step);
         let mut resid = vec![zero; n];
         for a in 0..n_ang {
             for d in 0..n_off {
@@ -91,6 +92,10 @@ pub fn sirt_reconstruction<T: GeometryScalar>(
 mod tests {
     use crate::radon::parallel_beam_radon;
     use crate::sirt_reconstruction;
+    use aequitas::systems::si::{
+        quantities::{Angle, Length},
+        units::{Millimeter, Radian},
+    };
     use helios_analysis::{roi_statistics, volume_relative_l2_error};
     use helios_domain::{Volume, VoxelGrid};
     use helios_math::{Point3, ShippedScalar};
@@ -114,14 +119,16 @@ mod tests {
         })
     }
 
-    fn angles(n: usize) -> Vec<f64> {
+    fn angles(n: usize) -> Vec<Angle<f64>> {
         (0..n)
-            .map(|a| a as f64 * std::f64::consts::PI / n as f64)
+            .map(|a| Angle::from_unit::<Radian>(a as f64 * std::f64::consts::PI / n as f64))
             .collect()
     }
-    fn offsets(half: f64, n: usize) -> Vec<f64> {
+    fn offsets(half: f64, n: usize) -> Vec<Length<f64>> {
         let ds = 2.0 * half / (n - 1) as f64;
-        (0..n).map(|j| -half + j as f64 * ds).collect()
+        (0..n)
+            .map(|j| Length::from_unit::<Millimeter>(-half + j as f64 * ds))
+            .collect()
     }
 
     #[test]
@@ -131,9 +138,22 @@ mod tests {
         // (Discretization accuracy vs the analytical sinogram is the FBP tests' job.)
         let phantom = disk(0.04, 14.0);
         let (ang, off) = (angles(40), offsets(24.0, 41));
-        let b = parallel_beam_radon(&phantom, &ang, &off, 400.0, 0.5);
+        let b = parallel_beam_radon(
+            &phantom,
+            &ang,
+            &off,
+            Length::from_unit::<Millimeter>(400.0),
+            Length::from_unit::<Millimeter>(0.5),
+        );
 
-        let x = sirt_reconstruction(&b, &recon_grid(), 400.0, 0.5, 30, 1.0);
+        let x = sirt_reconstruction(
+            &b,
+            &recon_grid(),
+            Length::from_unit::<Millimeter>(400.0),
+            Length::from_unit::<Millimeter>(0.5),
+            30,
+            1.0,
+        );
         // Interior accuracy (the well-determined region): mean μ recovers μ₀ within
         // the same 15% reconstruction tolerance used for FBP — the whole-image L2 is
         // edge-Gibbs-dominated at a sharp disk boundary, so it is a looser sanity
@@ -152,15 +172,35 @@ mod tests {
     fn more_iterations_reduce_the_error() {
         let phantom = disk(0.04, 14.0);
         let (ang, off) = (angles(40), offsets(24.0, 41));
-        let b = parallel_beam_radon(&phantom, &ang, &off, 400.0, 0.5);
+        let b = parallel_beam_radon(
+            &phantom,
+            &ang,
+            &off,
+            Length::from_unit::<Millimeter>(400.0),
+            Length::from_unit::<Millimeter>(0.5),
+        );
         let grid = recon_grid();
         let err5 = volume_relative_l2_error(
-            &sirt_reconstruction(&b, &grid, 400.0, 0.5, 5, 1.0),
+            &sirt_reconstruction(
+                &b,
+                &grid,
+                Length::from_unit::<Millimeter>(400.0),
+                Length::from_unit::<Millimeter>(0.5),
+                5,
+                1.0,
+            ),
             &phantom,
         )
         .unwrap();
         let err25 = volume_relative_l2_error(
-            &sirt_reconstruction(&b, &grid, 400.0, 0.5, 25, 1.0),
+            &sirt_reconstruction(
+                &b,
+                &grid,
+                Length::from_unit::<Millimeter>(400.0),
+                Length::from_unit::<Millimeter>(0.5),
+                25,
+                1.0,
+            ),
             &phantom,
         )
         .unwrap();
@@ -173,8 +213,21 @@ mod tests {
     #[test]
     fn zero_sinogram_reconstructs_zero() {
         let (ang, off) = (angles(20), offsets(24.0, 21));
-        let empty = parallel_beam_radon(&Volume::zeros(recon_grid()), &ang, &off, 400.0, 1.0);
-        let x = sirt_reconstruction(&empty, &recon_grid(), 400.0, 1.0, 10, 1.0);
+        let empty = parallel_beam_radon(
+            &Volume::zeros(recon_grid()),
+            &ang,
+            &off,
+            Length::from_unit::<Millimeter>(400.0),
+            Length::from_unit::<Millimeter>(1.0),
+        );
+        let x = sirt_reconstruction(
+            &empty,
+            &recon_grid(),
+            Length::from_unit::<Millimeter>(400.0),
+            Length::from_unit::<Millimeter>(1.0),
+            10,
+            1.0,
+        );
         assert!((0..21).all(|i| (0..21).all(|j| x.get(i, j, 0).unwrap().abs() < 1e-12)));
     }
 
@@ -212,16 +265,27 @@ mod tests {
             }
         });
 
-        let angles: Vec<T> = (0..30)
-            .map(|a| cast(a as f64 * std::f64::consts::PI / 30.0))
+        let angles: Vec<Angle<T>> = (0..30)
+            .map(|a| Angle::from_unit::<Radian>(cast(a as f64 * std::f64::consts::PI / 30.0)))
             .collect();
-        let offsets: Vec<T> = (0..31)
-            .map(|j| cast(-20.0 + j as f64 * 40.0 / 30.0))
+        let offsets: Vec<Length<T>> = (0..31)
+            .map(|j| Length::from_unit::<Millimeter>(cast(-20.0 + j as f64 * 40.0 / 30.0)))
             .collect();
-        let sinogram =
-            parallel_beam_radon(&phantom, &angles, &offsets, cast(400.0), cast(0.5));
-        let recon =
-            sirt_reconstruction(&sinogram, &grid, cast(400.0), cast(0.5), 30, cast(1.0));
+        let sinogram = parallel_beam_radon(
+            &phantom,
+            &angles,
+            &offsets,
+            Length::from_unit::<Millimeter>(cast(400.0)),
+            Length::from_unit::<Millimeter>(cast(0.5)),
+        );
+        let recon = sirt_reconstruction(
+            &sinogram,
+            &grid,
+            Length::from_unit::<Millimeter>(cast(400.0)),
+            Length::from_unit::<Millimeter>(cast(0.5)),
+            30,
+            cast(1.0),
+        );
 
         let interior = roi_statistics(&recon, [5, 5, 0], [10, 10, 1]);
         let relative_error = (interior.mean - mu).abs() / mu;

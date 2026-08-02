@@ -1,30 +1,34 @@
 //! Parallel-beam Radon forward transform (MVCT projection sinogram).
 
+use aequitas::systems::si::{
+    quantities::{Angle, Length},
+    units::{Millimeter, Radian},
+};
 use helios_core::HeliosError;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
 use helios_solver::forward_project_ray;
 
-/// A parallel-beam sinogram: line integrals `p(θ, s)` over projection angles `θ`
-/// (rad) and signed detector offsets `s` (mm from the rotation axis), stored
-/// row-major `[angle][offset]`.
+/// A parallel-beam sinogram: line integrals `p(θ, s)` over typed projection
+/// angles `θ` and signed detector offsets `s`, stored row-major
+/// `[angle][offset]`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Sinogram<T: GeometryScalar> {
-    angles: Vec<T>,
-    offsets: Vec<T>,
+    angles: Vec<Angle<T>>,
+    offsets: Vec<Length<T>>,
     data: Vec<T>,
 }
 
 impl<T: GeometryScalar> Sinogram<T> {
-    /// Projection angles (rad).
+    /// Projection angles.
     #[must_use]
-    pub fn angles(&self) -> &[T] {
+    pub fn angles(&self) -> &[Angle<T>] {
         &self.angles
     }
 
-    /// Signed detector offsets (mm).
+    /// Signed detector offsets.
     #[must_use]
-    pub fn offsets(&self) -> &[T] {
+    pub fn offsets(&self) -> &[Length<T>] {
         &self.offsets
     }
 
@@ -47,8 +51,8 @@ impl<T: GeometryScalar> Sinogram<T> {
     /// [`HeliosError::InvalidDomainValue`] if `data.len() != angles.len() *
     /// offsets.len()`.
     pub fn from_readings(
-        angles: Vec<T>,
-        offsets: Vec<T>,
+        angles: Vec<Angle<T>>,
+        offsets: Vec<Length<T>>,
         data: Vec<T>,
     ) -> Result<Self, HeliosError> {
         let expected = angles.len() * offsets.len();
@@ -84,27 +88,33 @@ impl<T: GeometryScalar> Sinogram<T> {
 ///
 /// For each projection angle `θ` and signed detector offset `s`, integrates `μ`
 /// along the line `{ centre + s·(cosθ, sinθ) + t·(−sinθ, cosθ) }` in the axial
-/// plane. `source_distance_mm` places each ray's start well outside the grid;
-/// `step_mm` is the ray-march sampling step. Rays that miss record zero.
+/// plane. `source_distance` places each ray's start well outside the grid;
+/// `step` is the ray-march sampling step. Rays that miss record zero. The
+/// geometric quantities are converted to millimetres and radians only at the
+/// scalar trigonometry and ray-marching boundaries.
 #[must_use]
-pub fn parallel_beam_radon<T: GeometryScalar>(
+pub fn parallel_beam_radon<T: GeometryScalar + eunomia::UnitScalar>(
     mu: &Volume<T>,
-    angles: &[T],
-    detector_offsets: &[T],
-    source_distance_mm: T,
-    step_mm: T,
+    angles: &[Angle<T>],
+    detector_offsets: &[Length<T>],
+    source_distance: Length<T>,
+    step: Length<T>,
 ) -> Sinogram<T> {
     let zero = <T as NumericElement>::ZERO;
+    let source_distance_mm = source_distance.in_unit::<Millimeter>();
+    let step_mm = step.in_unit::<Millimeter>();
     let grid = *mu.grid();
     let [nx, ny, nz] = grid.dims();
     let centre = grid.voxel_center((nx - 1) / 2, (ny - 1) / 2, (nz - 1) / 2);
 
     let mut data = Vec::with_capacity(angles.len() * detector_offsets.len());
-    for &theta in angles {
+    for &angle in angles {
+        let theta = angle.in_unit::<Radian>();
         let (cos_t, sin_t) = (theta.cos(), theta.sin());
         // Integration direction (along the line) and the detector-offset axis.
         let dir = Vector3::new(-sin_t, cos_t, zero);
-        for &s in detector_offsets {
+        for &offset in detector_offsets {
+            let s = offset.in_unit::<Millimeter>();
             // Point on the line at signed distance s from the axis.
             let px = centre.x + s * cos_t;
             let py = centre.y + s * sin_t;
@@ -134,6 +144,14 @@ mod tests {
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
+
+    fn angle(value: f64) -> Angle<f64> {
+        Angle::from_unit::<Radian>(value)
+    }
+
+    fn length_mm(value: f64) -> Length<f64> {
+        Length::from_unit::<Millimeter>(value)
+    }
 
     /// Uniform-μ disk of radius `radius_mm` centred in a 0.5 mm grid, single axial
     /// slice. The fine voxel keeps the voxelized-circle vs analytical-circle
@@ -166,15 +184,16 @@ mod tests {
         let radius = 25.0;
         let vol = disk_phantom(mu0, radius);
         let angles = [
-            0.0_f64,
-            std::f64::consts::FRAC_PI_4,
-            std::f64::consts::FRAC_PI_2,
+            angle(0.0),
+            angle(std::f64::consts::FRAC_PI_4),
+            angle(std::f64::consts::FRAC_PI_2),
         ];
-        let offsets = [-15.0_f64, 0.0, 10.0];
-        let sino = parallel_beam_radon(&vol, &angles, &offsets, 400.0, 0.25);
+        let offsets = [length_mm(-15.0), length_mm(0.0), length_mm(10.0)];
+        let sino = parallel_beam_radon(&vol, &angles, &offsets, length_mm(400.0), length_mm(0.25));
 
         for (ai, _) in angles.iter().enumerate() {
-            for (di, &s) in offsets.iter().enumerate() {
+            for (di, &offset) in offsets.iter().enumerate() {
+                let s = offset.in_unit::<Millimeter>();
                 let chord_mm = 2.0 * (radius * radius - s * s).sqrt();
                 let expected = mu0 * chord_mm * 0.1;
                 // ~2% tolerance: voxelized disk edge vs the analytical circle.
@@ -186,9 +205,9 @@ mod tests {
     #[test]
     fn sinogram_is_angle_independent_for_a_disk() {
         let vol = disk_phantom(0.04, 25.0);
-        let angles = [0.0_f64, 0.3, 1.1, 2.0];
-        let offsets = [0.0_f64];
-        let sino = parallel_beam_radon(&vol, &angles, &offsets, 400.0, 0.25);
+        let angles = [angle(0.0), angle(0.3), angle(1.1), angle(2.0)];
+        let offsets = [length_mm(0.0)];
+        let sino = parallel_beam_radon(&vol, &angles, &offsets, length_mm(400.0), length_mm(0.25));
         let central = sino.get(0, 0);
         for ai in 1..angles.len() {
             assert_relative_eq!(sino.get(ai, 0), central, max_relative = 2e-2);
@@ -199,14 +218,26 @@ mod tests {
     fn ray_outside_the_disk_reads_zero() {
         let vol = disk_phantom(0.04, 25.0);
         // Offset beyond the disk radius → the line misses the object.
-        let sino = parallel_beam_radon(&vol, &[0.0_f64], &[30.0_f64], 400.0, 0.25);
+        let sino = parallel_beam_radon(
+            &vol,
+            &[angle(0.0)],
+            &[length_mm(30.0)],
+            length_mm(400.0),
+            length_mm(0.25),
+        );
         assert_relative_eq!(sino.get(0, 0), 0.0, epsilon = 1e-9);
     }
 
     #[test]
     fn dims_and_indexing_are_consistent() {
         let vol = disk_phantom(0.04, 20.0);
-        let sino = parallel_beam_radon(&vol, &[0.0_f64, 1.0], &[-5.0_f64, 0.0, 5.0], 400.0, 0.5);
+        let sino = parallel_beam_radon(
+            &vol,
+            &[angle(0.0), angle(1.0)],
+            &[length_mm(-5.0), length_mm(0.0), length_mm(5.0)],
+            length_mm(400.0),
+            length_mm(0.5),
+        );
         assert_eq!(sino.dims(), (2, 3));
         assert_eq!(sino.angles().len(), 2);
         assert_eq!(sino.offsets().len(), 3);
@@ -216,12 +247,16 @@ mod tests {
     fn from_readings_validates_length_and_map_preserves_geometry() {
         // Correct length constructs; wrong length errors.
         let ok = Sinogram::from_readings(
-            vec![0.0_f64, 1.0],
-            vec![-1.0, 1.0],
+            vec![angle(0.0), angle(1.0)],
+            vec![length_mm(-1.0), length_mm(1.0)],
             vec![1.0, 2.0, 3.0, 4.0],
         );
         assert!(ok.is_ok());
-        let bad = Sinogram::from_readings(vec![0.0_f64], vec![-1.0, 1.0], vec![1.0]);
+        let bad = Sinogram::from_readings(
+            vec![angle(0.0)],
+            vec![length_mm(-1.0), length_mm(1.0)],
+            vec![1.0],
+        );
         assert!(bad.is_err());
         // map_readings preserves geometry and applies f in order.
         let doubled = ok.unwrap().map_readings(|v| v * 2.0);

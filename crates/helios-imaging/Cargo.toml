@@ -13,6 +13,7 @@ workspace = true
 
 [dependencies]
 aequitas = { workspace = true }
+eunomia = { workspace = true }
 helios-core = { workspace = true }
 helios-math = { workspace = true }
 helios-domain = { workspace = true }
@@ -21,7 +22,6 @@ hyperion = { workspace = true }
 tyche-core = { workspace = true }
 
 [dev-dependencies]
-eunomia = { workspace = true }
 # Quantify reconstruction accuracy / contrast with the analysis image-quality
 # metrics in an end-to-end recon test (analysis is a lower layer; dev-only).
 helios-analysis = { workspace = true }

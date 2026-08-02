@@ -7,6 +7,10 @@
 //!
 //! Run with: cargo run --example fbp_reconstruction -p helios-imaging
 
+use aequitas::systems::si::{
+    quantities::{Angle, Length},
+    units::{Millimeter, Radian},
+};
 use helios_domain::{Volume, VoxelGrid};
 use helios_imaging::{filtered_back_projection, parallel_beam_radon};
 use helios_math::Point3;
@@ -31,15 +35,17 @@ fn disk_phantom(mu0: f64, radius_mm: f64) -> Volume<f64> {
     })
 }
 
-fn uniform_angles(n: usize) -> Vec<f64> {
+fn uniform_angles(n: usize) -> Vec<Angle<f64>> {
     (0..n)
-        .map(|a| a as f64 * std::f64::consts::PI / n as f64)
+        .map(|a| Angle::from_unit::<Radian>(a as f64 * std::f64::consts::PI / n as f64))
         .collect()
 }
 
-fn uniform_offsets(half_mm: f64, n: usize) -> Vec<f64> {
+fn uniform_offsets(half_mm: f64, n: usize) -> Vec<Length<f64>> {
     let ds = 2.0 * half_mm / (n - 1) as f64;
-    (0..n).map(|j| -half_mm + j as f64 * ds).collect()
+    (0..n)
+        .map(|j| Length::from_unit::<Millimeter>(-half_mm + j as f64 * ds))
+        .collect()
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -57,7 +63,13 @@ fn main() {
     let offsets = uniform_offsets(45.0, N_OFFSETS);
 
     println!("Running parallel-beam Radon transform  ({N_ANGLES} angles × {N_OFFSETS} offsets)");
-    let sino = parallel_beam_radon(&phantom, &angles, &offsets, 400.0, 0.25);
+    let sino = parallel_beam_radon(
+        &phantom,
+        &angles,
+        &offsets,
+        Length::from_unit::<Millimeter>(400.0),
+        Length::from_unit::<Millimeter>(0.25),
+    );
 
     // Reconstruction grid: 41×41×1 at 2 mm.
     let recon_grid = VoxelGrid::axis_aligned([41, 41, 1], [2.0; 3], Point3::new(0.0, 0.0, 0.0))
