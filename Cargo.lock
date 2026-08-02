@@ -1482,7 +1482,7 @@ dependencies = [
  "helios-solver",
  "hyperion",
  "image",
- "moirai-parallel 0.4.0",
+ "moirai-parallel",
 ]
 
 [[package]]
@@ -2109,23 +2109,23 @@ dependencies = [
 [[package]]
 name = "moirai-async"
 version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
+source = "git+https://github.com/ryancinsight/Moirai#6ee653f0eb7891b29a88166eb1f2b8cb8bfd6b26"
 dependencies = [
  "futures",
  "libc",
  "moirai-async-macros",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-executor 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-pal 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-executor",
+ "moirai-pal",
  "moirai-transport",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-utils",
  "socket2",
 ]
 
 [[package]]
 name = "moirai-async-macros"
 version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
+source = "git+https://github.com/ryancinsight/Moirai#6ee653f0eb7891b29a88166eb1f2b8cb8bfd6b26"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2135,71 +2135,49 @@ dependencies = [
 [[package]]
 name = "moirai-core"
 version = "0.4.0"
+source = "git+https://github.com/ryancinsight/Moirai#6ee653f0eb7891b29a88166eb1f2b8cb8bfd6b26"
 dependencies = [
  "bytemuck",
  "libc",
  "mnemosyne-memory",
- "moirai-utils 0.4.0",
-]
-
-[[package]]
-name = "moirai-core"
-version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
-dependencies = [
- "bytemuck",
- "libc",
- "mnemosyne-memory",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-utils",
 ]
 
 [[package]]
 name = "moirai-executor"
 version = "0.4.0"
+source = "git+https://github.com/ryancinsight/Moirai#6ee653f0eb7891b29a88166eb1f2b8cb8bfd6b26"
 dependencies = [
  "melinoe",
  "mnemosyne-memory",
- "moirai-core 0.4.0",
- "moirai-pal 0.4.0",
- "moirai-scheduler 0.4.0",
- "moirai-utils 0.4.0",
-]
-
-[[package]]
-name = "moirai-executor"
-version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
-dependencies = [
- "melinoe",
- "mnemosyne-memory",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-pal 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-scheduler 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-pal",
+ "moirai-scheduler",
+ "moirai-utils",
 ]
 
 [[package]]
 name = "moirai-gpu"
 version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
+source = "git+https://github.com/ryancinsight/Moirai#6ee653f0eb7891b29a88166eb1f2b8cb8bfd6b26"
 dependencies = [
  "mnemosyne-memory-core",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-utils",
  "themis-topology",
 ]
 
 [[package]]
 name = "moirai-iter"
 version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
+source = "git+https://github.com/ryancinsight/Moirai#6ee653f0eb7891b29a88166eb1f2b8cb8bfd6b26"
 dependencies = [
  "futures",
  "libc",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-executor 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-scheduler 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-executor",
+ "moirai-scheduler",
+ "moirai-utils",
  "num_cpus",
  "themis-topology",
  "thiserror 1.0.69",
@@ -2208,26 +2186,12 @@ dependencies = [
 [[package]]
 name = "moirai-pal"
 version = "0.4.0"
+source = "git+https://github.com/ryancinsight/Moirai#6ee653f0eb7891b29a88166eb1f2b8cb8bfd6b26"
 dependencies = [
  "js-sys",
  "libc",
  "melinoe",
- "moirai-core 0.4.0",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
- "windows 0.58.0",
-]
-
-[[package]]
-name = "moirai-pal"
-version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
-dependencies = [
- "js-sys",
- "libc",
- "melinoe",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -2237,58 +2201,39 @@ dependencies = [
 [[package]]
 name = "moirai-parallel"
 version = "0.4.0"
-dependencies = [
- "moirai-core 0.4.0",
- "moirai-executor 0.4.0",
-]
-
-[[package]]
-name = "moirai-parallel"
-version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
+source = "git+https://github.com/ryancinsight/Moirai#6ee653f0eb7891b29a88166eb1f2b8cb8bfd6b26"
 dependencies = [
  "melinoe",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-executor 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-executor",
 ]
 
 [[package]]
 name = "moirai-runtime"
 version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
+source = "git+https://github.com/ryancinsight/Moirai#6ee653f0eb7891b29a88166eb1f2b8cb8bfd6b26"
 dependencies = [
  "melinoe",
  "mnemosyne-memory",
  "moirai-async",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-executor 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-executor",
  "moirai-iter",
- "moirai-parallel 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-scheduler 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-parallel",
+ "moirai-scheduler",
  "moirai-sync",
  "moirai-transport",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-utils",
 ]
 
 [[package]]
 name = "moirai-scheduler"
 version = "0.4.0"
+source = "git+https://github.com/ryancinsight/Moirai#6ee653f0eb7891b29a88166eb1f2b8cb8bfd6b26"
 dependencies = [
  "mnemosyne-memory",
- "moirai-core 0.4.0",
- "moirai-utils 0.4.0",
- "num_cpus",
- "themis-topology",
-]
-
-[[package]]
-name = "moirai-scheduler"
-version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
-dependencies = [
- "mnemosyne-memory",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-utils",
  "num_cpus",
  "themis-topology",
 ]
@@ -2296,32 +2241,28 @@ dependencies = [
 [[package]]
 name = "moirai-sync"
 version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
+source = "git+https://github.com/ryancinsight/Moirai#6ee653f0eb7891b29a88166eb1f2b8cb8bfd6b26"
 dependencies = [
  "libc",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-utils",
 ]
 
 [[package]]
 name = "moirai-transport"
 version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
+source = "git+https://github.com/ryancinsight/Moirai#6ee653f0eb7891b29a88166eb1f2b8cb8bfd6b26"
 dependencies = [
  "bytemuck",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-scheduler 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-scheduler",
+ "moirai-utils",
 ]
 
 [[package]]
 name = "moirai-utils"
 version = "0.4.0"
-
-[[package]]
-name = "moirai-utils"
-version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
+source = "git+https://github.com/ryancinsight/Moirai#6ee653f0eb7891b29a88166eb1f2b8cb8bfd6b26"
 
 [[package]]
 name = "moxcms"

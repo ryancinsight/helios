@@ -11,6 +11,9 @@ under a Breaking subsection.
 
 - Remove stale hosted CI checkout steps that referenced absent Coeus manifests;
   the manifest-driven Atlas path-dependency checkout remains authoritative.
+  Convert committed Moirai path dependencies to the current git/package
+  contract so locked resolution uses `moirai-runtime`, `moirai-parallel`, and
+  `mnemosyne-memory` consistently.
 
 - **Breaking**: `helios-imaging::Sinogram`, `parallel_beam_radon`, and
   `sirt_reconstruction` now carry projection angles, detector offsets, source

@@ -14,8 +14,11 @@ git dependencies, and the manifest-driven checkout step already handles the
 actual path dependency closure.
 
 H-098 removes the three stale Coeus checkout steps while retaining the
-manifest-driven action. This is workflow hygiene, not an Aequitas metric
-change. The hosted CI rerun is the closure evidence.
+manifest-driven action, and converts Helios's committed Moirai path
+dependencies to the provider's git/package contract. The standalone locked
+imaging check now resolves against Moirai's current `moirai-runtime` and
+`moirai-parallel` packages. This is workflow/provider integration hygiene, not
+an Aequitas metric change. The hosted CI rerun is the closure evidence.
 
 ## Eunomia complex compatibility refresh (2026-07-28)
 
