@@ -6,6 +6,10 @@
 //! scaled by Δθ) and SIRT ([`crate::sirt_reconstruction`], on raw residual rows),
 //! so the interpolation geometry lives in exactly one place.
 
+use aequitas::systems::si::{
+    quantities::{Angle, Length},
+    units::{Millimeter, Radian},
+};
 use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{GeometryScalar, NumericElement};
@@ -17,9 +21,9 @@ use helios_math::{GeometryScalar, NumericElement};
 /// row is sampled by linear interpolation; contributions are summed over angles.
 /// The grid's axial centre is the rotation centre (matching the forward
 /// projector). Requires ≥ 2 detector offsets (uniformly spaced).
-pub(crate) fn back_project_rows<T: GeometryScalar>(
-    angles: &[T],
-    offsets: &[T],
+pub(crate) fn back_project_rows<T: GeometryScalar + eunomia::UnitScalar>(
+    angles: &[Angle<T>],
+    offsets: &[Length<T>],
     rows: &[T],
     recon: &VoxelGrid<T>,
     scale: T,
@@ -27,9 +31,16 @@ pub(crate) fn back_project_rows<T: GeometryScalar>(
     let zero = <T as NumericElement>::ZERO;
     let n_off = offsets.len();
     let mm_to_cm = <T as GeometryScalar>::from_f64(MM_PER_CM).recip();
-    let ds_cm = (offsets[1] - offsets[0]) * mm_to_cm;
-    let off0_cm = offsets[0] * mm_to_cm;
-    let trig: Vec<(T, T)> = angles.iter().map(|&t| (t.cos(), t.sin())).collect();
+    let ds_cm =
+        (offsets[1].in_unit::<Millimeter>() - offsets[0].in_unit::<Millimeter>()) * mm_to_cm;
+    let off0_cm = offsets[0].in_unit::<Millimeter>() * mm_to_cm;
+    let trig: Vec<(T, T)> = angles
+        .iter()
+        .map(|angle| {
+            let theta = angle.in_unit::<Radian>();
+            (theta.cos(), theta.sin())
+        })
+        .collect();
 
     let grid = *recon;
     let [nx, ny, nz] = grid.dims();

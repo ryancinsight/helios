@@ -10,6 +10,7 @@
 //! detector offsets — the standard parallel-beam FBP sampling.
 
 use crate::radon::Sinogram;
+use aequitas::systems::si::units::{Millimeter, Radian};
 use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{GeometryScalar, NumericElement};
@@ -45,7 +46,7 @@ fn ram_lak_kernel<T: GeometryScalar>(len: usize, ds_cm: T) -> Vec<T> {
 /// same centre the forward projection used). Values recover linear attenuation
 /// `μ` (cm⁻¹).
 #[must_use]
-pub fn filtered_back_projection<T: GeometryScalar>(
+pub fn filtered_back_projection<T: GeometryScalar + eunomia::UnitScalar>(
     sinogram: &Sinogram<T>,
     recon: &VoxelGrid<T>,
 ) -> Volume<T> {
@@ -56,7 +57,8 @@ pub fn filtered_back_projection<T: GeometryScalar>(
     let mm_to_cm = <T as GeometryScalar>::from_f64(MM_PER_CM).recip();
 
     // Detector spacing in cm (drives the ramp-filter sample spacing).
-    let ds_cm = (offsets[1] - offsets[0]) * mm_to_cm;
+    let ds_cm =
+        (offsets[1].in_unit::<Millimeter>() - offsets[0].in_unit::<Millimeter>()) * mm_to_cm;
     let kernel = ram_lak_kernel::<T>(n_off, ds_cm);
     let base = n_off as isize - 1;
 
@@ -75,7 +77,7 @@ pub fn filtered_back_projection<T: GeometryScalar>(
 
     // Back-project the ramp-filtered rows, weighted by the angular step Δθ.
     let d_theta = if n_ang > 1 {
-        angles[1] - angles[0]
+        angles[1].in_unit::<Radian>() - angles[0].in_unit::<Radian>()
     } else {
         T::PI
     };
@@ -85,10 +87,11 @@ pub fn filtered_back_projection<T: GeometryScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use crate::radon::parallel_beam_radon;
+    use aequitas::systems::si::quantities::{Angle, Length};
     use eunomia::assert_relative_eq;
     use helios_math::Point3;
+    use helios_math::ShippedScalar;
 
     fn disk_phantom(mu0: f64, radius_mm: f64) -> Volume<f64> {
         let n = 161;
@@ -116,15 +119,17 @@ mod tests {
         VoxelGrid::axis_aligned([41, 41, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0)).unwrap()
     }
 
-    fn uniform_angles(n: usize) -> Vec<f64> {
+    fn uniform_angles(n: usize) -> Vec<Angle<f64>> {
         (0..n)
-            .map(|a| a as f64 * std::f64::consts::PI / n as f64)
+            .map(|a| Angle::from_unit::<Radian>(a as f64 * std::f64::consts::PI / n as f64))
             .collect()
     }
 
-    fn uniform_offsets(half_mm: f64, n: usize) -> Vec<f64> {
+    fn uniform_offsets(half_mm: f64, n: usize) -> Vec<Length<f64>> {
         let ds = 2.0 * half_mm / (n - 1) as f64;
-        (0..n).map(|j| -half_mm + j as f64 * ds).collect()
+        (0..n)
+            .map(|j| Length::from_unit::<Millimeter>(-half_mm + j as f64 * ds))
+            .collect()
     }
 
     #[test]
@@ -135,7 +140,13 @@ mod tests {
         let phantom = disk_phantom(mu0, 25.0);
         let angles = uniform_angles(180);
         let offsets = uniform_offsets(45.0, 181);
-        let sino = parallel_beam_radon(&phantom, &angles, &offsets, 400.0, 0.25);
+        let sino = parallel_beam_radon(
+            &phantom,
+            &angles,
+            &offsets,
+            Length::from_unit::<Millimeter>(400.0),
+            Length::from_unit::<Millimeter>(0.25),
+        );
         let recon = filtered_back_projection(&sino, &recon_grid());
 
         // Centre pixel (world 40,40) ≈ μ₀ within FBP tolerance.
@@ -162,7 +173,13 @@ mod tests {
         let phantom = disk_phantom(mu0, 25.0);
         let angles = uniform_angles(180);
         let offsets = uniform_offsets(45.0, 181);
-        let sino = parallel_beam_radon(&phantom, &angles, &offsets, 400.0, 0.25);
+        let sino = parallel_beam_radon(
+            &phantom,
+            &angles,
+            &offsets,
+            Length::from_unit::<Millimeter>(400.0),
+            Length::from_unit::<Millimeter>(0.25),
+        );
         let recon = filtered_back_projection(&sino, &recon_grid());
 
         // Interior ROI (well inside the 25 mm disk around centre voxel 20,20):
@@ -200,7 +217,13 @@ mod tests {
         let phantom = disk_phantom(mu0, 25.0);
         let angles = uniform_angles(180);
         let offsets = uniform_offsets(45.0, 181);
-        let clean_sino = parallel_beam_radon(&phantom, &angles, &offsets, 400.0, 0.25);
+        let clean_sino = parallel_beam_radon(
+            &phantom,
+            &angles,
+            &offsets,
+            Length::from_unit::<Millimeter>(400.0),
+            Length::from_unit::<Millimeter>(0.25),
+        );
 
         let interior = [18usize, 18, 0];
         let interior_hi = [23usize, 23, 1];
@@ -273,12 +296,9 @@ mod tests {
         let zero = cast(0.0);
         let n = 161;
         let spacing = cast(0.5);
-        let grid = VoxelGrid::<T>::axis_aligned(
-            [n, n, 1],
-            [spacing; 3],
-            Point3::new(zero, zero, zero),
-        )
-        .expect("valid axis-aligned grid");
+        let grid =
+            VoxelGrid::<T>::axis_aligned([n, n, 1], [spacing; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
 
         let mu = cast(0.04);
         let centre_offset = cast((n - 1) as f64 * 0.5 / 2.0);
@@ -293,14 +313,19 @@ mod tests {
             }
         });
 
-        let angles: Vec<T> = (0..90)
-            .map(|a| cast(a as f64 * std::f64::consts::PI / 90.0))
+        let angles: Vec<Angle<T>> = (0..90)
+            .map(|a| Angle::from_unit::<Radian>(cast(a as f64 * std::f64::consts::PI / 90.0)))
             .collect();
-        let offsets: Vec<T> = (0..121)
-            .map(|j| cast(-45.0 + j as f64 * 90.0 / 120.0))
+        let offsets: Vec<Length<T>> = (0..121)
+            .map(|j| Length::from_unit::<Millimeter>(cast(-45.0 + j as f64 * 90.0 / 120.0)))
             .collect();
-        let sinogram =
-            parallel_beam_radon(&phantom, &angles, &offsets, cast(400.0), cast(0.5));
+        let sinogram = parallel_beam_radon(
+            &phantom,
+            &angles,
+            &offsets,
+            Length::from_unit::<Millimeter>(cast(400.0)),
+            Length::from_unit::<Millimeter>(cast(0.5)),
+        );
 
         let recon_grid = VoxelGrid::<T>::axis_aligned(
             [41, 41, 1],

@@ -76,12 +76,19 @@ pub fn add_quantum_noise<T: GeometryScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use aequitas::systems::si::{
+        quantities::{Angle, Length},
+        units::{Millimeter, Radian},
+    };
     use helios_math::ShippedScalar;
 
     // Constant-τ sinogram of `n` readings (1 angle × n offsets), for statistics.
     fn constant_sinogram(tau: f64, n: usize) -> Sinogram<f64> {
-        let offsets: Vec<f64> = (0..n).map(|i| i as f64).collect();
-        Sinogram::from_readings(vec![0.0], offsets, vec![tau; n]).expect("valid sinogram")
+        let offsets: Vec<Length<f64>> = (0..n)
+            .map(|i| Length::from_unit::<Millimeter>(i as f64))
+            .collect();
+        Sinogram::from_readings(vec![Angle::from_unit::<Radian>(0.0)], offsets, vec![tau; n])
+            .expect("valid sinogram")
     }
 
     fn mean_and_var(sino: &Sinogram<f64>) -> (f64, f64) {
@@ -176,10 +183,12 @@ mod tests {
         // GeometryScalar and FloatElement both define `from_f64`; name the
         // one that performs the literal conversion so the call is unambiguous.
         let cast = <T as helios_math::FloatElement>::from_f64;
-        let offsets: Vec<T> = (0..64).map(|i| cast(i as f64)).collect();
+        let offsets: Vec<Length<T>> = (0..64)
+            .map(|i| Length::from_unit::<Millimeter>(cast(i as f64)))
+            .collect();
         let optical_depth = cast(0.5);
         let clean = Sinogram::from_readings(
-            vec![cast(0.0)],
+            vec![Angle::from_unit::<Radian>(cast(0.0))],
             offsets,
             vec![optical_depth; 64],
         )

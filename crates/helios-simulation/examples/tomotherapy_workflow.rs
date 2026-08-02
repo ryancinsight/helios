@@ -22,13 +22,13 @@ use aequitas::systems::si::{
         SquareCentimeterPerGram,
     },
 };
-use helios_analysis::{Dvh, gamma_index_3d, gamma_pass_rate, roi_statistics};
+use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, Dvh};
 use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel, Volume, VoxelGrid};
 use helios_imaging::{filtered_back_projection, parallel_beam_radon};
 use helios_math::Point3;
 use helios_simulation::{
-    BeamGeometry, CollapsedCone, SpectralComponent, accumulate_delivered_dose_anisotropic,
-    simulate_helical_delivery,
+    accumulate_delivered_dose_anisotropic, simulate_helical_delivery, BeamGeometry, CollapsedCone,
+    SpectralComponent,
 };
 use helios_solver::attenuation_map;
 use hyperion::coefficient::MassAttenuation;
@@ -115,14 +115,20 @@ fn main() {
     .expect("fixture calibration is finite");
 
     // 2. Imaging: Radon → FBP.
-    let angles: Vec<f64> = (0..180)
-        .map(|a| a as f64 * std::f64::consts::PI / 180.0)
+    let angles: Vec<Angle<f64>> = (0..180)
+        .map(|a| Angle::from_unit::<Radian>(a as f64 * std::f64::consts::PI / 180.0))
         .collect();
     let n_off = 121;
-    let offsets: Vec<f64> = (0..n_off)
-        .map(|j| -35.0 + j as f64 * 70.0 / (n_off - 1) as f64)
+    let offsets: Vec<Length<f64>> = (0..n_off)
+        .map(|j| Length::from_unit::<Millimeter>(-35.0 + j as f64 * 70.0 / (n_off - 1) as f64))
         .collect();
-    let sino = parallel_beam_radon(&mu, &angles, &offsets, 500.0, 0.25);
+    let sino = parallel_beam_radon(
+        &mu,
+        &angles,
+        &offsets,
+        Length::from_unit::<Millimeter>(500.0),
+        Length::from_unit::<Millimeter>(0.25),
+    );
     let recon_grid =
         VoxelGrid::axis_aligned([NX, NX, 1], [SPACING; 3], Point3::new(0.0, 0.0, 0.0)).unwrap();
     let recon = filtered_back_projection(&sino, &recon_grid);

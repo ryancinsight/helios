@@ -41,6 +41,10 @@
 //!
 //! [← MVCT and Correction Workflows](../../docs/book/imaging_mvct.md)
 
+use aequitas::systems::si::{
+    quantities::{Angle, Length},
+    units::{Millimeter, Radian},
+};
 use helios_domain::{Volume, VoxelGrid};
 use helios_imaging::{filtered_back_projection, parallel_beam_radon, sirt_reconstruction};
 use helios_math::Point3;
@@ -87,17 +91,17 @@ fn main() {
     // 500 mm SAD (simulates TomoTherapy-scale geometry).
     let n_angles = 32usize;
     let n_detectors = 64usize;
-    let source_mm = 500.0_f64;
-    let step_mm = 1.0_f64;
+    let source = Length::from_unit::<Millimeter>(500.0_f64);
+    let step = Length::from_unit::<Millimeter>(1.0_f64);
 
-    let angles: Vec<f64> = (0..n_angles)
-        .map(|k| k as f64 * std::f64::consts::PI / n_angles as f64)
+    let angles: Vec<Angle<f64>> = (0..n_angles)
+        .map(|k| Angle::from_unit::<Radian>(k as f64 * std::f64::consts::PI / n_angles as f64))
         .collect();
-    let offsets: Vec<f64> = (0..n_detectors)
-        .map(|d| (d as f64 - n_detectors as f64 / 2.0) * voxel_mm)
+    let offsets: Vec<Length<f64>> = (0..n_detectors)
+        .map(|d| Length::from_unit::<Millimeter>((d as f64 - n_detectors as f64 / 2.0) * voxel_mm))
         .collect();
 
-    let sinogram = parallel_beam_radon(&phantom, &angles, &offsets, source_mm, step_mm);
+    let sinogram = parallel_beam_radon(&phantom, &angles, &offsets, source, step);
     println!(
         "Sinogram acquired: {} angles × {} detectors",
         n_angles, n_detectors
@@ -116,7 +120,7 @@ fn main() {
     let iterations = 10;
     let relaxation = 1.0_f64;
 
-    let sirt = sirt_reconstruction(&sinogram, &grid, source_mm, step_mm, iterations, relaxation);
+    let sirt = sirt_reconstruction(&sinogram, &grid, source, step, iterations, relaxation);
     let sirt_rmse = rmse(&phantom, &sirt);
     println!("\nSIRT ({iterations} iterations, λ={relaxation}):");
     println!(

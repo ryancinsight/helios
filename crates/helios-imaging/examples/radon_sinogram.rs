@@ -6,6 +6,10 @@
 //!
 //! Run with: cargo run --example radon_sinogram -p helios-imaging
 
+use aequitas::systems::si::{
+    quantities::{Angle, Length},
+    units::{Millimeter, Radian},
+};
 use helios_domain::{Volume, VoxelGrid};
 use helios_imaging::parallel_beam_radon;
 use helios_math::Point3;
@@ -52,18 +56,28 @@ fn main() {
     let phantom = disk_phantom(MU0, RADIUS_MM, N_VOXELS, SPACING);
 
     // Projection angles: 4 cardinal angles.
-    let angles: Vec<f64> = (0..4)
-        .map(|i| i as f64 * std::f64::consts::PI / 4.0)
+    let angles: Vec<Angle<f64>> = (0..4)
+        .map(|i| Angle::from_unit::<Radian>(i as f64 * std::f64::consts::PI / 4.0))
         .collect();
 
     // Detector offsets centred on the rotation axis.
     let n_det = 81;
     let det_extent = 50.0_f64; // ±50 mm
-    let offsets: Vec<f64> = (0..n_det)
-        .map(|i| -det_extent + i as f64 * (2.0 * det_extent) / (n_det - 1) as f64)
+    let offsets: Vec<Length<f64>> = (0..n_det)
+        .map(|i| {
+            Length::from_unit::<Millimeter>(
+                -det_extent + i as f64 * (2.0 * det_extent) / (n_det - 1) as f64,
+            )
+        })
         .collect();
 
-    let sinogram = parallel_beam_radon(&phantom, &angles, &offsets, 200.0, SPACING);
+    let sinogram = parallel_beam_radon(
+        &phantom,
+        &angles,
+        &offsets,
+        Length::from_unit::<Millimeter>(200.0),
+        Length::from_unit::<Millimeter>(SPACING),
+    );
     println!(
         "Sinogram dimensions: {} angles × {} offsets",
         angles.len(),
@@ -73,7 +87,8 @@ fn main() {
     // Validate the θ=0 projection against the analytical chord * μ₀.
     // (Line integrals are in mm·cm⁻¹ because μ is per-cm and spacings are mm.)
     let mut max_err_pct = 0.0_f64;
-    for (d, &s) in offsets.iter().enumerate() {
+    for (d, &offset) in offsets.iter().enumerate() {
+        let s = offset.in_unit::<Millimeter>();
         let analytical_mm = chord_mm(RADIUS_MM, s);
         let analytical = MU0 * analytical_mm / 10.0; // mm → cm
         let measured = sinogram.get(0, d) as f64;

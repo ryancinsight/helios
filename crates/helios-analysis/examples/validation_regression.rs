@@ -25,8 +25,8 @@
 //! [← Analytical Solutions and Regression Tests](../../docs/book/validation_regression.md)
 
 use aequitas::systems::si::{
-    quantities::{AbsorbedDose, Length},
-    units::{Gray, Millimeter},
+    quantities::{AbsorbedDose, Angle, Length},
+    units::{Gray, Millimeter, Radian},
 };
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, volume_rmse, Dvh};
 use helios_domain::{Volume, VoxelGrid};
@@ -96,15 +96,20 @@ fn main() {
     });
 
     let n_angles = 180;
-    let source_mm = 500.0_f64;
-    let angles: Vec<f64> = (0..n_angles)
-        .map(|k| k as f64 * std::f64::consts::PI / n_angles as f64)
+    let angles: Vec<Angle<f64>> = (0..n_angles)
+        .map(|k| Angle::from_unit::<Radian>(k as f64 * std::f64::consts::PI / n_angles as f64))
         .collect();
-    let offsets: Vec<f64> = (0..N)
-        .map(|d| (d as f64 - N as f64 / 2.0) * SPACING_MM)
+    let offsets: Vec<Length<f64>> = (0..N)
+        .map(|d| Length::from_unit::<Millimeter>((d as f64 - N as f64 / 2.0) * SPACING_MM))
         .collect();
 
-    let sinogram = parallel_beam_radon(&phantom, &angles, &offsets, source_mm, 1.0_f64);
+    let sinogram = parallel_beam_radon(
+        &phantom,
+        &angles,
+        &offsets,
+        Length::from_unit::<Millimeter>(500.0_f64),
+        Length::from_unit::<Millimeter>(1.0_f64),
+    );
     let recon_grid = make_grid(N, SPACING_MM);
     let recon = filtered_back_projection(&sinogram, &recon_grid);
     let rmse = volume_rmse(&recon, &phantom).expect("identical grids");

@@ -1,5 +1,23 @@
 # Helios Checklist (tactical)
 
+## Codex — H-097 typed Radon imaging geometry [arch] [major] — done 2026-08-02
+
+- [x] Carry `Angle<T>` and `Length<T>` through `Sinogram`, Radon, FBP, SIRT,
+      noise, examples, and workflow validation; extract radians/millimetres/
+      centimetres only at scalar formula and mesh boundaries.
+- [x] Refresh `Cargo.lock` after the earlier provider rev-pin removal so the
+      standalone `--locked` gate resolves the current git source identities.
+- [x] Record the breaking contract in ADR 0016 and document that this real
+      imaging law has no Eunomia imaginary or complex unit.
+- [x] Run standalone locked check, focused Nextest, warning-denied Clippy,
+      doctests, Rustdoc, touched-file Rustfmt, and diff checks.
+
+Evidence: standalone locked imaging check passes; Nextest run
+`26905c71-03f1-447a-be77-df0c84278c3c` passes 33/33; warning-denied Clippy,
+doctests, Rustdoc, touched-file Rustfmt, and the analysis validation example
+check pass. The downstream simulation gate remains externally blocked by
+Moirai/Mnemosyne provider diagnostics recorded in `gap_audit.md`.
+
 ## Codex — H-096 typed helical acquisition outcomes [arch] [major] — done 2026-07-31
 
 - [x] Carry `HelicalProjection` optical depth and transmission as Aequitas
