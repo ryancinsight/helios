@@ -177,8 +177,8 @@ impl<T: Scalar> Volume<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
+    use helios_math::ShippedScalar;
 
     fn affine_grid() -> VoxelGrid<f64> {
         VoxelGrid::axis_aligned([4, 5, 6], [2.0, 3.0, 4.0], Point3::new(10.0, 20.0, 30.0))
@@ -260,8 +260,9 @@ mod tests {
         let cast = <T as helios_math::FloatElement>::from_f64;
         let zero = cast(0.0);
         let unit = cast(1.0);
-        let grid = VoxelGrid::<T>::axis_aligned([2, 2, 2], [unit; 3], Point3::new(zero, zero, zero))
-            .expect("valid axis-aligned grid");
+        let grid =
+            VoxelGrid::<T>::axis_aligned([2, 2, 2], [unit; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
 
         // f(i,j,k) = i + j + k is affine, so trilinear interpolation is exact.
         let volume = Volume::from_shape_fn(grid, |idx| {

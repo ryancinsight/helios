@@ -116,8 +116,8 @@ pub fn optimize_beam_weights<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
+    use helios_math::ShippedScalar;
 
     /// Identity influence: `n` voxels, `n` beamlets, `A = I`.
     fn identity(n: usize) -> DoseInfluence<f64> {
