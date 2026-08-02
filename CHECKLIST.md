@@ -1,5 +1,14 @@
 # Helios Checklist (tactical)
 
+## Codex — H-098 hosted path-dependency checkout repair [patch] — in progress 2026-08-02
+
+- [x] Trace the hosted PR failure to three stale checkout steps that reference
+      absent Coeus manifests before any Rust job starts.
+- [x] Remove only those steps; retain the manifest-driven Atlas checkout used
+      by the current Helios dependency graph.
+- [ ] Re-run the hosted workflow and close H-098 after the workflow reaches its
+      actual Rust, Python, and benchmark gates.
+
 ## Codex — H-097 typed Radon imaging geometry [arch] [major] — done 2026-08-02
 
 - [x] Carry `Angle<T>` and `Length<T>` through `Sinogram`, Radon, FBP, SIRT,

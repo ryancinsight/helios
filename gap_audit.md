@@ -4,6 +4,19 @@ Physics, numerics, accuracy, architecture, and integration gaps. Closed by
 evidence, not silence. Each gap: ID, description, class, current evidence tier,
 target closure.
 
+## Hosted CI path-dependency checkout (H-098, 2026-08-02)
+
+PR #36 initially failed all three workflow jobs before compilation because
+`.github/workflows/ci.yml` invoked the Atlas checkout action against an absent
+`../coeus/Cargo.toml` (and `coeus/Cargo.toml` in the benchmark job). Helios
+has no Cargo manifest path dependency on Coeus; its provider references are
+git dependencies, and the manifest-driven checkout step already handles the
+actual path dependency closure.
+
+H-098 removes the three stale Coeus checkout steps while retaining the
+manifest-driven action. This is workflow hygiene, not an Aequitas metric
+change. The hosted CI rerun is the closure evidence.
+
 ## Eunomia complex compatibility refresh (2026-07-28)
 
 The live Helios source contains no `Complex`, `Complex32`, `Complex64`, or

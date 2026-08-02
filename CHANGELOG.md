@@ -9,6 +9,9 @@ under a Breaking subsection.
 
 ### Changed
 
+- Remove stale hosted CI checkout steps that referenced absent Coeus manifests;
+  the manifest-driven Atlas path-dependency checkout remains authoritative.
+
 - **Breaking**: `helios-imaging::Sinogram`, `parallel_beam_radon`, and
   `sirt_reconstruction` now carry projection angles, detector offsets, source
   distance, and ray-march step as Aequitas `Angle`/`Length` values. Scalar
