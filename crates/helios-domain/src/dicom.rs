@@ -292,6 +292,7 @@ pub fn load_ct_series<T: Scalar, P: AsRef<std::path::Path>>(
 
     let mut data = vec![T::from_f64(0.0); rows * cols * nz];
     for (k, slice) in slices.iter().enumerate() {
+        // Safety: k is bounded by slices.len() which is validated above
         scatter_slice(&mut data, slice, k, nz);
     }
     Volume::from_shape_vec(grid, data)

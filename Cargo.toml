@@ -70,50 +70,53 @@ criterion = "0.5"
 #    opt in as the corresponding Helios layer is built out.
 #    Layer map is authoritative in ARCHITECTURE.md. ──
 # Imaging foundation (DICOM/MVCT I/O, registration, VTK).
-ritk-core = { git = "https://github.com/ryancinsight/ritk" }
-ritk-io = { git = "https://github.com/ryancinsight/ritk" }
-ritk-registration = { git = "https://github.com/ryancinsight/ritk" }
+ritk-core = { path = "../../repos/ritk/crates/ritk-core", package = "ritk-core" }
+ritk-io = { path = "../../repos/ritk/crates/ritk-io", package = "ritk-io" }
+ritk-registration = { path = "../../repos/ritk/crates/ritk-registration", package = "ritk-registration" }
 # Native DICOM parse/decode (CT/MVCT real-input path). ritk-dicom owns parsing,
 # typed attribute access, transfer-syntax dispatch, and pixel decoding.
-ritk-dicom = { git = "https://github.com/ryancinsight/ritk" }
+ritk-dicom = { path = "../../repos/ritk/crates/ritk-dicom", package = "ritk-dicom" }
 # Geometry kernel (binary MLC, collimators, jaws, patient meshes).
-gaia = { git = "https://github.com/ryancinsight/gaia", default-features = false }
+gaia = {path = "../../repos/gaia", package = "gaia", default-features = false}
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.
-hephaestus-core = { git = "https://github.com/ryancinsight/hephaestus" }
-hephaestus-wgpu = { git = "https://github.com/ryancinsight/hephaestus" }
-moirai = { git = "https://github.com/ryancinsight/Moirai", package = "moirai-runtime", version = "0.4.0" }
-moirai-parallel = { git = "https://github.com/ryancinsight/Moirai", version = "0.4.0", default-features = false, features = ["parallel"] }
+hephaestus-core = { path = "../../repos/hephaestus/crates/hephaestus-core", package = "hephaestus-core" }
+hephaestus-wgpu = { path = "../../repos/hephaestus/crates/hephaestus-wgpu", package = "hephaestus-wgpu" }
+moirai = { path = "../../repos/moirai/moirai", package = "moirai-runtime" }
+moirai-parallel = {path = "../../repos/moirai/moirai-parallel", package = "moirai-parallel", features = ["parallel", "mnemosyne-memory", "melinoe"], default-features = false}
 # Tensors, autodiff, optimizers, neural surrogates.
-coeus-core = { git = "https://github.com/ryancinsight/Coeus.git" }
-coeus-tensor = { git = "https://github.com/ryancinsight/Coeus.git" }
-coeus-autograd = { git = "https://github.com/ryancinsight/Coeus.git" }
-coeus-optim = { git = "https://github.com/ryancinsight/Coeus.git" }
+coeus-core = { path = "../../repos/coeus/crates/coeus-core", package = "coeus-core" }
+coeus-tensor = { path = "../../repos/coeus/crates/coeus-tensor", package = "coeus-tensor" }
+coeus-autograd = { path = "../../repos/coeus/crates/coeus-autograd", package = "coeus-autograd" }
+coeus-optim = { path = "../../repos/coeus/crates/coeus-optim", package = "coeus-optim" }
 # Biological-response laws and their Coeus tape construction.
-asclepius = { git = "https://github.com/ryancinsight/asclepius" }
-asclepius-coeus = { git = "https://github.com/ryancinsight/asclepius" }
+asclepius = {path = "../../repos/asclepius/crates/asclepius", package = "asclepius"}
+asclepius-coeus = {path = "../../repos/asclepius/crates/asclepius-coeus", package = "asclepius-coeus"}
 # Volumetric storage (HDF5/Zarr, compression).
-consus-core = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
-consus-hdf5 = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
-consus-io = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
-consus-compression = { git = "https://github.com/ryancinsight/consus", features = ["std", "deflate"] }
+consus-core = {path = "../../repos/consus/crates/consus-core", package = "consus-core", features = ["std"]}
+consus-hdf5 = {path = "../../repos/consus/crates/consus-hdf5", package = "consus-hdf5", features = ["std"]}
+consus-io = {path = "../../repos/consus/crates/consus-io", package = "consus-io", features = ["std"]}
+consus-compression = {path = "../../repos/consus/crates/consus-compression", package = "consus-compression", features = ["std", "deflate"]}
 # Numeric datatype SSOT (Scalar seam: RealField/FloatElement/NumericElement).
-aequitas = { git = "https://github.com/ryancinsight/aequitas", default-features = false, features = ["std"] }
-proteus = { git = "https://github.com/ryancinsight/proteus" }
-hyperion = { git = "https://github.com/ryancinsight/hyperion" }
-eunomia = { git = "https://github.com/ryancinsight/eunomia" }
-tyche-core = { git = "https://github.com/ryancinsight/tyche" }
+aequitas = {path = "../../repos/aequitas", package = "aequitas", features = ["std"], default-features = false}
+proteus = {path = "../../repos/proteus", package = "proteus"}
+hyperion = {path = "../../repos/hyperion", package = "hyperion"}
+eunomia = {path = "../../repos/eunomia/crates/eunomia", package = "eunomia"}
+tyche-core = { path = "../../repos/tyche/crates/tyche-core" }
 # Array substrate + geometry primitives, and portable SIMD.
 # default-features disabled: leto's default `mnemosyne-memory` feature pulls an
 # mnemosyne rev pinned to themis ^0.8 (skewed against themis HEAD 0.9.x). Helios
 # opts into mnemosyne placement explicitly at the layer that needs it (themis/
 # mnemosyne integration), not transitively through the geometry substrate.
-leto = { git = "https://github.com/ryancinsight/leto", default-features = false, features = ["std"] }
-hermes-simd = { git = "https://github.com/ryancinsight/hermes" }
+leto = {path = "../../repos/leto/crates/leto", package = "leto", features = ["std"], default-features = false}
+hermes-simd = { path = "../../repos/hermes/crates/hermes-simd" }
 # Memory management / placement.
-mnemosyne-core = { git = "https://github.com/ryancinsight/Mnemosyne.git" }
-themis = { git = "https://github.com/ryancinsight/themis" }
+# Crate names follow the current Mnemosyne/Themis facades (`mnemosyne-memory-core`,
+# `themis-topology`); the older `mnemosyne-core` / `themis` names were retired upstream
+# and are no longer resolvable at the pinned revisions.
+mnemosyne-memory = { path = "../../repos/mnemosyne/crates/mnemosyne", package = "mnemosyne-memory" }
+themis-topology = { path = "../../repos/themis" }
 # Spectral / transform methods.
-apollo = { git = "https://github.com/ryancinsight/apollo", package = "apollo-fft" }
+apollo = { path = "../../repos/apollo/crates/apollo-fft", package = "apollo-fft" }
 
 # ── Synchronized local-checkout patches (H-050) ──
 # The Atlas stack under D:/atlas/repos is a synchronized submodule checkout that
