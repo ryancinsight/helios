@@ -24,8 +24,14 @@ the action and graph now pin Atlas
 the current package names. This is workflow/provider integration hygiene, not
 an Aequitas metric change. The current Coeus graph also makes autodiff
 `backward()` fallible; `helios-planning` now maps that provider error to the
-typed `HeliosError::Autodiff` variant instead of discarding it. The hosted CI
-rerun is the remaining closure evidence.
+typed `HeliosError::Autodiff` variant instead of discarding it. The hosted
+benchmark rerun `30761913034` completed its full measurement and classified
+five replicated `beam_transmission/cpu` regressions: each is about 2.6% slower
+in the baseline-first comparison and about 2.5% slower in the candidate-first
+comparison, with complete 99.545% confidence intervals in both replications.
+The PR does not modify `helios-gpu`'s CPU transmission/projector source or the
+benchmark instrument. H-098 therefore remains open as a hosted performance
+gate residual; it is not evidence of an Aequitas dimensionality gap.
 
 ## Eunomia complex compatibility refresh (2026-07-28)
 

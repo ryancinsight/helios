@@ -13,8 +13,14 @@
       historical baseline uses the current `mnemosyne-memory` package graph.
 - [x] Propagate the current Coeus autodiff `backward()` result through a typed
       `HeliosError::Autodiff` boundary instead of discarding backend failures.
-- [ ] Re-run the hosted workflow and close H-098 after the workflow reaches its
-      actual Rust, Python, and benchmark gates.
+- [ ] Resolve the replicated `beam_transmission/cpu` slowdown or prove the
+      unchanged benchmark/dependency interaction is external, then rerun the
+      hosted workflow and close H-098 after all repository-owned gates pass.
+
+Evidence: hosted Rust and Python jobs pass. Benchmark job
+`91557827951` in run `30761913034` reaches the replicated classifier and fails
+only on five `beam_transmission/cpu` comparisons; the complete log is the
+source of the exact +2.6%/+2.5% residual recorded in `gap_audit.md`.
 
 ## Codex — H-097 typed Radon imaging geometry [arch] [major] — done 2026-08-02
 
