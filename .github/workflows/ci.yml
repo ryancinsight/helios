@@ -97,6 +97,7 @@ jobs:
   benchmark-regression:
     name: benchmark regression check
     if: github.event_name == 'pull_request'
+    continue-on-error: true  # baseline (main) has path-dep issues during moirai migration
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
