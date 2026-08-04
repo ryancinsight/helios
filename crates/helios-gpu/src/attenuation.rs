@@ -316,30 +316,24 @@ mod tests {
         let Ok(device) = default_device() else {
             return;
         };
-        assert!(
-            GpuAttenuationMapper::new(
-                device.clone(),
-                AreaPerMass::from_unit::<SquareCentimeterPerGram>(f32::NAN),
-                water_density(),
-            )
-            .is_err()
-        );
-        assert!(
-            GpuAttenuationMapper::new(
-                device.clone(),
-                AreaPerMass::from_unit::<SquareCentimeterPerGram>(-0.1),
-                water_density(),
-            )
-            .is_err()
-        );
-        assert!(
-            GpuAttenuationMapper::new(
-                device,
-                mu_over_rho(),
-                MassDensity::from_unit::<GramPerCubicCentimeter>(0.0),
-            )
-            .is_err()
-        );
+        assert!(GpuAttenuationMapper::new(
+            device.clone(),
+            AreaPerMass::from_unit::<SquareCentimeterPerGram>(f32::NAN),
+            water_density(),
+        )
+        .is_err());
+        assert!(GpuAttenuationMapper::new(
+            device.clone(),
+            AreaPerMass::from_unit::<SquareCentimeterPerGram>(-0.1),
+            water_density(),
+        )
+        .is_err());
+        assert!(GpuAttenuationMapper::new(
+            device,
+            mu_over_rho(),
+            MassDensity::from_unit::<GramPerCubicCentimeter>(0.0),
+        )
+        .is_err());
     }
 
     #[test]

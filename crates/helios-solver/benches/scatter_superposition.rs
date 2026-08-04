@@ -7,7 +7,7 @@
 #![allow(missing_docs)] // criterion_group! generates an undocumented harness item.
 
 use aequitas::systems::si::{quantities::Length, units::Centimeter};
-use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Point3;
 use helios_solver::{scatter_superposition, symmetric_deposition_kernel};

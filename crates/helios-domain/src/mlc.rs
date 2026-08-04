@@ -166,8 +166,8 @@ impl<T: Scalar> MlcModel<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
+    use helios_math::ShippedScalar;
 
     #[test]
     fn sinogram_validates_length_and_range() {

@@ -208,8 +208,7 @@ mod tests {
         )
         .expect("non-degenerate ray direction");
 
-        let tau =
-            forward_project_ray(&volume, &ray, cast(0.5)).expect("ray hits the volume");
+        let tau = forward_project_ray(&volume, &ray, cast(0.5)).expect("ray hits the volume");
 
         // Uniform mu over a 2 cm traversal: tau = mu * 2.
         assert_relative_eq!(

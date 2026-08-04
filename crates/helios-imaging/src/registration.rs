@@ -162,9 +162,9 @@ pub fn register_translation_ncc<T: GeometryScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
+    use helios_math::ShippedScalar;
 
     // A textured phantom: a paraboloid bowl centred at `(cx, cy)`. Every voxel
     // carries distinct signal (like a real image), so `moving = fixed` translated

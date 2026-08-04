@@ -223,10 +223,10 @@ pub fn gamma_pass_rate<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
+    use helios_math::ShippedScalar;
 
     fn grid() -> VoxelGrid<f64> {
         VoxelGrid::axis_aligned([5, 5, 5], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
@@ -412,17 +412,15 @@ mod tests {
         .unwrap();
         assert_relative_eq!(local.get(2, 2, 2).unwrap(), 0.0, epsilon = 1e-15);
         // Bad cutoff is rejected.
-        assert!(
-            gamma_index_3d_local(
-                &reference,
-                &evaluated,
-                0.03,
-                distance(2.0),
-                absorbed(-1.0),
-                distance(4.0),
-            )
-            .is_err()
-        );
+        assert!(gamma_index_3d_local(
+            &reference,
+            &evaluated,
+            0.03,
+            distance(2.0),
+            absorbed(-1.0),
+            distance(4.0),
+        )
+        .is_err());
     }
 
     /// A dose distribution compared against itself has gamma identically zero at
@@ -436,8 +434,9 @@ mod tests {
     fn gamma_of_a_distribution_against_itself_vanishes<T: ShippedScalar>() {
         let zero = T::from_f64(0.0);
         let unit = T::from_f64(1.0);
-        let grid = VoxelGrid::<T>::axis_aligned([3, 3, 3], [unit; 3], Point3::new(zero, zero, zero))
-            .expect("valid axis-aligned grid");
+        let grid =
+            VoxelGrid::<T>::axis_aligned([3, 3, 3], [unit; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
 
         let dose = Volume::from_shape_fn(grid, |_| unit);
         let gamma = gamma_index_3d(

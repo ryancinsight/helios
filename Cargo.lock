@@ -20,7 +20,6 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 [[package]]
 name = "aequitas"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/aequitas#8f9974350fd12b2a0e9c62973ae73199bd372d7c"
 dependencies = [
  "eunomia",
  "typenum",
@@ -141,7 +140,6 @@ checksum = "2a4385e2e34eb35d6b3efe798b9eb88096925d87726c0798709bf56d9ed84af3"
 [[package]]
 name = "apollo-fft"
 version = "0.25.0"
-source = "git+https://github.com/ryancinsight/apollo#0167b2f8a97d1f97d3c3d2cd53ed86104f0ac908"
 dependencies = [
  "apollo-fft-macros",
  "apollo-leto-interop",
@@ -162,8 +160,7 @@ dependencies = [
 
 [[package]]
 name = "apollo-fft-macros"
-version = "0.1.0"
-source = "git+https://github.com/ryancinsight/apollo#0167b2f8a97d1f97d3c3d2cd53ed86104f0ac908"
+version = "0.2.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -173,7 +170,6 @@ dependencies = [
 [[package]]
 name = "apollo-leto-interop"
 version = "0.17.0"
-source = "git+https://github.com/ryancinsight/apollo#0167b2f8a97d1f97d3c3d2cd53ed86104f0ac908"
 dependencies = [
  "leto",
 ]
@@ -187,7 +183,6 @@ checksum = "d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56"
 [[package]]
 name = "asclepius"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/asclepius#945ce45c4f6fc5dea3bea818c5e4cdba9b6afaef"
 dependencies = [
  "aequitas",
  "eunomia",
@@ -196,7 +191,6 @@ dependencies = [
 [[package]]
 name = "asclepius-coeus"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/asclepius#945ce45c4f6fc5dea3bea818c5e4cdba9b6afaef"
 dependencies = [
  "asclepius",
  "coeus-autograd",
@@ -544,7 +538,6 @@ dependencies = [
 [[package]]
 name = "coeus-autograd"
 version = "0.9.0"
-source = "git+https://github.com/ryancinsight/Coeus.git#299806460e54132f3a678bcd91cfce4fe2373453"
 dependencies = [
  "apollo-fft",
  "coeus-core",
@@ -559,7 +552,6 @@ dependencies = [
 [[package]]
 name = "coeus-core"
 version = "0.9.0"
-source = "git+https://github.com/ryancinsight/Coeus.git#299806460e54132f3a678bcd91cfce4fe2373453"
 dependencies = [
  "bytemuck",
  "eunomia",
@@ -573,7 +565,6 @@ dependencies = [
 [[package]]
 name = "coeus-leto"
 version = "0.9.0"
-source = "git+https://github.com/ryancinsight/Coeus.git#299806460e54132f3a678bcd91cfce4fe2373453"
 dependencies = [
  "coeus-core",
  "leto",
@@ -583,7 +574,6 @@ dependencies = [
 [[package]]
 name = "coeus-ops"
 version = "0.9.0"
-source = "git+https://github.com/ryancinsight/Coeus.git#299806460e54132f3a678bcd91cfce4fe2373453"
 dependencies = [
  "bytemuck",
  "coeus-core",
@@ -601,7 +591,6 @@ dependencies = [
 [[package]]
 name = "coeus-sparse"
 version = "0.9.0"
-source = "git+https://github.com/ryancinsight/Coeus.git#299806460e54132f3a678bcd91cfce4fe2373453"
 dependencies = [
  "coeus-core",
  "coeus-tensor",
@@ -612,7 +601,6 @@ dependencies = [
 [[package]]
 name = "coeus-tensor"
 version = "0.9.0"
-source = "git+https://github.com/ryancinsight/Coeus.git#299806460e54132f3a678bcd91cfce4fe2373453"
 dependencies = [
  "bytemuck",
  "coeus-core",
@@ -631,7 +619,6 @@ checksum = "1d07550c9036bf2ae0c684c4297d503f838287c83c53686d05370d0e139ae570"
 [[package]]
 name = "consus-compression"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/consus#247391a395d55d972b698ca609574d87a1cbe8bf"
 dependencies = [
  "byteorder",
  "consus-core",
@@ -640,7 +627,6 @@ dependencies = [
 [[package]]
 name = "consus-core"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/consus#247391a395d55d972b698ca609574d87a1cbe8bf"
 dependencies = [
  "byteorder",
  "smallvec",
@@ -650,7 +636,6 @@ dependencies = [
 [[package]]
 name = "consus-hdf5"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/consus#247391a395d55d972b698ca609574d87a1cbe8bf"
 dependencies = [
  "byteorder",
  "consus-compression",
@@ -661,7 +646,6 @@ dependencies = [
 [[package]]
 name = "consus-io"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/consus#247391a395d55d972b698ca609574d87a1cbe8bf"
 dependencies = [
  "consus-core",
 ]
@@ -1047,7 +1031,6 @@ dependencies = [
 [[package]]
 name = "eunomia"
 version = "0.7.0"
-source = "git+https://github.com/ryancinsight/eunomia#98f853711a4832a2d3eea58e0fd3dc0f2a8810b3"
 dependencies = [
  "bytemuck",
  "libm",
@@ -1200,7 +1183,6 @@ dependencies = [
 [[package]]
 name = "gaia"
 version = "0.3.0"
-source = "git+https://github.com/ryancinsight/gaia#9a7b2edeb772202c6a73d6fca478d02771760112"
 dependencies = [
  "anyhow",
  "eunomia",
@@ -1482,7 +1464,7 @@ dependencies = [
  "helios-solver",
  "hyperion",
  "image",
- "moirai-parallel 0.4.0",
+ "moirai-parallel",
 ]
 
 [[package]]
@@ -1503,7 +1485,6 @@ dependencies = [
 [[package]]
 name = "hephaestus-core"
 version = "0.18.0"
-source = "git+https://github.com/ryancinsight/hephaestus#32767da22d5c39ec5c433f961a08747351acc1a2"
 dependencies = [
  "aequitas",
  "bytemuck",
@@ -1516,7 +1497,6 @@ dependencies = [
 [[package]]
 name = "hephaestus-wgpu"
 version = "0.18.0"
-source = "git+https://github.com/ryancinsight/hephaestus#32767da22d5c39ec5c433f961a08747351acc1a2"
 dependencies = [
  "bytemuck",
  "eunomia",
@@ -1536,7 +1516,6 @@ dependencies = [
 [[package]]
 name = "hermes-simd"
 version = "0.5.0"
-source = "git+https://github.com/ryancinsight/hermes.git#b628ca26e5c52f15a3a11d91fab2c3471d602e93"
 dependencies = [
  "eunomia",
  "hermes-simd-core",
@@ -1549,7 +1528,6 @@ dependencies = [
 [[package]]
 name = "hermes-simd-core"
 version = "0.5.0"
-source = "git+https://github.com/ryancinsight/hermes.git#b628ca26e5c52f15a3a11d91fab2c3471d602e93"
 dependencies = [
  "bytemuck",
  "eunomia",
@@ -1561,7 +1539,6 @@ dependencies = [
 [[package]]
 name = "hermes-simd-intrinsics"
 version = "0.5.0"
-source = "git+https://github.com/ryancinsight/hermes.git#b628ca26e5c52f15a3a11d91fab2c3471d602e93"
 dependencies = [
  "eunomia",
  "hermes-simd-core",
@@ -1570,7 +1547,6 @@ dependencies = [
 [[package]]
 name = "hermes-simd-macros"
 version = "0.5.0"
-source = "git+https://github.com/ryancinsight/hermes.git#b628ca26e5c52f15a3a11d91fab2c3471d602e93"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1580,7 +1556,6 @@ dependencies = [
 [[package]]
 name = "hermes-simd-types"
 version = "0.5.0"
-source = "git+https://github.com/ryancinsight/hermes.git#b628ca26e5c52f15a3a11d91fab2c3471d602e93"
 dependencies = [
  "hermes-simd-core",
  "hermes-simd-intrinsics",
@@ -1595,7 +1570,6 @@ checksum = "fc0fef456e4baa96da950455cd02c081ca953b141298e41db3fc7e36b1da849c"
 [[package]]
 name = "hyperion"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/hyperion#465799639e4f311d00d84bb81f4c1cedaed1a80e"
 dependencies = [
  "aequitas",
  "eunomia",
@@ -1909,7 +1883,6 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 [[package]]
 name = "leto"
 version = "0.40.0"
-source = "git+https://github.com/ryancinsight/leto#94f914d6ce1131889e64e3bba4f0990225c984f3"
 dependencies = [
  "aequitas",
  "bytemuck",
@@ -1922,7 +1895,6 @@ dependencies = [
 [[package]]
 name = "leto-ops"
 version = "0.40.0"
-source = "git+https://github.com/ryancinsight/leto#94f914d6ce1131889e64e3bba4f0990225c984f3"
 dependencies = [
  "bytemuck",
  "eunomia",
@@ -1986,7 +1958,6 @@ checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
 [[package]]
 name = "melinoe"
 version = "0.9.0"
-source = "git+https://github.com/ryancinsight/melinoe.git#0287db3e87458ac882f299ee0682af5dc8da6ca3"
 
 [[package]]
 name = "memchr"
@@ -2007,7 +1978,6 @@ dependencies = [
 [[package]]
 name = "mnemosyne-arena"
 version = "0.3.0"
-source = "git+https://github.com/ryancinsight/Mnemosyne.git#705706e65468ee23096a7814c8c100285beed0f9"
 dependencies = [
  "eunomia",
  "mnemosyne-backend",
@@ -2018,7 +1988,6 @@ dependencies = [
 [[package]]
 name = "mnemosyne-backend"
 version = "0.5.0"
-source = "git+https://github.com/ryancinsight/Mnemosyne.git#705706e65468ee23096a7814c8c100285beed0f9"
 dependencies = [
  "mnemosyne-memory-core",
 ]
@@ -2026,12 +1995,10 @@ dependencies = [
 [[package]]
 name = "mnemosyne-build-util"
 version = "0.2.0"
-source = "git+https://github.com/ryancinsight/Mnemosyne.git#705706e65468ee23096a7814c8c100285beed0f9"
 
 [[package]]
 name = "mnemosyne-decay"
 version = "0.2.0"
-source = "git+https://github.com/ryancinsight/Mnemosyne.git#705706e65468ee23096a7814c8c100285beed0f9"
 dependencies = [
  "mnemosyne-arena",
  "mnemosyne-backend",
@@ -2041,7 +2008,6 @@ dependencies = [
 [[package]]
 name = "mnemosyne-hardened"
 version = "0.2.0"
-source = "git+https://github.com/ryancinsight/Mnemosyne.git#705706e65468ee23096a7814c8c100285beed0f9"
 dependencies = [
  "mnemosyne-memory-core",
 ]
@@ -2049,7 +2015,6 @@ dependencies = [
 [[package]]
 name = "mnemosyne-heap"
 version = "0.3.0"
-source = "git+https://github.com/ryancinsight/Mnemosyne.git#705706e65468ee23096a7814c8c100285beed0f9"
 dependencies = [
  "melinoe",
  "mnemosyne-arena",
@@ -2063,7 +2028,6 @@ dependencies = [
 [[package]]
 name = "mnemosyne-local"
 version = "0.3.0"
-source = "git+https://github.com/ryancinsight/Mnemosyne.git#705706e65468ee23096a7814c8c100285beed0f9"
 dependencies = [
  "melinoe",
  "mnemosyne-arena",
@@ -2078,7 +2042,6 @@ dependencies = [
 [[package]]
 name = "mnemosyne-memory"
 version = "0.6.0"
-source = "git+https://github.com/ryancinsight/Mnemosyne.git#705706e65468ee23096a7814c8c100285beed0f9"
 dependencies = [
  "eunomia",
  "mnemosyne-arena",
@@ -2094,12 +2057,10 @@ dependencies = [
 [[package]]
 name = "mnemosyne-memory-core"
 version = "0.2.0"
-source = "git+https://github.com/ryancinsight/Mnemosyne.git#705706e65468ee23096a7814c8c100285beed0f9"
 
 [[package]]
 name = "mnemosyne-prof"
 version = "0.2.0"
-source = "git+https://github.com/ryancinsight/Mnemosyne.git#705706e65468ee23096a7814c8c100285beed0f9"
 dependencies = [
  "backtrace",
  "mnemosyne-build-util",
@@ -2109,23 +2070,21 @@ dependencies = [
 [[package]]
 name = "moirai-async"
 version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
 dependencies = [
  "futures",
  "libc",
  "moirai-async-macros",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-executor 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-pal 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-executor",
+ "moirai-pal",
  "moirai-transport",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-utils",
  "socket2",
 ]
 
 [[package]]
 name = "moirai-async-macros"
 version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2139,18 +2098,7 @@ dependencies = [
  "bytemuck",
  "libc",
  "mnemosyne-memory",
- "moirai-utils 0.4.0",
-]
-
-[[package]]
-name = "moirai-core"
-version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
-dependencies = [
- "bytemuck",
- "libc",
- "mnemosyne-memory",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-utils",
 ]
 
 [[package]]
@@ -2159,47 +2107,32 @@ version = "0.4.0"
 dependencies = [
  "melinoe",
  "mnemosyne-memory",
- "moirai-core 0.4.0",
- "moirai-pal 0.4.0",
- "moirai-scheduler 0.4.0",
- "moirai-utils 0.4.0",
-]
-
-[[package]]
-name = "moirai-executor"
-version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
-dependencies = [
- "melinoe",
- "mnemosyne-memory",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-pal 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-scheduler 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-pal",
+ "moirai-scheduler",
+ "moirai-utils",
 ]
 
 [[package]]
 name = "moirai-gpu"
 version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
 dependencies = [
  "mnemosyne-memory-core",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-utils",
  "themis-topology",
 ]
 
 [[package]]
 name = "moirai-iter"
 version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
 dependencies = [
  "futures",
  "libc",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-executor 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-scheduler 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-executor",
+ "moirai-scheduler",
+ "moirai-utils",
  "num_cpus",
  "themis-topology",
  "thiserror 1.0.69",
@@ -2212,22 +2145,7 @@ dependencies = [
  "js-sys",
  "libc",
  "melinoe",
- "moirai-core 0.4.0",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
- "windows 0.58.0",
-]
-
-[[package]]
-name = "moirai-pal"
-version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
-dependencies = [
- "js-sys",
- "libc",
- "melinoe",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -2238,36 +2156,26 @@ dependencies = [
 name = "moirai-parallel"
 version = "0.4.0"
 dependencies = [
- "moirai-core 0.4.0",
- "moirai-executor 0.4.0",
-]
-
-[[package]]
-name = "moirai-parallel"
-version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
-dependencies = [
  "melinoe",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-executor 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-executor",
 ]
 
 [[package]]
 name = "moirai-runtime"
 version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
 dependencies = [
  "melinoe",
  "mnemosyne-memory",
  "moirai-async",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-executor 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-executor",
  "moirai-iter",
- "moirai-parallel 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-scheduler 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-parallel",
+ "moirai-scheduler",
  "moirai-sync",
  "moirai-transport",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-utils",
 ]
 
 [[package]]
@@ -2275,20 +2183,8 @@ name = "moirai-scheduler"
 version = "0.4.0"
 dependencies = [
  "mnemosyne-memory",
- "moirai-core 0.4.0",
- "moirai-utils 0.4.0",
- "num_cpus",
- "themis-topology",
-]
-
-[[package]]
-name = "moirai-scheduler"
-version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
-dependencies = [
- "mnemosyne-memory",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-utils",
  "num_cpus",
  "themis-topology",
 ]
@@ -2296,32 +2192,25 @@ dependencies = [
 [[package]]
 name = "moirai-sync"
 version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
 dependencies = [
  "libc",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-utils",
 ]
 
 [[package]]
 name = "moirai-transport"
 version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
 dependencies = [
  "bytemuck",
- "moirai-core 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-scheduler 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
- "moirai-utils 0.4.0 (git+https://github.com/ryancinsight/Moirai.git)",
+ "moirai-core",
+ "moirai-scheduler",
+ "moirai-utils",
 ]
 
 [[package]]
 name = "moirai-utils"
 version = "0.4.0"
-
-[[package]]
-name = "moirai-utils"
-version = "0.4.0"
-source = "git+https://github.com/ryancinsight/Moirai.git#b7988419dc59faab2133b87eb224c40adc211a61"
 
 [[package]]
 name = "moxcms"
@@ -2680,7 +2569,6 @@ dependencies = [
 [[package]]
 name = "proteus"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/proteus#3eaa720b3c1e5016125a8ce79ee03e7f3075b0a1"
 dependencies = [
  "aequitas",
  "eunomia",
@@ -3019,7 +2907,6 @@ checksum = "19b30a45b0cd0bcca8037f3d0dc3421eaf95327a17cad11964fb8179b4fc4832"
 [[package]]
 name = "ritk-codecs"
 version = "0.5.3"
-source = "git+https://github.com/ryancinsight/ritk#1eddee42d132c9c90f0c47fb6549043eea559bf6"
 dependencies = [
  "anyhow",
  "jpeg-decoder",
@@ -3028,7 +2915,6 @@ dependencies = [
 [[package]]
 name = "ritk-dicom"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/ritk#1eddee42d132c9c90f0c47fb6549043eea559bf6"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -3042,7 +2928,6 @@ dependencies = [
 [[package]]
 name = "ritk-diffusion-scheme"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/ritk#1eddee42d132c9c90f0c47fb6549043eea559bf6"
 dependencies = [
  "aequitas",
  "ritk-spatial",
@@ -3052,7 +2937,6 @@ dependencies = [
 [[package]]
 name = "ritk-spatial"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/ritk#1eddee42d132c9c90f0c47fb6549043eea559bf6"
 dependencies = [
  "leto",
  "serde",
@@ -3419,7 +3303,6 @@ dependencies = [
 [[package]]
 name = "themis-topology"
 version = "0.10.1"
-source = "git+https://github.com/ryancinsight/themis#96ddc272aaa10b718a3841d2fe6bc5a5a9a94a6f"
 dependencies = [
  "melinoe",
 ]
@@ -3523,7 +3406,6 @@ dependencies = [
 [[package]]
 name = "tyche-core"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/tyche#2bd74c299a27836e166bb7fd9d3b1fc5c41b1ff4"
 dependencies = [
  "eunomia",
 ]
@@ -4137,3 +4019,83 @@ name = "zmij"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
+
+[[patch.unused]]
+name = "consus-npy"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "consus-onnx"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "consus-zarr"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "moirai-http"
+version = "0.4.0"
+
+[[patch.unused]]
+name = "coeus-nn"
+version = "0.9.0"
+
+[[patch.unused]]
+name = "coeus-optim"
+version = "0.9.0"
+
+[[patch.unused]]
+name = "apollo-nufft"
+version = "0.7.0"
+
+[[patch.unused]]
+name = "apollo-sht"
+version = "0.7.0"
+
+[[patch.unused]]
+name = "horae"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "athena-core"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "athena-leto"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "ritk-core"
+version = "0.9.0"
+
+[[patch.unused]]
+name = "ritk-image"
+version = "0.2.0"
+
+[[patch.unused]]
+name = "ritk-io"
+version = "0.2.0"
+
+[[patch.unused]]
+name = "ritk-registration"
+version = "0.53.0"
+
+[[patch.unused]]
+name = "ritk-vtk"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "iris"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "hephaestus-cuda"
+version = "0.18.0"
+
+[[patch.unused]]
+name = "hephaestus-metal"
+version = "0.18.0"
+
+[[patch.unused]]
+name = "hephaestus-rocm"
+version = "0.18.0"

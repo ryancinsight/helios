@@ -123,8 +123,8 @@ pub fn collimate_frames<T: GeometryScalar + UnitScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
+    use helios_math::ShippedScalar;
 
     fn delivery() -> HelicalDelivery<f64> {
         HelicalDelivery::new(
@@ -220,8 +220,8 @@ mod tests {
         let one = T::from_f64(1.0);
         let sinogram = LeafOpenTimeSinogram::from_fractions(1, 3, vec![one, zero, one])
             .expect("open-time fractions within range");
-        let mlc = MlcModel::new(zero, T::from_f64(0.1))
-            .expect("transmission and penumbra within range");
+        let mlc =
+            MlcModel::new(zero, T::from_f64(0.1)).expect("transmission and penumbra within range");
         let delivery = HelicalDelivery::<T>::new(
             51,
             Length::from_unit::<Millimeter>(T::from_f64(25.0)),

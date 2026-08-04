@@ -26,9 +26,9 @@ use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Scalar;
 use hyperion::{
-    TransportError,
     coefficient::{InteractionCoefficient, LinearAttenuation},
     quantity::{OpticalDepth, PathLength},
+    TransportError,
 };
 
 /// Attenuated primary energy fluence for a parallel beam entering along **+x**.

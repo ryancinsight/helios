@@ -10,7 +10,7 @@ use eunomia::UnitScalar;
 use helios_domain::Volume;
 use helios_math::Scalar;
 use helios_physics::mass_density_from_hu;
-use hyperion::{TransportError, coefficient::MassAttenuation};
+use hyperion::{coefficient::MassAttenuation, TransportError};
 use proteus::{InvalidProperty, MassDensity};
 
 /// Failure while converting a CT volume into linear attenuation.
@@ -95,9 +95,9 @@ mod tests {
     use super::*;
     use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
     use eunomia::assert_relative_eq;
-    use helios_math::ShippedScalar;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
+    use helios_math::ShippedScalar;
 
     fn grid() -> VoxelGrid<f64> {
         VoxelGrid::axis_aligned([3, 4, 5], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
@@ -196,18 +196,15 @@ mod tests {
     fn attenuation_map_scales_mass_coefficient_by_density<T: ShippedScalar>() {
         let zero = T::from_f64(0.0);
         let unit = T::from_f64(1.0);
-        let grid = VoxelGrid::<T>::axis_aligned(
-            [2, 2, 2],
-            [unit; 3],
-            Point3::new(zero, zero, zero),
-        )
-        .expect("valid axis-aligned grid");
+        let grid =
+            VoxelGrid::<T>::axis_aligned([2, 2, 2], [unit; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
 
         let mass_coefficient = T::from_f64(0.06);
         let ct = Volume::from_shape_fn(grid, |_| zero);
-        let coefficient = MassAttenuation::new(AreaPerMass::from_unit::<
-            SquareCentimeterPerGram,
-        >(mass_coefficient))
+        let coefficient = MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(
+            mass_coefficient,
+        ))
         .expect("positive mass-attenuation coefficient");
         let mu = attenuation_map(
             &ct,
