@@ -143,6 +143,7 @@ jobs:
           key: ${{ runner.os }}-helios-bench-${{ hashFiles('helios-candidate/Cargo.lock') }}
 
       - name: Normalize historical baseline lock
+        continue-on-error: true  # baseline may have broken path deps during moirai migration
         run: >-
           cargo metadata
           --manifest-path helios-baseline/Cargo.toml
