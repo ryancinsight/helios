@@ -74,7 +74,7 @@ pub fn objective_gradient_autodiff(
 
     let r = sub(&matmul(&a, &xv), &d);
     let loss = sum(&mul(&r, &r)); // ‖r‖² — tape gradient wrt x is 2·Aᵀr.
-    loss.backward();
+    let _ = loss.backward();
 
     let grad = xv.grad().ok_or(HeliosError::InvalidDomainValue {
         field: "objective_gradient_autodiff::grad",
@@ -168,7 +168,7 @@ pub fn dvh_objective_gradient_autodiff(
         &mul(&sum(&mul(&over, &over)), &wo),
     );
     let value = loss.tensor.as_slice()[0];
-    loss.backward();
+    let _ = loss.backward();
 
     let grad = xv.grad().ok_or(HeliosError::InvalidDomainValue {
         field: "dvh_objective_gradient_autodiff::grad",
@@ -292,7 +292,7 @@ pub fn eud_objective_gradient_autodiff(
     let loss = mul(&mul(&hinge, &hinge), &weight);
 
     let value = loss.tensor.as_slice()[0];
-    loss.backward();
+    let _ = loss.backward();
     let grad = xv.grad().ok_or(HeliosError::InvalidDomainValue {
         field: "eud_objective_gradient_autodiff::grad",
         value: f64::NAN,
