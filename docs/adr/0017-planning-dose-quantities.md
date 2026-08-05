@@ -43,9 +43,10 @@ boundaries.
 ## Verification
 
 The focused planning and analysis package checks with all features pass against
-the live Eunomia 0.8/Aequitas graph. Value-semantic tests cover the independent
+the clean locked Eunomia 0.8/Aequitas graph. Value-semantic tests cover the independent
 gEUD oracle, finite-difference gradient, zero-violation band, DVH optimizer,
 and the shared DVH/clinical/end-to-end callers. The repository's locked hosted
 matrix remains the final source-identity gate; the local Atlas overlay cannot
 execute the standalone lock because its path patches intentionally replace the
-committed Git sources.
+committed Git sources; the lock was regenerated from the normal Git graph and
+the clean `--locked` check passes.

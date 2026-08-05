@@ -10,14 +10,18 @@
       Coeus/Asclepius scalar boundaries.
 - [x] Record ADR 0017 and the Eunomia real-only/no-imaginary-unit rule; remove
       the stale RustSec 2026 ignore from workflow and dependency policy.
-- [x] Run formatting and the all-feature planning package check; retain the
-      focused value-semantic autodiff tests as the behavior oracle.
+- [x] Regenerate `Cargo.lock` outside the Atlas local-path overlay so the
+      direct `helios-planning` → `aequitas` edge is locked with Git sources.
+- [x] Run formatting, the clean locked all-feature package check, warning-
+      denied Clippy, doctests, and focused value-semantic Nextest; retain the
+      gEUD and autodiff oracles.
 
-Evidence: `cargo check -p helios-planning -p helios-analysis --all-features
---offline --tests` is the focused overlay gate. The shared-target Nextest
-collection was queued behind concurrent provider builds and exceeded the local
-command bound before test execution; hosted locked Nextest remains the
-authoritative clean-source gate.
+Evidence: clean-source `cargo check --manifest-path D:\atlas\repos\helios\Cargo.toml
+--locked -p helios-planning -p helios-analysis --all-features --tests` passes;
+the overlay focused check and 55/55 focused Nextest tests also pass. Hosted
+Rust, Python, and dependency gates pass at the pushed head. The phase-replicated
+benchmark initially failed before execution because the candidate lock lacked
+the new direct edge; the lock refresh in the follow-up commit is corrective.
 
 ## Codex — H-097 typed Radon imaging geometry [arch] [major] — done 2026-08-02
 

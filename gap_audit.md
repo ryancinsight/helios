@@ -24,7 +24,9 @@ rather than fixed SI metrics.
 The planning law is real-valued under Eunomia. It has no phasor boundary, so no
 imaginary dose unit or complex physical wrapper is introduced. The focused
 all-feature package check passes; the value-semantic autodiff suite retains its
-independent gEUD, finite-difference, hinge, and optimizer coverage. See
+independent gEUD, finite-difference, hinge, and optimizer coverage. The
+committed lock now includes the direct planning-to-Aequitas edge with Git
+source identity, and the exact clean-source locked package check passes. See
 [`ADR 0017`](docs/adr/0017-planning-dose-quantities.md).
 
 ## Eunomia complex compatibility refresh (2026-07-28)

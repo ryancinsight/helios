@@ -1387,6 +1387,7 @@ dependencies = [
 name = "helios-planning"
 version = "0.1.0"
 dependencies = [
+ "aequitas",
  "asclepius",
  "asclepius-coeus",
  "coeus-autograd",
