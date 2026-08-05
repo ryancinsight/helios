@@ -125,18 +125,18 @@ jobs:
           path: helios-candidate
 
       - name: Checkout candidate path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
         with:
           manifest: helios-candidate/Cargo.toml
           destination: .
-          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
+          atlas_ref: 4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
 
       - name: Checkout historical baseline path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
         with:
           manifest: helios-baseline/Cargo.toml
           destination: .
-          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
+          atlas_ref: 4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
 
       - name: Checkout Atlas benchmark gate
         uses: actions/checkout@v6
@@ -157,12 +157,14 @@ jobs:
           key: ${{ runner.os }}-helios-bench-${{ hashFiles('helios-candidate/Cargo.lock') }}
 
       - name: Normalize historical baseline lock
+        # The baseline lock predates the provider package-identity cutover.
+        # Materialized path providers are authoritative for this comparison;
+        # regenerate only the ephemeral baseline lock before locked builds.
         run: >-
           cargo metadata
           --manifest-path helios-baseline/Cargo.toml
           --format-version 1
           --all-features
-          --locked
           > /dev/null
 
       - name: Hold the candidate benchmark instrument constant
