@@ -59,14 +59,20 @@ declares `../moirai/moirai` and `../moirai/moirai-parallel`, and the clean
 runner did not contain those sibling checkouts. The failure occurred before a
 benchmark binary or metric was executed (`30913557127`).
 
-The corrected workflow materializes the candidate, historical baseline, and
-Coeus path dependencies through the pinned Atlas checkout tool at workspace
-`.`. This is required because the baseline's `../moirai/moirai` and
+The corrected workflow materializes the candidate and historical baseline path
+dependencies through the pinned Atlas checkout tool at workspace `.`. This is
+required because the baseline's `../moirai/moirai` and
 `../moirai/moirai-parallel` paths resolve relative to its checked-out workspace;
 using `..` placed the repositories one level too high and caused the checkout
 action to inspect a non-repository directory. Baseline metadata and both
 benchmark phases require `--locked`, and the job no longer marks this failure
 class successful with `continue-on-error`.
+
+The first replacement run also showed that an additional `coeus/Cargo.toml`
+checkout invocation was invalid: Helios consumes Coeus as a Git dependency and
+the job contains no `coeus/` checkout, so the action failed before the Atlas
+benchmark gate. The invocation is removed; Coeus remains resolved through the
+candidate's locked Git graph rather than a fabricated path checkout.
 
 The first clean lock regeneration then exposed a separate provider defect:
 Gaia and Asclepius still required Eunomia `^0.7.0` while current Aequitas and
@@ -85,8 +91,8 @@ no imaginary or complex unit is required. Local locked metadata,
 warning-denied workspace Clippy, 285/285 configured Nextest tests, doctests,
 and warning-denied Rustdoc pass against the clean graph; the post-merge-graph
 Nextest run is `0eff8ef7-ca1e-4e50-9a8e-c9e070e671cc`. The only remaining
-closure item is the hosted exact-head Rust, Python, and phase-replicated
-benchmark matrix.
+closure item is the replacement hosted exact-head Rust, Python, and
+phase-replicated benchmark matrix after the invalid Coeus checkout removal.
 
 ## Aequitas metric audit refresh (2026-07-27)
 

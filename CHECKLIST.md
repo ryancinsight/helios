@@ -23,9 +23,11 @@ Moirai/Mnemosyne provider diagnostics recorded in `gap_audit.md`.
 - [x] Reproduce the hosted failure: baseline compilation could not read
       `moirai/moirai-parallel/Cargo.toml` because the baseline manifest still
       uses external sibling path dependencies.
-- [x] Materialize candidate, historical-baseline, and Coeus path dependencies
-      through the pinned Atlas checkout tool at workspace `.`; the baseline's
-      `../moirai/*` paths then resolve under the checked-out workspace.
+- [x] Materialize candidate and historical-baseline path dependencies through
+      the pinned Atlas checkout tool at workspace `.`; the baseline's
+      `../moirai/*` paths then resolve under the checked-out workspace. Do not
+      invoke the tool for `coeus/Cargo.toml`: Helios consumes Coeus as a Git
+      dependency and no `coeus/` checkout exists in this job.
 - [x] Remove job-level and step-level `continue-on-error` masking and require
       locked metadata plus locked benchmark compilation and measurement.
 - [x] Regenerate `Cargo.lock` outside the Atlas local-path overlay after the
@@ -42,8 +44,11 @@ remain open. Gaia PR `#21` and Asclepius PR `#6` are merged. Local evidence at
 this graph is locked metadata,
 warning-denied workspace Clippy, 285/285 configured Nextest tests, doctests,
 and warning-denied Rustdoc; all pass. The post-merge-graph Nextest run is
-`0eff8ef7-ca1e-4e50-9a8e-c9e070e671cc`. The remaining acceptance item is the
-exact-head hosted Rust, Python, and phase-replicated benchmark matrix.
+`0eff8ef7-ca1e-4e50-9a8e-c9e070e671cc`. Hosted run `30970135338` passed the
+Python binding job and failed only at the invalid `coeus/Cargo.toml` checkout
+step; the correction removes that step. The remaining acceptance item is the
+replacement exact-head hosted Rust, Python, and phase-replicated benchmark
+matrix.
 
 ## Codex — H-096 typed helical acquisition outcomes [arch] [major] — done 2026-07-31
 
