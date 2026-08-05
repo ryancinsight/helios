@@ -97,7 +97,6 @@ jobs:
   benchmark-regression:
     name: benchmark regression check
     if: github.event_name == 'pull_request'
-    continue-on-error: true  # baseline (main) has path-dep issues during moirai migration
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -125,6 +124,13 @@ jobs:
         with:
           path: helios-candidate
 
+      - name: Checkout historical baseline path dependencies
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
+        with:
+          manifest: helios-baseline/Cargo.toml
+          destination: ..
+          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
+
       - name: Checkout Atlas benchmark gate
         uses: actions/checkout@v6
         with:
@@ -144,12 +150,12 @@ jobs:
           key: ${{ runner.os }}-helios-bench-${{ hashFiles('helios-candidate/Cargo.lock') }}
 
       - name: Normalize historical baseline lock
-        continue-on-error: true  # baseline may have broken path deps during moirai migration
         run: >-
           cargo metadata
           --manifest-path helios-baseline/Cargo.toml
           --format-version 1
           --all-features
+          --locked
           > /dev/null
 
       - name: Hold the candidate benchmark instrument constant
@@ -184,6 +190,7 @@ jobs:
                 --all-features \
                 --package "$package" \
                 --bench "$benchmark" \
+                --locked \
                 --no-run
             done <<<"$BENCHMARK_TARGETS"
           done
@@ -212,6 +219,7 @@ jobs:
                   --all-features \
                   --package "$package" \
                   --bench "$benchmark" \
+                  --locked \
                   -- \
                   "$@"
               echo "::endgroup::"

@@ -18,6 +18,23 @@ doctests, Rustdoc, touched-file Rustfmt, and the analysis validation example
 check pass. The downstream simulation gate remains externally blocked by
 Moirai/Mnemosyne provider diagnostics recorded in `gap_audit.md`.
 
+## Codex — H-098 historical benchmark baseline gate [patch] — review
+
+- [x] Reproduce the hosted failure: baseline compilation could not read
+      `moirai/moirai-parallel/Cargo.toml` because the baseline manifest still
+      uses external sibling path dependencies.
+- [x] Materialize only the historical baseline path dependencies through the
+      Atlas checkout tool at the provider-parent destination; candidate source
+      remains on its committed Git dependencies.
+- [x] Remove job-level and step-level `continue-on-error` masking and require
+      locked metadata plus locked benchmark compilation and measurement.
+- [ ] Collect the exact-head hosted Rust, Python, and phase-replicated
+      benchmark matrix after the correction.
+
+Evidence: hosted run `30913557127` fails before benchmark execution at the
+baseline manifest load; the correction is committed on the H-097 branch and
+awaits its replacement matrix.
+
 ## Codex — H-096 typed helical acquisition outcomes [arch] [major] — done 2026-07-31
 
 - [x] Carry `HelicalProjection` optical depth and transmission as Aequitas

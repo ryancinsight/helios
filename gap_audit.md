@@ -51,6 +51,25 @@ but is rejected by Moirai's existing `missing_docs` errors for public fields in
 These are external provider integration blockers, not failures of the typed
 Radon contract; they remain open in the provider-owned audit path.
 
+## Historical benchmark baseline path dependency gate (H-098, 2026-08-04)
+
+The H-097 hosted benchmark job reached candidate compilation but failed while
+loading the historical baseline workspace: its committed `Cargo.toml` still
+declares `../moirai/moirai` and `../moirai/moirai-parallel`, and the clean
+runner did not contain those sibling checkouts. The failure occurred before a
+benchmark binary or metric was executed (`30913557127`).
+
+The workflow now materializes only those baseline path dependencies through
+the pinned Atlas checkout tool at the provider-parent destination. The
+candidate remains on its committed Git-source graph. Baseline metadata and
+both benchmark phases require `--locked`, and the job no longer marks this
+failure class successful with `continue-on-error`.
+
+This is a verification-infrastructure correction, not a new physical metric
+or unit. It does not change the benchmark source, workload, counterbalancing,
+classifier, or Eunomia boundary. The replacement hosted matrix is the closure
+oracle; no Aequitas gap is inferred from the pre-execution failure.
+
 ## Aequitas metric audit refresh (2026-07-27)
 
 The current `main` branch had stale closed-ledger claims: the typed helical
