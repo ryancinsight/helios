@@ -206,11 +206,11 @@ pub fn volume_relative_l2_error<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use aequitas::systems::si::units::Gray;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
+    use helios_math::ShippedScalar;
 
     fn grid(dims: [usize; 3]) -> VoxelGrid<f64> {
         VoxelGrid::axis_aligned(dims, [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0)).expect("grid")

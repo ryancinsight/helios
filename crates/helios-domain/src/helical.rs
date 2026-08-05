@@ -215,8 +215,8 @@ impl<T: Scalar + UnitScalar> HelicalDelivery<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
+    use helios_math::ShippedScalar;
 
     fn angle(value: f64) -> Angle<f64> {
         Angle::from_unit::<Radian>(value)
@@ -237,50 +237,42 @@ mod tests {
 
     #[test]
     fn rejects_invalid_parameters() {
-        assert!(
-            HelicalDelivery::new(
-                0,
-                Length::from_unit::<Millimeter>(25.0),
-                Dimensionless::from_base(0.4),
-                Time::from_unit::<Second>(10.0),
-                angle(0.0),
-                Length::from_unit::<Millimeter>(0.0),
-            )
-            .is_err()
-        );
-        assert!(
-            HelicalDelivery::new(
-                51,
-                Length::from_unit::<Millimeter>(0.0),
-                Dimensionless::from_base(0.4),
-                Time::from_unit::<Second>(10.0),
-                angle(0.0),
-                Length::from_unit::<Millimeter>(0.0),
-            )
-            .is_err()
-        );
-        assert!(
-            HelicalDelivery::new(
-                51,
-                Length::from_unit::<Millimeter>(25.0),
-                Dimensionless::from_base(-0.4),
-                Time::from_unit::<Second>(10.0),
-                angle(0.0),
-                Length::from_unit::<Millimeter>(0.0),
-            )
-            .is_err()
-        );
-        assert!(
-            HelicalDelivery::new(
-                51,
-                Length::from_unit::<Millimeter>(25.0),
-                Dimensionless::from_base(0.4),
-                Time::from_unit::<Second>(f64::NAN),
-                angle(0.0),
-                Length::from_unit::<Millimeter>(0.0),
-            )
-            .is_err()
-        );
+        assert!(HelicalDelivery::new(
+            0,
+            Length::from_unit::<Millimeter>(25.0),
+            Dimensionless::from_base(0.4),
+            Time::from_unit::<Second>(10.0),
+            angle(0.0),
+            Length::from_unit::<Millimeter>(0.0),
+        )
+        .is_err());
+        assert!(HelicalDelivery::new(
+            51,
+            Length::from_unit::<Millimeter>(0.0),
+            Dimensionless::from_base(0.4),
+            Time::from_unit::<Second>(10.0),
+            angle(0.0),
+            Length::from_unit::<Millimeter>(0.0),
+        )
+        .is_err());
+        assert!(HelicalDelivery::new(
+            51,
+            Length::from_unit::<Millimeter>(25.0),
+            Dimensionless::from_base(-0.4),
+            Time::from_unit::<Second>(10.0),
+            angle(0.0),
+            Length::from_unit::<Millimeter>(0.0),
+        )
+        .is_err());
+        assert!(HelicalDelivery::new(
+            51,
+            Length::from_unit::<Millimeter>(25.0),
+            Dimensionless::from_base(0.4),
+            Time::from_unit::<Second>(f64::NAN),
+            angle(0.0),
+            Length::from_unit::<Millimeter>(0.0),
+        )
+        .is_err());
     }
 
     #[test]
@@ -405,7 +397,9 @@ mod tests {
 
         // Pitch 0.4 over a 25 mm field advances the couch 10 mm per rotation.
         assert_relative_eq!(
-            delivery.couch_travel_per_rotation_mm().in_unit::<Millimeter>(),
+            delivery
+                .couch_travel_per_rotation_mm()
+                .in_unit::<Millimeter>(),
             T::from_f64(10.0),
             max_relative = tolerance
         );

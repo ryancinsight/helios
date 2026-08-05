@@ -4,6 +4,33 @@ Physics, numerics, accuracy, architecture, and integration gaps. Closed by
 evidence, not silence. Each gap: ID, description, class, current evidence tier,
 target closure.
 
+## Inverse-planning dose objective metrics (H-099, 2026-08-05)
+
+The live planning audit found one remaining public Aequitas gap spanning the
+autodiff-only `helios-planning` objective layer and the shared
+`helios-analysis::Dvh` gEUD entry points: `DvhPenalty` exposed clinical dose
+floors and ceilings as `&[f64]`, `EudPenalty` exposed its gEUD reference dose
+as `f64`, and the public gEUD volume-effect parameters were untyped
+dimensionless scalars. These were physical planning inputs, not dense tensor
+storage.
+
+H-099 closes the gap. DVH bands and gEUD references now use Aequitas
+`AbsorbedDose<f64>`, and the gEUD parameter uses `Dimensionless<f64>`. Base
+values are extracted only at the Coeus or Asclepius formula boundaries. Beamlet
+weights, penalty coefficients, response slopes, and dense dose-influence
+entries remain scalar because their units are optimization-model coefficients
+rather than fixed SI metrics.
+
+The planning law is real-valued under Eunomia. It has no phasor boundary, so no
+imaginary dose unit or complex physical wrapper is introduced. The focused
+all-feature package check passes; the value-semantic autodiff suite retains its
+independent gEUD, finite-difference, hinge, and optimizer coverage. The
+committed lock now includes the direct planning-to-Aequitas edge with Git
+source identity, and the exact clean-source locked package check passes. Hosted
+run `31011688127` passes the Rust, Python, dependency, and phase-replicated
+benchmark gates at exact head `c00d270`; the classifier reports 0 regressions
+and 0 replication-universe mismatches. See [`ADR 0017`](docs/adr/0017-planning-dose-quantities.md).
+
 ## Eunomia complex compatibility refresh (2026-07-28)
 
 The live Helios source contains no `Complex`, `Complex32`, `Complex64`, or
@@ -11,6 +38,88 @@ imaginary-valued public physical contract. Its Aequitas migration therefore
 needs no complex-unit extension or consumer wrapper. Eunomia's complex support
 is relevant to other numerical consumers, but no Helios metric crosses that
 boundary.
+
+## Radon imaging geometry (H-097, 2026-08-02)
+
+The live imaging audit found a remaining public Aequitas gap in
+`helios-imaging`: `Sinogram` stored projection angles and detector offsets as
+raw `T`, while Radon and SIRT accepted raw source distance and ray-march step.
+The documentation named radians and millimetres, but the type system did not
+enforce those dimensions.
+
+H-097 carries `Angle<T>` and `Length<T>` through `Sinogram`, Radon, FBP, SIRT,
+the quantum-noise path, all affected examples, the analysis validation example,
+and the end-to-end workflow. Scalar extraction is confined to radians for
+trigonometry, millimetres for ray/grid geometry, and centimetres for the FBP
+ramp filter. Dense voxel-grid coordinates and line-integral readings remain
+scalar kernel storage.
+
+This imaging law is real-valued. It has no phasor or Fourier-valued physical
+field, so Eunomia complex values do not require an imaginary length unit or a
+consumer wrapper. Complex compatibility remains the existing Eunomia rule:
+complex components share one real physical unit when a numerical domain
+actually needs a phasor.
+
+The earlier provider rev-pin removal left the committed lockfile without the
+current git source identities. H-097 refreshes that derived lock state so the
+standalone `--locked` gate is executable again.
+
+Evidence: `cargo check --offline --locked -p helios-imaging --all-targets`,
+warning-denied Clippy, `cargo test --doc`, Rustdoc, and the analysis
+`validation_regression` example check pass. Nextest run
+`26905c71-03f1-447a-be77-df0c84278c3c` passes all 33 `helios-imaging` tests,
+including the analytical disk oracle and f32/f64 reconstruction paths.
+
+The downstream `cargo nextest -p helios-analysis -p helios-simulation` gate
+does not reach test execution: `mnemosyne-memory` exits from `rustc` with code
+1 and no diagnostic. The simulation example check reaches the provider graph
+but is rejected by Moirai's existing `missing_docs` errors for public fields in
+`moirai-executor/src/metrics/mod.rs` and `moirai-executor/src/task/mod.rs`.
+These are external provider integration blockers, not failures of the typed
+Radon contract; they remain open in the provider-owned audit path.
+
+## Historical benchmark and provider-graph gate (H-098, 2026-08-04)
+
+The H-097 hosted benchmark job reached candidate compilation but failed while
+loading the historical baseline workspace: its committed `Cargo.toml` still
+declares `../moirai/moirai` and `../moirai/moirai-parallel`, and the clean
+runner did not contain those sibling checkouts. The failure occurred before a
+benchmark binary or metric was executed (`30913557127`).
+
+The corrected workflow materializes the candidate and historical baseline path
+dependencies through the pinned Atlas checkout tool at workspace `.`. This is
+required because the baseline's `../moirai/moirai` and
+`../moirai/moirai-parallel` paths resolve relative to its checked-out workspace;
+using `..` placed the repositories one level too high and caused the checkout
+action to inspect a non-repository directory. Baseline metadata and both
+benchmark phases require `--locked`, and the job no longer marks this failure
+class successful with `continue-on-error`.
+
+The first replacement run also showed that an additional `coeus/Cargo.toml`
+checkout invocation was invalid: Helios consumes Coeus as a Git dependency and
+the job contains no `coeus/` checkout, so the action failed before the Atlas
+benchmark gate. The invocation is removed; Coeus remains resolved through the
+candidate's locked Git graph rather than a fabricated path checkout.
+
+The first clean lock regeneration then exposed a separate provider defect:
+Gaia and Asclepius still required Eunomia `^0.7.0` while current Aequitas and
+Leto require Eunomia `0.8.0`. Gaia PR `#21` and Asclepius PR `#6` corrected
+those manifests and are merged at `683565e` and `3463a70`. Helios now uses
+their normal Git dependencies, and `Cargo.lock` was regenerated outside
+Atlas's local path overlay so its first-party entries carry real Git source
+identities. No temporary pin or compatibility shim remains.
+
+This is a verification-infrastructure and dependency-graph correction, not a
+new physical metric or unit. It does not change the benchmark source,
+workload, counterbalancing, classifier, or Eunomia boundary. The replacement
+hosted matrix is the closure oracle; no Aequitas gap is inferred from the
+pre-execution failures. Helios's public physical contracts remain real-valued;
+no imaginary or complex unit is required. Local locked metadata,
+warning-denied workspace Clippy, 285/285 configured Nextest tests, doctests,
+and warning-denied Rustdoc pass against the clean graph; the post-merge-graph
+Nextest run is `0eff8ef7-ca1e-4e50-9a8e-c9e070e671cc`. Hosted run
+`31011688127` passes all required jobs with 0 benchmark regressions and 0
+replication-universe mismatches. H-098 is closed.
 
 ## Aequitas metric audit refresh (2026-07-27)
 
@@ -103,6 +212,8 @@ and attenuation, and `AreaPerMass` for mass attenuation. `EnergyMeV` and
 | `HELIOS-AEQ-MET-03` | `helios-simulation/src/delivery.rs` stored leaf fluence as `T`; `total_delivered_fluence` returned `T`. `portal.rs` constructed `EnergyPerArea` internally and converted it back. `dose_accumulation.rs` accepted `*_mm` geometry and sampling values as `T`. | Carry fluence as `EnergyPerArea` and geometry distances as `Length` through delivery, portal, and dose accumulation. | Helios | **RESOLVED.** `DeliveryFrame`, collimation, portal transmission, total fluence, and dose geometry now use Aequitas quantities. Typed values convert once to the existing millimetre ray/voxel kernel; closed-leaf zero, Beer–Lambert darkening, fluence linearity, geometry-limit, f32, example, and end-to-end regressions pass. ADR 0008 records the breaking boundary. |
 | `HELIOS-AEQ-MET-04` | `helios-analysis/src/image_quality.rs` returns raw intensity/RMSE values, while the same analysis can operate on dose volumes. | Decide the semantic input at the analysis boundary: retain raw image intensity for MVCT, but return `AbsorbedDose` statistics when the API contract is dose-specific. | Helios | **RESOLVED.** Shared ROI/RMSE value kernels now back raw MVCT `roi_statistics`/`volume_rmse` and typed-dose `dose_roi_statistics`/`dose_volume_rmse`; the clinical validation example uses typed dose means/stddev and converts only for dimensionless contrast/CNR. Value tests cover f64/f32 and Gray outputs; ADR 0009 records the partition. |
 | `HELIOS-AEQ-MET-05` | `helios-gpu/src/attenuation.rs` accepted mass attenuation `mu_over_rho_cm2_g` and reference water density `water_density_g_cm3` as raw `f32` at `GpuAttenuationMapper::new`, despite the CPU attenuation boundary using Aequitas/provider quantities. | Accept typed Aequitas `AreaPerMass<f32>` and `MassDensity<f32>`; extract cm²/g and g/cm³ only at the GPU formula boundary and migrate tests/examples without a scalar facade. | Helios, Aequitas | **RESOLVED in this increment.** `GpuAttenuationMapper::new` carries typed coefficient/density inputs and preserves the fused clamp law. Check with tests/examples, Nextest 10/10, warning-denied Clippy, doctests, Rustdoc, rustfmt, and diff checks pass. See [ADR 0013](docs/adr/0013-gpu-attenuation-quantities.md). |
+
+| `HELIOS-AEQ-MET-06` | `helios-imaging::Sinogram`, `parallel_beam_radon`, and `sirt_reconstruction` accepted projection angles, detector offsets, source distance, and ray step as raw `T` despite their radian/millimetre contract. | Carry Aequitas `Angle<T>` and `Length<T>` through the public imaging boundary; extract only at trigonometry, mesh, and filter formula boundaries. | Helios, Aequitas | **RESOLVED in H-097.** Radon, FBP, SIRT, noise, examples, analysis validation, and the end-to-end workflow use typed geometry; the standalone locked gate and focused value-semantic suites are the closure evidence. See [ADR 0016](docs/adr/0016-radon-geometry-quantities.md). |
 
 ### Explicit non-gaps and constraints
 

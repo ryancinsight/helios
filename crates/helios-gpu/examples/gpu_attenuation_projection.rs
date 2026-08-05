@@ -38,7 +38,7 @@ use aequitas::systems::si::{
     units::{GramPerCubicCentimeter, SquareCentimeterPerGram},
 };
 use helios_domain::{Volume, VoxelGrid};
-use helios_gpu::{GpuAttenuationMapper, default_device};
+use helios_gpu::{default_device, GpuAttenuationMapper};
 use helios_math::Point3;
 use helios_solver::attenuation_map;
 use hyperion::coefficient::MassAttenuation;

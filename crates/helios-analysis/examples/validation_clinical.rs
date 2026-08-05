@@ -17,7 +17,7 @@
 //! Run with: `cargo run --example validation_clinical -p helios-analysis`
 
 use aequitas::systems::si::{
-    quantities::{AbsorbedDose, Length},
+    quantities::{AbsorbedDose, Dimensionless, Length},
     units::{Gray, Millimeter},
 };
 use helios_analysis::{
@@ -153,9 +153,15 @@ fn main() {
     // gEUD: volume-effect parameter a > 0 emphasizes hot voxels (parallel organs),
     // a < 0 emphasizes cold voxels (serial organs). Positive a avoids 0^negative
     // when masks include zero-dose voxels.
-    let ptv_geud = ptv_dvh.generalized_eud(5.0).expect("valid gEUD");
-    let parotid_geud = parotid_dvh.generalized_eud(1.0).expect("valid gEUD");
-    let cord_geud = cord_dvh.generalized_eud(3.0).expect("valid gEUD");
+    let ptv_geud = ptv_dvh
+        .generalized_eud(Dimensionless::from_base(5.0))
+        .expect("valid gEUD");
+    let parotid_geud = parotid_dvh
+        .generalized_eud(Dimensionless::from_base(1.0))
+        .expect("valid gEUD");
+    let cord_geud = cord_dvh
+        .generalized_eud(Dimensionless::from_base(3.0))
+        .expect("valid gEUD");
     println!("  PTV gEUD (a=5):     {:.2} Gy", ptv_geud.in_unit::<Gray>());
     println!(
         "  Parotid gEUD (a=1): {:.2} Gy",
@@ -168,17 +174,29 @@ fn main() {
 
     // TCP: tumour control probability (logistic model)
     let tcp = ptv_dvh
-        .tcp_logistic(5.0, AbsorbedDose::from_unit::<Gray>(55.0), 3.0)
+        .tcp_logistic(
+            Dimensionless::from_base(5.0),
+            AbsorbedDose::from_unit::<Gray>(55.0),
+            3.0,
+        )
         .expect("valid TCP");
     println!("  PTV TCP:            {tcp:.4}  ({:.1}%)", tcp * 100.0);
     assert!(tcp > 0.5, "PTV TCP {tcp:.4} below 50%");
 
     // NTCP: normal-tissue complication probability (Lyman-Kutcher-Burman)
     let parotid_ntcp = parotid_dvh
-        .ntcp_lkb(1.0, AbsorbedDose::from_unit::<Gray>(30.0), 0.15)
+        .ntcp_lkb(
+            Dimensionless::from_base(1.0),
+            AbsorbedDose::from_unit::<Gray>(30.0),
+            0.15,
+        )
         .expect("valid NTCP");
     let cord_ntcp = cord_dvh
-        .ntcp_lkb(3.0, AbsorbedDose::from_unit::<Gray>(45.0), 0.12)
+        .ntcp_lkb(
+            Dimensionless::from_base(3.0),
+            AbsorbedDose::from_unit::<Gray>(45.0),
+            0.12,
+        )
         .expect("valid NTCP");
     println!(
         "  Parotid NTCP:       {parotid_ntcp:.4}  ({:.1}%)",

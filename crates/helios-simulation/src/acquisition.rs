@@ -8,7 +8,7 @@ use eunomia::UnitScalar;
 use helios_domain::{HelicalDelivery, Volume};
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
 use helios_solver::forward_project_ray;
-use hyperion::{TransportError, quantity::OpticalDepth};
+use hyperion::{quantity::OpticalDepth, TransportError};
 use moirai_parallel::Adaptive;
 
 #[cfg(test)]

@@ -18,13 +18,13 @@ use aequitas::systems::si::{
         Centimeter, GramPerCubicCentimeter, Millimeter, Radian, Second, SquareCentimeterPerGram,
     },
 };
-use helios_analysis::{Dvh, gamma_index_3d, gamma_pass_rate, roi_statistics, spherical_mask};
+use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, spherical_mask, Dvh};
 use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel, Volume, VoxelGrid};
 use helios_imaging::{filtered_back_projection, parallel_beam_radon, register_translation};
 use helios_math::Point3;
 use helios_simulation::{
-    BeamGeometry, CollapsedCone, SpectralComponent, accumulate_delivered_dose,
-    accumulate_delivered_dose_anisotropic, simulate_helical_delivery,
+    accumulate_delivered_dose, accumulate_delivered_dose_anisotropic, simulate_helical_delivery,
+    BeamGeometry, CollapsedCone, SpectralComponent,
 };
 use helios_solver::{attenuation_map, scatter_superposition, symmetric_deposition_kernel};
 use hyperion::coefficient::MassAttenuation;
@@ -93,14 +93,20 @@ fn shared_mu_drives_imaging_and_delivery_end_to_end() {
     assert!(mu.get(0, 0, 2).unwrap().abs() < 1e-6); // corner = air
 
     // ── Imaging branch: Radon → FBP; recover μ in a water ROI. ──
-    let angles: Vec<f64> = (0..90)
-        .map(|a| a as f64 * std::f64::consts::PI / 90.0)
+    let angles: Vec<Angle<f64>> = (0..90)
+        .map(|a| Angle::from_unit::<Radian>(a as f64 * std::f64::consts::PI / 90.0))
         .collect();
     let n_off = 61;
-    let offsets: Vec<f64> = (0..n_off)
-        .map(|j| -30.0 + j as f64 * 60.0 / (n_off - 1) as f64)
+    let offsets: Vec<Length<f64>> = (0..n_off)
+        .map(|j| Length::from_unit::<Millimeter>(-30.0 + j as f64 * 60.0 / (n_off - 1) as f64))
         .collect();
-    let sino = parallel_beam_radon(&mu, &angles, &offsets, 400.0, 0.5);
+    let sino = parallel_beam_radon(
+        &mu,
+        &angles,
+        &offsets,
+        Length::from_unit::<Millimeter>(400.0),
+        Length::from_unit::<Millimeter>(0.5),
+    );
     let recon_grid =
         VoxelGrid::axis_aligned([NX, NX, 1], [SPACING; 3], Point3::new(0.0, 0.0, 0.0)).unwrap();
     let recon = filtered_back_projection(&sino, &recon_grid);
@@ -357,8 +363,12 @@ fn per_structure_plan_evaluation_over_delivered_dose() {
         ptv.mean().into_base(),
         oar.mean().into_base()
     );
-    let ptv_geud = ptv.generalized_eud(1.0).expect("valid PTV response");
-    let oar_geud = oar.generalized_eud(1.0).expect("valid OAR response");
+    let ptv_geud = ptv
+        .generalized_eud(Dimensionless::from_base(1.0))
+        .expect("valid PTV response");
+    let oar_geud = oar
+        .generalized_eud(Dimensionless::from_base(1.0))
+        .expect("valid OAR response");
     assert!(ptv_geud > oar_geud, "PTV gEUD must exceed OAR gEUD");
 
     // Outcome models are well-formed probabilities. With TCD50 set below the PTV
@@ -369,10 +379,10 @@ fn per_structure_plan_evaluation_over_delivered_dose() {
         "OAR (in-water) must receive some dose"
     );
     let tcp = ptv
-        .tcp_logistic(1.0, ptv_geud * 0.8, 2.0)
+        .tcp_logistic(Dimensionless::from_base(1.0), ptv_geud * 0.8, 2.0)
         .expect("valid tumour-control response");
     let ntcp = oar
-        .ntcp_lkb(1.0, oar_geud * 2.0, 0.3)
+        .ntcp_lkb(Dimensionless::from_base(1.0), oar_geud * 2.0, 0.3)
         .expect("valid complication response");
     assert!(
         (0.0..=1.0).contains(&tcp) && tcp > 0.5,

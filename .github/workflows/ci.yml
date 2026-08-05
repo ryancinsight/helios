@@ -18,19 +18,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
-        with:
-          manifest: Cargo.toml
-          destination: ..
-          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
-
-      - name: Checkout Coeus path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
-        with:
-          manifest: ../coeus/Cargo.toml
-          destination: ..
-          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -54,18 +41,18 @@ jobs:
         run: cargo fmt -- --check
 
       - name: Clippy
-        run: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
       - name: Tests
-        run: cargo nextest run --locked --workspace --all-features --profile ci
+        run: cargo nextest run --workspace --all-features --profile ci
 
       - name: Doctests
-        run: cargo test --locked --workspace --all-features --doc
+        run: cargo test --workspace --all-features --doc
 
       - name: Documentation
         env:
           RUSTDOCFLAGS: -D warnings
-        run: cargo doc --locked --workspace --no-deps
+        run: cargo doc --workspace --no-deps
 
       - name: Check book figures
         run: cargo run -p xtask -- check-figures
@@ -85,19 +72,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
-        with:
-          manifest: Cargo.toml
-          destination: ..
-          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
-
-      - name: Checkout Coeus path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
-        with:
-          manifest: ../coeus/Cargo.toml
-          destination: ..
-          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
-
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -110,8 +84,6 @@ jobs:
 
       - name: Build Python extension
         working-directory: crates/helios-python
-        # The Atlas checkout action materializes git path dependencies before
-        # this build; Cargo must be allowed to refresh the generated lock.
         run: python -m maturin build --release --out dist
 
       - name: Install Python extension
@@ -152,33 +124,26 @@ jobs:
         with:
           path: helios-candidate
 
+      - name: Checkout candidate path dependencies
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
+        with:
+          manifest: helios-candidate/Cargo.toml
+          destination: .
+          atlas_ref: 4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
+
+      - name: Checkout historical baseline path dependencies
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
+        with:
+          manifest: helios-baseline/Cargo.toml
+          destination: .
+          atlas_ref: 4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
+
       - name: Checkout Atlas benchmark gate
         uses: actions/checkout@v6
         with:
           repository: ryancinsight/atlas
           ref: 9bfb722367a6c3911409d6b4619701c549b6d415
           path: atlas-tool
-
-      - name: Checkout candidate path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
-        with:
-          manifest: helios-candidate/Cargo.toml
-          destination: .
-          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
-
-      - name: Checkout historical baseline path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
-        with:
-          manifest: helios-baseline/Cargo.toml
-          destination: .
-          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
-
-      - name: Checkout Coeus path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
-        with:
-          manifest: coeus/Cargo.toml
-          destination: .
-          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -192,6 +157,9 @@ jobs:
           key: ${{ runner.os }}-helios-bench-${{ hashFiles('helios-candidate/Cargo.lock') }}
 
       - name: Normalize historical baseline lock
+        # The baseline lock predates the provider package-identity cutover.
+        # Materialized path providers are authoritative for this comparison;
+        # regenerate only the ephemeral baseline lock before locked builds.
         run: >-
           cargo metadata
           --manifest-path helios-baseline/Cargo.toml
@@ -231,6 +199,7 @@ jobs:
                 --all-features \
                 --package "$package" \
                 --bench "$benchmark" \
+                --locked \
                 --no-run
             done <<<"$BENCHMARK_TARGETS"
           done
@@ -259,6 +228,7 @@ jobs:
                   --all-features \
                   --package "$package" \
                   --bench "$benchmark" \
+                  --locked \
                   -- \
                   "$@"
               echo "::endgroup::"

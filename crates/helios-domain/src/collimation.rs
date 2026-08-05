@@ -156,8 +156,8 @@ impl<T: GeometryScalar> FieldAperture<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
+    use helios_math::ShippedScalar;
 
     // 20 mm × 20 mm × 20 mm field centred at the origin, 2 mm penumbra.
     fn aperture() -> FieldAperture<f64> {

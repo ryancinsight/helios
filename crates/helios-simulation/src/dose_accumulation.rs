@@ -34,8 +34,9 @@ use eunomia::UnitScalar;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
 use helios_solver::{
-    SpectralComponent, deposit_ray_terma, deposit_ray_terma_diverging, forward_peaked_kernel,
+    deposit_ray_terma, deposit_ray_terma_diverging, forward_peaked_kernel,
     oriented_forward_scatter, poly_forward_peaked_kernel, symmetric_deposition_kernel,
+    SpectralComponent,
 };
 use hyperion::TransportError;
 

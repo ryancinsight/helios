@@ -16,9 +16,9 @@ use helios_core::constants::MM_PER_CM;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray};
 use hyperion::{
-    TransportError,
     coefficient::{InteractionCoefficient, LinearAttenuation},
     quantity::{OpticalDepth, PathLength},
+    TransportError,
 };
 
 /// Nearest voxel index along one axis for a continuous index `coord`, clamped to
@@ -27,7 +27,11 @@ use hyperion::{
 fn nearest<T: GeometryScalar>(coord: T, n: usize) -> usize {
     let half = <T as GeometryScalar>::from_f64(0.5);
     let r = (coord + half).floor().to_f64();
-    if r <= 0.0 { 0 } else { (r as usize).min(n - 1) }
+    if r <= 0.0 {
+        0
+    } else {
+        (r as usize).min(n - 1)
+    }
 }
 
 /// Deposit primary-beam energy along `ray` into `dose`, returning the total
@@ -180,8 +184,8 @@ fn deposit_terma_impl<T: GeometryScalar + UnitScalar>(
 mod tests {
     use super::*;
     use eunomia::assert_relative_eq;
-    use helios_math::ShippedScalar;
     use helios_domain::VoxelGrid;
+    use helios_math::ShippedScalar;
     use helios_math::{Point3, Vector3};
 
     // Uniform-μ cube: 9³ voxels, 2 mm spacing → node box [0,16] mm = 1.6 cm/axis.
@@ -372,15 +376,9 @@ mod tests {
         )
         .expect("non-degenerate ray direction");
 
-        let total = deposit_ray_terma(
-            &mut dose,
-            &attenuation,
-            &ray,
-            cast(1.0),
-            cast(0.25),
-        )
-        .expect("valid attenuation volume")
-        .into_base();
+        let total = deposit_ray_terma(&mut dose, &attenuation, &ray, cast(1.0), cast(0.25))
+            .expect("valid attenuation volume")
+            .into_base();
 
         // Absorbed fraction over the 1.6 cm traversed path.
         let path_cm = cast(1.6);

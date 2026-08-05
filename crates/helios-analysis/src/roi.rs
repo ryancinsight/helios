@@ -43,10 +43,10 @@ pub fn box_mask<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use crate::Dvh;
     use eunomia::assert_relative_eq;
     use helios_domain::Volume;
+    use helios_math::ShippedScalar;
 
     fn grid() -> VoxelGrid<f64> {
         // 5×5×1, 2 mm spacing → centre voxel (2,2,0) at world (4,4,0).
@@ -107,8 +107,14 @@ mod tests {
         let centre = Point3::new(T::from_f64(4.0), T::from_f64(4.0), zero);
         let mask = spherical_mask(grid, centre, T::from_f64(2.5));
 
-        assert!(mask([2, 2, 0]), "the centre voxel must be inside the sphere");
-        assert!(!mask([0, 0, 0]), "the far corner must be outside the sphere");
+        assert!(
+            mask([2, 2, 0]),
+            "the centre voxel must be inside the sphere"
+        );
+        assert!(
+            !mask([0, 0, 0]),
+            "the far corner must be outside the sphere"
+        );
     }
 
     #[test]

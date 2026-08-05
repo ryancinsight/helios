@@ -1,5 +1,76 @@
 # Helios Checklist (tactical)
 
+## Codex — H-099 typed inverse-planning dose objectives [arch] [major] — done 2026-08-05
+
+- [x] Audit `helios-planning` autodiff and `helios-analysis::Dvh` contracts and
+      classify dose, dimensionless, coefficient, and tensor-storage boundaries.
+- [x] Carry DVH floor/ceiling and gEUD reference values as Aequitas
+      `AbsorbedDose<f64>` and the gEUD volume-effect parameter as
+      `Dimensionless<f64>` across planning and DVH APIs; extract only at the
+      Coeus/Asclepius scalar boundaries.
+- [x] Record ADR 0017 and the Eunomia real-only/no-imaginary-unit rule; remove
+      the stale RustSec 2026 ignore from workflow and dependency policy.
+- [x] Regenerate `Cargo.lock` outside the Atlas local-path overlay so the
+      direct `helios-planning` → `aequitas` edge is locked with Git sources.
+- [x] Run formatting, the clean locked all-feature package check, warning-
+      denied Clippy, doctests, and focused value-semantic Nextest; retain the
+      gEUD and autodiff oracles.
+
+Evidence: clean-source `cargo check --manifest-path D:\atlas\repos\helios\Cargo.toml
+--locked -p helios-planning -p helios-analysis --all-features --tests` passes;
+the overlay focused check and 55/55 focused Nextest tests also pass. Hosted
+Rust, Python, dependency, and phase-replicated benchmark gates pass in hosted
+run `31011688127` at exact head `c00d270`. The benchmark classifier reports
+0 regressions and 0 replication-universe mismatches.
+
+## Codex — H-097 typed Radon imaging geometry [arch] [major] — done 2026-08-02
+
+- [x] Carry `Angle<T>` and `Length<T>` through `Sinogram`, Radon, FBP, SIRT,
+      noise, examples, and workflow validation; extract radians/millimetres/
+      centimetres only at scalar formula and mesh boundaries.
+- [x] Refresh `Cargo.lock` after the earlier provider rev-pin removal so the
+      standalone `--locked` gate resolves the current git source identities.
+- [x] Record the breaking contract in ADR 0016 and document that this real
+      imaging law has no Eunomia imaginary or complex unit.
+- [x] Run standalone locked check, focused Nextest, warning-denied Clippy,
+      doctests, Rustdoc, touched-file Rustfmt, and diff checks.
+
+Evidence: standalone locked imaging check passes; Nextest run
+`26905c71-03f1-447a-be77-df0c84278c3c` passes 33/33; warning-denied Clippy,
+doctests, Rustdoc, touched-file Rustfmt, and the analysis validation example
+check pass. The downstream simulation gate remains externally blocked by
+Moirai/Mnemosyne provider diagnostics recorded in `gap_audit.md`.
+
+## Codex — H-098 historical benchmark and provider-graph gate [patch] — done 2026-08-05
+
+- [x] Reproduce the hosted failure: baseline compilation could not read
+      `moirai/moirai-parallel/Cargo.toml` because the baseline manifest still
+      uses external sibling path dependencies.
+- [x] Materialize candidate and historical-baseline path dependencies through
+      the pinned Atlas checkout tool at workspace `.`; the baseline's
+      `../moirai/*` paths then resolve under the checked-out workspace. Do not
+      invoke the tool for `coeus/Cargo.toml`: Helios consumes Coeus as a Git
+      dependency and no `coeus/` checkout exists in this job.
+- [x] Remove job-level and step-level `continue-on-error` masking and require
+      locked metadata plus locked benchmark compilation and measurement.
+- [x] Regenerate `Cargo.lock` outside the Atlas local-path overlay after the
+      provider corrections merged; Gaia resolves at `683565e`, Asclepius at
+      `3463a70`, and every first-party package has a real Git source identity.
+- [x] Collect the exact-head hosted Rust, Python, and phase-replicated
+      benchmark matrix after the workflow and provider graph corrections.
+
+Evidence: hosted run `31011688127` passes the Rust workspace, Python bindings,
+dependency policy, and phase-replicated benchmark jobs at exact head
+`c00d270`. The benchmark classifier reports 0 regressions and 0
+replication-universe mismatches. The two historical `scan_reference/1024`
+measurements are counterbalanced (`+0.17%` baseline-first versus `-0.27%`
+candidate-first), so they do not classify as a regression. Local evidence at
+this graph remains locked metadata, warning-denied workspace Clippy, 285/285
+configured Nextest tests, doctests, and warning-denied Rustdoc; all pass. The
+earlier `30913557127`, `30967195570`, and `30970135338` failures occurred
+before benchmark execution and are retained as diagnostic history, not open
+residuals. Gaia PR `#21` and Asclepius PR `#6` are merged.
+
 ## Codex — H-096 typed helical acquisition outcomes [arch] [major] — done 2026-07-31
 
 - [x] Carry `HelicalProjection` optical depth and transmission as Aequitas

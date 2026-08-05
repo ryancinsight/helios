@@ -9,7 +9,7 @@
 //! fluence, and attenuation multiplies each reading by `exp(−τ)`.
 
 use crate::delivery::DeliveryFrame;
-use crate::dose_accumulation::{BeamGeometry, beamlet_ray, gantry_basis};
+use crate::dose_accumulation::{beamlet_ray, gantry_basis, BeamGeometry};
 use aequitas::systems::si::{
     quantities::{Dimensionless, EnergyPerArea, Length},
     units::Millimeter,
@@ -18,7 +18,7 @@ use eunomia::UnitScalar;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement};
 use helios_solver::forward_project_ray;
-use hyperion::{TransportError, quantity::OpticalDepth};
+use hyperion::{quantity::OpticalDepth, TransportError};
 
 #[cfg(test)]
 use aequitas::systems::si::{quantities::Angle, units::Radian};
@@ -70,10 +70,10 @@ pub fn frame_portal_fluence<T: GeometryScalar + UnitScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use helios_math::ShippedScalar;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
+    use helios_math::ShippedScalar;
 
     // Uniform-μ cube: 9³ voxels, 2 mm spacing → central axial chord 16 mm = 1.6 cm.
     fn uniform_cube(mu_val: f64) -> Volume<f64> {
@@ -192,8 +192,9 @@ mod tests {
         let cast = <T as helios_math::FloatElement>::from_f64;
         let zero = cast(0.0);
         let spacing = cast(2.0);
-        let grid = VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], Point3::new(zero, zero, zero))
-            .expect("valid axis-aligned grid");
+        let grid =
+            VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
 
         let mu = cast(0.05);
         let attenuation = Volume::from_shape_fn(grid, |_| mu);
