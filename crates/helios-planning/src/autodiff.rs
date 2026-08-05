@@ -12,6 +12,7 @@
 //! core build. The feature gates a complete implementation, not a stub.
 
 use crate::optimize::DoseInfluence;
+use aequitas::systems::si::quantities::{AbsorbedDose, Dimensionless};
 use asclepius::VolumeEffect;
 use asclepius_coeus::response::radiation::generalized_equivalent_uniform_dose;
 use coeus_autograd::{add, matmul, mul, relu, sub, sum, Var};
@@ -90,9 +91,9 @@ pub fn objective_gradient_autodiff(
 #[derive(Debug, Clone, Copy)]
 pub struct DvhPenalty<'a> {
     /// Per-voxel prescription floor (underdose below it is penalized).
-    pub floor: &'a [f64],
+    pub floor: &'a [AbsorbedDose<f64>],
     /// Per-voxel dose ceiling (overdose above it is penalized).
-    pub ceiling: &'a [f64],
+    pub ceiling: &'a [AbsorbedDose<f64>],
     /// Weight on the underdose term.
     pub weight_under: f64,
     /// Weight on the overdose term.
@@ -143,12 +144,16 @@ pub fn dvh_objective_gradient_autodiff(
         false,
     );
     let xv = Var::new(Tensor::from_slice_on(vec![beamlets, 1], x, &backend), true);
+    // The autodiff tensor is a scalar numerical boundary. Preserve the
+    // physical dose type through the public contract and unwrap it once here.
+    let floor_values: Vec<f64> = penalty.floor.iter().map(|dose| *dose.as_base()).collect();
+    let ceiling_values: Vec<f64> = penalty.ceiling.iter().map(|dose| *dose.as_base()).collect();
     let floor = Var::new(
-        Tensor::from_slice_on(vec![voxels, 1], penalty.floor, &backend),
+        Tensor::from_slice_on(vec![voxels, 1], &floor_values, &backend),
         false,
     );
     let ceiling = Var::new(
-        Tensor::from_slice_on(vec![voxels, 1], penalty.ceiling, &backend),
+        Tensor::from_slice_on(vec![voxels, 1], &ceiling_values, &backend),
         false,
     );
     let wu = Var::new(
@@ -220,9 +225,9 @@ pub enum EudKind {
 #[derive(Debug, Clone, Copy)]
 pub struct EudPenalty {
     /// Niemierko volume-effect parameter (`a ≠ 0`).
-    pub a: f64,
+    pub a: Dimensionless<f64>,
     /// gEUD reference dose (ceiling for `UpperLimit`, floor for `LowerLimit`).
-    pub reference: f64,
+    pub reference: AbsorbedDose<f64>,
     /// Which side is penalized.
     pub kind: EudKind,
     /// Penalty weight.
@@ -255,9 +260,9 @@ pub fn eud_objective_gradient_autodiff(
         });
     }
     let volume_effect =
-        VolumeEffect::new(penalty.a).map_err(|_| HeliosError::InvalidDomainValue {
+        VolumeEffect::new(*penalty.a.as_base()).map_err(|_| HeliosError::InvalidDomainValue {
             field: "eud_objective_gradient_autodiff::a",
-            value: penalty.a,
+            value: *penalty.a.as_base(),
             reason: "gEUD volume parameter must be finite and non-zero",
         })?;
 
@@ -282,7 +287,7 @@ pub fn eud_objective_gradient_autodiff(
     })?;
 
     // One-sided hinge: violation = ±(gEUD − reference), penalized when > 0.
-    let reference = scalar_const(penalty.reference, &backend);
+    let reference = scalar_const(*penalty.reference.as_base(), &backend);
     let violation = match penalty.kind {
         EudKind::UpperLimit => sub(&geud, &reference),
         EudKind::LowerLimit => sub(&reference, &geud),
@@ -305,6 +310,14 @@ pub fn eud_objective_gradient_autodiff(
 mod tests {
     use super::*;
     use eunomia::assert_relative_eq;
+
+    fn dose(value: f64) -> AbsorbedDose<f64> {
+        AbsorbedDose::from_base(value)
+    }
+
+    fn dimensionless(value: f64) -> Dimensionless<f64> {
+        Dimensionless::from_base(value)
+    }
 
     // Independent scalar gEUD oracle for the coeus-tape gEUD — deliberately a
     // separate implementation from both the tape and helios-analysis's
@@ -334,8 +347,8 @@ mod tests {
         let x = [0.8, 0.6];
         let a = 2.5;
         let penalty = EudPenalty {
-            a,
-            reference: 0.0,
+            a: dimensionless(a),
+            reference: dose(0.0),
             kind: EudKind::UpperLimit,
             weight: 1.0,
         };
@@ -354,8 +367,8 @@ mod tests {
         let a = 3.0;
         let geud = geud_ref(&inf.apply(&x), a);
         let penalty = EudPenalty {
-            a,
-            reference: 0.5 * geud, // strictly below gEUD ⇒ hinge active
+            a: dimensionless(a),
+            reference: dose(0.5 * geud), // strictly below gEUD ⇒ hinge active
             kind: EudKind::UpperLimit,
             weight: 2.0,
         };
@@ -383,8 +396,8 @@ mod tests {
         let a = 3.0;
         let geud = geud_ref(&inf.apply(&x), a);
         let penalty = EudPenalty {
-            a,
-            reference: geud * 2.0, // well above ⇒ no violation
+            a: dimensionless(a),
+            reference: dose(geud * 2.0), // well above ⇒ no violation
             kind: EudKind::UpperLimit,
             weight: 5.0,
         };
@@ -399,8 +412,8 @@ mod tests {
     fn eud_zero_a_and_shape_mismatch_are_typed_errors() {
         let inf = positive_influence();
         let bad_a = EudPenalty {
-            a: 0.0,
-            reference: 1.0,
+            a: dimensionless(0.0),
+            reference: dose(1.0),
             kind: EudKind::UpperLimit,
             weight: 1.0,
         };
@@ -413,8 +426,8 @@ mod tests {
             })
         );
         let ok = EudPenalty {
-            a: 2.0,
-            reference: 1.0,
+            a: dimensionless(2.0),
+            reference: dose(1.0),
             kind: EudKind::UpperLimit,
             weight: 1.0,
         };
@@ -466,8 +479,8 @@ mod tests {
         // hinges are strictly active somewhere (no kink ambiguity).
         let inf = influence();
         let x = [0.4, -0.2];
-        let floor = [1.0, 0.2, 0.5];
-        let ceiling = [1.5, 0.4, 0.9];
+        let floor = [dose(1.0), dose(0.2), dose(0.5)];
+        let ceiling = [dose(1.5), dose(0.4), dose(0.9)];
         let penalty = DvhPenalty {
             floor: &floor,
             ceiling: &ceiling,
@@ -475,14 +488,16 @@ mod tests {
             weight_over: 3.0,
         };
         let ax = inf.apply(&x);
+        let floor_values: Vec<f64> = floor.iter().map(|value| *value.as_base()).collect();
+        let ceiling_values: Vec<f64> = ceiling.iter().map(|value| *value.as_base()).collect();
         let under: Vec<f64> = ax
             .iter()
-            .zip(&floor)
+            .zip(&floor_values)
             .map(|(&d, &f)| (f - d).max(0.0))
             .collect();
         let over: Vec<f64> = ax
             .iter()
-            .zip(&ceiling)
+            .zip(&ceiling_values)
             .map(|(&d, &c)| (d - c).max(0.0))
             .collect();
         let gu = inf.transpose_apply(&under);
@@ -510,8 +525,8 @@ mod tests {
         let inf = DoseInfluence::from_rows(2, 2, vec![1.0, 0.0, 0.0, 1.0]).unwrap();
         let x = [1.0, 1.0]; // dose = [1, 1]
         let penalty = DvhPenalty {
-            floor: &[0.5, 0.5],
-            ceiling: &[2.0, 2.0],
+            floor: &[dose(0.5), dose(0.5)],
+            ceiling: &[dose(2.0), dose(2.0)],
             weight_under: 1.0,
             weight_over: 1.0,
         };
@@ -530,8 +545,8 @@ mod tests {
         // while keeping the OAR under its ceiling.
         let inf = DoseInfluence::from_rows(2, 2, vec![1.0, 1.0, 0.5, 0.0]).unwrap();
         let penalty = DvhPenalty {
-            floor: &[1.0, 0.0],
-            ceiling: &[10.0, 0.3],
+            floor: &[dose(1.0), dose(0.0)],
+            ceiling: &[dose(10.0), dose(0.3)],
             weight_under: 1.0,
             weight_over: 10.0,
         };

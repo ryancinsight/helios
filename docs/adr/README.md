@@ -20,3 +20,4 @@
 | [0014](0014-scatter-kernel-quantities.md) | Type scatter-kernel physical inputs | — |
 | [0015](0015-helical-acquisition-outcomes.md) | Type helical acquisition outcomes | — |
 | [0016](0016-radon-geometry-quantities.md) | Type Radon imaging geometry quantities | Accepted |
+| [0017](0017-planning-dose-quantities.md) | Type inverse-planning dose objectives | Accepted |

@@ -58,7 +58,7 @@ jobs:
         run: cargo run -p xtask -- check-figures
 
       - name: RustSec audit
-        run: cargo audit --deny warnings --ignore RUSTSEC-2021-0153 --ignore RUSTSEC-2026-0235
+        run: cargo audit --deny warnings --ignore RUSTSEC-2021-0153
 
       - name: Dependency policy
         run: cargo deny check

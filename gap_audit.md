@@ -4,6 +4,29 @@ Physics, numerics, accuracy, architecture, and integration gaps. Closed by
 evidence, not silence. Each gap: ID, description, class, current evidence tier,
 target closure.
 
+## Inverse-planning dose objective metrics (H-099, 2026-08-05)
+
+The live planning audit found one remaining public Aequitas gap spanning the
+autodiff-only `helios-planning` objective layer and the shared
+`helios-analysis::Dvh` gEUD entry points: `DvhPenalty` exposed clinical dose
+floors and ceilings as `&[f64]`, `EudPenalty` exposed its gEUD reference dose
+as `f64`, and the public gEUD volume-effect parameters were untyped
+dimensionless scalars. These were physical planning inputs, not dense tensor
+storage.
+
+H-099 closes the gap. DVH bands and gEUD references now use Aequitas
+`AbsorbedDose<f64>`, and the gEUD parameter uses `Dimensionless<f64>`. Base
+values are extracted only at the Coeus or Asclepius formula boundaries. Beamlet
+weights, penalty coefficients, response slopes, and dense dose-influence
+entries remain scalar because their units are optimization-model coefficients
+rather than fixed SI metrics.
+
+The planning law is real-valued under Eunomia. It has no phasor boundary, so no
+imaginary dose unit or complex physical wrapper is introduced. The focused
+all-feature package check passes; the value-semantic autodiff suite retains its
+independent gEUD, finite-difference, hinge, and optimizer coverage. See
+[`ADR 0017`](docs/adr/0017-planning-dose-quantities.md).
+
 ## Eunomia complex compatibility refresh (2026-07-28)
 
 The live Helios source contains no `Complex`, `Complex32`, `Complex64`, or

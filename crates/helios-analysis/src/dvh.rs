@@ -1,6 +1,6 @@
 //! Cumulative dose-volume histogram (DVH).
 
-use aequitas::systems::si::quantities::AbsorbedDose;
+use aequitas::systems::si::quantities::{AbsorbedDose, Dimensionless};
 use asclepius::{
     response::radiation::{
         GeneralizedEquivalentUniformDose, LogisticControlProbability, LymanComplicationProbability,
@@ -157,7 +157,7 @@ impl<T: Scalar> Dvh<T> {
     }
 
     /// Generalized equivalent uniform dose (gEUD) of this structure's dose, with
-    /// volume-effect parameter `a`. The canonical Asclepius law borrows the
+    /// dimensionless volume-effect parameter `a`. The canonical Asclepius law borrows the
     /// already-sampled Aequitas dose quantities, with no allocation or volume
     /// re-scan.
     ///
@@ -166,8 +166,11 @@ impl<T: Scalar> Dvh<T> {
     /// Returns [`ResponseError`] when `a` is zero or non-finite, the sample is
     /// empty, a dose is negative or non-finite, or a negative exponent observes
     /// zero dose.
-    pub fn generalized_eud(&self, a: T) -> Result<AbsorbedDose<T>, ResponseError<T>> {
-        let volume_effect = VolumeEffect::new(a).map_err(ResponseError::from)?;
+    pub fn generalized_eud(
+        &self,
+        a: Dimensionless<T>,
+    ) -> Result<AbsorbedDose<T>, ResponseError<T>> {
+        let volume_effect = VolumeEffect::new(*a.as_base()).map_err(ResponseError::from)?;
         GeneralizedEquivalentUniformDose::new(volume_effect).evaluate(&self.sorted)
     }
 
@@ -180,7 +183,7 @@ impl<T: Scalar> Dvh<T> {
     /// violates the law's mathematical domain.
     pub fn tcp_logistic(
         &self,
-        a: T,
+        a: Dimensionless<T>,
         tcd50: AbsorbedDose<T>,
         gamma50: T,
     ) -> Result<T, ResponseError<T>> {
@@ -197,7 +200,12 @@ impl<T: Scalar> Dvh<T> {
     ///
     /// Returns [`ResponseError`] when any model parameter or dose observation
     /// violates the law's mathematical domain.
-    pub fn ntcp_lkb(&self, a: T, td50: AbsorbedDose<T>, m: T) -> Result<T, ResponseError<T>> {
+    pub fn ntcp_lkb(
+        &self,
+        a: Dimensionless<T>,
+        td50: AbsorbedDose<T>,
+        m: T,
+    ) -> Result<T, ResponseError<T>> {
         let dose = self.generalized_eud(a)?;
         let slope = ResponseSlope::new(m).map_err(ResponseError::from)?;
         let model = LymanComplicationProbability::new(td50, slope).map_err(ResponseError::from)?;
@@ -212,6 +220,10 @@ mod tests {
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
     use helios_math::ShippedScalar;
+
+    fn dimensionless(value: f64) -> Dimensionless<f64> {
+        Dimensionless::from_base(value)
+    }
 
     fn grid(dims: [usize; 3]) -> VoxelGrid<f64> {
         VoxelGrid::axis_aligned(dims, [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0)).expect("grid")
@@ -371,7 +383,9 @@ mod tests {
                 .evaluate(dvh.dose_sample())
                 .expect("valid dose observation");
             assert_relative_eq!(
-                dvh.generalized_eud(a).expect("valid response").into_base(),
+                dvh.generalized_eud(dimensionless(a))
+                    .expect("valid response")
+                    .into_base(),
                 direct.into_base(),
                 max_relative = 1e-13
             );
@@ -420,7 +434,7 @@ mod tests {
             1.0 / 3.0
         );
         assert!(matches!(
-            nan_dvh.generalized_eud(1.0),
+            nan_dvh.generalized_eud(dimensionless(1.0)),
             Err(ResponseError::InvalidObservation { index: 2, .. })
         ));
     }
@@ -429,13 +443,13 @@ mod tests {
     fn outcome_parameters_preserve_asclepius_validation_errors() {
         let dvh = Dvh::from_volume(&Volume::from_shape_fn(grid([2, 1, 1]), |_| 1.0));
         assert!(matches!(
-            dvh.generalized_eud(0.0),
+            dvh.generalized_eud(dimensionless(0.0)),
             Err(ResponseError::InvalidValue(source))
                 if source.kind() == asclepius::ValueKind::VolumeEffect
                     && source.constraint() == asclepius::ValueConstraint::FiniteNonZero
         ));
         assert!(matches!(
-            dvh.tcp_logistic(1.0, AbsorbedDose::from_base(1.0), -0.5),
+            dvh.tcp_logistic(dimensionless(1.0), AbsorbedDose::from_base(1.0), -0.5),
             Err(ResponseError::InvalidValue(source))
                 if source.kind() == asclepius::ValueKind::ResponseSlope
                     && source.constraint() == asclepius::ValueConstraint::FinitePositive
@@ -449,7 +463,7 @@ mod tests {
         let d = 62.0;
         let dvh = Dvh::from_volume(&Volume::from_shape_fn(grid([3, 3, 3]), |_| d));
         assert_relative_eq!(
-            dvh.generalized_eud(-10.0)
+            dvh.generalized_eud(dimensionless(-10.0))
                 .expect("valid response")
                 .into_base(),
             d,
@@ -457,18 +471,20 @@ mod tests {
         );
         // NTCP with TD50 = d ⇒ t = 0 ⇒ 0.5; TCP with TCD50 = d ⇒ 0.5.
         assert_relative_eq!(
-            dvh.ntcp_lkb(1.0, AbsorbedDose::from_base(d), 0.2)
+            dvh.ntcp_lkb(dimensionless(1.0), AbsorbedDose::from_base(d), 0.2)
                 .expect("valid response"),
             0.5,
             epsilon = 1e-12
         );
         assert_relative_eq!(
-            dvh.tcp_logistic(1.0, AbsorbedDose::from_base(d), 2.0)
+            dvh.tcp_logistic(dimensionless(1.0), AbsorbedDose::from_base(d), 2.0)
                 .expect("valid response"),
             0.5,
             epsilon = 1e-12
         );
-        let geud = dvh.generalized_eud(2.0).expect("valid response");
+        let geud = dvh
+            .generalized_eud(dimensionless(2.0))
+            .expect("valid response");
         let ntcp_model = LymanComplicationProbability::new(
             AbsorbedDose::from_base(50.0),
             ResponseSlope::new(0.2).expect("positive slope"),
@@ -480,13 +496,13 @@ mod tests {
         )
         .expect("positive midpoint");
         assert_relative_eq!(
-            dvh.ntcp_lkb(2.0, AbsorbedDose::from_base(50.0), 0.2)
+            dvh.ntcp_lkb(dimensionless(2.0), AbsorbedDose::from_base(50.0), 0.2)
                 .expect("valid response"),
             ntcp_model.evaluate(geud).expect("valid response").get(),
             epsilon = 1e-14
         );
         assert_relative_eq!(
-            dvh.tcp_logistic(2.0, AbsorbedDose::from_base(55.0), 2.0)
+            dvh.tcp_logistic(dimensionless(2.0), AbsorbedDose::from_base(55.0), 2.0)
                 .expect("valid response"),
             tcp_model.evaluate(geud).expect("valid response").get(),
             epsilon = 1e-14
@@ -502,24 +518,24 @@ mod tests {
         let hot = Dvh::from_volume_masked(&dose, |idx| idx[0] >= 2);
         let cold = Dvh::from_volume_masked(&dose, |idx| idx[0] < 2);
         assert_relative_eq!(
-            hot.generalized_eud(1.0)
+            hot.generalized_eud(dimensionless(1.0))
                 .expect("valid response")
                 .into_base(),
             80.0,
             epsilon = 1e-12
         );
         assert_relative_eq!(
-            cold.generalized_eud(1.0)
+            cold.generalized_eud(dimensionless(1.0))
                 .expect("valid response")
                 .into_base(),
             20.0,
             epsilon = 1e-12
         );
         assert!(
-            hot.ntcp_lkb(1.0, AbsorbedDose::from_base(50.0), 0.2)
+            hot.ntcp_lkb(dimensionless(1.0), AbsorbedDose::from_base(50.0), 0.2)
                 .expect("valid response")
                 > cold
-                    .ntcp_lkb(1.0, AbsorbedDose::from_base(50.0), 0.2)
+                    .ntcp_lkb(dimensionless(1.0), AbsorbedDose::from_base(50.0), 0.2)
                     .expect("valid response")
         );
     }

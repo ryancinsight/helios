@@ -363,8 +363,12 @@ fn per_structure_plan_evaluation_over_delivered_dose() {
         ptv.mean().into_base(),
         oar.mean().into_base()
     );
-    let ptv_geud = ptv.generalized_eud(1.0).expect("valid PTV response");
-    let oar_geud = oar.generalized_eud(1.0).expect("valid OAR response");
+    let ptv_geud = ptv
+        .generalized_eud(Dimensionless::from_base(1.0))
+        .expect("valid PTV response");
+    let oar_geud = oar
+        .generalized_eud(Dimensionless::from_base(1.0))
+        .expect("valid OAR response");
     assert!(ptv_geud > oar_geud, "PTV gEUD must exceed OAR gEUD");
 
     // Outcome models are well-formed probabilities. With TCD50 set below the PTV
@@ -375,10 +379,10 @@ fn per_structure_plan_evaluation_over_delivered_dose() {
         "OAR (in-water) must receive some dose"
     );
     let tcp = ptv
-        .tcp_logistic(1.0, ptv_geud * 0.8, 2.0)
+        .tcp_logistic(Dimensionless::from_base(1.0), ptv_geud * 0.8, 2.0)
         .expect("valid tumour-control response");
     let ntcp = oar
-        .ntcp_lkb(1.0, oar_geud * 2.0, 0.3)
+        .ntcp_lkb(Dimensionless::from_base(1.0), oar_geud * 2.0, 0.3)
         .expect("valid complication response");
     assert!(
         (0.0..=1.0).contains(&tcp) && tcp > 0.5,

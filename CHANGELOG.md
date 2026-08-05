@@ -9,6 +9,14 @@ under a Breaking subsection.
 
 ### Changed
 
+- **Breaking**: `helios-planning` autodiff DVH floors/ceilings and gEUD
+  references now use Aequitas `AbsorbedDose<f64>`, while the gEUD volume-effect
+  parameter uses `Dimensionless<f64>`. The shared `helios-analysis::Dvh`
+  gEUD/TCP/NTCP entry points use the same typed exponent. Scalar extraction
+  remains at the Coeus/Asclepius formula boundaries. The real planning law has
+  no imaginary or complex unit. See [ADR 0017](docs/adr/0017-planning-dose-quantities.md)
+  and [H-099](backlog.md).
+
 - **Breaking**: `helios-imaging::Sinogram`, `parallel_beam_radon`, and
   `sirt_reconstruction` now carry projection angles, detector offsets, source
   distance, and ray-march step as Aequitas `Angle`/`Length` values. Scalar

@@ -1,5 +1,24 @@
 # Helios Checklist (tactical)
 
+## Codex — H-099 typed inverse-planning dose objectives [arch] [major] — done 2026-08-05
+
+- [x] Audit `helios-planning` autodiff and `helios-analysis::Dvh` contracts and
+      classify dose, dimensionless, coefficient, and tensor-storage boundaries.
+- [x] Carry DVH floor/ceiling and gEUD reference values as Aequitas
+      `AbsorbedDose<f64>` and the gEUD volume-effect parameter as
+      `Dimensionless<f64>` across planning and DVH APIs; extract only at the
+      Coeus/Asclepius scalar boundaries.
+- [x] Record ADR 0017 and the Eunomia real-only/no-imaginary-unit rule; remove
+      the stale RustSec 2026 ignore from workflow and dependency policy.
+- [x] Run formatting and the all-feature planning package check; retain the
+      focused value-semantic autodiff tests as the behavior oracle.
+
+Evidence: `cargo check -p helios-planning -p helios-analysis --all-features
+--offline --tests` is the focused overlay gate. The shared-target Nextest
+collection was queued behind concurrent provider builds and exceeded the local
+command bound before test execution; hosted locked Nextest remains the
+authoritative clean-source gate.
+
 ## Codex — H-097 typed Radon imaging geometry [arch] [major] — done 2026-08-02
 
 - [x] Carry `Angle<T>` and `Length<T>` through `Sinogram`, Radon, FBP, SIRT,
