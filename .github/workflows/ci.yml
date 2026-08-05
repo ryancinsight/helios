@@ -124,11 +124,25 @@ jobs:
         with:
           path: helios-candidate
 
+      - name: Checkout candidate path dependencies
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
+        with:
+          manifest: helios-candidate/Cargo.toml
+          destination: .
+          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
+
       - name: Checkout historical baseline path dependencies
         uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
         with:
           manifest: helios-baseline/Cargo.toml
-          destination: ..
+          destination: .
+          atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
+
+      - name: Checkout Coeus path dependencies
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@51d8600cf3077e6ad6aafa5603b3289444b1719f
+        with:
+          manifest: coeus/Cargo.toml
+          destination: .
           atlas_ref: 51d8600cf3077e6ad6aafa5603b3289444b1719f
 
       - name: Checkout Atlas benchmark gate

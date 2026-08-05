@@ -18,22 +18,31 @@ doctests, Rustdoc, touched-file Rustfmt, and the analysis validation example
 check pass. The downstream simulation gate remains externally blocked by
 Moirai/Mnemosyne provider diagnostics recorded in `gap_audit.md`.
 
-## Codex — H-098 historical benchmark baseline gate [patch] — review
+## Codex — H-098 historical benchmark and provider-graph gate [patch] — review
 
 - [x] Reproduce the hosted failure: baseline compilation could not read
       `moirai/moirai-parallel/Cargo.toml` because the baseline manifest still
       uses external sibling path dependencies.
-- [x] Materialize only the historical baseline path dependencies through the
-      Atlas checkout tool at the provider-parent destination; candidate source
-      remains on its committed Git dependencies.
+- [x] Materialize candidate, historical-baseline, and Coeus path dependencies
+      through the pinned Atlas checkout tool at workspace `.`; the baseline's
+      `../moirai/*` paths then resolve under the checked-out workspace.
 - [x] Remove job-level and step-level `continue-on-error` masking and require
       locked metadata plus locked benchmark compilation and measurement.
+- [x] Regenerate `Cargo.lock` outside the Atlas local-path overlay so every
+      first-party package has a real Git source identity; pin Gaia to
+      `e24b070` and Asclepius to `560bc97` while their Eunomia-0.8 corrections
+      remain in review.
 - [ ] Collect the exact-head hosted Rust, Python, and phase-replicated
-      benchmark matrix after the correction.
+      benchmark matrix after the workflow and provider graph corrections.
 
 Evidence: hosted run `30913557127` fails before benchmark execution at the
-baseline manifest load; the correction is committed on the H-097 branch and
-awaits its replacement matrix.
+baseline manifest load. The subsequent run `30967195570` identified the
+candidate/Coeus checkout regression and the Gaia `^0.7` resolver mismatch.
+The corrected workflow and clean lock are now local; hosted exact-head gates
+remain open. The temporary provider pins are removed after PRs `gaia#21` and
+`asclepius#6` merge. Local evidence at this graph is locked metadata,
+warning-denied workspace Clippy, 285/285 configured Nextest tests, doctests,
+and warning-denied Rustdoc; all pass.
 
 ## Codex — H-096 typed helical acquisition outcomes [arch] [major] — done 2026-07-31
 

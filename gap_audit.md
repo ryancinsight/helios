@@ -51,7 +51,7 @@ but is rejected by Moirai's existing `missing_docs` errors for public fields in
 These are external provider integration blockers, not failures of the typed
 Radon contract; they remain open in the provider-owned audit path.
 
-## Historical benchmark baseline path dependency gate (H-098, 2026-08-04)
+## Historical benchmark and provider-graph gate (H-098, 2026-08-04)
 
 The H-097 hosted benchmark job reached candidate compilation but failed while
 loading the historical baseline workspace: its committed `Cargo.toml` still
@@ -59,16 +59,32 @@ declares `../moirai/moirai` and `../moirai/moirai-parallel`, and the clean
 runner did not contain those sibling checkouts. The failure occurred before a
 benchmark binary or metric was executed (`30913557127`).
 
-The workflow now materializes only those baseline path dependencies through
-the pinned Atlas checkout tool at the provider-parent destination. The
-candidate remains on its committed Git-source graph. Baseline metadata and
-both benchmark phases require `--locked`, and the job no longer marks this
-failure class successful with `continue-on-error`.
+The corrected workflow materializes the candidate, historical baseline, and
+Coeus path dependencies through the pinned Atlas checkout tool at workspace
+`.`. This is required because the baseline's `../moirai/moirai` and
+`../moirai/moirai-parallel` paths resolve relative to its checked-out workspace;
+using `..` placed the repositories one level too high and caused the checkout
+action to inspect a non-repository directory. Baseline metadata and both
+benchmark phases require `--locked`, and the job no longer marks this failure
+class successful with `continue-on-error`.
 
-This is a verification-infrastructure correction, not a new physical metric
-or unit. It does not change the benchmark source, workload, counterbalancing,
-classifier, or Eunomia boundary. The replacement hosted matrix is the closure
-oracle; no Aequitas gap is inferred from the pre-execution failure.
+The first clean lock regeneration then exposed a separate provider defect:
+Gaia and Asclepius still required Eunomia `^0.7.0` while current Aequitas and
+Leto require Eunomia `0.8.0`. Helios now uses exact review pins to Gaia
+`e24b070ae0470247a0379990ad64d55ad98f2e84` and Asclepius
+`560bc973e7a9ecd02ebbc71480b4cf9a815c6b1a`, and `Cargo.lock` was regenerated
+outside Atlas's local path overlay so its first-party entries carry real Git
+source identities. These pins are quarantine, not compatibility shims; remove
+them and regenerate the clean lock after `gaia#21` and `asclepius#6` merge.
+
+This is a verification-infrastructure and dependency-graph correction, not a
+new physical metric or unit. It does not change the benchmark source,
+workload, counterbalancing, classifier, or Eunomia boundary. The replacement
+hosted matrix is the closure oracle; no Aequitas gap is inferred from the
+pre-execution failures. Helios's public physical contracts remain real-valued;
+no imaginary or complex unit is required. Local locked metadata,
+warning-denied workspace Clippy, 285/285 configured Nextest tests, doctests,
+and warning-denied Rustdoc pass against the clean graph.
 
 ## Aequitas metric audit refresh (2026-07-27)
 
