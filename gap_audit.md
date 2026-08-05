@@ -70,12 +70,11 @@ class successful with `continue-on-error`.
 
 The first clean lock regeneration then exposed a separate provider defect:
 Gaia and Asclepius still required Eunomia `^0.7.0` while current Aequitas and
-Leto require Eunomia `0.8.0`. Helios now uses exact review pins to Gaia
-`e24b070ae0470247a0379990ad64d55ad98f2e84` and Asclepius
-`560bc973e7a9ecd02ebbc71480b4cf9a815c6b1a`, and `Cargo.lock` was regenerated
-outside Atlas's local path overlay so its first-party entries carry real Git
-source identities. These pins are quarantine, not compatibility shims; remove
-them and regenerate the clean lock after `gaia#21` and `asclepius#6` merge.
+Leto require Eunomia `0.8.0`. Gaia PR `#21` and Asclepius PR `#6` corrected
+those manifests and are merged at `683565e` and `3463a70`. Helios now uses
+their normal Git dependencies, and `Cargo.lock` was regenerated outside
+Atlas's local path overlay so its first-party entries carry real Git source
+identities. No temporary pin or compatibility shim remains.
 
 This is a verification-infrastructure and dependency-graph correction, not a
 new physical metric or unit. It does not change the benchmark source,
@@ -84,7 +83,10 @@ hosted matrix is the closure oracle; no Aequitas gap is inferred from the
 pre-execution failures. Helios's public physical contracts remain real-valued;
 no imaginary or complex unit is required. Local locked metadata,
 warning-denied workspace Clippy, 285/285 configured Nextest tests, doctests,
-and warning-denied Rustdoc pass against the clean graph.
+and warning-denied Rustdoc pass against the clean graph; the post-merge-graph
+Nextest run is `0eff8ef7-ca1e-4e50-9a8e-c9e070e671cc`. The only remaining
+closure item is the hosted exact-head Rust, Python, and phase-replicated
+benchmark matrix.
 
 ## Aequitas metric audit refresh (2026-07-27)
 

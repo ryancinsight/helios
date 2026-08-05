@@ -176,7 +176,7 @@ checksum = "d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56"
 [[package]]
 name = "asclepius"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/asclepius?rev=560bc973e7a9ecd02ebbc71480b4cf9a815c6b1a#560bc973e7a9ecd02ebbc71480b4cf9a815c6b1a"
+source = "git+https://github.com/ryancinsight/asclepius#3463a70d155942ff54f3b82cf494145ababd7f61"
 dependencies = [
  "aequitas",
  "eunomia",
@@ -185,7 +185,7 @@ dependencies = [
 [[package]]
 name = "asclepius-coeus"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/asclepius?rev=560bc973e7a9ecd02ebbc71480b4cf9a815c6b1a#560bc973e7a9ecd02ebbc71480b4cf9a815c6b1a"
+source = "git+https://github.com/ryancinsight/asclepius#3463a70d155942ff54f3b82cf494145ababd7f61"
 dependencies = [
  "asclepius",
  "coeus-autograd",
@@ -1149,7 +1149,7 @@ dependencies = [
 [[package]]
 name = "gaia"
 version = "0.3.0"
-source = "git+https://github.com/ryancinsight/gaia?rev=e24b070ae0470247a0379990ad64d55ad98f2e84#e24b070ae0470247a0379990ad64d55ad98f2e84"
+source = "git+https://github.com/ryancinsight/gaia#683565ec1e87e7d0e32e4dcf0810b597346a52c6"
 dependencies = [
  "anyhow",
  "eunomia",
@@ -1926,7 +1926,7 @@ checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
 [[package]]
 name = "melinoe"
 version = "0.9.0"
-source = "git+https://github.com/ryancinsight/melinoe.git#40d0f7ca080f1d4df2cd8e2d16d5e5bbd8a25e88"
+source = "git+https://github.com/ryancinsight/melinoe.git#9988daa956edc23bee7dcb4b1955b2871a68c31e"
 
 [[package]]
 name = "memchr"

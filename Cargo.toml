@@ -77,7 +77,7 @@ ritk-registration = { git = "https://github.com/ryancinsight/ritk" }
 # typed attribute access, transfer-syntax dispatch, and pixel decoding.
 ritk-dicom = { git = "https://github.com/ryancinsight/ritk" }
 # Geometry kernel (binary MLC, collimators, jaws, patient meshes).
-gaia = { git = "https://github.com/ryancinsight/gaia", rev = "e24b070ae0470247a0379990ad64d55ad98f2e84", default-features = false }
+gaia = { git = "https://github.com/ryancinsight/gaia", default-features = false }
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.
 hephaestus-core = { git = "https://github.com/ryancinsight/hephaestus" }
 hephaestus-wgpu = { git = "https://github.com/ryancinsight/hephaestus" }
@@ -89,8 +89,8 @@ coeus-tensor = { git = "https://github.com/ryancinsight/Coeus.git" }
 coeus-autograd = { git = "https://github.com/ryancinsight/Coeus.git" }
 coeus-optim = { git = "https://github.com/ryancinsight/Coeus.git" }
 # Biological-response laws and their Coeus tape construction.
-asclepius = { git = "https://github.com/ryancinsight/asclepius", rev = "560bc973e7a9ecd02ebbc71480b4cf9a815c6b1a" }
-asclepius-coeus = { git = "https://github.com/ryancinsight/asclepius", rev = "560bc973e7a9ecd02ebbc71480b4cf9a815c6b1a" }
+asclepius = { git = "https://github.com/ryancinsight/asclepius" }
+asclepius-coeus = { git = "https://github.com/ryancinsight/asclepius" }
 # Volumetric storage (HDF5/Zarr, compression).
 consus-core = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
 consus-hdf5 = { git = "https://github.com/ryancinsight/consus", features = ["std"] }

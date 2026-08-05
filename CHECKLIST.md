@@ -28,10 +28,9 @@ Moirai/Mnemosyne provider diagnostics recorded in `gap_audit.md`.
       `../moirai/*` paths then resolve under the checked-out workspace.
 - [x] Remove job-level and step-level `continue-on-error` masking and require
       locked metadata plus locked benchmark compilation and measurement.
-- [x] Regenerate `Cargo.lock` outside the Atlas local-path overlay so every
-      first-party package has a real Git source identity; pin Gaia to
-      `e24b070` and Asclepius to `560bc97` while their Eunomia-0.8 corrections
-      remain in review.
+- [x] Regenerate `Cargo.lock` outside the Atlas local-path overlay after the
+      provider corrections merged; Gaia resolves at `683565e`, Asclepius at
+      `3463a70`, and every first-party package has a real Git source identity.
 - [ ] Collect the exact-head hosted Rust, Python, and phase-replicated
       benchmark matrix after the workflow and provider graph corrections.
 
@@ -39,10 +38,12 @@ Evidence: hosted run `30913557127` fails before benchmark execution at the
 baseline manifest load. The subsequent run `30967195570` identified the
 candidate/Coeus checkout regression and the Gaia `^0.7` resolver mismatch.
 The corrected workflow and clean lock are now local; hosted exact-head gates
-remain open. The temporary provider pins are removed after PRs `gaia#21` and
-`asclepius#6` merge. Local evidence at this graph is locked metadata,
+remain open. Gaia PR `#21` and Asclepius PR `#6` are merged. Local evidence at
+this graph is locked metadata,
 warning-denied workspace Clippy, 285/285 configured Nextest tests, doctests,
-and warning-denied Rustdoc; all pass.
+and warning-denied Rustdoc; all pass. The post-merge-graph Nextest run is
+`0eff8ef7-ca1e-4e50-9a8e-c9e070e671cc`. The remaining acceptance item is the
+exact-head hosted Rust, Python, and phase-replicated benchmark matrix.
 
 ## Codex — H-096 typed helical acquisition outcomes [arch] [major] — done 2026-07-31
 
