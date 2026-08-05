@@ -26,8 +26,10 @@ imaginary dose unit or complex physical wrapper is introduced. The focused
 all-feature package check passes; the value-semantic autodiff suite retains its
 independent gEUD, finite-difference, hinge, and optimizer coverage. The
 committed lock now includes the direct planning-to-Aequitas edge with Git
-source identity, and the exact clean-source locked package check passes. See
-[`ADR 0017`](docs/adr/0017-planning-dose-quantities.md).
+source identity, and the exact clean-source locked package check passes. Hosted
+run `31011688127` passes the Rust, Python, dependency, and phase-replicated
+benchmark gates at exact head `c00d270`; the classifier reports 0 regressions
+and 0 replication-universe mismatches. See [`ADR 0017`](docs/adr/0017-planning-dose-quantities.md).
 
 ## Eunomia complex compatibility refresh (2026-07-28)
 
@@ -115,9 +117,9 @@ pre-execution failures. Helios's public physical contracts remain real-valued;
 no imaginary or complex unit is required. Local locked metadata,
 warning-denied workspace Clippy, 285/285 configured Nextest tests, doctests,
 and warning-denied Rustdoc pass against the clean graph; the post-merge-graph
-Nextest run is `0eff8ef7-ca1e-4e50-9a8e-c9e070e671cc`. The only remaining
-closure item is the replacement hosted exact-head Rust, Python, and
-phase-replicated benchmark matrix after the invalid Coeus checkout removal.
+Nextest run is `0eff8ef7-ca1e-4e50-9a8e-c9e070e671cc`. Hosted run
+`31011688127` passes all required jobs with 0 benchmark regressions and 0
+replication-universe mismatches. H-098 is closed.
 
 ## Aequitas metric audit refresh (2026-07-27)
 

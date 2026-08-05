@@ -43,10 +43,12 @@ boundaries.
 ## Verification
 
 The focused planning and analysis package checks with all features pass against
-the clean locked Eunomia 0.8/Aequitas graph. Value-semantic tests cover the independent
-gEUD oracle, finite-difference gradient, zero-violation band, DVH optimizer,
-and the shared DVH/clinical/end-to-end callers. The repository's locked hosted
-matrix remains the final source-identity gate; the local Atlas overlay cannot
-execute the standalone lock because its path patches intentionally replace the
-committed Git sources; the lock was regenerated from the normal Git graph and
-the clean `--locked` check passes.
+the clean locked Eunomia 0.8/Aequitas graph. Value-semantic tests cover the
+independent gEUD oracle, finite-difference gradient, zero-violation band, DVH
+optimizer, and the shared DVH/clinical/end-to-end callers. Hosted run
+`31011688127` passes the Rust, Python, dependency, and phase-replicated
+benchmark gates at exact head `c00d270`; the benchmark classifier reports 0
+regressions and 0 replication-universe mismatches. The local Atlas overlay
+cannot execute the standalone lock because its path patches intentionally
+replace the committed Git sources; the lock was regenerated from the normal
+Git graph and the clean `--locked` check passes.

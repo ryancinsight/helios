@@ -19,9 +19,9 @@
 Evidence: clean-source `cargo check --manifest-path D:\atlas\repos\helios\Cargo.toml
 --locked -p helios-planning -p helios-analysis --all-features --tests` passes;
 the overlay focused check and 55/55 focused Nextest tests also pass. Hosted
-Rust, Python, and dependency gates pass at the pushed head. The phase-replicated
-benchmark initially failed before execution because the candidate lock lacked
-the new direct edge; the lock refresh in the follow-up commit is corrective.
+Rust, Python, dependency, and phase-replicated benchmark gates pass in hosted
+run `31011688127` at exact head `c00d270`. The benchmark classifier reports
+0 regressions and 0 replication-universe mismatches.
 
 ## Codex — H-097 typed Radon imaging geometry [arch] [major] — done 2026-08-02
 
@@ -41,7 +41,7 @@ doctests, Rustdoc, touched-file Rustfmt, and the analysis validation example
 check pass. The downstream simulation gate remains externally blocked by
 Moirai/Mnemosyne provider diagnostics recorded in `gap_audit.md`.
 
-## Codex — H-098 historical benchmark and provider-graph gate [patch] — review
+## Codex — H-098 historical benchmark and provider-graph gate [patch] — done 2026-08-05
 
 - [x] Reproduce the hosted failure: baseline compilation could not read
       `moirai/moirai-parallel/Cargo.toml` because the baseline manifest still
@@ -56,22 +56,20 @@ Moirai/Mnemosyne provider diagnostics recorded in `gap_audit.md`.
 - [x] Regenerate `Cargo.lock` outside the Atlas local-path overlay after the
       provider corrections merged; Gaia resolves at `683565e`, Asclepius at
       `3463a70`, and every first-party package has a real Git source identity.
-- [ ] Collect the exact-head hosted Rust, Python, and phase-replicated
+- [x] Collect the exact-head hosted Rust, Python, and phase-replicated
       benchmark matrix after the workflow and provider graph corrections.
 
-Evidence: hosted run `30913557127` fails before benchmark execution at the
-baseline manifest load. The subsequent run `30967195570` identified the
-candidate/Coeus checkout regression and the Gaia `^0.7` resolver mismatch.
-The corrected workflow and clean lock are now local; hosted exact-head gates
-remain open. Gaia PR `#21` and Asclepius PR `#6` are merged. Local evidence at
-this graph is locked metadata,
-warning-denied workspace Clippy, 285/285 configured Nextest tests, doctests,
-and warning-denied Rustdoc; all pass. The post-merge-graph Nextest run is
-`0eff8ef7-ca1e-4e50-9a8e-c9e070e671cc`. Hosted run `30970135338` passed the
-Python binding job and failed only at the invalid `coeus/Cargo.toml` checkout
-step; the correction removes that step. The remaining acceptance item is the
-replacement exact-head hosted Rust, Python, and phase-replicated benchmark
-matrix.
+Evidence: hosted run `31011688127` passes the Rust workspace, Python bindings,
+dependency policy, and phase-replicated benchmark jobs at exact head
+`c00d270`. The benchmark classifier reports 0 regressions and 0
+replication-universe mismatches. The two historical `scan_reference/1024`
+measurements are counterbalanced (`+0.17%` baseline-first versus `-0.27%`
+candidate-first), so they do not classify as a regression. Local evidence at
+this graph remains locked metadata, warning-denied workspace Clippy, 285/285
+configured Nextest tests, doctests, and warning-denied Rustdoc; all pass. The
+earlier `30913557127`, `30967195570`, and `30970135338` failures occurred
+before benchmark execution and are retained as diagnostic history, not open
+residuals. Gaia PR `#21` and Asclepius PR `#6` are merged.
 
 ## Codex — H-096 typed helical acquisition outcomes [arch] [major] — done 2026-07-31
 
