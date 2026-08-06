@@ -14,7 +14,10 @@
 //! `σ_T = (8/3)π r_e²` (the low-energy analytical oracle used in the tests).
 //! Result units are m² per electron.
 
-use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
+use aequitas::systems::si::{
+    quantities::{AreaPerMass, Energy},
+    units::{MegaElectronVolt, SquareCentimeterPerGram},
+};
 use eunomia::UnitScalar;
 use helios_core::constants::{
     AVOGADRO_PER_MOL, CLASSICAL_ELECTRON_RADIUS_M, ELECTRON_REST_ENERGY_MEV,
@@ -35,19 +38,20 @@ pub fn thomson_cross_section<T: Scalar>() -> T {
 }
 
 /// Klein–Nishina total Compton cross-section per electron (m²) for a photon of
-/// energy `photon_energy_mev` (MeV).
+/// energy `photon_energy`.
 ///
 /// # Panics
 /// Does not panic for finite positive energies. Very small energies are handled
 /// by the closed form (which is numerically stable away from `α = 0`); for the
 /// exact `α → 0` limit use [`thomson_cross_section`].
 #[must_use]
-pub fn klein_nishina_cross_section<T: Scalar>(photon_energy_mev: T) -> T {
+pub fn klein_nishina_cross_section<T: Scalar + UnitScalar>(photon_energy: Energy<T>) -> T {
     let r_e = T::from_f64(CLASSICAL_ELECTRON_RADIUS_M);
     let one = <T as NumericElement>::ONE;
     let two = T::from_f64(2.0);
     let three = T::from_f64(3.0);
 
+    let photon_energy_mev = photon_energy.in_unit::<MegaElectronVolt>();
     let alpha = photon_energy_mev * T::from_f64(ELECTRON_REST_ENERGY_MEV).recip();
     let one_plus_two_alpha = one + two * alpha;
     let ln_term = one_plus_two_alpha.ln();
@@ -77,10 +81,10 @@ pub fn electrons_per_gram<T: Scalar>(z_over_a: T) -> T {
 /// NIST value at 1 MeV) — a derived coefficient, not a fabricated table entry.
 #[must_use]
 pub fn compton_mass_attenuation<T: Scalar + UnitScalar>(
-    photon_energy_mev: T,
+    photon_energy: Energy<T>,
     electrons_per_gram: T,
 ) -> MassAttenuation<T> {
-    let sigma_cm2 = klein_nishina_cross_section(photon_energy_mev) * T::from_f64(CM2_PER_M2);
+    let sigma_cm2 = klein_nishina_cross_section(photon_energy) * T::from_f64(CM2_PER_M2);
     let mu_over_rho = sigma_cm2 * electrons_per_gram;
     MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(
         mu_over_rho,
@@ -89,14 +93,15 @@ pub fn compton_mass_attenuation<T: Scalar + UnitScalar>(
 }
 
 /// Klein–Nishina differential cross-section `dσ/dΩ` (m²/sr) per electron at
-/// scattering angle `θ` (given as `cos θ`) for a photon of energy `energy_mev`.
+/// scattering angle `θ` (given as `cos θ`) for a photon of energy `energy`.
 ///
 /// `dσ/dΩ = ½ r_e² (E'/E)² (E/E' + E'/E − sin²θ)`, with the Compton scattered-to-
 /// incident energy ratio `E'/E = 1 / (1 + α(1 − cosθ))`, `α = E / m_e c²`.
 #[must_use]
-pub fn klein_nishina_differential<T: Scalar>(energy_mev: T, cos_theta: T) -> T {
+pub fn klein_nishina_differential<T: Scalar + UnitScalar>(energy: Energy<T>, cos_theta: T) -> T {
     let r_e = T::from_f64(CLASSICAL_ELECTRON_RADIUS_M);
     let one = <T as NumericElement>::ONE;
+    let energy_mev = energy.in_unit::<MegaElectronVolt>();
     let alpha = energy_mev * T::from_f64(ELECTRON_REST_ENERGY_MEV).recip();
     let ratio = (one + alpha * (one - cos_theta)).recip();
     let sin_sq = one - cos_theta * cos_theta;
@@ -106,7 +111,7 @@ pub fn klein_nishina_differential<T: Scalar>(energy_mev: T, cos_theta: T) -> T {
 /// Midpoint-integrate the Klein–Nishina differential over solid angle, returning
 /// `(σ_total, σ_transfer)`: the total cross-section and the energy-transfer
 /// cross-section `σ_tr = ∫ (dσ/dΩ)(1 − E'/E) dΩ`.
-fn integrate_compton<T: Scalar>(energy_mev: T, steps: usize) -> (T, T) {
+fn integrate_compton<T: Scalar + UnitScalar>(energy_mev: T, steps: usize) -> (T, T) {
     let one = <T as NumericElement>::ONE;
     let zero = <T as NumericElement>::ZERO;
     let alpha = energy_mev * T::from_f64(ELECTRON_REST_ENERGY_MEV).recip();
@@ -120,7 +125,8 @@ fn integrate_compton<T: Scalar>(energy_mev: T, steps: usize) -> (T, T) {
         let theta = (T::from_f64(i as f64) + half) * d_theta;
         let cos_t = theta.cos();
         let sin_t = theta.sin();
-        let diff = klein_nishina_differential(energy_mev, cos_t);
+        let energy = Energy::from_unit::<MegaElectronVolt>(energy_mev);
+        let diff = klein_nishina_differential(energy, cos_t);
         let ratio = (one + alpha * (one - cos_t)).recip();
         // Solid-angle element integrated over azimuth: 2π sinθ dθ.
         let weight = two_pi * sin_t * d_theta;
@@ -131,19 +137,19 @@ fn integrate_compton<T: Scalar>(energy_mev: T, steps: usize) -> (T, T) {
 }
 
 /// Klein–Nishina Compton **energy-transfer** cross-section per electron (m²) for
-/// `energy_mev` — the fraction of the total cross-section weighted by the energy
+/// `energy` — the fraction of the total cross-section weighted by the energy
 /// given to the recoil electron. Feeds collision kerma. Computed by quadrature of
 /// [`klein_nishina_differential`] (self-validated against the closed-form total).
 #[must_use]
-pub fn compton_energy_transfer_cross_section<T: Scalar>(energy_mev: T) -> T {
-    integrate_compton(energy_mev, 4096).1
+pub fn compton_energy_transfer_cross_section<T: Scalar + UnitScalar>(energy: Energy<T>) -> T {
+    integrate_compton(energy.in_unit::<MegaElectronVolt>(), 4096).1
 }
 
 /// Mean fraction of photon energy transferred to the recoil electron per Compton
 /// interaction, `σ_tr / σ_KN` (dimensionless, in `[0, 1)`).
 #[must_use]
-pub fn compton_mean_energy_transfer_fraction<T: Scalar>(energy_mev: T) -> T {
-    let (total, transfer) = integrate_compton(energy_mev, 4096);
+pub fn compton_mean_energy_transfer_fraction<T: Scalar + UnitScalar>(energy: Energy<T>) -> T {
+    let (total, transfer) = integrate_compton(energy.in_unit::<MegaElectronVolt>(), 4096);
     transfer * total.recip()
 }
 
@@ -153,10 +159,10 @@ pub fn compton_mean_energy_transfer_fraction<T: Scalar>(energy_mev: T) -> T {
 /// (water at MV), kerma ≈ dose, so this is the dose-relevant Compton coefficient.
 #[must_use]
 pub fn compton_mass_energy_transfer<T: Scalar + UnitScalar>(
-    energy_mev: T,
+    energy: Energy<T>,
     electrons_per_gram: T,
 ) -> MassAttenuation<T> {
-    let sigma_tr_cm2 = compton_energy_transfer_cross_section(energy_mev) * T::from_f64(CM2_PER_M2);
+    let sigma_tr_cm2 = compton_energy_transfer_cross_section(energy) * T::from_f64(CM2_PER_M2);
     MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(
         sigma_tr_cm2 * electrons_per_gram,
     ))
@@ -166,7 +172,12 @@ pub fn compton_mass_energy_transfer<T: Scalar + UnitScalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use aequitas::systems::si::units::ElectronVolt;
     use eunomia::assert_relative_eq;
+
+    fn photon_energy<T: Scalar + UnitScalar>(mev: T) -> Energy<T> {
+        Energy::from_unit::<MegaElectronVolt>(mev)
+    }
 
     // CODATA Thomson cross-section: 6.6524587321e-29 m². Independent numeric check
     // of the (8/3)π r_e² formula against the published value.
@@ -189,7 +200,7 @@ mod tests {
         // that is ill-conditioned as α→0, so this near-limit check requires f64
         // precision (f32 genericity is checked at a well-conditioned energy below).
         let sigma_t = thomson_cross_section::<f64>();
-        let sigma_kn = klein_nishina_cross_section(0.001_f64);
+        let sigma_kn = klein_nishina_cross_section(photon_energy(0.001_f64));
         assert!(sigma_kn < sigma_t, "KN must be below Thomson");
         assert_relative_eq!(sigma_kn / sigma_t, 1.0, max_relative = 1e-2);
     }
@@ -200,7 +211,7 @@ mod tests {
         let energies = [0.03_f64, 0.1, 0.5, 1.25, 6.0, 18.0];
         let sigmas: Vec<f64> = energies
             .iter()
-            .map(|&e| klein_nishina_cross_section(e))
+            .map(|&e| klein_nishina_cross_section(photon_energy(e)))
             .collect();
         for pair in sigmas.windows(2) {
             assert!(pair[1] < pair[0], "σ must decrease with energy: {pair:?}");
@@ -209,9 +220,17 @@ mod tests {
     }
 
     #[test]
+    fn energy_unit_conversion_preserves_compton_result() {
+        let one_mev = klein_nishina_cross_section(photon_energy(1.0_f64));
+        let one_mev_in_ev = klein_nishina_cross_section(Energy::from_unit::<ElectronVolt>(1.0e6));
+        assert_relative_eq!(one_mev_in_ev, one_mev, max_relative = 1e-12);
+    }
+
+    #[test]
     fn six_mv_is_well_below_thomson() {
         // At 6 MeV Compton is far into the relativistic regime; σ ≪ σ_T.
-        let ratio = klein_nishina_cross_section(6.0_f64) / thomson_cross_section::<f64>();
+        let ratio =
+            klein_nishina_cross_section(photon_energy(6.0_f64)) / thomson_cross_section::<f64>();
         assert!(ratio < 0.2, "σ_KN(6 MeV)/σ_T = {ratio} should be ≪ 1");
         assert!(ratio > 0.0);
     }
@@ -232,16 +251,18 @@ mod tests {
         // (0.0707 cm²/g), which is Compton-dominated (~99.8%) at this energy.
         // The derived Compton-only value must match to within ~2%.
         let epg = electrons_per_gram(0.5551_f64);
-        let mu_over_rho =
-            compton_mass_attenuation(1.0_f64, epg).in_unit::<SquareCentimeterPerGram>();
+        let mu_over_rho = compton_mass_attenuation(photon_energy(1.0_f64), epg)
+            .in_unit::<SquareCentimeterPerGram>();
         assert_relative_eq!(mu_over_rho, 0.0707, max_relative = 2e-2);
     }
 
     #[test]
     fn derived_mu_over_rho_decreases_with_energy() {
         let epg = electrons_per_gram(0.5551_f64);
-        let low = compton_mass_attenuation(0.5_f64, epg).in_unit::<SquareCentimeterPerGram>();
-        let high = compton_mass_attenuation(6.0_f64, epg).in_unit::<SquareCentimeterPerGram>();
+        let low = compton_mass_attenuation(photon_energy(0.5_f64), epg)
+            .in_unit::<SquareCentimeterPerGram>();
+        let high = compton_mass_attenuation(photon_energy(6.0_f64), epg)
+            .in_unit::<SquareCentimeterPerGram>();
         assert!(
             high < low && high > 0.0,
             "μ/ρ Compton must fall with energy"
@@ -263,8 +284,8 @@ mod tests {
 
     #[test]
     fn single_precision_cross_section_tracks_the_double_precision_reference() {
-        let narrow = klein_nishina_cross_section(0.1_f32);
-        let wide = klein_nishina_cross_section(0.1_f64);
+        let narrow = klein_nishina_cross_section(photon_energy(0.1_f32));
+        let wide = klein_nishina_cross_section(photon_energy(0.1_f64));
 
         // Compton scattering never exceeds the Thomson limit.
         assert!(
@@ -289,7 +310,7 @@ mod tests {
             let (numeric_total, _) = integrate_compton(e, 8192);
             assert_relative_eq!(
                 numeric_total,
-                klein_nishina_cross_section(e),
+                klein_nishina_cross_section(photon_energy(e)),
                 max_relative = 1e-4
             );
         }
@@ -303,8 +324,8 @@ mod tests {
             let (total, transfer) = integrate_compton(e, 4096);
             assert!(transfer > 0.0 && transfer < total, "E={e}");
         }
-        let f_low = compton_mean_energy_transfer_fraction(0.1_f64);
-        let f_high = compton_mean_energy_transfer_fraction(6.0_f64);
+        let f_low = compton_mean_energy_transfer_fraction(photon_energy(0.1_f64));
+        let f_high = compton_mean_energy_transfer_fraction(photon_energy(6.0_f64));
         assert!(f_low > 0.0 && f_low < 1.0);
         assert!(f_high > f_low, "transfer fraction must grow with energy");
     }
@@ -315,7 +336,8 @@ mod tests {
         // (≈0.0310 cm²/g, Compton-dominated). Validates the energy-transfer
         // integral against a published coefficient — within ~5%.
         let epg = electrons_per_gram(0.5551_f64);
-        let mu_tr = compton_mass_energy_transfer(1.0_f64, epg).in_unit::<SquareCentimeterPerGram>();
+        let mu_tr = compton_mass_energy_transfer(photon_energy(1.0_f64), epg)
+            .in_unit::<SquareCentimeterPerGram>();
         assert_relative_eq!(mu_tr, 0.0310, max_relative = 5e-2);
     }
 
@@ -324,7 +346,7 @@ mod tests {
         /// across the diagnostic→therapy energy range.
         #[test]
         fn kn_is_positive_and_below_thomson(e in 1e-3_f64..25.0) {
-            let sigma = klein_nishina_cross_section(e);
+            let sigma = klein_nishina_cross_section(photon_energy(e));
             let sigma_t = thomson_cross_section::<f64>();
             // Small tolerance on the upper bound for the near-α=0 cancellation.
             proptest::prop_assert!(sigma > 0.0 && sigma <= sigma_t * (1.0 + 1e-6), "σ={sigma}");
@@ -333,8 +355,8 @@ mod tests {
         /// The cross-section decreases monotonically with photon energy.
         #[test]
         fn kn_decreases_with_energy(e in 0.05_f64..25.0, delta in 1e-3_f64..25.0) {
-            let lo = klein_nishina_cross_section(e);
-            let hi = klein_nishina_cross_section(e + delta);
+            let lo = klein_nishina_cross_section(photon_energy(e));
+            let hi = klein_nishina_cross_section(photon_energy(e + delta));
             proptest::prop_assert!(hi <= lo);
         }
 
@@ -345,9 +367,9 @@ mod tests {
             e in 0.1_f64..25.0,
             epg in 1e22_f64..1e24,
         ) {
-            let single = compton_mass_attenuation(e, epg)
+            let single = compton_mass_attenuation(photon_energy(e), epg)
                 .in_unit::<SquareCentimeterPerGram>();
-            let double = compton_mass_attenuation(e, epg * 2.0)
+            let double = compton_mass_attenuation(photon_energy(e), epg * 2.0)
                 .in_unit::<SquareCentimeterPerGram>();
             proptest::prop_assert!(single > 0.0);
             proptest::prop_assert!((double - 2.0 * single).abs() <= 1e-9 * (1.0 + double));
