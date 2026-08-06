@@ -81,7 +81,7 @@ gaia = { git = "https://github.com/ryancinsight/gaia", default-features = false 
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.
 hephaestus-core = { git = "https://github.com/ryancinsight/hephaestus" }
 hephaestus-wgpu = { git = "https://github.com/ryancinsight/hephaestus" }
-moirai = { version = "0.4.0", git = "https://github.com/ryancinsight/Moirai.git" }
+moirai = { version = "0.4.0", git = "https://github.com/ryancinsight/Moirai.git", package = "moirai-runtime" }
 moirai-parallel = { version = "0.4.0", git = "https://github.com/ryancinsight/Moirai.git", default-features = false, features = ["parallel"] }
 # Tensors, autodiff, optimizers, neural surrogates.
 coeus-core = { git = "https://github.com/ryancinsight/Coeus.git" }
@@ -110,8 +110,8 @@ tyche-core = { git = "https://github.com/ryancinsight/tyche" }
 leto = { git = "https://github.com/ryancinsight/leto", default-features = false, features = ["std"] }
 hermes-simd = { git = "https://github.com/ryancinsight/hermes" }
 # Memory management / placement.
-mnemosyne-core = { git = "https://github.com/ryancinsight/Mnemosyne.git" }
-themis = { git = "https://github.com/ryancinsight/themis" }
+mnemosyne-core = { git = "https://github.com/ryancinsight/Mnemosyne.git", package = "mnemosyne-memory-core" }
+themis = { git = "https://github.com/ryancinsight/themis", package = "themis-topology" }
 # Spectral / transform methods.
 apollo = { git = "https://github.com/ryancinsight/apollo", package = "apollo-fft" }
 
