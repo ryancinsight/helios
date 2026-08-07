@@ -58,27 +58,12 @@
   - [Example: GPU Attenuation Map and Forward Projection](examples/gpu_attenuation_projection.md)
 - [22. Coeus Tensor Operations for Dose Grids](gpu_coeus.md)
 
-# Part VII — Atlas Stack Migration
+# Part VII — Validation and Benchmarking
 
-- [23. Migration Overview](migration_overview.md)
-- [24. Eunomia: Numeric Traits](migration_eunomia.md)
-- [25. Leto: Arrays and Linalg](migration_arrays.md)
-- [26. Leto: Geometry](migration_geometry.md)
-- [27. Hermes: SIMD Lanes](migration_simd.md)
-- [28. Mnemosyne and Themis: Memory](migration_memory.md)
-- [29. Moirai: Concurrency](migration_concurrency.md)
-- [30. Apollo: FFT](migration_fft.md)
-- [31. Leto: GAT Tiling](migration_gat_tiles.md)
-- [32. Coeus: Tensors and Autodiff](migration_coeus.md)
-- [33. Ritk: Image I/O](migration_image_io.md)
-- [34. Migration Validation](migration_validation.md)
-
-# Part VIII — Validation and Benchmarking
-
-- [35. Reference Phantoms and Ground Truth](validation_phantoms.md)
-- [36. Analytical Solutions and Regression Tests](validation_regression.md)
+- [23. Reference Phantoms and Ground Truth](validation_phantoms.md)
+- [24. Analytical Solutions and Regression Tests](validation_regression.md)
   - [Example: Regression and Analytical Validation](examples/validation_regression.md)
-- [37. Clinical Protocol Compliance](validation_clinical.md)
+- [25. Clinical Protocol Compliance](validation_clinical.md)
   - [Example: Clinical Protocol Validation](examples/validation_clinical.md)
 
 # Appendix
@@ -86,5 +71,3 @@
 - [A. Atlas Crate Dependency Map](appendix_dependencies.md)
 - [B. Atlas Glossary](appendix_glossary.md)
 - [C. API Reference Index](appendix_api.md)
-- [D. Changelog](appendix_changelog.md)
-- [E. Book Organization Forward Roadmap](BOOK_ORGANIZATION.md)
