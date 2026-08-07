@@ -1,5 +1,16 @@
 # Helios Checklist (tactical)
 
+## current session — H-101 examples-only `book_*.rs` GPU placement seam [patch] — done 2026-08-07
+
+- [x] Added `crates/helios-gpu/examples/book_gpu_placement_hint.rs`.
+- [x] Kept the example on the existing `helios-gpu` public surface; no
+      solver/domain behavior or provider graph changes.
+- [x] Validation gates passed:
+  - `cargo check -p helios-gpu --examples`
+  - `cargo clippy -p helios-gpu --examples -- -D warnings`
+  - `cargo nextest run -p helios-gpu` (10/10)
+  - `cargo run -p xtask -- legacy-migration-audit` (clean)
+
 ## Codex — H-100 Themis GPU placement ownership [arch] [minor] — done 2026-08-05
 
 - [x] Alias the provider's actual package identity (`themis-topology`) in the
