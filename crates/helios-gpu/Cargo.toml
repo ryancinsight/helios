@@ -20,6 +20,7 @@ helios-math = { workspace = true }
 hephaestus-core = { workspace = true }
 hephaestus-wgpu = { workspace = true }
 leto = { workspace = true }
+themis = { workspace = true }
 
 [dev-dependencies]
 aequitas = { workspace = true }

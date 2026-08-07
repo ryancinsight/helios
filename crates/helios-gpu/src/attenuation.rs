@@ -24,6 +24,7 @@ use hephaestus_core::{
     KernelSource, Result, Wgsl,
 };
 use std::borrow::Cow;
+use themis::{MemoryTier, PlacementHint};
 
 /// Uniform parameter block of the fused affine-clamp kernel.
 ///
@@ -156,8 +157,11 @@ impl<D: KernelDevice<Dialect = Wgsl>> GpuAttenuationMapper<D> {
             message: format!("HU buffer length {} exceeds u32 range", ct_hu.len()),
         })?;
 
-        let input = self.device.upload(ct_hu)?;
-        let output = self.device.alloc_zeroed::<f32>(ct_hu.len())?;
+        let device_hint = PlacementHint::Tier(MemoryTier::Device);
+        let input = self.device.upload_with_hint(ct_hu, device_hint)?;
+        let output = self
+            .device
+            .alloc_zeroed_with_hint::<f32>(ct_hu.len(), device_hint)?;
         let params = AffineClampParams {
             scale: self.scale,
             offset: self.offset,

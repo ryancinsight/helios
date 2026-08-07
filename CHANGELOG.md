@@ -9,6 +9,13 @@ under a Breaking subsection.
 
 ### Changed
 
+- Bind the `moirai`, `mnemosyne-core`, and `themis` workspace dependencies to
+  their registry package identities (`moirai-runtime`,
+  `mnemosyne-memory-core`, `themis-topology`) so the Atlas overlay resolves
+  them to the local provider trees instead of published/stale crates. This
+  restores local-first provider utilization for the placement and
+  memory-locality seams (themis is consumed by `helios-gpu`).
+
 - **Breaking**: `helios-planning` autodiff DVH floors/ceilings and gEUD
   references now use Aequitas `AbsorbedDose<f64>`, while the gEUD volume-effect
   parameter uses `Dimensionless<f64>`. The shared `helios-analysis::Dvh`
