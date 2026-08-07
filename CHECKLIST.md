@@ -1,5 +1,26 @@
 # Helios Checklist (tactical)
 
+## Codex — H-100 Themis GPU placement ownership [arch] [minor] — done 2026-08-05
+
+- [x] Alias the provider's actual package identity (`themis-topology`) in the
+      Helios workspace SSOT and add only the owning `helios-gpu` edge.
+- [x] Replace GPU `upload`/allocation defaults in attenuation, projection, and
+      transmission with Themis `PlacementHint::Tier(MemoryTier::Device)`;
+      transmission uses a caller-owned output so the fused operation does not
+      hide an unhinted allocation.
+- [x] Keep placement vocabulary in Themis/Hephaestus and do not add a direct
+      Melinoe dependency; Melinoe remains transitively owned by Moirai.
+- [x] Retain the exact `helios-gpu -> themis-topology` lock edge without
+      retaining unrelated overlay regeneration.
+
+Evidence: touched-file Rustfmt and `git diff --check` pass. Unlocked/offline
+focused `helios-gpu` check, warning-denied Clippy, and Nextest pass (10/10);
+doctest collection passes with no executable doctests. Locked metadata/build
+commands remain blocked by the pre-existing Helios sibling-provider overlay:
+Cargo requests a 141-line source/patch lock reconciliation; that broad
+regeneration was not retained. The current lock contains the intentional direct
+`themis-topology` edge. Existing dirty workflow changes remain outside H-100.
+
 ## Codex — H-099 typed inverse-planning dose objectives [arch] [major] — done 2026-08-05
 
 - [x] Audit `helios-planning` autodiff and `helios-analysis::Dvh` contracts and

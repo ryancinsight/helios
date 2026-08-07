@@ -13,6 +13,7 @@ use helios_domain::Volume;
 use helios_math::UnitQuaternion;
 use hephaestus_core::{BlockWidth, ComputeDevice, HephaestusError, Result};
 use hephaestus_wgpu::{ray_line_integrals_into, FieldGeometry, WgpuBuffer, WgpuDevice, RAY_STRIDE};
+use themis::{MemoryTier, PlacementHint};
 
 /// An attenuation volume resident on the GPU, ready for batched forward
 /// projection.
@@ -35,7 +36,8 @@ impl GpuProjector {
     /// rejected before upload rather than projected with discarded orientation.
     pub fn new(device: &WgpuDevice, mu: &Volume<f32>) -> Result<Self> {
         let geometry = Self::field_geometry(mu)?;
-        let field = device.upload(mu.as_slice())?;
+        let field =
+            device.upload_with_hint(mu.as_slice(), PlacementHint::Tier(MemoryTier::Device))?;
         Ok(Self { field, geometry })
     }
 
@@ -95,8 +97,9 @@ impl GpuProjector {
         if out.is_empty() {
             return Ok(());
         }
-        let ray_buf = device.upload(rays)?;
-        let out_buf = device.alloc_zeroed::<f32>(out.len())?;
+        let device_hint = PlacementHint::Tier(MemoryTier::Device);
+        let ray_buf = device.upload_with_hint(rays, device_hint)?;
+        let out_buf = device.alloc_zeroed_with_hint::<f32>(out.len(), device_hint)?;
         ray_line_integrals_into(
             device,
             &self.field,

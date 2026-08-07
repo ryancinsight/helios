@@ -8,8 +8,9 @@
 //! transport law.
 
 use hephaestus_core::{BlockWidth, ComputeDevice, Result};
-use hephaestus_wgpu::{unary_elementwise_strided, ExpNegOp, StridedOperand, WgpuDevice};
+use hephaestus_wgpu::{unary_elementwise_strided_into, ExpNegOp, StridedOperand, WgpuDevice};
 use leto::Layout;
+use themis::{MemoryTier, PlacementHint};
 
 /// Compute `out[i] = exp(-optical_depth[i])` on the GPU.
 ///
@@ -26,18 +27,24 @@ pub fn beam_transmission_into(
     if optical_depth.is_empty() && out.is_empty() {
         return Ok(());
     }
-    let input = device.upload(optical_depth)?;
+    let device_hint = PlacementHint::Tier(MemoryTier::Device);
+    let input = device.upload_with_hint(optical_depth, device_hint)?;
     // A rank-1 contiguous layout over `n` elements is always valid.
     let layout = Layout::c_contiguous([optical_depth.len()])
         .expect("invariant: rank-1 contiguous layout of a slice length is valid");
+    let transmitted =
+        device.alloc_uninitialized_with_hint::<f32>(optical_depth.len(), device_hint)?;
 
-    let transmitted = unary_elementwise_strided::<ExpNegOp, f32, 1>(
+    unary_elementwise_strided_into::<ExpNegOp, f32, 1>(
         device,
         StridedOperand {
             buffer: &input,
             layout: &layout,
         },
-        [optical_depth.len()],
+        StridedOperand {
+            buffer: &transmitted,
+            layout: &layout,
+        },
         BlockWidth::DEFAULT,
     )?;
     device.download(&transmitted, out)
