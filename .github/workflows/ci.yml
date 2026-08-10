@@ -167,6 +167,17 @@ jobs:
           --all-features
           > /dev/null
 
+      - name: Normalize candidate lock
+        # The committed candidate lock records git sources; the benchmark gate
+        # materializes path providers, so regenerate the ephemeral candidate
+        # lock against the materialized graph before locked builds.
+        run: >-
+          cargo metadata
+          --manifest-path helios-candidate/Cargo.toml
+          --format-version 1
+          --all-features
+          > /dev/null
+
       - name: Hold the candidate benchmark instrument constant
         shell: bash
         run: |
