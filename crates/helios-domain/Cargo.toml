@@ -16,6 +16,7 @@ aequitas = { workspace = true }
 eunomia = { workspace = true }
 helios-core = { workspace = true }
 helios-math = { workspace = true }
+horae = { workspace = true }
 leto = { workspace = true }
 # DICOM CT/MVCT load path — feature-gated so the provider stays out of the core
 # build for consumers that do not need real-file I/O. The feature gates a

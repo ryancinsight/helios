@@ -9,7 +9,8 @@ use helios_domain::{HelicalDelivery, Volume};
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
 use helios_solver::forward_project_ray;
 use hyperion::{quantity::OpticalDepth, TransportError};
-use moirai_parallel::Adaptive;
+use moirai_parallel::{Adaptive, Sequential};
+use themis::CpuTopology;
 
 #[cfg(test)]
 use aequitas::systems::si::quantities::Time;
@@ -64,41 +65,89 @@ pub fn simulate_helical_sinogram<T: GeometryScalar + UnitScalar + Send + Sync>(
     let [nx, ny, nz] = grid.dims();
     // Axial centre of the grid (used for the beam's x–y aim point).
     let centre = grid.voxel_center((nx - 1) / 2, (ny - 1) / 2, (nz - 1) / 2);
-
-    let projections =
-        moirai_parallel::map_collect_index_with::<Adaptive, _, _>(num_projections, |projection| {
-            let gantry_angle_rad = delivery.gantry_angle_rad(projection);
-            let couch_mm = delivery.couch_position_mm(projection);
-            let angle = gantry_angle_rad.in_unit::<Radian>();
-            let couch = couch_mm.in_unit::<Millimeter>();
-
-            // Beam direction rotates in the axial plane; z fixed at the couch slice.
-            let direction = Vector3::new(angle.cos(), angle.sin(), zero);
-            // Aim point: axial centre at the couch z; source sits behind isocentre.
-            let origin = Point3::new(
-                centre.x - direction.x * source_distance_mm.in_unit::<Millimeter>(),
-                centre.y - direction.y * source_distance_mm.in_unit::<Millimeter>(),
-                couch - direction.z * source_distance_mm.in_unit::<Millimeter>(),
-            );
-
-            let optical_depth = Ray::try_new(origin, direction)
-                .ok()
-                .and_then(|ray| forward_project_ray(mu, &ray, step_mm.in_unit::<Millimeter>()))
-                .unwrap_or(zero);
-            let optical_depth = Dimensionless::from_base(optical_depth);
-            let transmission = OpticalDepth::new(optical_depth)?
-                .transmission()
-                .into_quantity();
-
-            Ok(HelicalProjection {
+    let threshold = projection_parallel_threshold();
+    let projections = if num_projections < threshold {
+        moirai_parallel::map_collect_index_with::<Sequential, _, _>(num_projections, |projection| {
+            build_projection(
+                delivery,
+                mu,
+                source_distance_mm,
+                step_mm,
+                &centre,
                 projection,
-                gantry_angle_rad,
-                couch_mm,
-                optical_depth,
-                transmission,
-            })
-        });
+                zero,
+            )
+        })
+    } else {
+        moirai_parallel::map_collect_index_with::<Adaptive, _, _>(num_projections, |projection| {
+            build_projection(
+                delivery,
+                mu,
+                source_distance_mm,
+                step_mm,
+                &centre,
+                projection,
+                zero,
+            )
+        })
+    };
     projections.into_iter().collect()
+}
+
+#[inline]
+fn projection_parallel_threshold() -> usize {
+    effective_parallel_units().saturating_mul(4)
+}
+
+#[inline]
+fn effective_parallel_units() -> usize {
+    let topology_units = CpuTopology::detect()
+        .map(|topology| topology.logical_processors())
+        .unwrap_or(1)
+        .max(1);
+    let runtime_workers = moirai::global().worker_count().max(1);
+    topology_units.min(runtime_workers)
+}
+
+fn build_projection<T: GeometryScalar + UnitScalar>(
+    delivery: &HelicalDelivery<T>,
+    mu: &Volume<T>,
+    source_distance_mm: Length<T>,
+    step_mm: Length<T>,
+    centre: &Point3<T>,
+    projection: usize,
+    zero: T,
+) -> Result<HelicalProjection<T>, TransportError<T>> {
+    let gantry_angle_rad = delivery.gantry_angle_rad(projection);
+    let couch_mm = delivery.couch_position_mm(projection);
+    let angle = gantry_angle_rad.in_unit::<Radian>();
+    let couch = couch_mm.in_unit::<Millimeter>();
+
+    // Beam direction rotates in the axial plane; z fixed at the couch slice.
+    let direction = Vector3::new(angle.cos(), angle.sin(), zero);
+    // Aim point: axial centre at the couch z; source sits behind isocentre.
+    let origin = Point3::new(
+        centre.x - direction.x * source_distance_mm.in_unit::<Millimeter>(),
+        centre.y - direction.y * source_distance_mm.in_unit::<Millimeter>(),
+        couch - direction.z * source_distance_mm.in_unit::<Millimeter>(),
+    );
+
+    let optical_depth = Ray::try_new(origin, direction)
+        .ok()
+        .and_then(|ray| forward_project_ray(mu, &ray, step_mm.in_unit::<Millimeter>()))
+        .unwrap_or(zero);
+    let optical_depth = Dimensionless::from_base(optical_depth);
+    let transmission = OpticalDepth::new(optical_depth)?
+        .transmission()
+        .into_quantity();
+
+    Ok(HelicalProjection {
+        projection,
+        gantry_angle_rad,
+        couch_mm,
+        optical_depth,
+        transmission,
+    })
 }
 
 #[cfg(test)]
@@ -279,6 +328,11 @@ mod tests {
     #[test]
     fn helical_sinogram_accumulates_uniform_optical_depth_in_double_precision() {
         helical_sinogram_accumulates_uniform_optical_depth::<f64>();
+    }
+
+    #[test]
+    fn parallel_threshold_is_never_zero() {
+        assert!(projection_parallel_threshold() >= 1);
     }
 
     #[test]

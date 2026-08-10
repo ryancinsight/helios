@@ -25,6 +25,7 @@ use aequitas::systems::si::{
 use eunomia::UnitScalar;
 use helios_core::HeliosError;
 use helios_math::{NumericElement, Scalar};
+use horae::time::StepSize;
 
 /// Helical delivery geometry and timing.
 ///
@@ -35,7 +36,7 @@ pub struct HelicalDelivery<T: Scalar> {
     projections_per_rotation: usize,
     field_width_mm: Length<T>,
     pitch: Dimensionless<T>,
-    gantry_period_s: Time<T>,
+    gantry_period_s: StepSize<T>,
     start_gantry_angle_rad: Angle<T>,
     start_couch_mm: Length<T>,
 }
@@ -75,10 +76,6 @@ impl<T: Scalar + UnitScalar> HelicalDelivery<T> {
                 "HelicalDelivery::field_width_mm",
             ),
             (pitch.into_base(), "HelicalDelivery::pitch"),
-            (
-                gantry_period_s.in_unit::<Second>(),
-                "HelicalDelivery::gantry_period_s",
-            ),
         ] {
             if !value.is_finite() || value <= <T as NumericElement>::ZERO {
                 return Err(HeliosError::InvalidDomainValue {
@@ -88,6 +85,13 @@ impl<T: Scalar + UnitScalar> HelicalDelivery<T> {
                 });
             }
         }
+        let gantry_period_value = gantry_period_s.in_unit::<Second>().to_f64();
+        let gantry_period_s =
+            StepSize::new(gantry_period_s).map_err(|_| HeliosError::InvalidDomainValue {
+                field: "HelicalDelivery::gantry_period_s",
+                value: gantry_period_value,
+                reason: "must be finite and strictly positive",
+            })?;
         if !start_gantry_angle_rad.in_unit::<Radian>().is_finite()
             || !start_couch_mm.in_unit::<Millimeter>().is_finite()
         {
@@ -144,7 +148,8 @@ impl<T: Scalar + UnitScalar> HelicalDelivery<T> {
     #[must_use]
     pub fn couch_velocity_mm_per_s(&self) -> Velocity<T> {
         Velocity::from_base(
-            self.couch_travel_per_rotation_mm().into_base() / self.gantry_period_s.into_base(),
+            self.couch_travel_per_rotation_mm().into_base()
+                / self.gantry_period_s.as_time().into_base(),
         )
     }
 
@@ -183,7 +188,7 @@ impl<T: Scalar + UnitScalar> HelicalDelivery<T> {
     pub fn time_s(&self, projection: usize) -> Time<T> {
         Time::from_base(
             T::from_f64(projection as f64)
-                * self.gantry_period_s.in_unit::<Second>()
+                * self.gantry_period_s.as_time().in_unit::<Second>()
                 * self.projections_per_rotation_recip().into_base(),
         )
     }
@@ -193,7 +198,8 @@ impl<T: Scalar + UnitScalar> HelicalDelivery<T> {
     pub fn gantry_angle_at_time_rad(&self, t: Time<T>) -> Angle<T> {
         Angle::from_base(
             self.start_gantry_angle_rad.in_unit::<Radian>()
-                + T::TAU * t.in_unit::<Second>() / self.gantry_period_s.in_unit::<Second>(),
+                + T::TAU * t.in_unit::<Second>()
+                    / self.gantry_period_s.as_time().in_unit::<Second>(),
         )
     }
 

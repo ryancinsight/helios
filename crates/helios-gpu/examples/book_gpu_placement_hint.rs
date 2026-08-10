@@ -32,7 +32,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .collect::<Vec<_>>();
 
     for (gpu, cpu_like) in mu.iter().zip(expected.iter()) {
-        assert!((gpu - cpu_like).abs() < 1e-4, "gpu={gpu} expected={cpu_like}");
+        assert!(
+            (gpu - cpu_like).abs() < 1e-4,
+            "gpu={gpu} expected={cpu_like}"
+        );
     }
 
     Ok(())

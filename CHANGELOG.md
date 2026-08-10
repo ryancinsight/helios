@@ -9,6 +9,16 @@ under a Breaking subsection.
 
 ### Changed
 
+- `helios-simulation::simulate_helical_sinogram` now routes projection-lane
+  dispatch through a Themis+Moirai boundary (`CpuTopology::detect()` bounded by
+  `moirai::global().worker_count()`), selecting sequential vs adaptive
+  execution from provider-owned runtime capacity instead of a fixed local
+  policy assumption.
+- `helios-domain::HelicalDelivery` now stores/validates gantry rotation period
+  through Horae `time::StepSize`, replacing a local raw-time invariant check
+  with provider-owned finite/positive simulation-step validation at the timing
+  boundary.
+
 - Bind the `moirai`, `mnemosyne-core`, and `themis` workspace dependencies to
   their registry package identities (`moirai-runtime`,
   `mnemosyne-memory-core`, `themis-topology`) so the Atlas overlay resolves
