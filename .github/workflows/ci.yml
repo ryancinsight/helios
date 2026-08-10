@@ -125,24 +125,24 @@ jobs:
           path: helios-candidate
 
       - name: Checkout candidate path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@1a7cdcafce845bfa625e4917436c22566ad3486
         with:
           manifest: helios-candidate/Cargo.toml
           destination: .
-          atlas_ref: 4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
+          atlas_ref: 1a7cdcafce845bfa625e4917436c22566ad3486
 
       - name: Checkout historical baseline path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@1a7cdcafce845bfa625e4917436c22566ad3486
         with:
           manifest: helios-baseline/Cargo.toml
           destination: .
-          atlas_ref: 4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
+          atlas_ref: 1a7cdcafce845bfa625e4917436c22566ad3486
 
       - name: Checkout Atlas benchmark gate
         uses: actions/checkout@v6
         with:
           repository: ryancinsight/atlas
-          ref: 9bfb722367a6c3911409d6b4619701c549b6d415
+          ref: 1a7cdcafce845bfa625e4917436c22566ad3486
           path: atlas-tool
 
       - name: Install Rust toolchain
