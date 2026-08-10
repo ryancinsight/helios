@@ -20,9 +20,11 @@ helios-domain = { workspace = true }
 helios-physics = { workspace = true }
 helios-solver = { workspace = true }
 hyperion = { workspace = true }
+moirai = { workspace = true }
 # moirai (mandated Atlas orchestration): parallel dispatch of the independent
 # per-projection forward projections via the Adaptive execution policy.
 moirai-parallel = { workspace = true }
+themis = { workspace = true }
 
 [dev-dependencies]
 # End-to-end workflow test only: the higher application layers (imaging recon /

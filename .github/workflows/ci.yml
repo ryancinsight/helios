@@ -125,24 +125,24 @@ jobs:
           path: helios-candidate
 
       - name: Checkout candidate path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@1a7cdca7309f4a765b5bf644704521fa7c849208
         with:
           manifest: helios-candidate/Cargo.toml
           destination: .
-          atlas_ref: 4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
+          atlas_ref: 1a7cdca7309f4a765b5bf644704521fa7c849208
 
       - name: Checkout historical baseline path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@1a7cdca7309f4a765b5bf644704521fa7c849208
         with:
           manifest: helios-baseline/Cargo.toml
           destination: .
-          atlas_ref: 4f1aab830e6e9c41e95cbf34fa49202ac6833c5e
+          atlas_ref: 1a7cdca7309f4a765b5bf644704521fa7c849208
 
       - name: Checkout Atlas benchmark gate
         uses: actions/checkout@v6
         with:
           repository: ryancinsight/atlas
-          ref: 9bfb722367a6c3911409d6b4619701c549b6d415
+          ref: 1a7cdca7309f4a765b5bf644704521fa7c849208
           path: atlas-tool
 
       - name: Install Rust toolchain
@@ -163,6 +163,17 @@ jobs:
         run: >-
           cargo metadata
           --manifest-path helios-baseline/Cargo.toml
+          --format-version 1
+          --all-features
+          > /dev/null
+
+      - name: Normalize candidate lock
+        # The committed candidate lock records git sources; the benchmark gate
+        # materializes path providers, so regenerate the ephemeral candidate
+        # lock against the materialized graph before locked builds.
+        run: >-
+          cargo metadata
+          --manifest-path helios-candidate/Cargo.toml
           --format-version 1
           --all-features
           > /dev/null
