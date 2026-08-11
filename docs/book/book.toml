@@ -31,7 +31,8 @@ preferred-dark-theme = "navy"
 git-repository-url = "https://github.com/ryancinsight/helios"
 edit-url-template = "https://github.com/ryancinsight/helios/edit/main/docs/book/{path}"
 
-[output.linkcheck]
+[output.linkcheck2]
+optional = true
 # Check internal mdBook links during build. External web links are not followed
 # so the build remains deterministic and network-independent.
 follow-web-links = false

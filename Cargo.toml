@@ -77,7 +77,7 @@ ritk-registration = { git = "https://github.com/ryancinsight/ritk" }
 # typed attribute access, transfer-syntax dispatch, and pixel decoding.
 ritk-dicom = { git = "https://github.com/ryancinsight/ritk" }
 # Geometry kernel (binary MLC, collimators, jaws, patient meshes).
-gaia = { git = "https://github.com/ryancinsight/gaia", default-features = false }
+gaia = { package = "gaia-mesh", git = "https://github.com/ryancinsight/gaia", default-features = false }
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.
 hephaestus-core = { git = "https://github.com/ryancinsight/hephaestus" }
 hephaestus-wgpu = { git = "https://github.com/ryancinsight/hephaestus" }
