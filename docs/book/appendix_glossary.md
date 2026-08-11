@@ -8,8 +8,8 @@
 A consolidated glossary spanning every Atlas crate that Helios, CFDrs, and
 Kwavers consume.  Where a term has an Atlas-crate-specific meaning, the
 relevant crate is named in parentheses.  See also
-[`CFDrs` glossary](../../../CFDrs/docs/book/appendix_glossary.md) and
-[`Kwavers` glossary](../../../kwavers/docs/book/appendix_glossary.md) for
+[`CFDrs` glossary](https://github.com/ryancinsight/CFDrs/blob/main/docs/book/appendix_glossary.md) and
+[`Kwavers` glossary](https://github.com/ryancinsight/kwavers/blob/main/docs/book/appendix_glossary.md) for
 the cross-book shared vocabulary.
 
 ## A
