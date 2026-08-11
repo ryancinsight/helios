@@ -77,12 +77,12 @@ ritk-registration = { git = "https://github.com/ryancinsight/ritk" }
 # typed attribute access, transfer-syntax dispatch, and pixel decoding.
 ritk-dicom = { git = "https://github.com/ryancinsight/ritk" }
 # Geometry kernel (binary MLC, collimators, jaws, patient meshes).
-gaia = { package = "gaia-mesh", git = "https://github.com/ryancinsight/gaia", default-features = false }
+gaia = { package = "gaia-mesh", version = "0.4.0", git = "https://github.com/ryancinsight/gaia", default-features = false }
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.
-hephaestus-core = { git = "https://github.com/ryancinsight/hephaestus" }
-hephaestus-wgpu = { git = "https://github.com/ryancinsight/hephaestus" }
-moirai = { version = "0.4.0", git = "https://github.com/ryancinsight/Moirai.git", package = "moirai-runtime" }
-moirai-parallel = { version = "0.4.0", git = "https://github.com/ryancinsight/Moirai.git", default-features = false, features = ["parallel"] }
+hephaestus-core = { version = "0.19.0", git = "https://github.com/ryancinsight/hephaestus" }
+hephaestus-wgpu = { version = "0.19.0", git = "https://github.com/ryancinsight/hephaestus" }
+moirai = { version = "0.5.0", git = "https://github.com/ryancinsight/Moirai.git", package = "moirai-runtime" }
+moirai-parallel = { version = "0.5.0", git = "https://github.com/ryancinsight/Moirai.git", default-features = false, features = ["parallel"] }
 # Tensors, autodiff, optimizers, neural surrogates.
 coeus-core = { git = "https://github.com/ryancinsight/Coeus.git" }
 coeus-tensor = { git = "https://github.com/ryancinsight/Coeus.git" }
