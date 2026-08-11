@@ -28,7 +28,7 @@ let buffer: &mut [f64] = arena.alloc_slice(64 * 64 * 64)?;
 
 ## Zero-Copy Slicing
 
-Volume::as_slice() returns a &[T] borrow from the underlying leto::Array3
+Volume::as_slice() returns a `&[T]` borrow from the underlying leto::Array3
 without allocation. Kernels operate on borrowed slices, enabling zero-copy
 pipelines from CT → μ → terma → dose.
 

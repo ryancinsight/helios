@@ -28,7 +28,7 @@ Lower pitch = more overlap = higher dose uniformity but longer treatment.
 
 ## Sinogram
 
-The delivery sinogram has shape [n_gantry_angles, n_leaves].
+The delivery sinogram has shape `(n_gantry_angles, n_leaves)`.
 For a standard TomoTherapy treatment: 51 gantry projections × 64 leaves.
 
 ## Further Reading

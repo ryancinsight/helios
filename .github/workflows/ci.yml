@@ -157,15 +157,27 @@ jobs:
           key: ${{ runner.os }}-helios-bench-${{ hashFiles('helios-candidate/Cargo.lock') }}
 
       - name: Normalize historical baseline lock
-        # The baseline lock predates the provider package-identity cutover.
-        # Materialized path providers are authoritative for this comparison;
-        # regenerate only the ephemeral baseline lock before locked builds.
-        run: >-
-          cargo metadata
-          --manifest-path helios-baseline/Cargo.toml
-          --format-version 1
-          --all-features
-          > /dev/null
+        # The baseline manifest predates the Gaia package-identity cutover.
+        # Keep its historical source and code revision, but update the
+        # dependency alias required by the provider checkout recorded in the
+        # Atlas graph. This edits only the ephemeral baseline checkout.
+        shell: bash
+        run: |
+          set -euo pipefail
+          old='gaia = { git = "https://github.com/ryancinsight/gaia", default-features = false }'
+          new='gaia = { package = "gaia-mesh", git = "https://github.com/ryancinsight/gaia", default-features = false }'
+          manifest=helios-baseline/Cargo.toml
+          if grep --fixed-strings --quiet "$old" "$manifest"; then
+            sed --in-place "s#${old}#${new}#" "$manifest"
+          elif ! grep --fixed-strings --quiet "$new" "$manifest"; then
+            echo "historical baseline Gaia dependency has an unexpected shape" >&2
+            exit 1
+          fi
+
+          cargo metadata \
+            --manifest-path helios-baseline/Cargo.toml \
+            --format-version 1 \
+            --all-features > /dev/null
 
       - name: Normalize candidate lock
         # The committed candidate lock records git sources; the benchmark gate
