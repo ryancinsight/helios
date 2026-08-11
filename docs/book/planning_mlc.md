@@ -19,7 +19,7 @@ let lots = LeafOpenTimeSinogram { leaves: 64, gantry_angles: 51, data: ... };
 ## Leaf Open Time
 
 LeafOpenTimeSinogram (LOTS) encodes the fraction of each gantry rotation
-that each leaf is open: values in [0, 1]. At 0 the leaf is always closed,
+that each leaf is open: values in `0..=1`. At 0 the leaf is always closed,
 at 1 always open.
 
 ## Tongue-and-Groove Effect
