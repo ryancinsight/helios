@@ -54,12 +54,9 @@ jobs:
         run: cargo install mdbook-linkcheck2 --version "${MDBOOK_LINKCHECK2_VERSION}" --locked
 
       - name: Build book
-        env:
-          RUST_BACKTRACE: "1"
-          RUST_LOG: mdbook_linkcheck2=debug,linkcheck2=debug
         run: |
           mdbook build docs/book
-          test -f target/book/helios/index.html
+          test -f target/book/helios/html/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
