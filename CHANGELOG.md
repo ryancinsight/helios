@@ -18,6 +18,11 @@ under a Breaking subsection.
   through Horae `time::StepSize`, replacing a local raw-time invariant check
   with provider-owned finite/positive simulation-step validation at the timing
   boundary.
+- `helios-domain` DICOM load paths (`load_ct_slice` / `load_ct_series`) now
+  ingest and enforce `ImageOrientationPatient` as an oriented-grid boundary:
+  voxel grids are built with `VoxelGrid::oriented`, series stacking is sorted
+  by slice-normal projection instead of raw z, and synthetic-provider tests now
+  validate non-identity orientation pose preservation through `ritk-dicom`.
 
 - Bind the `moirai`, `mnemosyne-core`, and `themis` workspace dependencies to
   their registry package identities (`moirai-runtime`,
