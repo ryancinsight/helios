@@ -61,7 +61,11 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: target/book/helios
+          # mdbook writes the rendered site into an `html/` subdirectory, so
+          # uploading the parent puts no index.html at the artifact root and
+          # the Pages site serves 404 while the deployment still reports
+          # success. Upload the rendered directory itself.
+          path: target/book/helios/html
 
   deploy:
     if: github.event_name != 'pull_request'
