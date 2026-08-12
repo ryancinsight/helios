@@ -14,12 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           fetch-depth: 0
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
         with:
           components: clippy, rustfmt
 
@@ -29,7 +29,7 @@ jobs:
           tool: cargo-nextest@0.9.140,cargo-audit@0.22.2,cargo-deny@0.20.2
 
       - name: Cache cargo dependencies
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
             ~/.cargo/registry
@@ -68,16 +68,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: "3.13"
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
 
       - name: Install binding verification tools
         run: python -m pip install maturin==1.14.1 pytest==9.1.1
@@ -114,42 +114,42 @@ jobs:
         helios-solver:scatter_superposition
     steps:
       - name: Checkout baseline
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: helios-baseline
 
       - name: Checkout candidate
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           path: helios-candidate
 
       - name: Checkout candidate path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@1a7cdca7309f4a765b5bf644704521fa7c849208
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@366640fe64977fe629462a9a3d96e295a7e864b7
         with:
           manifest: helios-candidate/Cargo.toml
           destination: .
-          atlas_ref: 1a7cdca7309f4a765b5bf644704521fa7c849208
+          atlas_ref: 366640fe64977fe629462a9a3d96e295a7e864b7
 
       - name: Checkout historical baseline path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@1a7cdca7309f4a765b5bf644704521fa7c849208
+        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@366640fe64977fe629462a9a3d96e295a7e864b7
         with:
           manifest: helios-baseline/Cargo.toml
           destination: .
-          atlas_ref: 1a7cdca7309f4a765b5bf644704521fa7c849208
+          atlas_ref: 366640fe64977fe629462a9a3d96e295a7e864b7
 
       - name: Checkout Atlas benchmark gate
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           repository: ryancinsight/atlas
-          ref: 1a7cdca7309f4a765b5bf644704521fa7c849208
+          ref: 366640fe64977fe629462a9a3d96e295a7e864b7
           path: atlas-tool
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
 
       - name: Cache cargo dependencies
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
             ~/.cargo/registry
