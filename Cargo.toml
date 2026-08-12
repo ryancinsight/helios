@@ -101,7 +101,7 @@ aequitas = { git = "https://github.com/ryancinsight/aequitas", default-features 
 proteus = { git = "https://github.com/ryancinsight/proteus" }
 hyperion = { git = "https://github.com/ryancinsight/hyperion" }
 eunomia = { git = "https://github.com/ryancinsight/eunomia" }
-tyche-core = { git = "https://github.com/ryancinsight/tyche" }
+tyche-core = { version = "0.2.0", git = "https://github.com/ryancinsight/tyche" }
 horae = { git = "https://github.com/ryancinsight/horae" }
 # Array substrate + geometry primitives, and portable SIMD.
 # default-features disabled: leto's default `mnemosyne-memory` feature pulls an
