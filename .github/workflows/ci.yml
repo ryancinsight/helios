@@ -169,7 +169,12 @@ jobs:
           manifest=helios-baseline/Cargo.toml
           if grep --fixed-strings --quiet "$old" "$manifest"; then
             sed --in-place "s#${old}#${new}#" "$manifest"
-          elif ! grep --fixed-strings --quiet "$new" "$manifest"; then
+          elif grep --fixed-strings --quiet 'gaia = { package = "gaia-mesh"' "$manifest" \
+              && grep --fixed-strings --quiet 'git = "https://github.com/ryancinsight/gaia"' "$manifest"; then
+            # The baseline may already include the package identity together
+            # with a version requirement; that shape needs no rewrite.
+            :
+          else
             echo "historical baseline Gaia dependency has an unexpected shape" >&2
             exit 1
           fi

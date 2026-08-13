@@ -907,29 +907,23 @@ or H-004b ritk DICOM (real inputs → clinical validation) or H-020b binary-MLC.
   `gaia::{Aabb, Ray}`; bridge test green. Consumes gaia's migrated geometry;
   unblocks the projector.
 
-### Deferred (still blocked / sequenced)
+### Deferred (current open scope)
 
-- **H-020b** binary-MLC leaf-open-time sinogram (unblocked; queued after projector).
-- **H-020h** anisotropic collapsed-cone kernel.
-- **H-004b** ritk DICOM (heavy build).
+- **H-004d** RITK `ImageOrientationPatient` tag and oriented DICOM grid (blocked on
+  the external provider surface).
+- **H-011d** exact Siddon voxel-DDA and oriented-grid projection.
+- **H-012** GPU MVCT forward projector over the CPU reference.
 
-### Superseded in-flight plan: H-020b binary-MLC sinogram — `todo`
+### H-020b — binary-MLC leaf-open-time sinogram — resolved
 
-Unblocked (timing/modulation model, not spatial MLC geometry which needs gaia).
+`LeafOpenTimeSinogram` and `MlcModel` are delivered in
+`crates/helios-domain/src/mlc.rs`. Their value semantics and consumer behavior are
+covered by the domain and end-to-end tests; the authoritative completion state is
+recorded in `backlog.md` and G-23 in `gap_audit.md`.
 
-1. [ ] `LeafOpenTimeSinogram`: per-projection × per-leaf open-time fractions in
-   `[0,1]`; validated bounds; indexed by (projection, leaf). — *round-trip
-   set/get; out-of-range rejected.*
-2. [ ] Effective per-leaf fluence weight = open_fraction·(1−leakage) + leakage
-   (binary-MLC transmission/leakage model). — *closed vs open vs partial value
-   checks; leakage floor honored.*
-3. [ ] Tongue-and-groove inter-leaf underdose factor between adjacent open leaves.
-   — *analytical factor vs hand-computed.*
-4. [ ] clippy `-D warnings`, fmt, nextest, doctests green; sync artifacts.
-
-*Blocked:* H-010 GPU kernel (G-12), H-011c segment-generation + spatial MLC
-geometry (gaia G-11), H-004b ritk DICOM (heavy build). *Unblocked queue:*
-H-021 delivery simulation stepping.
+*Resolved:* H-010 GPU transmission, H-011c CPU forward projection, H-020b binary
+MLC, and H-020h anisotropic scatter. *Blocked or queued:* H-004d, H-011d, and
+H-012.
 
 ### Completed
 
