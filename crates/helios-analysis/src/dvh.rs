@@ -189,8 +189,7 @@ impl<T: Scalar> Dvh<T> {
     ) -> Result<T, ResponseError<T>> {
         let dose = self.generalized_eud(a)?;
         let gamma50 = Gamma50::new(gamma50).map_err(ResponseError::from)?;
-        let model =
-            LogisticControlProbability::new(tcd50, gamma50).map_err(ResponseError::from)?;
+        let model = LogisticControlProbability::new(tcd50, gamma50).map_err(ResponseError::from)?;
         model.evaluate(dose).map(asclepius::Probability::get)
     }
 
