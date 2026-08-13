@@ -5,7 +5,7 @@ use asclepius::{
     response::radiation::{
         GeneralizedEquivalentUniformDose, LogisticControlProbability, LymanComplicationProbability,
     },
-    BiologicalResponse, ResponseError, ResponseSlope, VolumeEffect,
+    BiologicalResponse, Gamma50, LymanSlope, ResponseError, VolumeEffect,
 };
 use helios_domain::Volume;
 use helios_math::{NumericElement, Scalar};
@@ -188,8 +188,9 @@ impl<T: Scalar> Dvh<T> {
         gamma50: T,
     ) -> Result<T, ResponseError<T>> {
         let dose = self.generalized_eud(a)?;
-        let slope = ResponseSlope::new(gamma50).map_err(ResponseError::from)?;
-        let model = LogisticControlProbability::new(tcd50, slope).map_err(ResponseError::from)?;
+        let gamma50 = Gamma50::new(gamma50).map_err(ResponseError::from)?;
+        let model =
+            LogisticControlProbability::new(tcd50, gamma50).map_err(ResponseError::from)?;
         model.evaluate(dose).map(asclepius::Probability::get)
     }
 
@@ -207,8 +208,8 @@ impl<T: Scalar> Dvh<T> {
         m: T,
     ) -> Result<T, ResponseError<T>> {
         let dose = self.generalized_eud(a)?;
-        let slope = ResponseSlope::new(m).map_err(ResponseError::from)?;
-        let model = LymanComplicationProbability::new(td50, slope).map_err(ResponseError::from)?;
+        let m = LymanSlope::new(m).map_err(ResponseError::from)?;
+        let model = LymanComplicationProbability::new(td50, m).map_err(ResponseError::from)?;
         model.evaluate(dose).map(asclepius::Probability::get)
     }
 }
@@ -451,7 +452,7 @@ mod tests {
         assert!(matches!(
             dvh.tcp_logistic(dimensionless(1.0), AbsorbedDose::from_base(1.0), -0.5),
             Err(ResponseError::InvalidValue(source))
-                if source.kind() == asclepius::ValueKind::ResponseSlope
+                if source.kind() == asclepius::ValueKind::Gamma50
                     && source.constraint() == asclepius::ValueConstraint::FinitePositive
         ));
     }
@@ -487,12 +488,12 @@ mod tests {
             .expect("valid response");
         let ntcp_model = LymanComplicationProbability::new(
             AbsorbedDose::from_base(50.0),
-            ResponseSlope::new(0.2).expect("positive slope"),
+            LymanSlope::new(0.2).expect("positive Lyman slope"),
         )
         .expect("positive midpoint");
         let tcp_model = LogisticControlProbability::new(
             AbsorbedDose::from_base(55.0),
-            ResponseSlope::new(2.0).expect("positive slope"),
+            Gamma50::new(2.0).expect("positive gamma50"),
         )
         .expect("positive midpoint");
         assert_relative_eq!(

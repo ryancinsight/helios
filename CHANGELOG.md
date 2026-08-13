@@ -9,6 +9,11 @@ under a Breaking subsection.
 
 ### Changed
 
+- Helios DVH TCP and NTCP evaluation now uses Asclepius's distinct `Gamma50`
+  and `LymanSlope` parameter types, preserving the model-specific validity
+  domains at the provider boundary instead of allowing the parameters to be
+  interchanged through one shared slope type.
+
 - `helios-simulation::simulate_helical_sinogram` now routes projection-lane
   dispatch through a Themis+Moirai boundary (`CpuTopology::detect()` bounded by
   `moirai::global().worker_count()`), selecting sequential vs adaptive
