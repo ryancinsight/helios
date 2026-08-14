@@ -7,6 +7,7 @@
 # compute. Domain crates never depend on pyo3 (unidirectional; ARCHITECTURE.md).
 [package]
 name = "helios-python"
+description = "Thin PyO3 binding surface for Helios radiotherapy planning, imaging, and dosimetry"
 edition.workspace = true
 version.workspace = true
 license.workspace = true
