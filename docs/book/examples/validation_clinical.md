@@ -37,7 +37,7 @@ Part VII — Clinical Protocol Compliance
 |------|--------------------|--------|
 | 1 — TRS-398 reference point | IAEA TRS-398 §7 | Absorbed dose in water at 10 cm, 6 MV: ± 2 % |
 | 2 — TG-119 C-shape coverage | AAPM TG-119 | PTV D95 ≥ 95 % prescribed; OAR D5 ≤ 50 % |
-| 3 — TomoTherapy self-gamma | 3 %/2 mm global | Pass rate ≥ 95 % |
+| 3 — TomoTherapy gamma vs an independent reference | 3 %/2 mm global | Pass rate ≥ 95 % (self-comparison excluded: 100 % by construction) |
 
 ## Planned APIs
 

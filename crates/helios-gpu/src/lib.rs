@@ -10,6 +10,14 @@
 //! at this boundary. Every GPU kernel here has a CPU reference it is
 //! differentially validated against (see the tests), per the differential-
 //! verification discipline.
+//!
+//! # Running the tests
+//!
+//! Every test that acquires a device is `#[ignore]`d: a host with no wgpu
+//! adapter reports them as *skipped* instead of passing a test that dispatched
+//! nothing. On a machine with an adapter, opt in with
+//! `cargo nextest run -p helios-gpu --run-ignored all`; a missing adapter is
+//! then a hard failure.
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
@@ -30,4 +38,19 @@ pub use transmission::beam_transmission_into;
 /// Returns [`HephaestusError`] if no compatible GPU adapter/device is available.
 pub fn default_device() -> Result<WgpuDevice> {
     WgpuDevice::try_default("helios-gpu")
+}
+
+/// Device accessor for the adapter-requiring tests.
+///
+/// Those tests are `#[ignore]`d (see the module tests), so reaching this helper
+/// means the run explicitly opted in with `--run-ignored all`. A missing adapter
+/// is therefore a hard failure: the alternative — returning early — reports a
+/// test that executed no kernel as *passed*, which is a false green rather than
+/// an honest skip.
+#[cfg(test)]
+fn required_device() -> WgpuDevice {
+    default_device().expect(
+        "GPU tests are opt-in (`cargo nextest run -p helios-gpu --run-ignored all`) and require a \
+         wgpu adapter; none was found",
+    )
 }

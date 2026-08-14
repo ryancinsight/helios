@@ -57,12 +57,9 @@ mod tests {
     use hyperion::quantity::OpticalDepth;
 
     #[test]
+    #[ignore = "requires a GPU adapter; opt in with --run-ignored all"]
     fn gpu_transmission_matches_hyperion_transport() {
-        // Requires a GPU adapter; skip cleanly if none is present.
-        let Ok(device) = crate::default_device() else {
-            eprintln!("no GPU adapter — skipping GPU transmission test");
-            return;
-        };
+        let device = crate::required_device();
         let tau = [0.0_f32, 0.1, 0.5, 1.0, 2.0, 3.5, 7.0];
         let mut got = [0.0_f32; 7];
         beam_transmission_into(&device, &tau, &mut got).expect("gpu transmission");
@@ -81,10 +78,9 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a GPU adapter; opt in with --run-ignored all"]
     fn empty_input_is_ok() {
-        let Ok(device) = crate::default_device() else {
-            return;
-        };
+        let device = crate::required_device();
         let mut out: [f32; 0] = [];
         beam_transmission_into(&device, &[], &mut out).expect("empty is a no-op");
     }

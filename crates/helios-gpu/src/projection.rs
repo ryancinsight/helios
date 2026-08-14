@@ -167,11 +167,9 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a GPU adapter; opt in with --run-ignored all"]
     fn gpu_batch_matches_cpu_projector_per_ray() {
-        let Ok(device) = crate::default_device() else {
-            eprintln!("no GPU adapter — skipping GPU projection test");
-            return;
-        };
+        let device = crate::required_device();
         let mu = mu_volume();
         let projector = GpuProjector::new(&device, &mu).expect("upload");
 
@@ -219,10 +217,9 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a GPU adapter; opt in with --run-ignored all"]
     fn empty_batch_is_ok() {
-        let Ok(device) = crate::default_device() else {
-            return;
-        };
+        let device = crate::required_device();
         let projector = GpuProjector::new(&device, &mu_volume()).expect("upload");
         let mut out: [f32; 0] = [];
         projector

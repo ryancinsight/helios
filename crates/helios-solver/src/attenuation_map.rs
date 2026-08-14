@@ -149,30 +149,61 @@ mod tests {
         assert_relative_eq!(mu.get(1, 0, 0).unwrap(), 0.12, epsilon = 1e-15);
     }
 
+    /// Relative tolerance, in ulps of `f64`, for the CT-calibration oracle.
+    ///
+    /// The oracle writes the published calibration out — `(μ/ρ)·ρ_w·max(0, 1 +
+    /// HU/1000)` — while the engine evaluates `1 + HU·1e-3` and routes the
+    /// product through Aequitas unit conversions, so the two agree
+    /// mathematically but not bit-for-bit. `1e-3` is inexact and `HU/1000` is a
+    /// division, contributing about one ulp of disagreement each; the `1 + ·`
+    /// cancels down to 0.2 at the −800 HU corner of the fixture, amplifying
+    /// those by `1/0.2 = 5`; the two products and the unit round-trip add a few
+    /// more. Thirty-two bounds the total (7.1e-15) and is far tighter than the
+    /// 1e-15 *absolute* bound it replaces, which at μ ≈ 0.012 was 4.5e-14
+    /// relative.
+    const CALIBRATION_ULPS: f64 = 32.0;
+
     #[test]
-    fn engine_matches_direct_per_voxel_formula() {
-        // Differential oracle over a heterogeneous HU field: engine == closed form.
+    fn engine_matches_the_published_hu_calibration() {
+        // Differential oracle over a heterogeneous HU field. The reference is the
+        // calibration as *documented* — ρ = max(0, 1 + HU/1000)·ρ_water, then
+        // μ = (μ/ρ)·ρ — written out here rather than obtained by calling
+        // `mass_density_from_hu`, which is the function the engine itself calls:
+        // re-invoking it would compare the engine with itself and pass for any
+        // calibration whatsoever.
         let ct = Volume::from_shape_fn(grid(), |idx| {
-            // A varied HU field spanning air→soft-tissue→bone.
-            -800.0 + 120.0 * idx[0] as f64 + 90.0 * idx[1] as f64 + 60.0 * idx[2] as f64
+            // Spans the sub-air clamp (−1200), air, water and bone (+1300).
+            -1200.0 + 400.0 * idx[0] as f64 + 300.0 * idx[1] as f64 + 200.0 * idx[2] as f64
         });
         let mass_atten = water_mass_attenuation();
         let water_density = DensityQuantity::from_unit::<GramPerCubicCentimeter>(1.0);
         let mu =
             attenuation_map(&ct, mass_atten, water_density).expect("fixture calibration is finite");
+        let mut clamped = 0usize;
         for i in 0..3 {
             for j in 0..4 {
                 for k in 0..5 {
                     let hu = ct.get(i, j, k).unwrap();
+                    let relative_density = (1.0 + hu / 1000.0).max(0.0);
+                    if relative_density == 0.0 {
+                        clamped += 1;
+                    }
                     let expected = mass_atten.in_unit::<SquareCentimeterPerGram>()
-                        * mass_density_from_hu(
-                            hu,
-                            water_density.in_unit::<GramPerCubicCentimeter>(),
-                        );
-                    assert_relative_eq!(mu.get(i, j, k).unwrap(), expected, epsilon = 1e-15);
+                        * relative_density
+                        * water_density.in_unit::<GramPerCubicCentimeter>();
+                    assert_relative_eq!(
+                        mu.get(i, j, k).unwrap(),
+                        expected,
+                        max_relative = f64::EPSILON * CALIBRATION_ULPS,
+                        epsilon = 0.0
+                    );
                 }
             }
         }
+        assert!(
+            clamped > 0,
+            "the fixture must reach below −1000 HU so the density clamp is exercised"
+        );
     }
 
     #[test]

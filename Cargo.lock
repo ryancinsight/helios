@@ -176,7 +176,7 @@ checksum = "d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56"
 [[package]]
 name = "asclepius"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/asclepius#bf4bb72aa691d90d8d4a3d3ef9d65ea448e72d3c"
+source = "git+https://github.com/ryancinsight/asclepius#5d528d2f98c1677fdc9dab41ead23fad92ea2130"
 dependencies = [
  "aequitas",
  "eunomia",
@@ -185,7 +185,7 @@ dependencies = [
 [[package]]
 name = "asclepius-coeus"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/asclepius#bf4bb72aa691d90d8d4a3d3ef9d65ea448e72d3c"
+source = "git+https://github.com/ryancinsight/asclepius#5d528d2f98c1677fdc9dab41ead23fad92ea2130"
 dependencies = [
  "asclepius",
  "coeus-autograd",
