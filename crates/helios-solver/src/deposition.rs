@@ -424,6 +424,203 @@ mod tests {
         assert_relative_eq!(div, plain, max_relative = 1e-6);
     }
 
+    /// Relative tolerance, in ulps of `T`, for the inverse-square ratio.
+    ///
+    /// `deposit_ray_terma` and `deposit_ray_terma_diverging` share one march, so
+    /// with identical inputs the pre-falloff per-segment loss is bit-identical
+    /// and cancels in the per-voxel ratio: what is compared is
+    /// `fl(loss · isf) / loss`, two roundings. The kernel's
+    /// `isf = fl(sad²) · fl(1/fl(r²))` adds two more (here `sad = 28` and
+    /// `r ∈ {21,…,35}` are integers, so the squares are exact), and the test's
+    /// own `sad²/r²` one. Six roundings; eight bounds them — 9.5e-7 for `f32`,
+    /// 1.8e-15 for `f64`.
+    const INVERSE_SQUARE_ULPS: f64 = 8.0;
+
+    /// Asserts the point-source inverse-square falloff in one scalar width.
+    ///
+    /// The oracle is geometric and independent of the transport: the step is set
+    /// to the voxel pitch so each voxel receives exactly one segment, at a known
+    /// midpoint, and the divergent deposition must differ from the parallel one
+    /// by exactly `(SAD/r)²` there. The attenuation physics cancels in the
+    /// ratio, so only the divergence law is under test.
+    fn point_source_falloff_matches_inverse_square<
+        T: ShippedScalar + helios_math::GeometryScalar,
+    >() {
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
+        let spacing = cast(2.0);
+        let grid =
+            VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
+        let mu = Volume::from_shape_fn(grid, |_| cast(0.05));
+        let ray = Ray::try_new(
+            Point3::new(cast(-50.0), cast(8.0), cast(8.0)),
+            Vector3::new(cast(1.0), zero, zero),
+        )
+        .expect("non-degenerate ray direction");
+
+        // Step == pitch over the 16 mm node box: 8 segments with midpoints at
+        // x = 1, 3, …, 15 mm, one per voxel i = 1..=8 (voxel 0 receives none).
+        let (weight, step) = (cast(1.0), spacing);
+        // Source 20 mm before the entry face; SAD 28 mm reaches the grid centre.
+        let focal = Point3::new(cast(-20.0), cast(8.0), cast(8.0));
+        let sad = cast(28.0);
+
+        let mut parallel = Volume::zeros(grid);
+        deposit_ray_terma(&mut parallel, &mu, &ray, weight, step)
+            .expect("valid attenuation volume");
+        let mut divergent = Volume::zeros(grid);
+        deposit_ray_terma_diverging(&mut divergent, &mu, &ray, weight, step, focal, sad)
+            .expect("valid attenuation volume");
+
+        for i in 1..=8usize {
+            let midpoint_mm = cast(2.0 * i as f64 - 1.0);
+            let r = midpoint_mm - focal.x;
+            let expected = sad * sad * (r * r).recip();
+            let ratio = divergent.get(i, 4, 4).expect("in-grid voxel")
+                * parallel.get(i, 4, 4).expect("in-grid voxel").recip();
+            assert_relative_eq!(
+                ratio,
+                expected,
+                max_relative = T::EPSILON * cast(INVERSE_SQUARE_ULPS)
+            );
+        }
+
+        // The factor spans 784/441 = 1.78 at the entry voxel down to
+        // 784/1225 = 0.64 at the exit voxel, so no constant factor — in
+        // particular none at all — satisfies the loop above.
+        let voxel = |v: &Volume<T>, i: usize| v.get(i, 4, 4).expect("in-grid voxel");
+        assert!(
+            voxel(&divergent, 1) > voxel(&parallel, 1),
+            "near-source voxel must gain fluence"
+        );
+        assert!(
+            voxel(&divergent, 8) < voxel(&parallel, 8),
+            "far voxel must lose fluence"
+        );
+    }
+
+    #[test]
+    fn point_source_falloff_matches_inverse_square_in_single_precision() {
+        point_source_falloff_matches_inverse_square::<f32>();
+    }
+
+    #[test]
+    fn point_source_falloff_matches_inverse_square_in_double_precision() {
+        point_source_falloff_matches_inverse_square::<f64>();
+    }
+
+    /// Water linear attenuation at the TomoTherapy 6 MV working point, `cm⁻¹`:
+    /// the `(μ/ρ) = 0.06 cm²/g` used across the Helios fixtures at unit density.
+    const WATER_MU_PER_CM: f64 = 0.06;
+
+    /// Source-to-surface distance for the depth-dose phantom, mm.
+    const PDD_SSD_MM: f64 = 800.0;
+
+    /// Relative tolerance, in ulps of `T`, for the primary depth-dose ratio.
+    ///
+    /// The per-voxel deposit is a subtractive cancellation:
+    /// `e^{−τ} − e^{−(τ+μΔ)} = e^{−τ}(1 − e^{−0.12}) = 0.1131·e^{−τ}`, so the
+    /// relative error of the two transmissions is amplified by `1/0.1131 ≈ 8.8`.
+    /// Each transmission carries the accumulated optical depth (up to seven
+    /// `checked_add`s summing to 0.84, ≲4.2 ulps absolute) plus `exp`, which
+    /// IEEE 754 does not require correctly rounded (≈2 ulps): ≈6.2 ulps, doubled
+    /// for the pair and amplified gives ≈110 ulps at the deepest voxel and
+    /// ≈66 at the reference (whose leading transmission is exactly 1). With the
+    /// inverse-square factor, the ratio, and the oracle's own `exp` and squaring,
+    /// ≈191 ulps; 256 bounds it — 3.0e-5 for `f32`, 5.7e-14 for `f64`.
+    const DEPTH_DOSE_ULPS: f64 = 256.0;
+
+    /// Asserts percentage depth dose in water in one scalar width.
+    ///
+    /// In a uniform medium with one ray segment per voxel, the primary terma at
+    /// depth `d` relative to a reference depth `d₀` obeys the textbook law
+    ///
+    /// ```text
+    /// PDD(d) = exp(−μ·(d − d₀)) · ((SSD + d₀)/(SSD + d))²
+    /// ```
+    ///
+    /// — exponential attenuation of the primary fluence times inverse-square
+    /// divergence. The `weight·(1 − e^{−μΔ})` factor common to every segment
+    /// cancels in the ratio, so the oracle is that analytical law rather than a
+    /// restatement of the kernel's recursion. Buildup and phantom scatter are
+    /// absent by construction: this kernel transports the primary beam only, so
+    /// the curve is monotonically decreasing from the surface.
+    fn depth_dose_in_water_matches_the_primary_law<
+        T: ShippedScalar + helios_math::GeometryScalar,
+    >() {
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
+        // 16 cm of water along x, 2 cm voxels; the beam runs down the y = z = 20 mm axis.
+        let pitch_mm = 20.0;
+        let spacing = cast(pitch_mm);
+        let grid =
+            VoxelGrid::<T>::axis_aligned([9, 3, 3], [spacing; 3], Point3::new(zero, zero, zero))
+                .expect("valid axis-aligned grid");
+        let mu = Volume::from_shape_fn(grid, |_| cast(WATER_MU_PER_CM));
+
+        let focal = Point3::new(cast(-PDD_SSD_MM), cast(20.0), cast(20.0));
+        let ray = Ray::try_new(focal, Vector3::new(cast(1.0), zero, zero))
+            .expect("non-degenerate ray direction");
+        let mut dose = Volume::zeros(grid);
+        deposit_ray_terma_diverging(
+            &mut dose,
+            &mu,
+            &ray,
+            cast(1.0),
+            spacing,
+            focal,
+            cast(PDD_SSD_MM + 100.0),
+        )
+        .expect("valid attenuation volume");
+
+        // Step == pitch: segment midpoints at depth 10, 30, …, 150 mm land one
+        // per voxel i = 1..=8. Voxel 1 (d₀ = 10 mm) is the reference depth.
+        let depth_mm = |i: usize| pitch_mm * i as f64 - pitch_mm / 2.0;
+        let reference_depth = depth_mm(1);
+        let reference = dose.get(1, 1, 1).expect("in-grid voxel");
+
+        for i in 2..=8usize {
+            let depth = depth_mm(i);
+            // exp(−μ·Δdepth) with μ in cm⁻¹ and the depth difference in cm.
+            let attenuation = cast(-WATER_MU_PER_CM * (depth - reference_depth) / MM_PER_CM).exp();
+            let divergence = cast(((PDD_SSD_MM + reference_depth) / (PDD_SSD_MM + depth)).powi(2));
+            let expected = attenuation * divergence;
+            let pdd = dose.get(i, 1, 1).expect("in-grid voxel") * reference.recip();
+            assert_relative_eq!(
+                pdd,
+                expected,
+                max_relative = T::EPSILON * cast(DEPTH_DOSE_ULPS)
+            );
+            // Primary-only transport: no buildup, so the curve only descends.
+            assert!(
+                pdd < <T as helios_math::NumericElement>::ONE,
+                "primary depth dose must fall below the reference depth"
+            );
+        }
+
+        // The divergence term is not decorative: at 15 cm the full law sits
+        // strictly below pure attenuation, by the (810/950)² = 0.727 factor.
+        let deepest = dose.get(8, 1, 1).expect("in-grid voxel") * reference.recip();
+        let attenuation_only =
+            cast(-WATER_MU_PER_CM * (depth_mm(8) - reference_depth) / MM_PER_CM).exp();
+        assert!(
+            deepest < attenuation_only,
+            "inverse-square divergence must steepen the depth-dose curve: \
+             {deepest:?} !< {attenuation_only:?}"
+        );
+    }
+
+    #[test]
+    fn depth_dose_in_water_matches_the_primary_law_in_single_precision() {
+        depth_dose_in_water_matches_the_primary_law::<f32>();
+    }
+
+    #[test]
+    fn depth_dose_in_water_matches_the_primary_law_in_double_precision() {
+        depth_dose_in_water_matches_the_primary_law::<f64>();
+    }
+
     #[test]
     fn inverse_square_steepens_the_entry_to_exit_ratio() {
         // Point source 20 mm before the entry face (SAD = 28 mm to the centre):

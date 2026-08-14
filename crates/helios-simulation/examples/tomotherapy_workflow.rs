@@ -6,7 +6,8 @@
 //! 1. CT phantom (HU) → attenuation map `μ`.
 //! 2. Imaging: parallel-beam Radon → FBP reconstruction of `μ`.
 //! 3. Therapy: helical MLC delivery → divergent-fan terma → beam-following
-//!    poly-energetic (beam-hardened) collapsed-cone dose; DVH + 3%/2 mm self-gamma.
+//!    poly-energetic (beam-hardened) collapsed-cone dose; DVH + a 3%/2 mm gamma
+//!    against a uniformly perturbed comparison field, with a negative control.
 //!
 //! Writes `ct.png`, `mu.png`, `recon.png`, `dose.png` to the output directory (first
 //! CLI arg, default `helios_workflow_output/`) and prints a quantitative summary.
@@ -191,19 +192,29 @@ fn main() {
     )
     .expect("attenuation map satisfies Hyperion's transport contract");
 
-    // Analysis.
+    // Analysis. The gamma comparison field is the dose uniformly scaled, not the
+    // dose itself: comparing a distribution with itself is 100% by construction
+    // and measures nothing. A 2% offset sits inside the 3% criterion and must
+    // pass everywhere; the 6% offset is the negative control that must not.
     let dvh = Dvh::from_volume(&dose);
     let peak_dose = peak(&dose);
-    let gamma = gamma_index_3d(
-        &dose,
-        &dose,
-        0.03,
-        Length::from_unit::<Millimeter>(2.0),
-        AbsorbedDose::from_base(peak_dose),
-        Length::from_unit::<Millimeter>(6.0),
-    )
-    .unwrap();
-    let pass = gamma_pass_rate(&gamma, &dose, AbsorbedDose::from_base(0.1 * peak_dose));
+    let scaled_pass_rate = |scale: f64| {
+        let evaluated = Volume::from_shape_fn(*dose.grid(), |idx| {
+            scale * dose.get(idx[0], idx[1], idx[2]).unwrap()
+        });
+        let gamma = gamma_index_3d(
+            &dose,
+            &evaluated,
+            0.03,
+            Length::from_unit::<Millimeter>(2.0),
+            AbsorbedDose::from_base(peak_dose),
+            Length::from_unit::<Millimeter>(6.0),
+        )
+        .unwrap();
+        gamma_pass_rate(&gamma, &dose, AbsorbedDose::from_base(0.1 * peak_dose))
+    };
+    let pass = scaled_pass_rate(0.98);
+    let control = scaled_pass_rate(0.94);
 
     // Renders.
     render_slice(&ct, NZ / 2, &out.join("ct.png"));
@@ -228,8 +239,9 @@ fn main() {
         dvh.mean().in_unit::<Gray>()
     );
     println!(
-        "  gamma:  3%/2 mm self-consistency pass rate {:.1}%",
-        pass * 100.0
+        "  gamma:  3%/2 mm vs a 2%-low field {:.1}% pass; negative control (6% low) {:.1}%",
+        pass * 100.0,
+        control * 100.0
     );
     println!(
         "  wrote ct.png, mu.png, recon.png, dose.png to {}",

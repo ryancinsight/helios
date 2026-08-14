@@ -37,11 +37,18 @@ let pass_rate = gamma_pass_rate(
 println!("3%/2mm pass rate: {:.1}%", pass_rate * 100.0);
 ```
 
-## Self-Consistency Test
+## Verifying the Metric
 
-The tomotherapy workflow runs a **self-gamma** — the computed dose compared
-against itself as reference. A perfect self-gamma always yields 100% pass
-rate (within floating-point noise), confirming the metric implementation.
+Comparing a dose distribution against *itself* yields γ = 0 everywhere and a
+100% pass rate no matter what the dose engine computed, so it is a unit check on
+the gamma kernel — not evidence about a plan.
+
+The tomotherapy workflow therefore compares the dose against an independently
+constructed field: the same distribution scaled uniformly by `s`. Writing
+`peak = max D` and `c` for the dose-difference criterion, the closest candidate
+to the hottest voxel is that voxel itself, so its gamma is exactly `(1 − s)/c`.
+A 2%-low field (`s = 0.98`, inside a 3% criterion) must pass everywhere; a
+6%-low field is the **negative control** and must not.
 
 ## Clinical Standard
 

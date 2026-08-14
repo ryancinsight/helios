@@ -97,4 +97,9 @@ fails closed on a reproduced family-wise regression or incomplete evidence.
 
 ## License
 
-Dual-licensed under MIT or Apache-2.0.
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT license ([LICENSE-MIT](LICENSE-MIT))
+
+at your option.

@@ -7,7 +7,36 @@ under a Breaking subsection.
 
 ## [Unreleased]
 
+### Added
+
+- `LICENSE-APACHE` and `LICENSE-MIT` at the repository root, supplying the
+  texts the `MIT OR Apache-2.0` manifest and README declaration referred to.
+
+- `helios-solver`: value-semantic point-source inverse-square and
+  percentage-depth-dose-in-water tests for the terma deposition kernel,
+  instantiated at `f32` and `f64` with tolerances derived from `T::EPSILON`.
+  The pre-existing inverse-square coverage asserted only an inequality, which a
+  `1/r` divergence law satisfies.
+
 ### Changed
+
+- The end-to-end and example gamma checks compare the delivered dose against an
+  independently constructed, uniformly scaled comparison field with an
+  analytically derived peak gamma and pass rate, plus a negative control that
+  must fail. They previously ran the dose against itself, which is 100% by
+  construction; the backlog and book entries reporting that as a validation
+  result are corrected.
+
+- `helios-solver::attenuation_map`'s calibration oracle writes the documented
+  `max(0, 1 + HU/1000)` relation out instead of calling `mass_density_from_hu`,
+  the function the engine under test itself calls, and now spans the sub-air
+  clamp.
+
+- `helios-gpu` tests that acquire a device are `#[ignore]`d, so a host without a
+  wgpu adapter reports them as skipped rather than counting a test that
+  dispatched no kernel as passed. Opt in with
+  `cargo nextest run -p helios-gpu --run-ignored all`; under that flag a missing
+  adapter is a hard failure.
 
 - Helios DVH TCP and NTCP evaluation now uses Asclepius's distinct `Gamma50`
   and `LymanSlope` parameter types, preserving the model-specific validity

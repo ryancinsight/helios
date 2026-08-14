@@ -183,7 +183,6 @@ impl<D: KernelDevice<Dialect = Wgsl>> GpuAttenuationMapper<D> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::default_device;
 
     // NIST-representative water μ/ρ at ~1 MeV and unit water density; tests
     // verify the defining relation, not these specific magnitudes.
@@ -201,11 +200,9 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a GPU adapter; opt in with --run-ignored all"]
     fn gpu_matches_cpu_closed_form_including_clamp() {
-        let Ok(device) = default_device() else {
-            eprintln!("no GPU adapter — skipping HU→μ closed-form test");
-            return;
-        };
+        let device = crate::required_device();
         let mapper =
             GpuAttenuationMapper::new(device, mu_over_rho(), water_density()).expect("mapper");
         // Air (−1000, clamps to exactly 0), below-air (clamped), lung, water,
@@ -240,6 +237,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a GPU adapter; opt in with --run-ignored all"]
     fn gpu_matches_helios_solver_attenuation_map() {
         use aequitas::systems::si::{
             quantities::{AreaPerMass, MassDensity},
@@ -248,10 +246,7 @@ mod tests {
         use helios_math::Point3;
         use hyperion::coefficient::MassAttenuation;
 
-        let Ok(device) = default_device() else {
-            eprintln!("no GPU adapter — skipping HU→μ solver-differential test");
-            return;
-        };
+        let device = crate::required_device();
         let grid = helios_domain::VoxelGrid::axis_aligned(
             [4, 3, 2],
             [1.0_f32, 1.0, 1.0],
@@ -304,10 +299,9 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a GPU adapter; opt in with --run-ignored all"]
     fn length_mismatch_is_a_typed_error() {
-        let Ok(device) = default_device() else {
-            return;
-        };
+        let device = crate::required_device();
         let mapper =
             GpuAttenuationMapper::new(device, mu_over_rho(), water_density()).expect("mapper");
         let mut out = [0.0_f32; 3];
@@ -316,10 +310,9 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a GPU adapter; opt in with --run-ignored all"]
     fn invalid_coefficients_are_rejected() {
-        let Ok(device) = default_device() else {
-            return;
-        };
+        let device = crate::required_device();
         assert!(GpuAttenuationMapper::new(
             device.clone(),
             AreaPerMass::from_unit::<SquareCentimeterPerGram>(f32::NAN),
@@ -341,10 +334,9 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires a GPU adapter; opt in with --run-ignored all"]
     fn empty_input_is_ok() {
-        let Ok(device) = default_device() else {
-            return;
-        };
+        let device = crate::required_device();
         let mapper =
             GpuAttenuationMapper::new(device, mu_over_rho(), water_density()).expect("mapper");
         let mut out: [f32; 0] = [];

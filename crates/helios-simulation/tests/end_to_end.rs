@@ -6,7 +6,9 @@
 //! - **Imaging / IGRT:** `μ` → parallel-beam Radon → FBP reconstruction (recovers
 //!   `μ` in a water ROI) → rigid registration recovers a known couch shift.
 //! - **Therapy:** helical MLC delivery → per-leaf divergent-fan terma deposition
-//!   into `μ` → collapsed-cone scatter → dose → DVH + 3%/2 mm gamma self-consistency.
+//!   into `μ` → collapsed-cone scatter → dose → DVH + a 3%/2 mm gamma against an
+//!   independently constructed, analytically perturbed comparison field, carrying
+//!   its own negative control (see [`assert_gamma_against_scaled_reference`]).
 //!
 //! Every assertion is an analytical / self-consistency oracle; no external engine
 //! or licensed dataset is involved (those gates are environment-blocked, see
@@ -18,6 +20,7 @@ use aequitas::systems::si::{
         Centimeter, GramPerCubicCentimeter, Millimeter, Radian, Second, SquareCentimeterPerGram,
     },
 };
+use eunomia::assert_relative_eq;
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, spherical_mask, Dvh};
 use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel, Volume, VoxelGrid};
 use helios_imaging::{filtered_back_projection, parallel_beam_radon, register_translation};
@@ -168,28 +171,13 @@ fn shared_mu_drives_imaging_and_delivery_end_to_end() {
         }
     }
 
-    // ── Analysis: DVH + 3%/2 mm gamma self-consistency. ──
+    // ── Analysis: DVH + 3%/2 mm gamma against a perturbed reference. ──
     let dvh = Dvh::from_volume(&dose);
     assert!(
         *dvh.mean().as_base() > 0.0,
         "DVH mean dose must be positive"
     );
-    // Gamma of the dose against itself is identically 0 → 100% pass at 3%/2 mm.
-    let peak = dose.mean_top_dose();
-    let gamma = gamma_index_3d(
-        &dose,
-        &dose,
-        0.03,
-        Length::from_unit::<Millimeter>(2.0),
-        AbsorbedDose::from_base(peak),
-        Length::from_unit::<Millimeter>(6.0),
-    )
-    .unwrap();
-    let pass = gamma_pass_rate(&gamma, &dose, AbsorbedDose::from_base(0.1 * peak));
-    assert!(
-        (pass - 1.0).abs() < 1e-9,
-        "self-gamma pass rate {pass} must be 100%"
-    );
+    assert_gamma_against_scaled_reference(&dose);
 }
 
 #[test]
@@ -275,27 +263,13 @@ fn beam_following_poly_energetic_dose_end_to_end() {
         "scattered dose {dsum} lost too much of terma {tsum} to boundary truncation"
     );
 
-    // DVH + 3%/2 mm self-gamma self-consistency (dose vs itself → 100% pass).
+    // DVH + 3%/2 mm gamma against a perturbed reference (with its negative control).
     let dvh = Dvh::from_volume(&dose);
     assert!(
         *dvh.mean().as_base() > 0.0,
         "DVH mean dose must be positive"
     );
-    let peak = dose.mean_top_dose();
-    let gamma = gamma_index_3d(
-        &dose,
-        &dose,
-        0.03,
-        Length::from_unit::<Millimeter>(2.0),
-        AbsorbedDose::from_base(peak),
-        Length::from_unit::<Millimeter>(6.0),
-    )
-    .unwrap();
-    let pass = gamma_pass_rate(&gamma, &dose, AbsorbedDose::from_base(0.1 * peak));
-    assert!(
-        (pass - 1.0).abs() < 1e-9,
-        "self-gamma pass rate {pass} must be 100%"
-    );
+    assert_gamma_against_scaled_reference(&dose);
 }
 
 #[test]
@@ -394,21 +368,116 @@ fn per_structure_plan_evaluation_over_delivered_dose() {
     );
 }
 
-// Small helper: a positive normalization dose for gamma (max voxel dose).
-trait PeakDose {
-    fn mean_top_dose(&self) -> f64;
-}
-impl PeakDose for Volume<f64> {
-    fn mean_top_dose(&self) -> f64 {
-        let [nx, ny, nz] = self.grid().dims();
-        let mut peak = 0.0_f64;
-        for i in 0..nx {
-            for j in 0..ny {
-                for k in 0..nz {
-                    peak = peak.max(self.get(i, j, k).unwrap());
+/// Hottest voxel of a dose distribution: its index and value.
+fn hottest_voxel(dose: &Volume<f64>) -> ([usize; 3], f64) {
+    let [nx, ny, nz] = dose.grid().dims();
+    let mut best = ([0, 0, 0], f64::NEG_INFINITY);
+    for i in 0..nx {
+        for j in 0..ny {
+            for k in 0..nz {
+                let value = dose.get(i, j, k).expect("in-grid voxel");
+                if value > best.1 {
+                    best = ([i, j, k], value);
                 }
             }
         }
-        peak
     }
+    best
+}
+
+/// Dose-difference criterion of the 3%/2 mm gamma used below.
+const GAMMA_CRITERION: f64 = 0.03;
+
+/// Uniform scale of the *positive* comparison field: 2% low, inside the 3%
+/// criterion, so the whole distribution must pass.
+const GAMMA_PASSING_SCALE: f64 = 0.98;
+
+/// Uniform scale of the *negative control*: 6% low, twice the criterion, so the
+/// hottest voxel must fail and the pass rate must drop below 100%.
+const GAMMA_FAILING_SCALE: f64 = 0.94;
+
+/// Relative tolerance, in ulps of `f64`, for the analytic peak gamma.
+///
+/// The comparison field is `fl(s·D)`; at the hottest voxel the gamma kernel's
+/// dose difference `fl(s·peak) − peak` is exact by Sterbenz (`s > ½`), so the
+/// only error is the rounding of `fl(s·peak)`, amplified by `s/(1−s) ≤ 49` when
+/// referred to the difference `(1−s)·peak` — about 25 ulps. The normalization
+/// `1/(c·peak)²`, the squaring, and the final `sqrt` add a handful more, and the
+/// oracle's own division one; 64 bounds the total (1.4e-14).
+const GAMMA_ULPS: f64 = 64.0;
+
+/// Verify a delivered dose distribution with a 3%/2 mm gamma against an
+/// **independently constructed** comparison field, and prove the check can fail.
+///
+/// Comparing a distribution with itself is 100% by construction and validates
+/// nothing. Instead the evaluated field is the reference uniformly scaled to
+/// `s·D`, which has an analytically known answer. Writing `peak = max D`,
+/// `c = 0.03` and `r₀` for the hottest voxel:
+///
+/// * Take `r₀` as the reference point. Every candidate `v` has
+///   `s·D(v) − peak ≤ −(1−s)·peak`, so its dose term is at least `(1−s)/c`, with
+///   equality only where `D(v) = peak`. At `v = r₀` that equality holds at zero
+///   distance; every other candidate is strictly worse (a larger dose term, or
+///   the same one plus a positive distance term). Hence `γ(r₀) = (1−s)/c`
+///   **exactly** — a value, not a bound.
+/// * Evaluating the same candidate `v = r` at every reference point `r` gives
+///   `γ(r) ≤ (1−s)·D(r)/(c·peak) ≤ (1−s)/c`, so `s = 0.98` passes everywhere and
+///   `s = 0.94` fails at least at `r₀`.
+///
+/// The `s = 0.94` case is the negative control: it is the same code path with
+/// one constant changed, so a comparison that had silently degenerated into
+/// self-comparison would report 100% here and fail the assertion.
+fn assert_gamma_against_scaled_reference(dose: &Volume<f64>) {
+    let grid = *dose.grid();
+    let (peak_idx, peak) = hottest_voxel(dose);
+    assert!(peak > 0.0, "dose distribution must have a positive peak");
+    let scaled = |s: f64| {
+        Volume::from_shape_fn(grid, |idx| {
+            s * dose.get(idx[0], idx[1], idx[2]).expect("in-grid voxel")
+        })
+    };
+    let gamma_of = |evaluated: &Volume<f64>| {
+        gamma_index_3d(
+            dose,
+            evaluated,
+            GAMMA_CRITERION,
+            Length::from_unit::<Millimeter>(2.0),
+            AbsorbedDose::from_base(peak),
+            Length::from_unit::<Millimeter>(6.0),
+        )
+        .expect("dose and comparison field share a grid")
+    };
+    let peak_gamma = |gamma: &Volume<f64>| {
+        gamma
+            .get(peak_idx[0], peak_idx[1], peak_idx[2])
+            .expect("in-grid voxel")
+    };
+    let tolerance = f64::EPSILON * GAMMA_ULPS;
+    let threshold = AbsorbedDose::from_base(0.1 * peak);
+
+    // Positive: 2% low is inside the 3% criterion → γ(r₀) = 2/3, 100% pass.
+    let passing = gamma_of(&scaled(GAMMA_PASSING_SCALE));
+    assert_relative_eq!(
+        peak_gamma(&passing),
+        (1.0 - GAMMA_PASSING_SCALE) / GAMMA_CRITERION,
+        max_relative = tolerance
+    );
+    let pass_rate = gamma_pass_rate(&passing, dose, threshold);
+    assert_eq!(
+        pass_rate, 1.0,
+        "a 2% uniform offset is inside the 3% criterion; every voxel must pass"
+    );
+
+    // Negative control: 6% low is twice the criterion → γ(r₀) = 2, sub-100% pass.
+    let failing = gamma_of(&scaled(GAMMA_FAILING_SCALE));
+    assert_relative_eq!(
+        peak_gamma(&failing),
+        (1.0 - GAMMA_FAILING_SCALE) / GAMMA_CRITERION,
+        max_relative = tolerance
+    );
+    let fail_rate = gamma_pass_rate(&failing, dose, threshold);
+    assert!(
+        fail_rate < 1.0,
+        "negative control: a 6% uniform offset must fail somewhere, got {fail_rate}"
+    );
 }

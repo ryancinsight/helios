@@ -13,6 +13,16 @@ fail-fast = true
 slow-timeout = { period = "30s", terminate-after = 2, grace-period = "10s" }
 global-timeout = "15m"
 
+# Adapter-requiring tests in `helios-gpu` are `#[ignore]`d, so a host without a
+# wgpu adapter reports them as *skipped* rather than counting a test that
+# executed no kernel as passed. Run them where an adapter exists:
+#
+#     cargo nextest run -p helios-gpu --run-ignored all
+#
+# Under that opt-in a missing adapter is a hard failure (`required_device`),
+# because the run asked for GPU execution. `--run-ignored all` is a CLI flag,
+# not a profile key, so it cannot be folded into a profile here.
+
 # GPU tests each initialize a wgpu device; running several concurrently in
 # separate nextest processes contends on the single physical device and crashes
 # the driver (STATUS_ACCESS_VIOLATION 0xC0000005). Each test is correct in
