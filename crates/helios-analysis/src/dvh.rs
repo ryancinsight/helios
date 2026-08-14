@@ -454,6 +454,12 @@ mod tests {
                 if source.kind() == asclepius::ValueKind::Gamma50
                     && source.constraint() == asclepius::ValueConstraint::FinitePositive
         ));
+        assert!(matches!(
+            dvh.ntcp_lkb(dimensionless(1.0), AbsorbedDose::from_base(1.0), 0.0),
+            Err(ResponseError::InvalidValue(source))
+                if source.kind() == asclepius::ValueKind::LymanSlope
+                    && source.constraint() == asclepius::ValueConstraint::FinitePositive
+        ));
     }
 
     #[test]
