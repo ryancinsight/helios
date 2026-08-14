@@ -9,7 +9,7 @@
 //!    must yield γ = 0 everywhere and 100 % pass rate.
 //!
 //! 2. **Radon transform RMSE** — A uniform water cylinder reconstructed with FBP
-//!    from 180 projection angles should reproduce μ_water within 1 % (< 6 × 10⁻⁴ cm⁻¹).
+//!    from 180 projection angles should reproduce `μ_water` within 1 % (< 6 × 10⁻⁴ cm⁻¹).
 //!
 //! 3. **DVH monotonicity** — The cumulative DVH of a linearly-ramping dose
 //!    field must be strictly non-increasing (fundamental DVH property).
@@ -23,6 +23,11 @@
 //! ## Book Chapter
 //!
 //! [← Analytical Solutions and Regression Tests](../../docs/book/validation_regression.md)
+
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
 
 use aequitas::systems::si::{
     quantities::{AbsorbedDose, Angle, Length},
@@ -39,10 +44,10 @@ fn make_grid(n: usize, spacing_mm: f64) -> VoxelGrid<f64> {
 }
 
 fn main() {
-    println!("=== Helios Regression and Analytical Validation ===\n");
-
     const N: usize = 32;
     const SPACING_MM: f64 = 2.0;
+
+    println!("=== Helios Regression and Analytical Validation ===\n");
 
     // ── Case 1: Gamma self-consistency ────────────────────────────────────────
     println!("Case 1: Gamma self-consistency");
@@ -73,8 +78,7 @@ fn main() {
 
     assert!(
         pass_rate >= 1.0 - 1e-9,
-        "self-gamma pass rate {:.6} must be 1.0",
-        pass_rate
+        "self-gamma pass rate {pass_rate:.6} must be 1.0"
     );
     assert!(max_gamma < 1e-9, "self-gamma max {max_gamma:.6} must be ~0");
     println!("  PASS\n");
@@ -97,7 +101,9 @@ fn main() {
 
     let n_angles = 180;
     let angles: Vec<Angle<f64>> = (0..n_angles)
-        .map(|k| Angle::from_unit::<Radian>(k as f64 * std::f64::consts::PI / n_angles as f64))
+        .map(|k| {
+            Angle::from_unit::<Radian>(f64::from(k) * std::f64::consts::PI / f64::from(n_angles))
+        })
         .collect();
     let offsets: Vec<Length<f64>> = (0..N)
         .map(|d| Length::from_unit::<Millimeter>((d as f64 - N as f64 / 2.0) * SPACING_MM))
@@ -128,7 +134,7 @@ fn main() {
     let dvh = Dvh::from_volume(&ramp);
 
     // Cumulative DVH must be non-increasing: D(v) >= D(v + δ).
-    let levels: Vec<f64> = (0..=10).map(|k| k as f64 / 10.0).collect();
+    let levels: Vec<f64> = (0..=10).map(|k| f64::from(k) / 10.0).collect();
     let doses: Vec<f64> = levels
         .iter()
         .map(|&v| dvh.dose_at_volume_fraction(v).into_base())

@@ -205,6 +205,10 @@ pub fn volume_relative_l2_error<T: Scalar>(
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
     use aequitas::systems::si::units::Gray;
     use eunomia::assert_relative_eq;

@@ -11,6 +11,10 @@
 //! This is a measurement instrument: optimization changes the *kernel*, never the
 //! benchmark body. If no GPU adapter is present the GPU arm is skipped (CPU-only).
 #![allow(missing_docs)] // criterion_group! generates an undocumented harness item.
+#![expect(
+    clippy::print_stderr,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use helios_gpu::{beam_transmission_into, default_device};

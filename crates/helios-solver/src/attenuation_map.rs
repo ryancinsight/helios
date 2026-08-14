@@ -52,7 +52,7 @@ impl<T: fmt::Debug> core::error::Error for AttenuationMapError<T> {}
 /// For each voxel: `ρ = mass_density_from_hu(HU, ρ_water)` and
 /// `μ = (μ/ρ)·ρ`, using the water mass-attenuation coefficient `mass_attenuation`
 /// at the beam energy. This is the **Compton-dominated MV approximation** (the
-/// TomoTherapy 6 MV regime): at MeV energies photon attenuation scales with
+/// `TomoTherapy` 6 MV regime): at `MeV` energies photon attenuation scales with
 /// electron ≈ mass density at an approximately material-independent `(μ/ρ)`, so a
 /// single water `(μ/ρ)` scaled by voxel density is an accurate first-order model.
 /// (A kV/energy-dependent, material-segmented model is a later refinement.)
@@ -92,6 +92,10 @@ pub fn attenuation_map<T: Scalar + UnitScalar>(
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
     use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
     use eunomia::assert_relative_eq;

@@ -32,6 +32,15 @@
 //!
 //! Part VI — GPU Acceleration
 
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
+#![expect(
+    clippy::unwrap_used,
+    reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+)]
+
 use aequitas::systems::si::{
     quantities::AreaPerMass,
     quantities::MassDensity,
@@ -121,13 +130,11 @@ fn main() {
             let tol = 1e-4_f32;
             assert!(
                 (gpu_water - cpu_water as f32).abs() < tol,
-                "GPU/CPU water mismatch: {gpu_water:.5} vs {:.5} (tol {tol})",
-                cpu_water
+                "GPU/CPU water mismatch: {gpu_water:.5} vs {cpu_water:.5} (tol {tol})"
             );
             assert!(
                 (gpu_bone - cpu_bone as f32).abs() < tol,
-                "GPU/CPU bone mismatch: {gpu_bone:.5} vs {:.5} (tol {tol})",
-                cpu_bone
+                "GPU/CPU bone mismatch: {gpu_bone:.5} vs {cpu_bone:.5} (tol {tol})"
             );
 
             println!("\nDifferential validation GPU vs CPU: ok  (tol = {tol:.0e})");

@@ -7,7 +7,12 @@
 //! spacings), so upstream callers must build domain values from validated sources
 //! rather than hand-poking the underlying float.
 //!
-//! Run with:  cargo run --example validate_foundation_units -p helios-core
+//! Run with:  cargo run --example `validate_foundation_units` -p helios-core
+
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
 
 use helios_core::{EnergyMeV, HeliosError, HounsfieldUnit, VoxelSpacingMm};
 

@@ -1,7 +1,7 @@
 //! Compton scattering — the Klein–Nishina total cross-section.
 //!
 //! Compton (incoherent) scattering dominates photon interactions at MV energies
-//! (the TomoTherapy 6 MV regime), so its cross-section drives attenuation and
+//! (the `TomoTherapy` 6 MV regime), so its cross-section drives attenuation and
 //! energy transfer there. The Klein–Nishina total cross-section **per electron**
 //! is, with `α = E / m_e c²` the photon energy in electron-rest-mass units,
 //!
@@ -78,7 +78,7 @@ pub fn electrons_per_gram<T: Scalar>(z_over_a: T) -> T {
 /// This connects [`klein_nishina_cross_section`] (m²/electron, converted to cm²)
 /// to [`MassAttenuation`]. In the MV regime Compton dominates, so for water this
 /// reproduces the tabulated total `μ/ρ` closely (the test validates against the
-/// NIST value at 1 MeV) — a derived coefficient, not a fabricated table entry.
+/// NIST value at 1 `MeV`) — a derived coefficient, not a fabricated table entry.
 #[must_use]
 pub fn compton_mass_attenuation<T: Scalar + UnitScalar>(
     photon_energy: Energy<T>,
@@ -276,7 +276,7 @@ mod tests {
     /// the same expression at different widths, so the discrepancy is whatever the
     /// narrower evaluation accumulated. The closed form applies roughly a dozen
     /// multiplies, divides, and one `ln` to the fine-structure ratio, and the
-    /// fixture deliberately sits at E = 0.1 MeV where alpha is about 0.2, away from
+    /// fixture deliberately sits at E = 0.1 `MeV` where alpha is about 0.2, away from
     /// the near-alpha-zero cancellation. Five hundred ulps of `f32` (about 6e-5)
     /// bounds that chain; it is stated as a multiple of epsilon rather than the
     /// former bare 1e-4 so the basis is visible and scales if the width changes.

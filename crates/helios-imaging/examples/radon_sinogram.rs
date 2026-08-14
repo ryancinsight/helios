@@ -4,7 +4,12 @@
 //! a set of angles with the parallel-beam Radon transform, and validates
 //! the sinogram against the analytical line-integral through a disk.
 //!
-//! Run with: cargo run --example radon_sinogram -p helios-imaging
+//! Run with: cargo run --example `radon_sinogram` -p helios-imaging
+
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
 
 use aequitas::systems::si::{
     quantities::{Angle, Length},
@@ -57,7 +62,7 @@ fn main() {
 
     // Projection angles: 4 cardinal angles.
     let angles: Vec<Angle<f64>> = (0..4)
-        .map(|i| Angle::from_unit::<Radian>(i as f64 * std::f64::consts::PI / 4.0))
+        .map(|i| Angle::from_unit::<Radian>(f64::from(i) * std::f64::consts::PI / 4.0))
         .collect();
 
     // Detector offsets centred on the rotation axis.
@@ -66,7 +71,7 @@ fn main() {
     let offsets: Vec<Length<f64>> = (0..n_det)
         .map(|i| {
             Length::from_unit::<Millimeter>(
-                -det_extent + i as f64 * (2.0 * det_extent) / (n_det - 1) as f64,
+                -det_extent + f64::from(i) * (2.0 * det_extent) / f64::from(n_det - 1),
             )
         })
         .collect();

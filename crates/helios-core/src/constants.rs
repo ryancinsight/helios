@@ -26,7 +26,7 @@ pub const VACUUM_PERMITTIVITY_F_PER_M: f64 = 8.854_187_812_8e-12;
 /// Electron rest mass, `m_e` (kg). CODATA 2018.
 pub const ELECTRON_MASS_KG: f64 = 9.109_383_701_5e-31;
 
-/// Electron rest energy, `m_e c²` (MeV). CODATA 2018: 0.510 998 950 00 MeV.
+/// Electron rest energy, `m_e c²` (`MeV`). CODATA 2018: 0.510 998 950 00 `MeV`.
 ///
 /// Cross-checked against `ELECTRON_MASS_KG`, `SPEED_OF_LIGHT_M_PER_S`, and
 /// [`MEV_TO_JOULE`] in the module tests.

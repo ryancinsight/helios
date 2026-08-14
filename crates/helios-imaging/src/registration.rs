@@ -161,6 +161,10 @@ pub fn register_translation_ncc<T: GeometryScalar>(
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;

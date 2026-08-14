@@ -9,7 +9,12 @@
 //! - "Good plan": identical to reference (expect 100% pass rate, γ ≈ 0).
 //! - "Degraded plan": same Gaussian shifted by 1.5 mm (expect <100% pass rate).
 //!
-//! Run with: cargo run --example gamma_index -p helios-analysis
+//! Run with: cargo run --example `gamma_index` -p helios-analysis
+
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
 
 use aequitas::systems::si::{
     quantities::{AbsorbedDose, Length},
