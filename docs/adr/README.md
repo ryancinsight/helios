@@ -6,19 +6,19 @@
 
 | ADR | Title | Status |
 | --- | ----- | ------ |
-| [0001](0001-aequitas-domain-units.md) | Aequitas-backed clinical quantities | — |
-| [0002](0002-proteus-material-density.md) | Proteus material-density boundary | — |
-| [0003](0003-atlas-benchmark-gate.md) | Adopt the Atlas Criterion regression gate | — |
-| [0004](0004-asclepius-response-ownership.md) | Asclepius owns biological-response laws | — |
-| [0005](0005-tyche-noise-stream.md) | Tyche-owned quantum-noise stream | — |
-| [0006](0006-dvh-dose-quantities.md) | Typed dose-valued DVH metrics | — |
-| [0007](0007-gamma-physical-criteria.md) | Typed gamma physical criteria | — |
-| [0008](0008-delivery-physical-quantities.md) | Typed delivery physical quantities | — |
-| [0009](0009-image-quality-physical-semantics.md) | Partition image-quality physical semantics | — |
+| [0001](0001-aequitas-domain-units.md) | Aequitas-backed clinical quantities | Accepted |
+| [0002](0002-proteus-material-density.md) | Proteus material-density boundary | Accepted |
+| [0003](0003-atlas-benchmark-gate.md) | Adopt the Atlas Criterion regression gate | Accepted |
+| [0004](0004-asclepius-response-ownership.md) | Asclepius owns biological-response laws | accepted |
+| [0005](0005-tyche-noise-stream.md) | Tyche-owned quantum-noise stream | Accepted |
+| [0006](0006-dvh-dose-quantities.md) | Typed dose-valued DVH metrics | accepted |
+| [0007](0007-gamma-physical-criteria.md) | Typed gamma physical criteria | accepted |
+| [0008](0008-delivery-physical-quantities.md) | Typed delivery physical quantities | accepted |
+| [0009](0009-image-quality-physical-semantics.md) | Partition image-quality physical semantics | Accepted |
 | [0010](0010-compton-energy-quantity.md) | Type Compton photon energy | Accepted |
-| [0012](0012-helical-delivery-quantities.md) | Type Helical Delivery Kinematic Metrics | — |
-| [0013](0013-gpu-attenuation-quantities.md) | Typed GPU attenuation inputs | — |
-| [0014](0014-scatter-kernel-quantities.md) | Type scatter-kernel physical inputs | — |
-| [0015](0015-helical-acquisition-outcomes.md) | Type helical acquisition outcomes | — |
+| [0012](0012-helical-delivery-quantities.md) | Type Helical Delivery Kinematic Metrics | Accepted |
+| [0013](0013-gpu-attenuation-quantities.md) | Typed GPU attenuation inputs | accepted |
+| [0014](0014-scatter-kernel-quantities.md) | Type scatter-kernel physical inputs | Accepted |
+| [0015](0015-helical-acquisition-outcomes.md) | Type helical acquisition outcomes | Accepted |
 | [0016](0016-radon-geometry-quantities.md) | Type Radon imaging geometry quantities | Accepted |
 | [0017](0017-planning-dose-quantities.md) | Type inverse-planning dose objectives | Accepted |
