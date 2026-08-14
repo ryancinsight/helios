@@ -1,6 +1,6 @@
 # ADR 0008: Typed delivery physical quantities
 
-- Status: accepted
+- Status: Accepted
 - Date: 2026-07-23
 - Class: [arch] [major]
 
