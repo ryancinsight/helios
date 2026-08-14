@@ -9,7 +9,12 @@
 //! - Homogeneity Index (ICRU-83: `(D₂ − D₉₈) / D₅₀`)
 //! - Volume fraction above prescription
 //!
-//! Run with: cargo run --example dvh_analysis -p helios-analysis
+//! Run with: cargo run --example `dvh_analysis` -p helios-analysis
+
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
 
 use aequitas::systems::si::{quantities::AbsorbedDose, units::Gray};
 use helios_analysis::Dvh;

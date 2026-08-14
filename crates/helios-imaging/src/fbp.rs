@@ -86,6 +86,10 @@ pub fn filtered_back_projection<T: GeometryScalar + eunomia::UnitScalar>(
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
     use crate::radon::parallel_beam_radon;
     use aequitas::systems::si::quantities::{Angle, Length};
@@ -235,9 +239,9 @@ mod tests {
         .std;
 
         // Low flux → visible noise; high flux → less. Both exceed the clean ripple.
-        let low = add_quantum_noise(&clean_sino, 1.0e4, 20260701)
+        let low = add_quantum_noise(&clean_sino, 1.0e4, 20_260_701)
             .expect("forward projection produces valid optical depths");
-        let high = add_quantum_noise(&clean_sino, 1.0e6, 20260701)
+        let high = add_quantum_noise(&clean_sino, 1.0e6, 20_260_701)
             .expect("forward projection produces valid optical depths");
         let std_low = roi_statistics(
             &filtered_back_projection(&low, &recon_grid()),
@@ -314,10 +318,10 @@ mod tests {
         });
 
         let angles: Vec<Angle<T>> = (0..90)
-            .map(|a| Angle::from_unit::<Radian>(cast(a as f64 * std::f64::consts::PI / 90.0)))
+            .map(|a| Angle::from_unit::<Radian>(cast(f64::from(a) * std::f64::consts::PI / 90.0)))
             .collect();
         let offsets: Vec<Length<T>> = (0..121)
-            .map(|j| Length::from_unit::<Millimeter>(cast(-45.0 + j as f64 * 90.0 / 120.0)))
+            .map(|j| Length::from_unit::<Millimeter>(cast(-45.0 + f64::from(j) * 90.0 / 120.0)))
             .collect();
         let sinogram = parallel_beam_radon(
             &phantom,

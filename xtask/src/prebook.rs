@@ -211,6 +211,6 @@ pub fn sha256_hex_first_16(bytes: &[u8]) -> String {
     let mut hasher = Sha256::new();
     hasher.update(bytes);
     let digest = hasher.finalize();
-    let hex = format!("{:x}", digest);
+    let hex = format!("{digest:x}");
     hex[..16].to_owned()
 }

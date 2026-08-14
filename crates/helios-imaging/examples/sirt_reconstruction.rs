@@ -41,6 +41,11 @@
 //!
 //! [← MVCT and Correction Workflows](../../docs/book/imaging_mvct.md)
 
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
+
 use aequitas::systems::si::{
     quantities::{Angle, Length},
     units::{Millimeter, Radian},
@@ -102,10 +107,7 @@ fn main() {
         .collect();
 
     let sinogram = parallel_beam_radon(&phantom, &angles, &offsets, source, step);
-    println!(
-        "Sinogram acquired: {} angles × {} detectors",
-        n_angles, n_detectors
-    );
+    println!("Sinogram acquired: {n_angles} angles × {n_detectors} detectors");
 
     // ── 3. FBP baseline reconstruction ────────────────────────────────────────
     let fbp = filtered_back_projection(&sinogram, &grid);

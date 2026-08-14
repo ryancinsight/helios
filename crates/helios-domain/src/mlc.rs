@@ -1,14 +1,14 @@
 //! Binary multi-leaf collimator (MLC) modulation with leakage and
 //! tongue-and-groove.
 //!
-//! TomoTherapy modulates the fan beam with a **binary** MLC: each leaf is open or
+//! `TomoTherapy` modulates the fan beam with a **binary** MLC: each leaf is open or
 //! closed, and modulation is achieved by the *fraction* of each projection a leaf
 //! is open (leaf-open-time, LOT), stored as a [`LeafOpenTimeSinogram`]. The
 //! delivered fluence departs from the nominal open fraction through two effects
 //! modelled here ([`MlcModel`]):
 //!
 //! - **Leakage / transmission**: a closed leaf still transmits a small fraction
-//!   `τ` (inter-/intra-leaf leakage, ~0.5–1 % for TomoTherapy), so the effective
+//!   `τ` (inter-/intra-leaf leakage, ~0.5–1 % for `TomoTherapy`), so the effective
 //!   fluence is `open + (1−open)·τ`.
 //! - **Tongue-and-groove**: the overlapping tongue/groove at a leaf's sides
 //!   underdoses the edge region where a neighbour is more closed, reducing the
@@ -165,6 +165,10 @@ impl<T: Scalar> MlcModel<T> {
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
     use eunomia::assert_relative_eq;
     use helios_math::ShippedScalar;

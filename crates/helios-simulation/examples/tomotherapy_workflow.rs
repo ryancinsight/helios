@@ -1,4 +1,4 @@
-//! End-to-end helical TomoTherapy + MVCT workflow demo (H-041b).
+//! End-to-end helical `TomoTherapy` + MVCT workflow demo (H-041b).
 //!
 //! Runs the full Helios pipeline on a synthetic CT phantom and renders inspectable
 //! PNG artifacts (per the Output & visual verification discipline):
@@ -13,6 +13,15 @@
 //! CLI arg, default `helios_workflow_output/`) and prints a quantitative summary.
 //!
 //! Run: `cargo run -p helios-simulation --example tomotherapy_workflow [out_dir]`.
+
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
+#![expect(
+    clippy::unwrap_used,
+    reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+)]
 
 use std::path::{Path, PathBuf};
 
@@ -117,11 +126,13 @@ fn main() {
 
     // 2. Imaging: Radon → FBP.
     let angles: Vec<Angle<f64>> = (0..180)
-        .map(|a| Angle::from_unit::<Radian>(a as f64 * std::f64::consts::PI / 180.0))
+        .map(|a| Angle::from_unit::<Radian>(f64::from(a) * std::f64::consts::PI / 180.0))
         .collect();
     let n_off = 121;
     let offsets: Vec<Length<f64>> = (0..n_off)
-        .map(|j| Length::from_unit::<Millimeter>(-35.0 + j as f64 * 70.0 / (n_off - 1) as f64))
+        .map(|j| {
+            Length::from_unit::<Millimeter>(-35.0 + f64::from(j) * 70.0 / f64::from(n_off - 1))
+        })
         .collect();
     let sino = parallel_beam_radon(
         &mu,
@@ -222,7 +233,7 @@ fn main() {
     render_slice(&recon, 0, &out.join("recon.png"));
     render_slice(&dose, NZ / 2, &out.join("dose.png"));
 
-    println!("Helios end-to-end workflow ({}³ voxels)", NX);
+    println!("Helios end-to-end workflow ({NX}³ voxels)");
     println!(
         "  μ:      water 0.0600 cm⁻¹, bone {:.4}, air ~0",
         mu.get(NX / 2, NX / 2, NZ / 2).unwrap()

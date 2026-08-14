@@ -30,6 +30,15 @@
 //! cargo run -p helios-planning --example dvh_optimization
 //! ```
 
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
+#![expect(
+    clippy::unwrap_used,
+    reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+)]
+
 use helios_planning::{objective_value, optimize_beam_weights, DoseInfluence};
 
 fn main() {
@@ -61,10 +70,7 @@ fn main() {
     let influence =
         DoseInfluence::from_rows(n_voxels, n_beamlets, matrix).expect("matrix dimensions match");
 
-    println!(
-        "Dose influence matrix: {} voxels × {} beamlets",
-        n_voxels, n_beamlets
-    );
+    println!("Dose influence matrix: {n_voxels} voxels × {n_beamlets} beamlets");
     println!("  PTV voxels: 0–3 (prescription = 2.0 Gy)");
     println!("  OAR voxels: 4–5 (prescription = 0.0 Gy)\n");
 
@@ -107,7 +113,7 @@ fn main() {
     println!("  {:12} {:>10} {:>10}", "Voxel", "Rx [Gy]", "Dose [Gy]");
     for (i, (&d, &rx)) in dose.iter().zip(prescription.iter()).enumerate() {
         let label = if i < 4 { "PTV" } else { "OAR" };
-        println!("  {:3} ({})  {:>10.4} {:>10.4}", i, label, rx, d);
+        println!("  {i:3} ({label})  {rx:>10.4} {d:>10.4}");
     }
     println!();
 
@@ -130,7 +136,7 @@ fn main() {
     let ptv_mean = ptv_doses.iter().sum::<f64>() / ptv_doses.len() as f64;
 
     // D_max OAR.
-    let oar_max = oar_doses.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+    let oar_max = oar_doses.iter().copied().fold(f64::NEG_INFINITY, f64::max);
 
     // The synthetic 3-beamlet x 6-voxel geometry couples the OAR voxels directly
     // into two of the three beam channels (OAR v4 = 0.5*B1, OAR v5 = 0.4*B3).

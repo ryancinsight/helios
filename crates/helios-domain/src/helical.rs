@@ -1,9 +1,9 @@
-//! Helical TomoTherapy delivery kinematics.
+//! Helical `TomoTherapy` delivery kinematics.
 //!
 //! In helical delivery the gantry rotates continuously while the couch
 //! translates the patient through the bore, so the source traces a helix in the
 //! patient frame. The rotation is discretized into a fixed number of
-//! **projections** per rotation (51 on TomoTherapy), each with its own binary-MLC
+//! **projections** per rotation (51 on `TomoTherapy`), each with its own binary-MLC
 //! leaf pattern.
 //!
 //! The couch advance per gantry rotation is set by the **pitch** — the couch
@@ -45,7 +45,7 @@ impl<T: Scalar + UnitScalar> HelicalDelivery<T> {
     /// Construct a helical delivery.
     ///
     /// - `projections_per_rotation`: gantry projections per full rotation (51 on
-    ///   TomoTherapy).
+    ///   `TomoTherapy`).
     /// - `field_width_mm`: jaw opening at isocentre (e.g. 25 mm).
     /// - `pitch`: couch travel per rotation ÷ field width (typically 0.2–0.5).
     /// - `gantry_period_s`: time for one full gantry rotation.
@@ -220,6 +220,10 @@ impl<T: Scalar + UnitScalar> HelicalDelivery<T> {
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
     use eunomia::assert_relative_eq;
     use helios_math::ShippedScalar;

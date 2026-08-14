@@ -11,9 +11,8 @@ use aequitas::systems::si::{
 use helios_gpu::{default_device, GpuAttenuationMapper};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let device = match default_device() {
-        Ok(device) => device,
-        Err(_) => return Ok(()),
+    let Ok(device) = default_device() else {
+        return Ok(());
     };
 
     let mapper = GpuAttenuationMapper::new(

@@ -431,8 +431,9 @@ rustdoc is warning-clean.
   runs 104/104 domain/solver/GPU tests, including live-GPU differentials.
   Workspace example compilation and `cargo fmt --all --check` pass. Semver
   checks pass 196/196 each for `helios-domain`, `helios-math`,
-  `helios-solver`, and `helios-gpu`. H-004d remains blocked on RITK's named
-  `ImageOrientationPatient` attribute provider.
+  `helios-solver`, and `helios-gpu`. H-004d is in progress: Helios now uses
+  RITK's provider-owned `ImageOrientationPatient` constant; RITK PR #149 is
+  the remaining exact-head merge gate.
 
 ## Codex — H-062 DVH threshold-query audit [patch] — done 2026-07-15
 
@@ -909,8 +910,8 @@ or H-004b ritk DICOM (real inputs → clinical validation) or H-020b binary-MLC.
 
 ### Deferred (current open scope)
 
-- **H-004d** RITK `ImageOrientationPatient` tag and oriented DICOM grid (blocked on
-  the external provider surface).
+- **H-004d** RITK `ImageOrientationPatient` tag and oriented DICOM grid (consumer
+  cutover complete locally; pending RITK PR #149 exact-head merge).
 - **H-011d** exact Siddon voxel-DDA and oriented-grid projection.
 - **H-012** GPU MVCT forward projector over the CPU reference.
 

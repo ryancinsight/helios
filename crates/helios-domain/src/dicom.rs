@@ -26,7 +26,6 @@ use ritk_dicom::{
 };
 
 type Object = <DicomRsBackend as ritk_dicom::DicomParseBackend>::Object;
-const IMAGE_ORIENTATION_PATIENT: DicomTag = DicomTag::new(0x0020, 0x0037);
 const ORIENTATION_TOL: f64 = 1.0e-6;
 
 fn dicom_err(step: &str, e: impl core::fmt::Display) -> HeliosError {
@@ -134,8 +133,8 @@ fn read_slice(path: &std::path::Path) -> Result<SliceRaw, HeliosError> {
     ];
     let orientation = multi_f64(
         &obj,
-        IMAGE_ORIENTATION_PATIENT,
-        "ImageOrientationPatient (0020,0037)",
+        tags::IMAGE_ORIENTATION_PATIENT,
+        "ImageOrientationPatient",
     )?
     .unwrap_or_else(|| vec![1.0, 0.0, 0.0, 0.0, 1.0, 0.0]);
     if orientation.len() != 6 {
@@ -603,7 +602,7 @@ mod tests {
         );
         append_element(
             &mut bytes,
-            IMAGE_ORIENTATION_PATIENT,
+            tags::IMAGE_ORIENTATION_PATIENT,
             *b"DS",
             &text_value(*b"DS", image_orientation_patient),
         );

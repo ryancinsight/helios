@@ -1,6 +1,6 @@
 # ADR 0004: Asclepius owns biological-response laws
 
-- Status: accepted
+- Status: Accepted
 - Date: 2026-07-20
 - Class: architectural, public breaking
 

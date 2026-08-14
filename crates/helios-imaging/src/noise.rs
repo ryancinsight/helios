@@ -184,7 +184,7 @@ mod tests {
         // one that performs the literal conversion so the call is unambiguous.
         let cast = <T as helios_math::FloatElement>::from_f64;
         let offsets: Vec<Length<T>> = (0..64)
-            .map(|i| Length::from_unit::<Millimeter>(cast(i as f64)))
+            .map(|i| Length::from_unit::<Millimeter>(cast(f64::from(i))))
             .collect();
         let optical_depth = cast(0.5);
         let clean = Sinogram::from_readings(

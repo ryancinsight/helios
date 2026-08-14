@@ -13,17 +13,17 @@ use aequitas::systems::si::{
 };
 use core::fmt;
 
-/// Beam energy in megaelectronvolts (MeV).
+/// Beam energy in megaelectronvolts (`MeV`).
 ///
 /// Valid range: finite and strictly positive. Photon and electron beam
-/// nominal energies (e.g. TomoTherapy's 6 MV MV beam) are positive by
+/// nominal energies (e.g. `TomoTherapy`'s 6 MV MV beam) are positive by
 /// definition; zero and non-finite values are rejected at construction.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 #[repr(transparent)]
 pub struct EnergyMeV(Energy<f64>);
 
 impl EnergyMeV {
-    /// Returns the underlying value in MeV.
+    /// Returns the underlying value in `MeV`.
     #[must_use]
     pub fn get(self) -> f64 {
         self.0.in_unit::<MegaElectronVolt>()
@@ -161,6 +161,10 @@ const _: () = assert!(core::mem::align_of::<VoxelSpacingMm>() == core::mem::alig
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
 
     fn conversion_round_trip_bound(value: f64) -> f64 {

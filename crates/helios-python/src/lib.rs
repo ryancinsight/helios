@@ -1,4 +1,4 @@
-//! Thin PyO3 binding surface for Helios (`import helios`).
+//! Thin `PyO3` binding surface for Helios (`import helios`).
 //!
 //! This is the ONLY Helios crate permitted to depend on `pyo3`. It holds no
 //! domain logic: every function validates and converts its Python arguments into
@@ -17,7 +17,7 @@ use aequitas::systems::si::{
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
-/// Reject a photon energy that is not strictly positive and finite (MeV).
+/// Reject a photon energy that is not strictly positive and finite (`MeV`).
 fn checked_energy_mev(energy_mev: f64) -> PyResult<f64> {
     if !energy_mev.is_finite() || energy_mev <= 0.0 {
         return Err(PyValueError::new_err(
@@ -27,7 +27,7 @@ fn checked_energy_mev(energy_mev: f64) -> PyResult<f64> {
     Ok(energy_mev)
 }
 
-/// Total Thomson (classical) scattering cross-section σ_T (m²/electron).
+/// Total Thomson (classical) scattering cross-section `σ_T` (m²/electron).
 #[pyfunction]
 fn thomson_cross_section() -> f64 {
     helios_physics::thomson_cross_section::<f64>()
@@ -78,6 +78,10 @@ fn mass_density_from_hu(hu: f64, water_density_g_cm3: f64) -> f64 {
 /// `prescription` length ≠ `voxels`.
 #[pyfunction]
 #[pyo3(signature = (influence, voxels, beamlets, prescription, iterations, step))]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "PyO3 extracts sequence arguments into owned Vec<f64>; a borrowed slice is not an extractable argument type"
+)]
 fn optimize_beam_weights(
     py: Python<'_>,
     influence: Vec<f64>,
