@@ -163,3 +163,22 @@ for kwavers) requiring consumer coordination.
 | H-042 | Validation report: gamma/DVH vs reference; MVCT image metrics | [minor] | todo | — | `validation_reports/**` |
 | H-043 | Performance: GPU-vs-CPU scaling study — criterion benchmark of `beam_transmission_into` across sizes (`helios-gpu/benches/transmission_throughput.rs`) + quantitative report. Finding: the isolated transmission kernel is transfer-bound; GPU does not beat CPU at any tested size (RTX 5080 vs Core Ultra 9 285K). | [minor] | done | claude-helios | `crates/helios-gpu/benches/**`, `validation_reports/**` |
 | H-043b | Performance: on-device pipeline. **Step 1 done** — upstreamed hephaestus `ExpNegOp` (fused `exp(−x)`, one dispatch, no intermediate buffer; hephaestus commit 669a9b3) and consumed it in `beam_transmission_into`: GPU +30% at 4M (373→485 Melem/s) but still transfer-bound at 0.66–0.73× CPU (report addendum). **Step 2 done — RESOLVED:** upstreamed hephaestus `ray_line_integrals` (volume ray-integral kernel, commits 792ccc3/9354260, 4 live-GPU oracles) and consumed it as `helios_gpu::GpuProjector` (μ resident on device, batched sinogram projection). Measured: **171×/371× vs single-thread CPU** at 90×128 / 360×256 sinograms on a 128³ volume (report `2026-07-02-gpu-projection-throughput.md`); per-ray differential vs `forward_project_ray` within 1e-3. | [major] | done | claude-helios | `crates/helios-gpu/**`, `crates/helios-solver/**` |
+
+## HELIOS-HERMES-LOCKSTEP-001 — Coeus/Hermes consumer lock [patch] — done
+
+- Owner: current Atlas session; scope: the clean `build/hermes-lockstep`
+  lane's `Cargo.lock`, `backlog.md`, `checklist.md`, and `gap_audit.md` only.
+  The active dirty Helios checkout is excluded.
+- Acceptance: Helios resolves the verified Coeus default `32d7f4e8` and its
+  transitive Hermes default `eb1a2f87` without compatibility or local-path
+  shims; locked package, test, lint, documentation, and CI supply-chain gates
+  pass. Satisfied in the clean `build/hermes-lockstep` lane: all-feature
+  check, format, strict Clippy, 283/283 Nextest, doctests, Rustdoc, audit, and
+  all-feature cargo-deny all pass.
+- The resolver must update the dependency-ordered first-party graph together;
+  hand-editing only Hermes would leave the older Coeus `hermes-simd ^0.6.0`
+  requirement unsatisfiable.
+
+The license policy adds only the two precise transitive licenses required by
+the optional DICOM provider, CC0-1.0 and IJG, matching the existing allowance
+in sibling Atlas providers.

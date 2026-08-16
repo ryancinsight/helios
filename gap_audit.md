@@ -698,3 +698,18 @@ and attenuation, and `AreaPerMass` for mass attenuation. `EnergyMeV` and
   **not runnable in this environment**, so that specific gate cannot be closed here and
   will not be fabricated. Evidence tier: analytical oracles (conservation, identity
   differential, symmetry); NOT validated against a reference dose engine.
+
+## HELIOS-HERMES-LOCKSTEP-001 — Coeus/Hermes consumer lock — closed
+
+The prior Helios lockfile selected `coeus-*` at `d4503e8a` and Hermes at
+`0.6.0`. Resolving Hermes directly to the Atlas default failed because the
+older Coeus manifest required `hermes-simd ^0.6.0`. The dependency-ordered
+update advances Coeus to the verified current default `32d7f4e8`, Hermes to
+`eb1a2f87`, Hephaestus to `dc7b72c6`, and the remaining first-party graph.
+
+No Helios source, manifest boundary, compatibility path, or active dirty
+checkout changed. Clean-lane evidence: locked all-feature check, format,
+warning-denied Clippy, 283/283 Nextest with 9 skips, doctests, warning-denied
+Rustdoc, `cargo audit`, and all-feature `cargo deny check` pass. The license
+policy adds only the precise CC0-1.0 and IJG allowances required by the
+optional `ritk-dicom` provider, matching existing sibling-provider policy.
