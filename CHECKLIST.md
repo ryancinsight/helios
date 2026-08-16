@@ -1054,3 +1054,22 @@ H-012.
   action provenance and provider-graph resolution.
 - [x] Pass implementation-head hosted Rust, Python-binding, and benchmark verification
   at `44fb2768d` in run `29784712768`.
+
+## HELIOS-HERMES-LOCKSTEP-001 — Coeus/Hermes consumer lock
+
+- [x] Record the dependency-ordered lock update from current Coeus to Hermes
+      `0.7.0` without changing Helios source or the active dirty checkout.
+      The lock selects Coeus `32d7f4e8`, Hermes `eb1a2f87`, Hephaestus
+      `dc7b72c6`, and the co-evolved first-party graph.
+- [x] Run isolated locked metadata/build, focused tests, strict Clippy,
+      doctests, Rustdoc, and supply-chain gates. Locked all-feature check,
+      format, and warning-denied Clippy pass; Nextest passes 283/283 with
+      9 skips; doctests and warning-denied Rustdoc pass; `cargo audit` and
+      all-feature `cargo deny check` pass.
+- [x] Synchronize `backlog.md` and `gap_audit.md` for publication of the
+      lockstep increment. The active dirty Helios checkout remains untouched.
+
+The license policy adds only the two precise transitive licenses required by
+the optional DICOM provider: `encoding`'s CC0-1.0 charset tables and
+`jpeg-encoder`'s IJG license. Both are already allowed by sibling Atlas
+providers; no broad license allowance was added.
