@@ -36,6 +36,10 @@ jobs:
       id-token: write
     with:
       output-path: target/book/helios/html
+      # Every Rust sample is self-contained or intentionally text-only; keep
+      # the deployed book behind the same executable-sample gate verified
+      # locally with `mdbook test docs/book`.
+      mdbook-test: true
       # book.toml declares the optional linkcheck2 backend; install the exact
       # renderer so local links are checked in the same build as the HTML.
       mdbook-linkcheck2-version: "0.12.2"
