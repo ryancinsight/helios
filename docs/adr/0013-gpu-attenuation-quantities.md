@@ -1,6 +1,6 @@
 # ADR 0013: Typed GPU attenuation inputs
 
-- Status: accepted
+- Status: Accepted
 - Date: 2026-07-27
 
 ## Context

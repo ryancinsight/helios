@@ -1,6 +1,6 @@
 # ADR 0006: Typed dose-valued DVH metrics
 
-- Status: accepted
+- Status: Accepted
 - Date: 2026-07-23
 - Class: [arch] [major]
 
