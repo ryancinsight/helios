@@ -126,7 +126,7 @@ impl<D: KernelDevice<Dialect = Wgsl>> GpuAttenuationMapper<D> {
             });
         }
         let offset = mu_over_rho_cm2_g * water_density_g_cm3;
-        let scale = offset / 1000.0;
+        let scale = offset / helios_core::constants::HU_SCALE_DENOMINATOR as f32;
         let prepared = device.prepare(&HuToMuKernel)?;
         Ok(Self {
             device,
@@ -196,7 +196,7 @@ mod tests {
 
     fn cpu_reference(hu: f32) -> f32 {
         // μ = (μ/ρ)·ρ_water·max(1 + HU/1000, 0), computed in f32 like the GPU.
-        0.0707_f32 * (1.0_f32 + hu / 1000.0).max(0.0)
+        0.0707_f32 * (1.0_f32 + hu / helios_core::constants::HU_SCALE_DENOMINATOR as f32).max(0.0)
     }
 
     #[test]

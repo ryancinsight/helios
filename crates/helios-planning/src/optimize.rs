@@ -131,7 +131,9 @@ mod tests {
     #[test]
     fn rejects_wrong_matrix_length() {
         assert!(DoseInfluence::from_rows(2, 3, vec![0.0; 5]).is_err());
-        assert!(DoseInfluence::from_rows(2, 3, vec![0.0; 6]).is_ok());
+        let m = DoseInfluence::from_rows(2, 3, vec![0.0; 6]).unwrap();
+        assert_eq!(m.dims(), (2, 3));
+        assert_eq!(m.rows(), &[0.0; 6]);
     }
 
     #[test]
