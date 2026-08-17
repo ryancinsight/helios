@@ -253,6 +253,32 @@ and attenuation, and `AreaPerMass` for mass attenuation. `EnergyMeV` and
 
 ## Open gaps
 
+### H-102 — Pages trigger and link-check coverage (implemented in current branch)
+
+- The Pages caller previously rebuilt only for `docs/book/**` and its own
+  workflow, so source, example, manifest, and lockfile changes could leave the
+  published book stale. The caller now includes `crates/**`, `Cargo.toml`, and
+  `Cargo.lock` in both push and pull-request path filters.
+- `docs/book/book.toml` declares the optional `mdbook-linkcheck2` renderer. The
+  caller now installs the exact `0.12.2` renderer through the Atlas-owned
+  reusable workflow, so internal link checking runs with the HTML build.
+- Local evidence: workflow YAML and input names are source-verified against the
+  pinned Atlas reusable workflow; the change does not claim a hosted Pages
+  result until the exact branch head runs.
+
+### H-103 — Helios mdBook sample rot gate (open)
+
+- A direct `mdbook test docs/book` run on the current merged Helios base fails
+  across illustrative snippets: shell commands and architecture diagrams are
+  fenced as Rust, many snippets intentionally omit setup values, and provider
+  imports are not staged as declared extern crates. The command therefore
+  provides real failure evidence rather than a green gate.
+- The Pages caller must not enable `mdbook-test` until the snippets are either
+  converted into complete, value-semantic samples or explicitly rendered as
+  explanatory non-code. The existing Cargo examples remain the runnable
+  documentation surface and are already covered by the workspace example
+  gate. Re-open this item after the documentation conversion lands.
+
 ### H-088 — deterministic book-figure SSOT gate (implemented, PR #32 merged)
 
 - `xtask` now owns `FIGURE_SPECS`, deterministic SHA-256 manifest generation,

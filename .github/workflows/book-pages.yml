@@ -5,10 +5,16 @@ on:
     branches: [main]
     paths:
       - "docs/book/**"
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
       - ".github/workflows/book-pages.yml"
   pull_request:
     paths:
       - "docs/book/**"
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
       - ".github/workflows/book-pages.yml"
   workflow_dispatch:
 
@@ -30,3 +36,6 @@ jobs:
       id-token: write
     with:
       output-path: target/book/helios/html
+      # book.toml declares the optional linkcheck2 backend; install the exact
+      # renderer so local links are checked in the same build as the HTML.
+      mdbook-linkcheck2-version: "0.12.2"
