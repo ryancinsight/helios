@@ -20,6 +20,11 @@ under a Breaking subsection.
 
 ### Changed
 
+- The Pages book caller now rebuilds when Helios source, examples, manifests,
+  or the lockfile change and installs the pinned `mdbook-linkcheck2` renderer;
+  the separate mdBook sample gate remains disabled until the current
+  illustrative snippets are converted into executable samples.
+
 - The end-to-end and example gamma checks compare the delivered dose against an
   independently constructed, uniformly scaled comparison field with an
   analytically derived peak gamma and pass rate, plus a negative control that
