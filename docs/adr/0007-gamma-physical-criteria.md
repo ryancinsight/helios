@@ -1,6 +1,6 @@
 # ADR 0007: Typed gamma physical criteria
 
-- Status: accepted
+- Status: Accepted
 - Date: 2026-07-23
 - Class: [arch] [major]
 
