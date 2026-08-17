@@ -66,14 +66,23 @@ fn opt_f64(
         .map_err(|e| dicom_err(name, e))
 }
 
-/// Optional multi-valued decimal string.
-fn multi_f64(
+/// Required multi-valued decimal string with an exact value count.
+fn required_f64_array<const N: usize>(
     obj: &Object,
     tag: DicomTag,
     name: &'static str,
-) -> Result<Option<Vec<f64>>, HeliosError> {
-    obj.optional_decimal_vec(tag, name)
-        .map_err(|e| dicom_err(name, e))
+) -> Result<[f64; N], HeliosError> {
+    let values = obj
+        .optional_decimal_vec(tag, name)
+        .map_err(|e| dicom_err(name, e))?
+        .ok_or_else(|| HeliosError::Dicom {
+            reason: format!("{name}: missing required attribute"),
+        })?;
+    values
+        .try_into()
+        .map_err(|values: Vec<f64>| HeliosError::Dicom {
+            reason: format!("{name} expected {N} values, got {}", values.len()),
+        })
 }
 
 /// One parsed+decoded DICOM slice in native (f64/mm/HU) form, before it is mapped
@@ -119,33 +128,20 @@ fn read_slice(path: &std::path::Path) -> Result<SliceRaw, HeliosError> {
     let rescale_slope = opt_f64(&obj, tags::RESCALE_SLOPE, "RescaleSlope", 1.0)? as f32;
     let rescale_intercept = opt_f64(&obj, tags::RESCALE_INTERCEPT, "RescaleIntercept", 0.0)? as f32;
 
-    // PixelSpacing is [row_spacing, col_spacing] (mm); default to 1 mm isotropic.
-    let spacing = multi_f64(&obj, tags::PIXEL_SPACING, "PixelSpacing")?.unwrap_or_default();
-    let row_spacing = spacing.first().copied().unwrap_or(1.0);
-    let col_spacing = spacing.get(1).copied().unwrap_or(row_spacing);
+    // PixelSpacing is [row_spacing, col_spacing] (mm), and is required for a
+    // patient-coordinate grid. Silent unit-spacing recovery would change the
+    // physical meaning of every voxel without an error at the trust boundary.
+    let [row_spacing, col_spacing] =
+        required_f64_array::<2>(&obj, tags::PIXEL_SPACING, "PixelSpacing")?;
     let thickness = opt_f64(&obj, tags::SLICE_THICKNESS, "SliceThickness", 1.0)?;
 
-    let ipp =
-        multi_f64(&obj, tags::IMAGE_POSITION_PATIENT, "ImagePositionPatient")?.unwrap_or_default();
-    let origin = [
-        ipp.first().copied().unwrap_or(0.0),
-        ipp.get(1).copied().unwrap_or(0.0),
-        ipp.get(2).copied().unwrap_or(0.0),
-    ];
-    let orientation = multi_f64(
+    let origin =
+        required_f64_array::<3>(&obj, tags::IMAGE_POSITION_PATIENT, "ImagePositionPatient")?;
+    let orientation = required_f64_array::<6>(
         &obj,
         IMAGE_ORIENTATION_PATIENT,
         "ImageOrientationPatient (0020,0037)",
-    )?
-    .unwrap_or_else(|| vec![1.0, 0.0, 0.0, 0.0, 1.0, 0.0]);
-    if orientation.len() != 6 {
-        return Err(HeliosError::Dicom {
-            reason: format!(
-                "ImageOrientationPatient expected 6 values, got {}",
-                orientation.len()
-            ),
-        });
-    }
+    )?;
     let row_dir = normalize3(
         [orientation[0], orientation[1], orientation[2]],
         "ImageOrientationPatient row direction",
@@ -273,8 +269,8 @@ fn scatter_slice<T: Scalar>(dst: &mut [T], slice: &SliceRaw, k: usize, nz: usize
 /// so the volume holds HU directly. Grid geometry: `dims = [Columns, Rows, 1]`
 /// (voxel index `i = column`/x, `j = row`/y, `k = 0`); spacing
 /// `[PixelSpacing_col, PixelSpacing_row, SliceThickness]` (mm); origin from
-/// `ImagePositionPatient` (defaulting to the origin when absent); orientation
-/// from `ImageOrientationPatient` (defaulting to identity when absent).
+/// the required `ImagePositionPatient`; and orientation from the required
+/// `ImageOrientationPatient` direction cosines.
 ///
 /// # Errors
 /// [`HeliosError::Dicom`] if the file cannot be parsed/decoded or a required
@@ -454,16 +450,25 @@ mod tests {
         value.to_le_bytes()
     }
 
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum OmittedGeometry {
+        None,
+        PixelSpacing,
+        ImagePosition,
+        ImageOrientation,
+    }
+
     // Write a synthetic 2×2 unsigned-16 CT slice at position `z_mm` with a known
     // HU pattern and geometry (no external fixture). Slope 2, intercept −10;
     // PixelSpacing 0.8 (row) / 1.25 (col) mm; in-plane origin (5,7); configurable
     // `ImageOrientationPatient`; a unique SOP instance UID per file.
-    fn write_slice_at_with_orientation(
+    fn write_slice_at_with_geometry(
         path: &std::path::Path,
         pixels: [u16; 4],
         z_mm: f64,
         uid: &str,
         image_orientation_patient: &str,
+        omit: OmittedGeometry,
     ) {
         let sop_class = "1.2.840.10008.5.1.4.1.1.2";
         let transfer_syntax = "1.2.840.10008.1.2.1";
@@ -583,30 +588,36 @@ mod tests {
             *b"DS",
             &text_value(*b"DS", "-10"),
         );
-        append_element(
-            &mut bytes,
-            tags::PIXEL_SPACING,
-            *b"DS",
-            &text_value(*b"DS", "0.8\\1.25"),
-        );
+        if omit != OmittedGeometry::PixelSpacing {
+            append_element(
+                &mut bytes,
+                tags::PIXEL_SPACING,
+                *b"DS",
+                &text_value(*b"DS", "0.8\\1.25"),
+            );
+        }
         append_element(
             &mut bytes,
             tags::SLICE_THICKNESS,
             *b"DS",
             &text_value(*b"DS", "3"),
         );
-        append_element(
-            &mut bytes,
-            tags::IMAGE_POSITION_PATIENT,
-            *b"DS",
-            &text_value(*b"DS", &format!("5\\7\\{z_mm}")),
-        );
-        append_element(
-            &mut bytes,
-            IMAGE_ORIENTATION_PATIENT,
-            *b"DS",
-            &text_value(*b"DS", image_orientation_patient),
-        );
+        if omit != OmittedGeometry::ImagePosition {
+            append_element(
+                &mut bytes,
+                tags::IMAGE_POSITION_PATIENT,
+                *b"DS",
+                &text_value(*b"DS", &format!("5\\7\\{z_mm}")),
+            );
+        }
+        if omit != OmittedGeometry::ImageOrientation {
+            append_element(
+                &mut bytes,
+                IMAGE_ORIENTATION_PATIENT,
+                *b"DS",
+                &text_value(*b"DS", image_orientation_patient),
+            );
+        }
 
         let mut pixel_bytes = Vec::with_capacity(pixels.len() * 2);
         for pixel in pixels {
@@ -619,6 +630,23 @@ mod tests {
             &pixel_bytes,
         );
         std::fs::write(path, bytes).expect("write synthetic DICOM");
+    }
+
+    fn write_slice_at_with_orientation(
+        path: &std::path::Path,
+        pixels: [u16; 4],
+        z_mm: f64,
+        uid: &str,
+        image_orientation_patient: &str,
+    ) {
+        write_slice_at_with_geometry(
+            path,
+            pixels,
+            z_mm,
+            uid,
+            image_orientation_patient,
+            OmittedGeometry::None,
+        );
     }
 
     fn write_slice_at(path: &std::path::Path, pixels: [u16; 4], z_mm: f64, uid: &str) {
@@ -655,6 +683,39 @@ mod tests {
     fn missing_file_is_a_dicom_error_not_a_panic() {
         let err = load_ct_slice::<f64>("does_not_exist.dcm").unwrap_err();
         assert!(matches!(err, HeliosError::Dicom { .. }));
+    }
+
+    #[test]
+    fn missing_required_geometry_is_rejected_at_dicom_boundary() {
+        let cases = [
+            (OmittedGeometry::PixelSpacing, "PixelSpacing"),
+            (OmittedGeometry::ImagePosition, "ImagePositionPatient"),
+            (
+                OmittedGeometry::ImageOrientation,
+                "ImageOrientationPatient (0020,0037)",
+            ),
+        ];
+
+        for (index, (omitted, name)) in cases.into_iter().enumerate() {
+            let dir = tempfile::tempdir().unwrap();
+            let path = dir.path().join("missing-geometry.dcm");
+            write_slice_at_with_geometry(
+                &path,
+                [10, 20, 30, 40],
+                9.0,
+                &format!("2.25.4242.{index}"),
+                "1\\0\\0\\0\\1\\0",
+                omitted,
+            );
+
+            match load_ct_slice::<f64>(&path) {
+                Err(HeliosError::Dicom { reason }) => {
+                    assert_eq!(reason, format!("{name}: missing required attribute"));
+                }
+                Err(other) => panic!("unexpected DICOM error: {other}"),
+                Ok(_) => panic!("missing {name} was accepted"),
+            }
+        }
     }
 
     // Write a 3-slice series (deliberately out of z-order on disk) at z = 0, 4, 8
