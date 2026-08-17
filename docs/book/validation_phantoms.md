@@ -11,7 +11,7 @@ Helios includes synthetic test phantoms for validation and regression testing.
 
 The standard phantom for attenuation and dose validation:
 
-```rust
+```text
 fn water_cylinder_phantom(nx: usize, spacing: f64) -> Volume<f64> {
     let c = (nx as f64 - 1.0) * spacing / 2.0;
     Volume::from_shape_fn(grid, move |idx| {

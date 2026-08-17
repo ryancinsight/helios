@@ -23,7 +23,7 @@ dose-engine and imaging stack.
 
 ## Case 1 — Gamma Self-Consistency
 
-```rust
+```text
 use aequitas::systems::si::{
     quantities::{AbsorbedDose, Length},
     units::{Gray, Millimeter},
@@ -47,7 +47,7 @@ yields γ = 0 at every voxel → 100 % pass rate.
 
 ## Case 2 — Radon / FBP Round-Trip
 
-```rust
+```text
 let sinogram = parallel_beam_radon(&phantom, &angles, &offsets, source_mm, step_mm);
 let recon    = filtered_back_projection(&sinogram, &recon_grid);
 let rmse     = volume_rmse(&recon, &phantom)?;
@@ -60,7 +60,7 @@ tolerance.  Higher-resolution grids approach clinical MVCT accuracy (≤ 1 %).
 
 ## Case 3 — DVH Monotonicity
 
-```rust
+```text
 let dvh = Dvh::from_volume(&ramp);
 let d   = dvh.dose_at_volume_fraction(v).into_base();
 ```

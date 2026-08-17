@@ -25,7 +25,7 @@ reported as `HephaestusError` rather than silently selecting another backend.
 
 Run the live-device example on a host with a compatible adapter:
 
-```text
+```bash
 cargo run -p helios-gpu --example gpu_attenuation_projection
 ```
 

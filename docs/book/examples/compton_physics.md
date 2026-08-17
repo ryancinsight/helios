@@ -21,7 +21,7 @@ Demonstrates the Klein–Nishina cross-section model that underpins MV photon tr
 
 ## Key APIs
 
-```rust
+```text
 use helios_physics::{
     thomson_cross_section, klein_nishina_cross_section,
     compton_mean_energy_transfer_fraction, compton_mass_attenuation,

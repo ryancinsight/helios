@@ -11,7 +11,7 @@ terma volumes) are stack-allocated from thread-local arenas.
 
 ## Arena Allocation
 
-```rust
+```text
 use mnemosyne::Arena;
 
 let arena = Arena::with_capacity(256 * 1024 * 1024); // 256 MiB

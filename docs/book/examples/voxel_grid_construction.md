@@ -23,7 +23,7 @@ It then verifies the trilinear sampling contract:
 
 ## Key Code Snippet
 
-```rust
+```text
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{Point3, Scalar};
 
@@ -44,7 +44,7 @@ fn affine_volume<T: Scalar>() -> (VoxelGrid<T>, Volume<T>) {
 
 For an affine field `f(x) = a·x + b`, trilinear interpolation at continuous coordinate
 `x_c ∈ [x₀, x₁]` gives:
-```
+```text
 lerp(f(x₀), f(x₁), t) = (1-t)·(a·x₀+b) + t·(a·x₁+b) = a·((1-t)x₀ + t·x₁) + b = f(x_c)
 ```
 

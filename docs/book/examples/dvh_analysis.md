@@ -23,7 +23,7 @@ evaluation metrics used in treatment plan review:
 
 ## Key Code Snippet
 
-```rust
+```text
 use aequitas::systems::si::{quantities::AbsorbedDose, units::Gray};
 use helios_analysis::Dvh;
 

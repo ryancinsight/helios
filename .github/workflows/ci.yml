@@ -57,6 +57,14 @@ jobs:
       - name: Check book figures
         run: cargo run -p xtask -- check-figures
 
+      - name: Install mdBook
+        uses: taiki-e/install-action@f47c9687269207d6b374de4134cb8b1fa5b49649
+        with:
+          tool: mdbook@0.5.4
+
+      - name: Test book documentation
+        run: mdbook test docs/book
+
       - name: RustSec audit
         run: cargo audit --deny warnings --ignore RUSTSEC-2021-0153
 

@@ -41,7 +41,7 @@ Part VII — Clinical Protocol Compliance
 
 ## Planned APIs
 
-```rust
+```text
 use helios_analysis::{Dvh, gamma_index_3d, gamma_pass_rate};
 use helios_solver::dose_engine;
 ```

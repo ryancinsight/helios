@@ -23,7 +23,7 @@ integral.
 
 ## Key Code Snippet
 
-```rust
+```text
 use helios_imaging::radon::parallel_beam_radon;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Point3;
@@ -40,7 +40,7 @@ let sino = parallel_beam_radon(&phantom, &angles, &offsets, 200.0, 0.5);
 The **Radon transform** maps a 2-D attenuation distribution `μ(x, y)` to its
 line integrals `p(θ, s)`:
 
-```
+```text
 p(θ, s) = ∫ μ(s·cosθ − t·sinθ,  s·sinθ + t·cosθ) dt
 ```
 

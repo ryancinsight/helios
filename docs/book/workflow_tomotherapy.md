@@ -10,7 +10,7 @@ pipeline — from CT imaging through dose calculation to plan QA.
 
 ## System Overview
 
-```
+```text
 CT acquisition → Attenuation map → MVCT reconstruction
                                            │
                       Helical MLC delivery ┤
@@ -25,7 +25,7 @@ CT acquisition → Attenuation map → MVCT reconstruction
 The imaging path converts CT Hounsfield Units (HU) to linear attenuation
 coefficients (μ) using mass-attenuation physics from `helios-physics`:
 
-```rust
+```text
 let mu = attenuation_map(&ct_volume, MassAttenuation::water());
 let sinogram = parallel_beam_radon(&mu, n_angles);
 let recon = filtered_back_projection(&sinogram, n_angles, nx);
@@ -37,7 +37,7 @@ A helical MLC delivery is defined by a `LeafOpenTimeSinogram` (LOTS) encoding th
 per-gantry-angle leaf opening times. `simulate_helical_delivery` produces the 3-D
 terma (total energy released per unit mass) distribution:
 
-```rust
+```text
 let delivery = HelicalDelivery { sinogram: lots, beam_geometry: BeamGeometry::default() };
 let terma = simulate_helical_delivery(&delivery, &mu_volume, &spectrum);
 ```
@@ -47,7 +47,7 @@ let terma = simulate_helical_delivery(&delivery, &mu_volume, &spectrum);
 The `CollapsedCone` solver converts terma to dose using a poly-energetic
 beam-hardening correction driven by the spectral components:
 
-```rust
+```text
 let dose = accumulate_delivered_dose_anisotropic(&terma, &mu, &CollapsedCone::default());
 ```
 
@@ -58,7 +58,7 @@ The `helios-analysis` crate provides:
 - `gamma_index_3d` — per-voxel gamma metric (ΔD/δD)² + (Δr/δr)²
 - `gamma_pass_rate` — fraction of voxels with γ < 1
 
-```rust
+```text
 use aequitas::systems::si::{
     quantities::{AbsorbedDose, Length},
     units::{Gray, Millimeter},

@@ -8,7 +8,7 @@
 TomoTherapy delivers dose helically: the gantry rotates while the couch
 translates, producing a helical trajectory of the beam relative to the patient.
 
-```rust
+```text
 use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram};
 
 let delivery = HelicalDelivery {

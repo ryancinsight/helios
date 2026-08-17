@@ -15,7 +15,7 @@ R[θ, t] = ∫ μ(t·cos θ − s·sin θ, t·sin θ + s·cos θ) ds
 
 In Helios the Radon transform is provided by helios-imaging:
 
-```rust
+```text
 use helios_imaging::parallel_beam_radon;
 
 let n_angles = 180;

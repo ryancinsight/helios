@@ -23,7 +23,7 @@ sinogram, comparing SIRT convergence against the FBP analytic baseline.
 
 ## Key Code Snippet
 
-```rust
+```text
 use helios_imaging::{parallel_beam_radon, filtered_back_projection, sirt_reconstruction};
 
 let sinogram = parallel_beam_radon(&phantom, &angles, &offsets, 500.0, 1.0);
@@ -40,7 +40,7 @@ let sirt = sirt_reconstruction(&sinogram, &grid, 500.0, 1.0, 10, 1.0);
 SIRT solves the linear system `Ax = b` (sinogram = projection matrix × attenuation)
 iteratively via normalized back-projection updates:
 
-```
+```text
 x ← max(0, x + λ · C⁻¹ ⊙ Aᵀ( R⁻¹ ⊙ (b − Ax) ))
 ```
 

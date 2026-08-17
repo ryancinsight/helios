@@ -15,7 +15,7 @@ Each segment has:
 - An MLC aperture shape
 - A monitor unit count
 
-```rust
+```text
 use helios_domain::StaticSegment;
 
 let segment = StaticSegment {
@@ -30,7 +30,7 @@ let segment = StaticSegment {
 Same collapsed-cone engine as TomoTherapy, applied field-by-field
 and summed:
 
-```rust
+```text
 let total_dose = segments.iter()
     .map(|seg| calculate_segment_dose(seg, &mu))
     .fold(Volume::zeros(grid), |acc, d| acc + d);
