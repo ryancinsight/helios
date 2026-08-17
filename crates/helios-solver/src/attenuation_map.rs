@@ -184,7 +184,7 @@ mod tests {
             for j in 0..4 {
                 for k in 0..5 {
                     let hu = ct.get(i, j, k).unwrap();
-                    let relative_density = (1.0 + hu / 1000.0).max(0.0);
+                    let relative_density = (1.0 + hu / helios_core::constants::HU_SCALE_DENOMINATOR).max(0.0);
                     if relative_density == 0.0 {
                         clamped += 1;
                     }

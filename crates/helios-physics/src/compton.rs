@@ -142,14 +142,14 @@ fn integrate_compton<T: Scalar + UnitScalar>(energy_mev: T, steps: usize) -> (T,
 /// [`klein_nishina_differential`] (self-validated against the closed-form total).
 #[must_use]
 pub fn compton_energy_transfer_cross_section<T: Scalar + UnitScalar>(energy: Energy<T>) -> T {
-    integrate_compton(energy.in_unit::<MegaElectronVolt>(), 4096).1
+    integrate_compton(energy.in_unit::<MegaElectronVolt>(), helios_core::constants::COMPTON_QUADRATURE_STEPS).1
 }
 
 /// Mean fraction of photon energy transferred to the recoil electron per Compton
 /// interaction, `σ_tr / σ_KN` (dimensionless, in `[0, 1)`).
 #[must_use]
 pub fn compton_mean_energy_transfer_fraction<T: Scalar + UnitScalar>(energy: Energy<T>) -> T {
-    let (total, transfer) = integrate_compton(energy.in_unit::<MegaElectronVolt>(), 4096);
+    let (total, transfer) = integrate_compton(energy.in_unit::<MegaElectronVolt>(), helios_core::constants::COMPTON_QUADRATURE_STEPS);
     transfer * total.recip()
 }
 
