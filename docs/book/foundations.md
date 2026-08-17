@@ -20,7 +20,7 @@ from an arbitrary float — it must pass a domain-specific validation contract.
 All three are created via `TryFrom<f64>`, returning `HeliosError::InvalidDomainValue`
 on failure.
 
-```rust
+```text
 use helios_core::{EnergyMeV, HounsfieldUnit, VoxelSpacingMm};
 
 let energy  = EnergyMeV::try_from(6.0).unwrap();   // 6 MV photon beam

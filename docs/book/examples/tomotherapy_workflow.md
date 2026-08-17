@@ -36,7 +36,7 @@ distribution should be spatially consistent with the delivery geometry.
 
 ## Architecture Diagram
 
-```
+```text
 VoxelGrid → Volume<f64> (HU)
      │
      ├─ attenuation_map  ───────────────── μ map

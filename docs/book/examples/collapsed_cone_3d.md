@@ -23,7 +23,7 @@ Two-stage deterministic photon dose calculation on a 10×10×10 synthetic water 
 
 ## Key Code Snippet
 
-```rust
+```text
 use helios_solver::{
     attenuation_map, dose_convolution_x, exponential_deposition_kernel,
     primary_fluence_parallel_x, scatter_superposition, symmetric_deposition_kernel,

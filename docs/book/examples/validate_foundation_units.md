@@ -29,7 +29,7 @@ It confirms that:
 
 ## Key Code Snippet
 
-```rust
+```text
 use helios_core::{EnergyMeV, HeliosError, HounsfieldUnit, VoxelSpacingMm};
 
 // Valid construction

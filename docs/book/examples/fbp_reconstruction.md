@@ -23,7 +23,7 @@ recovers the true attenuation `μ₀` to within 15% FBP discretization tolerance
 
 ## Key Code Snippet
 
-```rust
+```text
 use helios_imaging::{fbp::filtered_back_projection, radon::parallel_beam_radon};
 
 // 180 angles, 181 detector offsets

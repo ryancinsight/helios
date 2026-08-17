@@ -26,7 +26,7 @@ eunomia::RealField
 
 ## Generic kernel
 
-```rust
+```text
 use helios_math::Scalar;
 
 fn square<T: Scalar>(value: T) -> T {

@@ -11,7 +11,7 @@ them portable across CPU (MoiraiBackend) and GPU backends.
 
 ## Tensor-Based Dose Operations
 
-```rust
+```text
 use coeus_core::ComputeBackend;
 use coeus_tensor::Tensor;
 

@@ -21,7 +21,7 @@ Demonstrates a 4-field box LINAC step-and-shoot delivery on a uniform water phan
 
 ## Key APIs
 
-```rust
+```text
 use aequitas::systems::si::{
     quantities::{EnergyPerArea, Length},
     units::Millimeter,

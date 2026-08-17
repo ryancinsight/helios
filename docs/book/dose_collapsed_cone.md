@@ -8,7 +8,7 @@
 The CollapsedCone solver in helios-simulation converts terma to dose
 by convolving with a poly-energetic pencil-beam kernel:
 
-```rust
+```text
 use helios_simulation::{CollapsedCone, accumulate_delivered_dose_anisotropic};
 
 let dose = accumulate_delivered_dose_anisotropic(&terma, &mu, &CollapsedCone::default());
@@ -30,7 +30,7 @@ D(r) = Σ_k  T(r) · A_k · exp(−μ_bar · d_k(r))
 For poly-energetic beams, each spectral component is transported
 with its own μ and kernel weight, then summed:
 
-```rust
+```text
 let spectrum = vec![SpectralComponent { energy_mev: 6.0, weight: 1.0 }];
 ```
 

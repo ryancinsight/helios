@@ -23,7 +23,7 @@ on a 32×32×32 synthetic water/bone phantom with a known applied setup error.
 
 ## Key Code Snippet
 
-```rust
+```text
 use helios_imaging::register_translation;
 
 // Max search radius ±5 voxels per axis (covers ≤15 mm at 3 mm resolution)
@@ -40,7 +40,7 @@ Before radiotherapy delivery the patient position is verified with a daily MVCT
 and aligned to the planning CT. The whole-voxel translation registrar minimizes
 the mean squared intensity difference over the overlap region:
 
-```
+```text
 cost(s) = mean_v ( daily(v) − reference(v − s) )²
 ```
 

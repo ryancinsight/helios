@@ -10,7 +10,7 @@ Filtered back projection (FBP) reconstructs a 2-D image from a sinogram by:
 1. **Ramp filtering** each projection in the Fourier domain: |ω| · P̂(θ, ω)
 2. **Back-projecting** filtered projections across all angles
 
-```rust
+```text
 use helios_imaging::filtered_back_projection;
 
 let recon = filtered_back_projection(&sinogram, n_angles, nx);
