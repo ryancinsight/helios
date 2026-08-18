@@ -63,6 +63,13 @@ pub const WATER_MEAN_EXCITATION_ENERGY_EV: f64 = 78.0;
 /// and reconstruction kernel; a locally redefined copy is a consolidation defect.
 pub const MM_PER_CM: f64 = 10.0;
 
+/// Centimetres per metre — the SI conversion factor for m→cm.
+///
+/// SSOT for the m→cm path-length conversion used by scatter kernels and
+/// dose-deposition code where `Length::into_base()` returns SI metres;
+/// a locally redefined `100.0` is a consolidation defect.
+pub const CM_PER_M: f64 = 100.0;
+
 /// Metres per millimetre — the SI conversion factor for mm→m.
 ///
 /// SSOT for the m→mm path-length conversion used by scatter kernels and

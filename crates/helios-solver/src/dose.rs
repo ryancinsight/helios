@@ -22,7 +22,7 @@ use aequitas::systems::si::{
     units::{Centimeter, PerCentimeter},
 };
 use eunomia::UnitScalar;
-use helios_core::constants::MM_PER_CM;
+use helios_core::constants::{CM_PER_M, MM_PER_CM};
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Scalar;
 use hyperion::{
@@ -105,8 +105,8 @@ pub fn exponential_deposition_kernel<T: Scalar>(
 ) -> Vec<T> {
     let mut kernel = Vec::with_capacity(taps);
     let mut sum = <T as helios_math::NumericElement>::ZERO;
-    let range_cm = range.into_base() * T::from_f64(100.0);
-    let voxel_cm = voxel_spacing.into_base() * T::from_f64(100.0);
+    let range_cm = range.into_base() * T::from_f64(CM_PER_M);
+    let voxel_cm = voxel_spacing.into_base() * T::from_f64(CM_PER_M);
     let inv_range = range_cm.recip();
     for d in 0..taps {
         let distance = T::from_f64(d as f64) * voxel_cm;
