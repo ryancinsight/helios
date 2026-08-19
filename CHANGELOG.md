@@ -9,6 +9,11 @@ under a Breaking subsection.
 
 ### Added
 
+- The `helios-python` PyPI distribution now has a source-backed package README,
+  dynamic Cargo versioning, abi3-py39 metadata, and a protected Trusted
+  Publishing workflow. The distribution name avoids the occupied `helios`
+  project name while the extension continues to import as `helios`.
+
 - `LICENSE-APACHE` and `LICENSE-MIT` at the repository root, supplying the
   texts the `MIT OR Apache-2.0` manifest and README declaration referred to.
 
