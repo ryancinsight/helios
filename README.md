@@ -58,6 +58,14 @@ performance defect to profile and optimize, never a limit to raise.
 - [Published Helios book](https://ryancinsight.github.io/helios/) — hosted mdBook site.
 - [Book source](docs/book/) — Markdown chapters and local build configuration.
 
+## Python bindings
+
+The PyPI distribution is `helios-python`; the extension keeps the stable
+`import helios` name. Install it after a tagged release with
+`python -m pip install helios-python`. The binding layer remains a thin PyO3
+boundary over the Rust physics and planning crates, and its value-semantic
+tests run after the release wheel is installed.
+
 Pull-request CI compares baseline and candidate Criterion reports through the
 Atlas-owned phase-replicated gate pinned in
 [ADR 0003](docs/adr/0003-atlas-benchmark-gate.md). It executes ABBA followed
