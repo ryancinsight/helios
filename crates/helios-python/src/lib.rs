@@ -9,6 +9,7 @@
 //! core. Concrete `f64` is used at this FFI boundary (the sanctioned place for a
 //! concrete numeric type); the underlying kernels remain generic over `Scalar`.
 #![forbid(unsafe_code)]
+#![deny(missing_docs)]
 
 use aequitas::systems::si::{
     quantities::Energy,

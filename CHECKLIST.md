@@ -2,9 +2,13 @@
 
 ## current session — H-118a typed Python surface [patch] — in-progress
 
-- [ ] Add the five-function `helios.pyi` contract and `py.typed` marker.
-- [ ] Include both files in the maturin wheel and enforce missing Rust docs.
-- [ ] Verify the stub and wheel contents against the built extension contract.
+- [x] Add the five-function `helios.pyi` contract and `py.typed` marker.
+- [x] Include both files in the maturin wheel and enforce missing Rust docs;
+      disable the unsupported cdylib Rust test target so the workspace doctest
+      gate can traverse the binding package.
+- [x] Verify the stub and wheel contents against the built extension contract.
+      Maturin emits `helios.pyi` and `helios/py.typed` without a duplicate
+      root marker; mypy 2.3.1 resolves a consumer snippet in strict mode.
 - [ ] Run the binding, package, and provider documentation gates; push the
       exact head for hosted verification.
 
