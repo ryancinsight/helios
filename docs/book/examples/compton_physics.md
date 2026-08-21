@@ -46,6 +46,20 @@ where `α = E / m_e c²` (photon energy in electron-rest-mass units, `m_e c² = 
 
 As `α → 0` this reduces to the Thomson limit `σ_T = (8/3)π r_e² ≈ 6.652 × 10⁻²⁹ m²`.
 
+The limiting value is independently checkable with a self-contained Rust
+calculation:
+
+```rust
+fn main() {
+    let electron_radius_m = 2.817_940_326_2e-15_f64;
+    let sigma_t = 8.0 * std::f64::consts::PI * electron_radius_m.powi(2) / 3.0;
+
+    // The 1e-38 bound exceeds the 2.4e-39 first-order uncertainty from the
+    // final supplied electron-radius digit and covers f64 rounding.
+    assert!((sigma_t - 6.652_458_732_1e-29).abs() < 1e-38);
+}
+```
+
 ## Book Chapter
 
 [← Mass Attenuation and Photon Cross Sections](../dose_attenuation.md)

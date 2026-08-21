@@ -12,10 +12,13 @@
 - [ ] Run the binding, package, and provider documentation gates; push the
       exact head for hosted verification.
 
-## current session — H-103a executable book oracle [patch] — in-progress
+## current session — H-103a executable book oracle [patch] — done
 
-- [ ] Add a self-contained Rust analytical check to the Compton chapter.
-- [ ] Run `mdbook test docs/book` and the link checker.
+- [x] Add a self-contained Rust analytical check to the Compton chapter. Its
+      tolerance is derived from the supplied electron-radius precision and
+      f64 rounding.
+- [x] Run `mdbook test docs/book` (one executable Rust sample passes),
+      `mdbook build`, and `mdbook-linkcheck2 --standalone --no-cache`.
 - [ ] Synchronize the changelog and push the exact head for hosted Pages
       verification.
 

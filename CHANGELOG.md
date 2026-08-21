@@ -9,6 +9,10 @@ under a Breaking subsection.
 
 ### Added
 
+- The Compton-scattering book chapter now carries an executable Rust
+  Thomson-limit oracle; `mdbook test` runs the analytical check instead of
+  leaving the book's Rust-sample gate vacuous.
+
 - `helios-python` now ships a typed `helios.pyi` extension-module stub and
   PEP 561 `py.typed` metadata in its abi3 wheel.
 
