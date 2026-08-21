@@ -9,6 +9,13 @@ under a Breaking subsection.
 
 ### Added
 
+- The Compton-scattering book chapter now carries an executable Rust
+  Thomson-limit oracle; `mdbook test` runs the analytical check instead of
+  leaving the book's Rust-sample gate vacuous.
+
+- `helios-python` now ships a typed `helios.pyi` extension-module stub and
+  PEP 561 `py.typed` metadata in its abi3 wheel.
+
 - The `helios-python` PyPI distribution now has a source-backed package README,
   dynamic Cargo versioning, abi3-py39 metadata, and a protected Trusted
   Publishing workflow. The distribution name avoids the occupied `helios`
@@ -26,9 +33,9 @@ under a Breaking subsection.
 ### Changed
 
 - The Pages book caller now rebuilds when Helios source, examples, manifests,
-  or the lockfile change and installs the pinned `mdbook-linkcheck2` renderer;
-  the separate mdBook sample gate remains disabled until the current
-  illustrative snippets are converted into executable samples.
+  or the lockfile change and installs the pinned `mdbook-linkcheck2` renderer.
+  CI runs `mdbook test docs/book`; the remaining explanatory `text` fences are
+  tracked by H-103 until they are converted into executable Rust samples.
 
 - The end-to-end and example gamma checks compare the delivered dose against an
   independently constructed, uniformly scaled comparison field with an

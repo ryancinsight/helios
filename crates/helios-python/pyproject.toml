@@ -38,3 +38,6 @@ Documentation = "https://ryancinsight.github.io/helios/"
 manifest-path = "Cargo.toml"
 module-name = "helios"
 features = []
+include = [
+    { path = "helios.pyi", format = "wheel" },
+]
