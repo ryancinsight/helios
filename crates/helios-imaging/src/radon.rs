@@ -251,15 +251,27 @@ mod tests {
             vec![length_mm(-1.0), length_mm(1.0)],
             vec![1.0, 2.0, 3.0, 4.0],
         );
-        assert!(ok.is_ok());
+        let ok = ok.expect("matching angle, offset, and reading counts construct a sinogram");
         let bad = Sinogram::from_readings(
             vec![angle(0.0)],
             vec![length_mm(-1.0), length_mm(1.0)],
             vec![1.0],
         );
-        assert!(bad.is_err());
+        match bad {
+            Err(HeliosError::InvalidDomainValue {
+                field,
+                value,
+                reason,
+            }) => {
+                assert_eq!(field, "Sinogram::from_readings");
+                assert_eq!(value, 1.0);
+                assert_eq!(reason, "reading count does not match angles × offsets");
+            }
+            Err(error) => panic!("unexpected error variant: {error:?}"),
+            Ok(_) => panic!("mismatched reading count must be rejected"),
+        }
         // map_readings preserves geometry and applies f in order.
-        let doubled = ok.unwrap().map_readings(|v| v * 2.0);
+        let doubled = ok.map_readings(|v| v * 2.0);
         assert_eq!(doubled.dims(), (2, 2));
         assert_eq!(doubled.get(1, 1), 8.0);
     }
