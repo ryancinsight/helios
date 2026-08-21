@@ -52,6 +52,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-101 | Add a `book_*.rs` Helios GPU example that exercises the Themis-backed placement seam through the `helios-gpu` API surface without changing solver/domain behavior. | [patch] | done 2026-08-07 | current session | `crates/helios-gpu/examples/book_gpu_placement_hint.rs`, `backlog.md`, `CHECKLIST.md` |
 | H-102 | Repair the Helios Pages caller so source, example, manifest, and lockfile changes rebuild the book; install the pinned `mdbook-linkcheck2` renderer in the same hosted build. | [patch] | done 2026-08-16 | current session | `.github/workflows/book-pages.yml`, `backlog.md`, `gap_audit.md` |
 | H-103 | Convert source-backed Helios book snippets into checked `mdbook test` samples, or mark non-runnable explanatory fragments as non-code while retaining runnable crate examples as the executable documentation surface. | [patch] | todo | — | `docs/book/**`, `crates/*/examples/**`, `.github/workflows/book-pages.yml`, PM artifacts |
+| H-118a | Ship PEP 561 typing metadata for the five-function `helios` PyO3 module: a typed stub, `py.typed`, package inclusion, and a missing-docs lint floor. | [patch] | in-progress | Codex | `crates/helios-python/**`, PM artifacts |
 
 ## Sprint 1 — Foundation
 

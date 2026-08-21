@@ -1,5 +1,13 @@
 # Helios Checklist (tactical)
 
+## current session — H-118a typed Python surface [patch] — in-progress
+
+- [ ] Add the five-function `helios.pyi` contract and `py.typed` marker.
+- [ ] Include both files in the maturin wheel and enforce missing Rust docs.
+- [ ] Verify the stub and wheel contents against the built extension contract.
+- [ ] Run the binding, package, and provider documentation gates; push the
+      exact head for hosted verification.
+
 ## current session — H-101 examples-only `book_*.rs` GPU placement seam [patch] — done 2026-08-07
 
 - [x] Added `crates/helios-gpu/examples/book_gpu_placement_hint.rs`.
