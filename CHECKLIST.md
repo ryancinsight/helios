@@ -12,6 +12,13 @@
 - [ ] Run the binding, package, and provider documentation gates; push the
       exact head for hosted verification.
 
+## current session — H-103a executable book oracle [patch] — in-progress
+
+- [ ] Add a self-contained Rust analytical check to the Compton chapter.
+- [ ] Run `mdbook test docs/book` and the link checker.
+- [ ] Synchronize the changelog and push the exact head for hosted Pages
+      verification.
+
 ## current session — H-101 examples-only `book_*.rs` GPU placement seam [patch] — done 2026-08-07
 
 - [x] Added `crates/helios-gpu/examples/book_gpu_placement_hint.rs`.
