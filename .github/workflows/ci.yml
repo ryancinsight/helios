@@ -1,3 +1,8 @@
+# Uncommitted Atlas audit-sweep Step 2 overlay: tighten workflow
+# permissions to least-privilege so the scanned class drops.
+permissions:
+  contents: read
+
 name: ci
 
 on:

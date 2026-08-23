@@ -5,18 +5,20 @@
 *Figure 4.1 — Memory and Allocation: Mnemosyne Integration*
 <!-- generated-figure-end -->
 
-Helios uses mnemosyne for arena-based, zero-fragmentation allocation
-of large physics arrays. Large intermediate buffers (sinograms, dose grids,
-terma volumes) are stack-allocated from thread-local arenas.
+Helios allocates every dense physics array through the leto array substrate:
+`Volume<T>` owns a C-contiguous `leto::Array3<T>` (`crates/helios-domain/src/volume.rs`),
+and sinograms, dose grids, and terma volumes are built once and then read
+through borrowed slices.
 
-## Arena Allocation
+## Arena Allocation — planned, not yet integrated
 
-```text
-use mnemosyne::Arena;
-
-let arena = Arena::with_capacity(256 * 1024 * 1024); // 256 MiB
-let buffer: &mut [f64] = arena.alloc_slice(64 * 64 * 64)?;
-```
+No Helios crate depends on mnemosyne today: `mnemosyne-core` is declared in the
+workspace dependency SSOT (`Cargo.toml`) but no member consumes it, and the
+source tree contains no `mnemosyne` import. Arena-backed placement for the
+large intermediate buffers is tracked work, not current behaviour; the
+placement contract Helios does consume is Themis
+(`PlacementHint`/`MemoryTier` in `crates/helios-gpu/src/{attenuation,projection,transmission}.rs`),
+which hints GPU-resident buffers.
 
 ## Layout Policy
 
