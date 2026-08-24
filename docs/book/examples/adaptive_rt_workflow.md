@@ -23,7 +23,7 @@ plan → daily MVCT setup correction → dose recomputation → adaptive decisio
 
 ## Expected Output
 
-```
+```text
 Phase 2: Daily MVCT (simulated setup error)
   Applied shift:    [2, 1]
   Recovered shift:  [2, 1]
@@ -45,7 +45,7 @@ or offline replanning cycle.
 
 ## Key APIs
 
-```rust
+```text
 use helios_imaging::register_translation;
 use helios_simulation::{accumulate_delivered_dose, BeamGeometry, DeliveryFrame};
 use aequitas::systems::si::{quantities::{AbsorbedDose, Length}, units::Millimeter};

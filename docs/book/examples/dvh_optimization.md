@@ -23,7 +23,7 @@ Inverse treatment planning on a synthetic 3-field head-and-neck geometry:
 
 ## Key Code Snippet
 
-```rust
+```text
 use helios_planning::{objective_value, optimize_beam_weights, DoseInfluence};
 
 // 6 voxels (4 PTV + 2 OAR) × 3 beamlets

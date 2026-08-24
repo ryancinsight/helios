@@ -175,7 +175,10 @@ mod tests {
 
     #[test]
     fn sinogram_validates_length_and_range() {
-        assert!(LeafOpenTimeSinogram::from_fractions(2, 3, vec![0.0; 6]).is_ok());
+        let s = LeafOpenTimeSinogram::from_fractions(2, 3, vec![0.0; 6]).unwrap();
+        assert_eq!(s.dims(), (2, 3));
+        assert_eq!(s.get(0, 0), 0.0);
+        assert_eq!(s.get(1, 2), 0.0);
         assert!(LeafOpenTimeSinogram::from_fractions(2, 3, vec![0.0; 5]).is_err());
         assert!(LeafOpenTimeSinogram::from_fractions(1, 1, vec![1.5]).is_err());
         assert!(LeafOpenTimeSinogram::from_fractions(1, 1, vec![-0.1]).is_err());
@@ -186,7 +189,9 @@ mod tests {
         assert!(MlcModel::new(1.0_f64, 0.1).is_err()); // leakage must be < 1
         assert!(MlcModel::new(-0.1_f64, 0.1).is_err());
         assert!(MlcModel::new(0.01_f64, 1.5).is_err());
-        assert!(MlcModel::new(0.01_f64, 0.1).is_ok());
+        let m = MlcModel::new(0.01_f64, 0.1).unwrap();
+        assert_relative_eq!(m.leakage(), 0.01, epsilon = 1e-15);
+        assert_relative_eq!(m.tongue_and_groove(), 0.1, epsilon = 1e-15);
     }
 
     #[test]

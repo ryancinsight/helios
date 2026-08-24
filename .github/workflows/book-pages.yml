@@ -5,10 +5,16 @@ on:
     branches: [main]
     paths:
       - "docs/book/**"
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
       - ".github/workflows/book-pages.yml"
   pull_request:
     paths:
       - "docs/book/**"
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
       - ".github/workflows/book-pages.yml"
   workflow_dispatch:
 
@@ -23,10 +29,17 @@ jobs:
   book:
     # Body owned once by Atlas (ADR 0035), pinned by SHA like any action. The
     # shared workflow keeps pull-request builds separate from deployment.
-    uses: ryancinsight/atlas/.github/workflows/book-pages.yml@4c31dd753f06dd93b4c04798cf781df253e3e532
+    uses: ryancinsight/atlas/.github/workflows/book-pages.yml@6ed29a957388327d221f2716ede5575a6817ba04
     permissions:
       contents: read
       pages: write
       id-token: write
     with:
       output-path: target/book/helios/html
+      # Every Rust sample is self-contained or intentionally text-only; keep
+      # the deployed book behind the same executable-sample gate verified
+      # locally with `mdbook test docs/book`.
+      mdbook-test: true
+      # book.toml declares the optional linkcheck2 backend; install the exact
+      # renderer so local links are checked in the same build as the HTML.
+      mdbook-linkcheck2-version: "0.12.2"

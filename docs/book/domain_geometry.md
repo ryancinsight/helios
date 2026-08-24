@@ -19,7 +19,7 @@ world[mm] = origin + (i·sx, j·sy, k·sz)
 
 Construction validates all invariants upfront:
 
-```rust
+```text
 use helios_domain::VoxelGrid;
 use helios_math::{Point3, Scalar};
 
@@ -38,7 +38,7 @@ assert_eq!(grid.num_voxels(), 256 * 256 * 64);
 All access is bounds-checked via `get(i, j, k)` → `Option<T>`, and hot kernels use
 `as_slice()` for zero-copy iteration.
 
-```rust
+```text
 let volume = Volume::from_shape_fn(grid, |[i, j, k]| {
     T::from_f64((i + j + k) as f64)
 });

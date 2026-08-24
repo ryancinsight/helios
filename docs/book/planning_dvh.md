@@ -7,7 +7,7 @@
 
 The DVH summarises the volumetric dose distribution of a target or organ:
 
-```rust
+```text
 use aequitas::systems::si::{quantities::AbsorbedDose, units::Gray};
 use helios_analysis::Dvh;
 

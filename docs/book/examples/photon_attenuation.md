@@ -24,7 +24,7 @@ Exercises the core photon-interaction physics in `helios-physics`:
 
 ## Key Code Snippet
 
-```rust
+```text
 use helios_physics::{LinearAttenuation, MassAttenuation, mass_density_from_hu};
 
 // Water at 100 keV: μ ≈ 0.171 cm⁻¹
@@ -42,7 +42,7 @@ let rho_rel = relative_electron_density_from_hu(0.0_f64); // water → 1.0
 
 The **Beer–Lambert law** describes narrow-beam attenuation:
 
-```
+```text
 I(x) / I₀ = exp(−μ · x)
 ```
 

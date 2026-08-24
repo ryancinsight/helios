@@ -63,6 +63,34 @@ pub const WATER_MEAN_EXCITATION_ENERGY_EV: f64 = 78.0;
 /// and reconstruction kernel; a locally redefined copy is a consolidation defect.
 pub const MM_PER_CM: f64 = 10.0;
 
+/// Centimetres per metre — the SI conversion factor for m→cm.
+///
+/// SSOT for the m→cm path-length conversion used by scatter kernels and
+/// dose-deposition code where `Length::into_base()` returns SI metres;
+/// a locally redefined `100.0` is a consolidation defect.
+pub const CM_PER_M: f64 = 100.0;
+
+/// Metres per millimetre — the SI conversion factor for mm→m.
+///
+/// SSOT for the m→mm path-length conversion used by scatter kernels and
+/// geometry projection code; a locally redefined `1000.0` is a consolidation
+/// defect.
+pub const MM_PER_M: f64 = 1e3;
+
+/// Hounsfield-unit scale factor in the CT calibration formula
+/// `μ = max(0, scale·HU + offset)` where `scale = (μ_water - 1) / 1000`.
+///
+/// The denominator `1000` converts HU to a linear scale; water is defined as
+/// 0 HU and air as −1000 HU.  SSOT for every CT-number→attenuation
+/// conversion; a locally redefined copy is a consolidation defect.
+pub const HU_SCALE_DENOMINATOR: f64 = 1000.0;
+
+/// Number of quadrature steps for the Klein–Nishina Compton cross-section
+/// numerical integration.  Provides sub-ppm accuracy across the clinical
+/// energy range (10 `keV` – 50 `MeV`), as verified by this module's self-validation
+/// against the analytic total cross-section.
+pub const COMPTON_QUADRATURE_STEPS: usize = 4096;
+
 #[cfg(test)]
 mod tests {
     use super::*;

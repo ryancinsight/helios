@@ -91,7 +91,7 @@ fn main() {
         .expect("fixture calibration is finite");
     let cpu_water = mu_cpu.get(0, 0, 0).unwrap();
     let cpu_bone = mu_cpu.get(cx, cx, cx).unwrap();
-    let expected_bone = 0.0636 * (1.0 + 700.0 / 1000.0);
+    let expected_bone = 0.0636 * (1.0 + 700.0 / helios_core::constants::HU_SCALE_DENOMINATOR);
     println!("CPU reference (helios_solver::attenuation_map):");
     println!("  mu water = {cpu_water:.5} cm-1  (expected 0.0636)");
     println!("  mu bone  = {cpu_bone:.5} cm-1  (expected {expected_bone:.5})");

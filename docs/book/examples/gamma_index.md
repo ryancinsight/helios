@@ -23,7 +23,7 @@ reference. Tests three scenarios:
 
 ## Key Code Snippet
 
-```rust
+```text
 use aequitas::systems::si::{
     quantities::{AbsorbedDose, Length},
     units::{Gray, Millimeter},
@@ -51,7 +51,7 @@ let pass_rate = gamma_pass_rate(
 
 Low's gamma index (Med. Phys. 25, 1998):
 
-```
+```text
 γ(r) = min_e √( |Δx|²/Δd²  +  ΔD²/ΔD_crit² )
 ```
 

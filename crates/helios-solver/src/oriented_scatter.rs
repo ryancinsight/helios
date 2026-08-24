@@ -45,7 +45,8 @@ pub fn directional_convolve<T: GeometryScalar>(
     let [nx, ny, nz] = grid.dims();
     let zero = <T as NumericElement>::ZERO;
     let center_f = <T as GeometryScalar>::from_f64(center as f64);
-    let sample_step_mm = sample_step.into_base() * <T as GeometryScalar>::from_f64(1000.0);
+    let sample_step_mm =
+        sample_step.into_base() * <T as GeometryScalar>::from_f64(helios_core::constants::MM_PER_M);
 
     let mut out = vec![zero; nx * ny * nz];
     let mut idx = 0usize;

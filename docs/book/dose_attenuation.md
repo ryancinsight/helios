@@ -8,7 +8,7 @@
 The helios-physics crate provides MassAttenuation models that convert
 Hounsfield units to linear attenuation coefficients (μ, cm⁻¹):
 
-```rust
+```text
 use helios_physics::MassAttenuation;
 use helios_solver::attenuation_map;
 

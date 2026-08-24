@@ -17,6 +17,7 @@
 //! primary-only reference.
 
 use aequitas::systems::si::quantities::{Dimensionless, Length};
+use helios_core::constants::CM_PER_M;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{NumericElement, Scalar};
 
@@ -35,8 +36,8 @@ pub fn symmetric_deposition_kernel<T: Scalar>(
 ) -> Vec<T> {
     let zero = <T as NumericElement>::ZERO;
     let taps = 2 * radius + 1;
-    let range_cm = range.into_base() * T::from_f64(100.0);
-    let voxel_cm = voxel_spacing.into_base() * T::from_f64(100.0);
+    let range_cm = range.into_base() * T::from_f64(CM_PER_M);
+    let voxel_cm = voxel_spacing.into_base() * T::from_f64(CM_PER_M);
     let inv_range = range_cm.recip();
     let mut kernel = Vec::with_capacity(taps);
     let mut sum = zero;
@@ -165,9 +166,9 @@ pub fn forward_peaked_kernel<T: Scalar>(
 ) -> (Vec<T>, usize) {
     let zero = <T as NumericElement>::ZERO;
     let taps = radius_up + radius_down + 1;
-    let range_up_cm = range_up.into_base() * T::from_f64(100.0);
-    let range_down_cm = range_down.into_base() * T::from_f64(100.0);
-    let voxel_cm = voxel_spacing.into_base() * T::from_f64(100.0);
+    let range_up_cm = range_up.into_base() * T::from_f64(CM_PER_M);
+    let range_down_cm = range_down.into_base() * T::from_f64(CM_PER_M);
+    let voxel_cm = voxel_spacing.into_base() * T::from_f64(CM_PER_M);
     let (inv_up, inv_down) = (range_up_cm.recip(), range_down_cm.recip());
     let mut kernel = Vec::with_capacity(taps);
     let mut sum = zero;

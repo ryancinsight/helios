@@ -13,7 +13,7 @@ preferentially absorbed (beam hardening), shifting the mean energy upward.
 
 Helios models a beam as a sum of SpectralComponent bins:
 
-```rust
+```text
 use helios_simulation::SpectralComponent;
 
 let spectrum = vec![

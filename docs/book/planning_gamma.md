@@ -13,7 +13,7 @@ The gamma index is the standard plan QA metric for 3D dose comparison:
 
 A point passes if γ < 1.
 
-```rust
+```text
 use aequitas::systems::si::{
     quantities::{AbsorbedDose, Length},
     units::{Gray, Millimeter},

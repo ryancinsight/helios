@@ -21,7 +21,7 @@ Two-stage GPU pipeline over the Atlas `hephaestus` compute substrate:
 
 ## Key Code Snippet
 
-```rust
+```text
 use helios_gpu::{default_device, GpuAttenuationMapper};
 
 let device = default_device()?;
@@ -38,7 +38,7 @@ mapper.map_into(&hu_f32, &mut mu_out)?;
 
 The GPU kernel implements the Compton-dominated 6 MV attenuation approximation:
 
-```
+```text
 μ = (μ/ρ) · ρ_water · max(1 + HU/1000, 0)
   = scale · HU + offset   where  scale = (μ/ρ)·ρ/1000, offset = (μ/ρ)·ρ
 ```

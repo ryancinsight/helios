@@ -58,6 +58,14 @@ performance defect to profile and optimize, never a limit to raise.
 - [Published Helios book](https://ryancinsight.github.io/helios/) — hosted mdBook site.
 - [Book source](docs/book/) — Markdown chapters and local build configuration.
 
+## Python bindings
+
+The PyPI distribution is `helios-python`; the extension keeps the stable
+`import helios` name. Install it after a tagged release with
+`python -m pip install helios-python`. The binding layer remains a thin PyO3
+boundary over the Rust physics and planning crates, and its value-semantic
+tests run after the release wheel is installed.
+
 Pull-request CI compares baseline and candidate Criterion reports through the
 Atlas-owned phase-replicated gate pinned in
 [ADR 0003](docs/adr/0003-atlas-benchmark-gate.md). It executes ABBA followed
@@ -95,6 +103,23 @@ fails closed on a reproduced family-wise regression or incomplete evidence.
 - **Software:** zero Clippy warnings on production paths, >80% core coverage,
   property-based testing, benchmarks with recorded baselines.
 
+### Pre-push hook
+
+
+Install the hooks once per clone:
+
+```sh
+git config core.hooksPath .githooks
+```
+
+Git never applies tracked hooks on its own, so this is a one-time step per
+clone. The `pre-push` hook runs `scripts/lockfile.py --check`, which is the
+same check CI runs. It matters most when working inside the Atlas stack: the
+stack's `[patch]` overlay makes cargo resolve first-party dependencies to
+local paths and write a `Cargo.lock` with every `source = "git+..."` line
+stripped. That lock resolves fine under the overlay and fails every
+`--locked` job in CI, so without the hook the corruption is invisible until a
+runner reports it. Repair with `python3 scripts/lockfile.py --regenerate`.
 ## License
 
 Licensed under either of

@@ -7,7 +7,7 @@ and clinical plan verification — with a consistent zero-copy, zero-cost-abstra
 
 ## Architecture at a Glance
 
-```
+```text
                 ┌──────────────────────────────────────────────────────────┐
                 │                    helios-simulation                     │
                 │         (end-to-end clinical workflow orchestration)     │
@@ -50,11 +50,19 @@ and clinical plan verification — with a consistent zero-copy, zero-cost-abstra
 
 ## Getting Started
 
-```
+```bash
 cargo run -p helios-core --example validate_foundation_units
 cargo run -p helios-domain --example voxel_grid_construction
 cargo run -p helios-simulation --example tomotherapy_workflow -- /tmp/helios_output
 ```
+
+## Executable Examples
+
+Fragments in the explanatory chapters are intentionally rendered as text when
+they are partial API sketches, formulas, or architecture diagrams. Each
+task-oriented example links to its canonical Rust source; those sources are
+the executable documentation surface compiled and run by the workspace gates.
+This keeps a partial fragment from being presented as a complete program.
 
 ## Chapters
 

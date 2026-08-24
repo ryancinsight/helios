@@ -50,6 +50,8 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-093 | Restore the omitted Aequitas helical-delivery and collimation commits on current `main`: keep `HelicalDelivery` geometry/time/angle/velocity and `FieldAperture` penumbra typed at public boundaries, migrate current callers, and refresh the audit with exact local evidence. | [arch] [major] | done | Codex | `crates/helios-domain/src/{helical,collimation}.rs`, `crates/helios-simulation/**`, PM artifacts |
 | H-100 | Route Helios GPU-resident buffers through the provider-owned Themis placement contract; remove default/current-tier allocation calls without introducing a local placement vocabulary, preserve Melinoe as Moirai-owned transitively, and retain the exact lock edge. | [arch] [minor] | done 2026-08-05 (local source slice; hosted/locked graph pending overlay reconciliation) | Codex | `Cargo.toml`, `Cargo.lock`, `crates/helios-gpu/{Cargo.toml,src/{attenuation,projection,transmission}.rs}`, PM artifacts |
 | H-101 | Add a `book_*.rs` Helios GPU example that exercises the Themis-backed placement seam through the `helios-gpu` API surface without changing solver/domain behavior. | [patch] | done 2026-08-07 | current session | `crates/helios-gpu/examples/book_gpu_placement_hint.rs`, `backlog.md`, `CHECKLIST.md` |
+| H-102 | Repair the Helios Pages caller so source, example, manifest, and lockfile changes rebuild the book; install the pinned `mdbook-linkcheck2` renderer in the same hosted build. | [patch] | done 2026-08-16 | current session | `.github/workflows/book-pages.yml`, `backlog.md`, `gap_audit.md` |
+| H-103 | Convert source-backed Helios book snippets into checked `mdbook test` samples, or mark non-runnable explanatory fragments as non-code while retaining runnable crate examples as the executable documentation surface. | [patch] | todo | — | `docs/book/**`, `crates/*/examples/**`, `.github/workflows/book-pages.yml`, PM artifacts |
 
 ## Sprint 1 — Foundation
 
@@ -163,3 +165,231 @@ for kwavers) requiring consumer coordination.
 | H-042 | Validation report: gamma/DVH vs reference; MVCT image metrics | [minor] | todo | — | `validation_reports/**` |
 | H-043 | Performance: GPU-vs-CPU scaling study — criterion benchmark of `beam_transmission_into` across sizes (`helios-gpu/benches/transmission_throughput.rs`) + quantitative report. Finding: the isolated transmission kernel is transfer-bound; GPU does not beat CPU at any tested size (RTX 5080 vs Core Ultra 9 285K). | [minor] | done | claude-helios | `crates/helios-gpu/benches/**`, `validation_reports/**` |
 | H-043b | Performance: on-device pipeline. **Step 1 done** — upstreamed hephaestus `ExpNegOp` (fused `exp(−x)`, one dispatch, no intermediate buffer; hephaestus commit 669a9b3) and consumed it in `beam_transmission_into`: GPU +30% at 4M (373→485 Melem/s) but still transfer-bound at 0.66–0.73× CPU (report addendum). **Step 2 done — RESOLVED:** upstreamed hephaestus `ray_line_integrals` (volume ray-integral kernel, commits 792ccc3/9354260, 4 live-GPU oracles) and consumed it as `helios_gpu::GpuProjector` (μ resident on device, batched sinogram projection). Measured: **171×/371× vs single-thread CPU** at 90×128 / 360×256 sinograms on a 128³ volume (report `2026-07-02-gpu-projection-throughput.md`); per-ray differential vs `forward_project_ray` within 1e-3. | [major] | done | claude-helios | `crates/helios-gpu/**`, `crates/helios-solver/**` |
+
+## HELIOS-HERMES-LOCKSTEP-001 — Coeus/Hermes consumer lock [patch] — done
+
+- Owner: current Atlas session; scope: the clean `build/hermes-lockstep`
+  lane's `Cargo.lock`, `backlog.md`, `checklist.md`, and `gap_audit.md` only.
+  The active dirty Helios checkout is excluded.
+- Acceptance: Helios resolves the verified Coeus default `32d7f4e8` and its
+  transitive Hermes default `eb1a2f87` without compatibility or local-path
+  shims; locked package, test, lint, documentation, and CI supply-chain gates
+  pass. Satisfied in the clean `build/hermes-lockstep` lane: all-feature
+  check, format, strict Clippy, 283/283 Nextest, doctests, Rustdoc, audit, and
+  all-feature cargo-deny all pass.
+- The resolver must update the dependency-ordered first-party graph together;
+  hand-editing only Hermes would leave the older Coeus `hermes-simd ^0.6.0`
+  requirement unsatisfiable.
+
+The license policy adds only the two precise transitive licenses required by
+the optional DICOM provider, CC0-1.0 and IJG, matching the existing allowance
+in sibling Atlas providers.
+
+## Gap-audit slice — 2026-08-20 (owner: atlas-gap-audit)
+
+Items filed by the read-only scope-vs-delivery audit recorded under
+[`gap_audit.md`](gap_audit.md) "Finding 2026-08-20". All are `todo` and
+unclaimed; none re-states or re-statuses another owner's item. IDs start at
+H-110 because H-101 and H-086 are each duplicated on the board above (see
+H-117).
+
+| ID | Item | Class | Status | Owner | Scope |
+|----|------|-------|--------|-------|-------|
+| H-110 | Re-ground the book's factual claims against the tree and prevent recurrence. | [patch] | todo | — | `docs/book/**`, `xtask/src/check_figures.rs` |
+| H-111 | Make the mdBook sample gate non-vacuous. | [patch] | todo | — | `docs/book/**`, `.github/workflows/{ci,book-pages}.yml` |
+| H-112 | Establish a reference-engine or published-benchmark dose validation tier (G-16 closure path). | [major] | todo | — | `crates/helios-{solver,simulation,analysis}/**`, `validation_reports/**` |
+| H-113 | Resolve the declared-but-unconsumed Atlas provider set. | [arch] [minor] | todo | — | `Cargo.toml`, `crates/helios-imaging/**` |
+| H-114 | Wire inverse planning to the dose engine: a `DoseInfluence` producer. | [minor] | todo | — | `crates/helios-{planning,simulation,solver}/**` |
+| H-115 | DICOM-RT object I/O and contour-based structure sets. | [minor] | todo | — | `crates/helios-domain/**`, `crates/helios-analysis/src/roi.rs` |
+| H-116 | Reconcile the book figure tree with the 25-chapter SUMMARY. | [patch] | todo | — | `docs/book/figures/**`, `xtask/src/{prebook,check_figures}.rs` |
+| H-117 | Board and record hygiene: stale statuses, duplicate IDs, ADR numbering hole. | [patch] | todo | — | `backlog.md`, `CHANGELOG.md`, `docs/adr/**`, root `*.md` |
+| H-118 | Per-crate READMEs and a typed Python surface. | [patch] | todo | — | `crates/*/README.md`, `crates/helios-python/**` |
+
+### H-110 — book factual re-grounding [patch]
+
+- **Outcome:** every factual claim in `docs/book/` resolves against the tree at
+  the same revision.
+- **Scope:** the remaining chapters not corrected by the audit pass; a
+  chapter-body figure/API reference check in `xtask`. **Non-goals:** rewriting
+  pedagogy, adding chapters, changing any Rust source.
+- **Acceptance oracle:** for each chapter, every named crate, module, function,
+  type, and file path resolves in the tree; a scripted check over chapter bodies
+  reports zero unresolved `crates/...` paths and zero references to absent
+  items, and fails non-zero on a seeded false path.
+- **Dependencies:** none. Overlaps H-111 (the gate that should have caught
+  these) and H-116 (chapter-body scanning).
+- **Already corrected by the audit pass, for context, not re-work:**
+  `docs/book/memory.md` claimed a mnemosyne arena integration that has zero
+  occurrences in the source; `docs/book/validation_phantoms.md` attributed
+  oracle generators to `helios-analysis`, which exports only evaluation
+  metrics; `docs/book/validation_regression.md` cited
+  `helios-imaging/tests/radon_oracle.rs`, a file that does not exist (the crate
+  has no `tests/` directory); `docs/book/validation_clinical.md` cited
+  `MassAttenuation::water()`, which has zero occurrences, and framed TG-119 and
+  TRS-398 as compliance rather than unimplemented targets.
+- **Risk:** docs-only, reversible.
+
+### H-111 — non-vacuous mdBook sample gate [patch]
+
+- **Outcome:** `mdbook test docs/book` can fail on a broken sample.
+- **Scope:** convert the illustrative `text` fences that are genuinely Rust into
+  compiled ```rust doctests (hidden `# ` setup lines where needed), or delete
+  the ones that no longer describe the API. **Non-goals:** adding new examples
+  under `crates/*/examples`, changing library code to suit a snippet.
+- **Acceptance oracle:** `mdbook test docs/book` reports a non-zero number of
+  executed tests and fails when a sample is deliberately broken; the CI step and
+  the Pages caller's `mdbook-test: true` then carry real evidence.
+- **Evidence of the defect:** the book has 0 ```rust fences (73 bare, 69
+  `text`, 4 `bash`), while `.github/workflows/ci.yml:65-66` and
+  `.github/workflows/book-pages.yml:42` both run the gate.
+- **Dependencies:** H-110 (fix the claims before compiling them). Supersedes
+  the stale H-103, whose stated remedy already landed.
+- **Risk:** docs and CI only.
+
+### H-112 — reference-engine dose validation tier [major]
+
+- **Outcome:** delivered dose carries an evidence tier above analytical
+  self-consistency, or the absence is a recorded, bounded decision with the
+  exact blocker.
+- **Scope:** a reproducible comparison of the superposition engine against an
+  independent oracle — published broad-beam central-axis depth-dose and
+  off-axis profile data for a stated beam quality, or a Monte-Carlo transport
+  reference — with tolerances derived from the reference's own stated
+  uncertainty, not fitted to the result. **Non-goals:** claiming clinical
+  validation of any kind; acquiring licensed patient data; loosening any
+  existing analytical tolerance.
+- **Acceptance oracle:** a committed test or bounded example reproduces the
+  published curve within the derived bound and fails when the engine is
+  perturbed by more than that bound; the report under `validation_reports/`
+  names the reference, its section or table, and the derivation of the
+  tolerance. Where the reference engine cannot run in this environment, the
+  item closes as a recorded blocker naming what is missing — never as a
+  fabricated pass.
+- **Dependencies:** G-16 in `gap_audit.md`; a licensed dataset and an external
+  MC engine are explicitly out of environment reach today, which is why the
+  first increment should be published tabulated data rather than a live engine.
+- **Safety note:** this closes a *simulation* evidence gap. It does not and
+  must not be described as clinical or dosimetric commissioning.
+- **Risk:** additive tests and reports; no production behaviour change.
+
+### H-113 — declared-but-unconsumed Atlas providers [arch] [minor]
+
+- **Outcome:** every entry in `[workspace.dependencies]` is either consumed by a
+  member or removed, and no Helios-local implementation stands in for a provider
+  that owns the capability.
+- **Scope:** `ritk-core`, `ritk-io`, `ritk-registration`, `apollo` (`apollo-fft`),
+  `hermes-simd`, `mnemosyne-core`, `consus-compression`. Decide per entry:
+  adopt at the member that needs it, or delete the SSOT declaration.
+  Substitution cases to adjudicate first: `crates/helios-imaging/src/registration.rs`
+  hand-rolls exhaustive SSD/NCC registration beside an unconsumed
+  `ritk-registration`; `crates/helios-imaging/src/fbp.rs:21-39` convolves a
+  spatial-domain Ram-Lak ramp beside an unconsumed `apollo-fft`.
+  **Non-goals:** adopting a provider whose capability Helios does not need;
+  a wholesale imaging rewrite in one item.
+- **Acceptance oracle:** a scripted check reports zero workspace dependency
+  entries with no member consumer; each removal or adoption carries the reason
+  in the commit or an ADR. FBP adoption additionally keeps the existing
+  reconstruction accuracy assertions green and shows the FFT path matches the
+  direct path within a derived bound.
+- **Dependencies:** upstream ownership — a capability gap in `ritk-registration`
+  or `apollo-fft` is closed upstream, not worked around here.
+- **Risk:** `[arch]` because it moves ownership of two imaging capabilities.
+
+### H-114 — DoseInfluence producer [minor]
+
+- **Outcome:** the inverse-planning optimizer consumes a matrix produced by the
+  Helios dose engine rather than only by callers.
+- **Scope:** a beamlet-decomposition path that runs the existing terma plus
+  superposition kernels per beamlet into a `DoseInfluence`, and an end-to-end
+  test that optimizes weights against a dose the engine itself computed.
+  **Non-goals:** leaf sequencing, VMAT, DAO, GPU acceleration of the
+  decomposition.
+- **Acceptance oracle:** value-semantic — for a known phantom and beamlet set,
+  `A * x` reproduces the directly accumulated dose within a derived tolerance,
+  and the optimized weights reduce the objective monotonically; the existing
+  `dvh_optimization` example is rewired to the produced matrix.
+- **Evidence of the gap:** `helios_planning::DoseInfluence::from_rows` has
+  exactly two call sites, both outside the library
+  (`crates/helios-planning/examples/dvh_optimization.rs:62`,
+  `crates/helios-python/src/lib.rs:90`).
+- **Dependencies:** none.
+- **Risk:** additive; the optimizer contract is unchanged.
+
+### H-115 — DICOM-RT objects and contour ROIs [minor]
+
+- **Outcome:** structure sets, plans, and dose grids cross the DICOM boundary,
+  so DVH and gamma can be evaluated over clinical contours rather than analytic
+  masks only.
+- **Scope:** `RTSTRUCT` contour import into an ROI mask, `RTDOSE` import/export
+  over `Volume`, and `RTPLAN` beam geometry read — routed through `ritk-dicom`
+  under the existing `dicom` feature. **Non-goals:** writing `RTPLAN`;
+  supporting every SOP class; any claim of DICOM conformance.
+- **Acceptance oracle:** a synthetic round-trip per object (build, write or
+  read, reconstruct) recovers geometry and values exactly for integer data and
+  within the stated rescale precision for scaled data; a contour-derived mask
+  reproduces a known analytic region within one voxel.
+- **Dependencies:** `ritk-dicom` capability — a missing tag or SOP class is
+  closed upstream in ritk (upstream ownership), not parsed locally.
+- **Risk:** feature-gated, additive.
+
+### H-116 — book figure tree reconciliation [patch]
+
+- **Outcome:** one figure numbering scheme, no orphan assets, and a gate that
+  sees chapter bodies.
+- **Scope:** delete or re-home the 12 unreferenced SVGs under
+  `docs/book/figures/ch23`-`ch34` (a removed "Atlas migration" part); renumber
+  `ch35`/`ch36`/`ch37` and their captions to chapters 23/24/25; extend
+  `xtask/src/check_figures.rs` to scan chapter and example bodies, not only
+  `SUMMARY.md` and `README.md`; reconcile `FIGURE_SPECS` (7 entries) with the 59
+  committed chapter and appendix SVGs. **Non-goals:** redesigning the figures.
+- **Acceptance oracle:** `cargo run -p xtask -- check-figures` reports zero
+  orphan assets and zero orphan references across all book sources, and exits
+  non-zero when a figure file is deleted without removing its reference.
+- **Related decision to record:** `xtask/src/prebook.rs:12-15` declares the
+  figure set `HandAuthored`. Data-bearing figures are required to be
+  regenerated from the data by committed code; schematic diagrams are not.
+  Split the two kinds in `FIGURE_SPECS` and state which rule each follows.
+- **Dependencies:** none.
+- **Risk:** docs and tooling only.
+
+### H-117 — board and record hygiene [patch]
+
+- **Outcome:** the board, CHANGELOG, ADR set, and repository root each state
+  the current truth once.
+- **Scope:**
+  - H-003b is `blocked` on gaia's leto migration, but
+    `crates/helios-math/src/lib.rs:76` already re-exports `gaia::{Aabb, Ray}`
+    with a bridge test; `gap_audit.md` already calls G-11 effectively resolved.
+    Re-status against the code.
+  - H-103 is `todo` while its remedy landed and both workflows enable the gate;
+    close it and let H-111 carry the real work. The `CHANGELOG.md` Unreleased
+    entry stating the mdBook sample gate "remains disabled" contradicts
+    `.github/workflows/ci.yml:65-66`.
+  - Duplicate IDs: two different `H-101` rows and two `H-086` rows.
+  - `docs/adr/` has no 0011; the record exists only on the unmerged commit
+    `aa70fab`. Either land it or record the number as retired in the index.
+  - Root carries `SPRINT_1.md` and `SPRINT_2.md`, duplicating the README sprint
+    roadmap, plus the generated `parity_artefacts/INDEX.html`.
+  **Non-goals:** re-statusing another owner's in-progress item; rewriting
+  history.
+- **Acceptance oracle:** no duplicate ID on the board; every `todo`/`blocked`
+  row's blocker re-verified against the tree; the ADR index and `docs/adr/`
+  agree; the repository root holds only the enumerable sanctioned set.
+- **Dependencies:** none.
+- **Risk:** PM artifacts only.
+
+### H-118 — crate READMEs and a typed Python surface [patch]
+
+- **Outcome:** each crate has a front page; the Python surface is typed.
+- **Scope:** a README per member (10 of 11 are missing; only
+  `crates/helios-python/README.md` exists), single-sourced against the
+  crate-level `//!` overview so the two cannot drift; `py.typed` plus `.pyi`
+  stubs for the 5 exported functions; `#![deny(missing_docs)]` on
+  `crates/helios-python/src/lib.rs`, the one crate without it.
+  **Non-goals:** the NumPy zero-copy surface, which stays H-040b.
+- **Acceptance oracle:** `cargo package --list` shows a README for every
+  publishable member; a regenerate-and-diff step proves README and crate docs
+  agree; `mypy` resolves the `helios` module against the shipped stubs, and the
+  wheel contains `py.typed`.
+- **Dependencies:** none.
+- **Risk:** docs and packaging metadata only.

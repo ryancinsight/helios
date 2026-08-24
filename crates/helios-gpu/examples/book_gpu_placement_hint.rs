@@ -27,7 +27,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let expected = hu
         .iter()
-        .map(|v| (0.0636_f32 * (1.0 + v / 1000.0)).max(0.0))
+        .map(|v| {
+            (0.0636_f32 * (1.0 + v / helios_core::constants::HU_SCALE_DENOMINATOR as f32)).max(0.0)
+        })
         .collect::<Vec<_>>();
 
     for (gpu, cpu_like) in mu.iter().zip(expected.iter()) {

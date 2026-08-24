@@ -1055,3 +1055,80 @@ H-012.
   action provenance and provider-graph resolution.
 - [x] Pass implementation-head hosted Rust, Python-binding, and benchmark verification
   at `44fb2768d` in run `29784712768`.
+
+## HELIOS-HERMES-LOCKSTEP-001 — Coeus/Hermes consumer lock
+
+- [x] Record the dependency-ordered lock update from current Coeus to Hermes
+      `0.7.0` without changing Helios source or the active dirty checkout.
+      The lock selects Coeus `32d7f4e8`, Hermes `eb1a2f87`, Hephaestus
+      `dc7b72c6`, and the co-evolved first-party graph.
+- [x] Run isolated locked metadata/build, focused tests, strict Clippy,
+      doctests, Rustdoc, and supply-chain gates. Locked all-feature check,
+      format, and warning-denied Clippy pass; Nextest passes 283/283 with
+      9 skips; doctests and warning-denied Rustdoc pass; `cargo audit` and
+      all-feature `cargo deny check` pass.
+- [x] Synchronize `backlog.md` and `gap_audit.md` for publication of the
+      lockstep increment. The active dirty Helios checkout remains untouched.
+
+The license policy adds only the two precise transitive licenses required by
+the optional DICOM provider: `encoding`'s CC0-1.0 charset tables and
+`jpeg-encoder`'s IJG license. Both are already allowed by sibling Atlas
+providers; no broad license allowance was added.
+
+## gap-audit-2026-08-20 (owner: atlas-gap-audit)
+
+Read-only scope-vs-delivery audit at detached HEAD `f31f261`. No cargo command
+was run (shared `CARGO_TARGET_DIR`, global lock), so nothing below claims a
+suite result. Findings recorded in `gap_audit.md` "Finding 2026-08-20"; items
+filed as H-110 through H-118.
+
+Completed this session:
+
+- [x] Oriented: `git log --oneline -8`, `git status -sb` (detached HEAD, 1
+      pre-existing peer edit in `crates/helios-python/Cargo.toml`, left as
+      found).
+- [x] Read declared scope: `README.md`, `CHANGELOG.md` Unreleased,
+      `docs/adr/README.md` + 16 ADR files, `docs/book/SUMMARY.md`, `backlog.md`,
+      `CHECKLIST.md`, `gap_audit.md`.
+- [x] Measured: 12 members, 14,304 src LOC, 293 `#[test]` fns, 3 `proptest!`
+      sites, 18 examples, 4 benches, 25 chapters, 0 `todo!`/`unimplemented!`/
+      TODO/FIXME, 0 production unwraps, 0 allow sites, 7 oversized files, 11
+      `#[ignore]`d tests (all `helios-gpu`).
+- [x] Cross-checked each README sprint claim and each Accepted-ADR subject
+      against the code.
+- [x] Corrected four unambiguously false book claims (`memory.md`,
+      `validation_phantoms.md`, `validation_regression.md`,
+      `validation_clinical.md`).
+
+Ordered execution steps for whoever claims the filed items:
+
+1. **H-110** first. Sweep the remaining chapters for claims that do not resolve
+   against the tree; the four corrected here were found by grepping each named
+   symbol and path, and that sweep is not exhaustive.
+2. **H-111** next, because it is the gate that lets H-110 stay fixed. Convert
+   the genuinely-Rust `text` fences into ```rust doctests and prove the gate
+   fails on a seeded break before trusting it.
+3. **H-117** in parallel — PM-only, no file overlap with 1 and 2 except
+   `CHANGELOG.md`. Re-verify each `blocked` row against the tree rather than
+   waiting on its recorded trigger; H-003b's blocker has already expired.
+4. **H-116** after H-111, since both touch the figure/book tooling. Delete the
+   12 orphan `ch23`-`ch34` SVGs, renumber `ch35`-`ch37` to chapters 23-25, then
+   extend `check_figures` to scan chapter bodies so the next orphan fails CI.
+5. **H-114** — smallest real capability increment: a beamlet-decomposition
+   producer for `DoseInfluence`, with `A * x` differential-checked against the
+   directly accumulated dose. Rewire `dvh_optimization` to it.
+6. **H-113** — adjudicate the seven unconsumed provider declarations one at a
+   time. Start with `apollo-fft` for FBP (bounded, measurable, differential
+   against the existing direct convolution), then `ritk-registration`.
+7. **H-115** — `RTSTRUCT` contour import first; it unblocks contour-based DVH,
+   which is the prerequisite for any meaningful plan-evaluation benchmark.
+8. **H-112** last of the capability items and largest. Do not open it before
+   H-114 and H-115: a reference-benchmark comparison without contour ROIs or an
+   engine-produced influence matrix cannot be set up honestly. Publish
+   tabulated depth-dose/profile data as the first oracle; a live Monte-Carlo
+   engine is not runnable in this environment and must not be simulated.
+9. **H-118** any time — independent of all of the above.
+
+Standing constraint for every item above: Helios is research and simulation
+software. No item here produces clinical validation, and no report generated
+from them may be phrased as if it does.

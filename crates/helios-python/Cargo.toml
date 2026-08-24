@@ -7,6 +7,9 @@
 # compute. Domain crates never depend on pyo3 (unidirectional; ARCHITECTURE.md).
 [package]
 name = "helios-python"
+# Required for publish: crates.io rejects a description-less crate at upload,
+# after the version is spent. Restored after a peer commit dropped it; the
+# registry-metadata gate caught the regression.
 description = "Thin PyO3 binding surface for Helios radiotherapy planning, imaging, and dosimetry"
 edition.workspace = true
 version.workspace = true

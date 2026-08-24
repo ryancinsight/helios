@@ -1,3 +1,8 @@
+# Uncommitted Atlas audit-sweep Step 2 overlay: tighten workflow
+# permissions to least-privilege so the scanned class drops.
+permissions:
+  contents: read
+
 name: ci
 
 on:
@@ -9,6 +14,14 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # Guards the one artifact whose correctness cannot be checked from inside the
+  # overlay environment that produces it. Calls the shared Atlas workflow.
+  lockfile:
+    name: Lockfile integrity
+    uses: ryancinsight/atlas/.github/workflows/lockfile-guard.yml@886d85b0e4bea20c8e5ec4b4239e6ba9cdbcf74d
+    permissions:
+      contents: read
+
   rust:
     name: rust workspace
     runs-on: ubuntu-latest
@@ -56,6 +69,14 @@ jobs:
 
       - name: Check book figures
         run: cargo run -p xtask -- check-figures
+
+      - name: Install mdBook
+        uses: taiki-e/install-action@f47c9687269207d6b374de4134cb8b1fa5b49649
+        with:
+          tool: mdbook@0.5.4
+
+      - name: Test book documentation
+        run: mdbook test docs/book
 
       - name: RustSec audit
         run: cargo audit --deny warnings --ignore RUSTSEC-2021-0153
@@ -123,20 +144,6 @@ jobs:
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           path: helios-candidate
-
-      - name: Checkout candidate path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@ceafa3d951f7db9ffcd93a79e5efbbdd09e199de
-        with:
-          manifest: helios-candidate/Cargo.toml
-          destination: .
-          atlas_ref: ceafa3d951f7db9ffcd93a79e5efbbdd09e199de
-
-      - name: Checkout historical baseline path dependencies
-        uses: ryancinsight/atlas/.github/actions/checkout-path-dependencies@ceafa3d951f7db9ffcd93a79e5efbbdd09e199de
-        with:
-          manifest: helios-baseline/Cargo.toml
-          destination: .
-          atlas_ref: ceafa3d951f7db9ffcd93a79e5efbbdd09e199de
 
       - name: Checkout Atlas benchmark gate
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
