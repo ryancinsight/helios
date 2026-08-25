@@ -10,7 +10,7 @@
 //!    attenuation through the phantom for a parallel beam entering along +x.
 //!
 //! 3. **TERMA** — primary fluence × local linear attenuation = energy released
-//!    per voxel (Total Energy Released per unit MAss).
+//!    per voxel (Total Energy Released per unit `MAss`).
 //!
 //! 4. **Dose by 1-D convolution** — `dose_convolution_x` spreads released energy
 //!    downstream with an exponential deposition kernel (fast collapsed-cone
@@ -40,6 +40,15 @@
 //! cargo run -p helios-solver --example collapsed_cone_3d
 //! ```
 
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
+#![expect(
+    clippy::unwrap_used,
+    reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+)]
+
 use aequitas::systems::si::{
     quantities::{AreaPerMass, Length, MassDensity},
     units::{Centimeter, GramPerCubicCentimeter, SquareCentimeterPerGram},
@@ -66,10 +75,7 @@ fn main() {
     let grid = VoxelGrid::axis_aligned([nx, ny, nz], [spacing_mm; 3], Point3::new(0.0, 0.0, 0.0))
         .expect("valid phantom grid");
 
-    println!(
-        "Phantom: {}×{}×{} voxels, {:.1} mm isotropic spacing",
-        nx, ny, nz, spacing_mm
-    );
+    println!("Phantom: {nx}×{ny}×{nz} voxels, {spacing_mm:.1} mm isotropic spacing");
     println!(
         "Volume: {:.0}×{:.0}×{:.0} mm³\n",
         nx as f64 * spacing_mm,

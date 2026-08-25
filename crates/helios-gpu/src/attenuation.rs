@@ -61,7 +61,7 @@ impl KernelSource<Wgsl> for HuToMuKernel {
         // Bindings follow the seam ABI: storage bindings 0..N-1 in
         // KernelInterface::BINDINGS order, uniform params at binding N.
         Cow::Borrowed(
-            r#"struct Params {
+            r"struct Params {
     scale: f32,
     offset: f32,
     len: u32,
@@ -80,7 +80,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     mu[i] = max(fma(params.scale, hu[i], params.offset), 0.0);
 }
-"#,
+",
         )
     }
 }
@@ -182,6 +182,10 @@ impl<D: KernelDevice<Dialect = Wgsl>> GpuAttenuationMapper<D> {
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
 
     // NIST-representative water μ/ρ at ~1 MeV and unit water density; tests

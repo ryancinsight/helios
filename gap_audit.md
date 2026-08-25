@@ -438,10 +438,12 @@ and attenuation, and `AreaPerMass` for mass attenuation. `EnergyMeV` and
   (including oriented Beer–Lambert and HDF5 pose round trips, live GPU checks);
   warning-denied Clippy, doctest/rustdoc, workspace example build, workspace
   format check, and four 196/196-package SemVer checks are clean.
-- H-004d remains externally sequenced: RITK's public DICOM tags currently omit
-  `ImageOrientationPatient`, and both permitted RITK worktree lanes carry
-  active peer migrations. Helios will consume the named provider tag once that
-  owner lane is available.
+- H-004d is in the consumer cutover phase: Helios now uses
+  `ritk_dicom::tags::IMAGE_ORIENTATION_PATIENT` and no longer owns a duplicate
+  `(0020,0037)` constant. RITK PR #149 carries the provider SSOT and its 37/37
+  focused nextest evidence; the exact-head cross-repository gate remains open
+  until that PR merges. The typed-slope lockfile and RITK peer lane remain
+  outside this slice.
 
 ## Open gaps
 

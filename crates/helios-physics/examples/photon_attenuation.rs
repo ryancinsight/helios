@@ -3,12 +3,17 @@
 //! Demonstrates the Beer–Lambert transmission model, mass attenuation, and
 //! CT-number-to-density calibration from `helios-physics`. Covers:
 //!
-//! 1. **LinearAttenuation** — validated μ (cm⁻¹) type with transmission law
+//! 1. **`LinearAttenuation`** — validated μ (cm⁻¹) type with transmission law
 //! 2. **Half-value layer** — HVL = ln(2)/μ for a monoenergetic beam
-//! 3. **MassAttenuation** → LinearAttenuation — scaling μ/ρ by mass density
+//! 3. **`MassAttenuation`** → `LinearAttenuation` — scaling μ/ρ by mass density
 //! 4. **CT calibration** — HU → relative electron density → mass density
 //!
-//! Run with: cargo run --example photon_attenuation -p helios-physics
+//! Run with: cargo run --example `photon_attenuation` -p helios-physics
+
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
 
 use aequitas::systems::si::{
     quantities::{AreaPerMass, Length, MassDensity as DensityQuantity, ReciprocalLength},
@@ -71,7 +76,7 @@ fn main() {
     for &depth in &[0.0, 1.0, 2.0, 5.0, 10.0, 20.0] {
         let frac = transmission_at(depth);
         let bar: String = "#".repeat((frac * 40.0) as usize);
-        println!("  {:10.1}  |  {:.4}  {bar}", depth, frac);
+        println!("  {depth:10.1}  |  {frac:.4}  {bar}");
     }
 
     // ── 3. MassAttenuation → LinearAttenuation ───────────────────────────────
@@ -112,10 +117,7 @@ fn main() {
     for &(name, hu) in test_materials {
         let rho_rel = relative_electron_density_from_hu(hu);
         let rho = mass_density_from_hu(hu, water_density);
-        println!(
-            "  {:<16}  HU={:>6.0}  ρ_rel={:.3}  ρ={:.3} g/cm³",
-            name, hu, rho_rel, rho
-        );
+        println!("  {name:<16}  HU={hu:>6.0}  ρ_rel={rho_rel:.3}  ρ={rho:.3} g/cm³");
     }
 
     // Water at 0 HU → ρ_rel = 1.0

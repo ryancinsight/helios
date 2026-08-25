@@ -26,6 +26,10 @@ use helios_math::{GeometryScalar, NumericElement};
 /// step `λ` (stable for `0 < λ < 2`; `1.0` is the standard choice). Reconstructed
 /// values are non-negative linear attenuation `μ` (cm⁻¹).
 #[must_use]
+#[expect(
+    clippy::many_single_char_names,
+    reason = "SIRT algebraic notation: A, R, C, n mirror the published iteration (Gilbert 1972) one-to-one"
+)]
 pub fn sirt_reconstruction<T: GeometryScalar + eunomia::UnitScalar>(
     sinogram: &Sinogram<T>,
     recon: &VoxelGrid<T>,
@@ -90,6 +94,10 @@ pub fn sirt_reconstruction<T: GeometryScalar + eunomia::UnitScalar>(
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use crate::radon::parallel_beam_radon;
     use crate::sirt_reconstruction;
     use aequitas::systems::si::{
@@ -266,10 +274,10 @@ mod tests {
         });
 
         let angles: Vec<Angle<T>> = (0..30)
-            .map(|a| Angle::from_unit::<Radian>(cast(a as f64 * std::f64::consts::PI / 30.0)))
+            .map(|a| Angle::from_unit::<Radian>(cast(f64::from(a) * std::f64::consts::PI / 30.0)))
             .collect();
         let offsets: Vec<Length<T>> = (0..31)
-            .map(|j| Length::from_unit::<Millimeter>(cast(-20.0 + j as f64 * 40.0 / 30.0)))
+            .map(|j| Length::from_unit::<Millimeter>(cast(-20.0 + f64::from(j) * 40.0 / 30.0)))
             .collect();
         let sinogram = parallel_beam_radon(
             &phantom,

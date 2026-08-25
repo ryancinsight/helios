@@ -155,6 +155,10 @@ impl<T: GeometryScalar> FieldAperture<T> {
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
     use eunomia::assert_relative_eq;
     use helios_math::ShippedScalar;
@@ -222,7 +226,7 @@ mod tests {
         let a = aperture();
         let mut prev = 1.0;
         for step in 0..=40 {
-            let x = 6.0 + step as f64 * 0.2; // 6 → 14 mm, crossing the 10 mm edge
+            let x = 6.0 + f64::from(step) * 0.2; // 6 → 14 mm, crossing the 10 mm edge
             let t = a.transmission(&Point3::new(x, 0.0, 0.0));
             assert!((0.0..=1.0).contains(&t), "transmission {t} out of [0,1]");
             assert!(t <= prev + 1e-12, "transmission must not increase outward");

@@ -8,7 +8,7 @@
 //! 1. **Klein–Nishina vs Thomson** — At low photon energies the Klein–Nishina
 //!    cross section converges to the classical Thomson value `σ_T = 8π r_e²/3`.
 //! 2. **Cross section vs energy table** — σ drops from the Thomson limit at
-//!    10 keV to < 20% of σ_T at 6 MV (Compton dominates at MV energies).
+//!    10 keV to < 20% of `σ_T` at 6 MV (Compton dominates at MV energies).
 //! 3. **Energy-transfer fraction** — The fraction of photon energy deposited
 //!    locally rises steeply with energy (forward-scattered Compton electrons
 //!    carry most energy at 6 MV).
@@ -24,6 +24,11 @@
 //! ## Book chapter
 //!
 //! [← Mass Attenuation and Photon Cross Sections](../../docs/book/dose_attenuation.md)
+
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
 
 use aequitas::systems::si::{
     quantities::Energy,
@@ -45,7 +50,7 @@ fn main() {
 
     // ── 1. Thomson vs Klein–Nishina low-energy limit ──────────────────────────
     let sigma_t: f64 = thomson_cross_section();
-    println!("Thomson cross section  σ_T = {:.4e} m²/electron", sigma_t);
+    println!("Thomson cross section  σ_T = {sigma_t:.4e} m²/electron");
 
     // At 1 keV, KN should be within 0.1% of Thomson
     let sigma_kn_1kev: f64 = klein_nishina_cross_section(photon_energy(0.001_f64));
@@ -77,7 +82,7 @@ fn main() {
     for (&e, &lbl) in energies_mev.iter().zip(labels.iter()) {
         let sigma: f64 = klein_nishina_cross_section(photon_energy(e));
         let ratio = sigma / sigma_t;
-        println!("  {:<14}  {:.4e}   {:.4}", lbl, sigma, ratio);
+        println!("  {lbl:<14}  {sigma:.4e}   {ratio:.4}");
     }
 
     // Verify monotonic decrease (cross section decreases with energy)
@@ -108,7 +113,7 @@ fn main() {
         } else {
             "high (electron carries most energy)"
         };
-        println!("  {:<12}  {f_tr:.4}      {interp}", lbl);
+        println!("  {lbl:<12}  {f_tr:.4}      {interp}");
     }
 
     // At 6 MV, energy-transfer fraction should be > 0.5

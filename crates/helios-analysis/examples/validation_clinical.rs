@@ -9,12 +9,17 @@
 //!
 //! For each structure the example computes:
 //!
-//! 1. DVH coverage metrics: D₉₅, D_mean, homogeneity index
+//! 1. DVH coverage metrics: D₉₅, `D_mean`, homogeneity index
 //! 2. Biological outcome: gEUD, TCP (logistic), NTCP (Lyman-Kutcher-Burman)
 //! 3. Image quality assessment: ROI statistics and contrast-to-noise ratio
 //!    between PTV and parotid regions
 //!
 //! Run with: `cargo run --example validation_clinical -p helios-analysis`
+
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
 
 use aequitas::systems::si::{
     quantities::{AbsorbedDose, Dimensionless, Length},
@@ -42,8 +47,7 @@ fn hn_phantom(dims: [usize; 3], spacing_mm: f64) -> Volume<f64> {
     let ptv_radius = 15.0; // mm
     let penumbra = 4.0; // mm penumbral width
 
-    Volume::from_shape_fn(grid, move |[i, j, k]| {
-        let _z = k as f64 * spacing_mm;
+    Volume::from_shape_fn(grid, move |[i, j, _k]| {
         let dx = i as f64 * spacing_mm - cx;
         let dy = j as f64 * spacing_mm - cy;
         let r = (dx * dx + dy * dy).sqrt();

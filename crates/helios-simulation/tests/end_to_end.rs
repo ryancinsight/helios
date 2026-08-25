@@ -1,4 +1,4 @@
-//! End-to-end helical TomoTherapy + MVCT workflow validation (H-041).
+//! End-to-end helical `TomoTherapy` + MVCT workflow validation (H-041).
 //!
 //! One shared attenuation volume `μ` drives BOTH branches of the platform, proving
 //! the layers compose across their seams:
@@ -12,7 +12,12 @@
 //!
 //! Every assertion is an analytical / self-consistency oracle; no external engine
 //! or licensed dataset is involved (those gates are environment-blocked, see
-//! gap_audit G-16/G-18).
+//! `gap_audit` G-16/G-18).
+
+#![expect(
+    clippy::unwrap_used,
+    reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+)]
 
 use aequitas::systems::si::{
     quantities::{AbsorbedDose, Angle, AreaPerMass, Dimensionless, Length, MassDensity, Time},
@@ -97,11 +102,13 @@ fn shared_mu_drives_imaging_and_delivery_end_to_end() {
 
     // ── Imaging branch: Radon → FBP; recover μ in a water ROI. ──
     let angles: Vec<Angle<f64>> = (0..90)
-        .map(|a| Angle::from_unit::<Radian>(a as f64 * std::f64::consts::PI / 90.0))
+        .map(|a| Angle::from_unit::<Radian>(f64::from(a) * std::f64::consts::PI / 90.0))
         .collect();
     let n_off = 61;
     let offsets: Vec<Length<f64>> = (0..n_off)
-        .map(|j| Length::from_unit::<Millimeter>(-30.0 + j as f64 * 60.0 / (n_off - 1) as f64))
+        .map(|j| {
+            Length::from_unit::<Millimeter>(-30.0 + f64::from(j) * 60.0 / f64::from(n_off - 1))
+        })
         .collect();
     let sino = parallel_beam_radon(
         &mu,

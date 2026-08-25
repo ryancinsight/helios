@@ -34,6 +34,11 @@
 //!
 //! [← MVCT and Correction Workflows](../../docs/book/imaging_mvct.md)
 
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
+
 use helios_domain::{Volume, VoxelGrid};
 use helios_imaging::register_translation;
 use helios_math::Point3;

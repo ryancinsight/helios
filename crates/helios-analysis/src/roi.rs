@@ -42,6 +42,10 @@ pub fn box_mask<T: Scalar>(
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
     use crate::Dvh;
     use eunomia::assert_relative_eq;

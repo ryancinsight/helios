@@ -1,7 +1,7 @@
 //! Oriented (beam-frame) collapsed-cone scatter along an arbitrary direction.
 //!
 //! [`scatter`](crate::scatter) convolves along grid axes — physically correct
-//! only when the beam is grid-aligned. Helical TomoTherapy rotates the gantry,
+//! only when the beam is grid-aligned. Helical `TomoTherapy` rotates the gantry,
 //! so each frame's beam travels an **oblique, in-plane** direction. This module
 //! convolves the forward-peaked deposition kernel along an arbitrary **unit**
 //! direction by trilinearly resampling the terma field, giving a beam-frame
@@ -81,7 +81,7 @@ pub fn directional_convolve<T: GeometryScalar>(
 /// Seeds Gram–Schmidt from the world axis least parallel to `beam` (so the
 /// projection is well-conditioned), then `u = normalize(seed − (seed·beam)beam)`
 /// and `v = beam × u`. For an in-plane beam (`beam.z = 0`) this yields
-/// `u = +z` and `v` the in-plane perpendicular — the natural TomoTherapy frame.
+/// `u = +z` and `v` the in-plane perpendicular — the natural `TomoTherapy` frame.
 fn lateral_basis<T: GeometryScalar>(beam: Vector3<T>) -> (Vector3<T>, Vector3<T>) {
     let zero = <T as NumericElement>::ZERO;
     let one = <T as NumericElement>::ONE;
@@ -128,6 +128,10 @@ pub fn oriented_forward_scatter<T: GeometryScalar>(
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
     use crate::{
         anisotropic_scatter_superposition, forward_peaked_kernel, symmetric_deposition_kernel,

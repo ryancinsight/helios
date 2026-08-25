@@ -112,9 +112,8 @@ fn deposit_terma_impl<T: GeometryScalar + UnitScalar>(
         dose.grid().dims(),
         "dose and mu must share the same grid"
     );
-    let (t_enter, t_exit) = match ray_grid_interval(&grid, ray) {
-        Some(v) => v,
-        None => return Ok(AbsorbedDose::from_base(T::ZERO)),
+    let Some((t_enter, t_exit)) = ray_grid_interval(&grid, ray) else {
+        return Ok(AbsorbedDose::from_base(T::ZERO));
     };
     let length = t_exit - t_enter;
     if length <= T::ZERO {
@@ -182,6 +181,10 @@ fn deposit_terma_impl<T: GeometryScalar + UnitScalar>(
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
@@ -510,7 +513,7 @@ mod tests {
         point_source_falloff_matches_inverse_square::<f64>();
     }
 
-    /// Water linear attenuation at the TomoTherapy 6 MV working point, `cm⁻¹`:
+    /// Water linear attenuation at the `TomoTherapy` 6 MV working point, `cm⁻¹`:
     /// the `(μ/ρ) = 0.06 cm²/g` used across the Helios fixtures at unit density.
     const WATER_MU_PER_CM: f64 = 0.06;
 

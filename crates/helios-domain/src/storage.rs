@@ -267,7 +267,7 @@ mod tests {
 
     #[test]
     fn volume_round_trips_bitwise_through_hdf5() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempfile::tempdir().expect("synthetic storage fixture round-trips");
         let path = dir.path().join("dose.h5");
         let original = test_volume();
         save_volume_hdf5(&original, &path).expect("save");
@@ -293,20 +293,20 @@ mod tests {
     fn hdf5_file_is_readable_as_standard_hdf5() {
         // The archive starts with the HDF5 superblock signature, so external
         // tools (h5py etc.) can open it — the interoperability contract.
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempfile::tempdir().expect("synthetic storage fixture round-trips");
         let path = dir.path().join("sig.h5");
         save_volume_hdf5(&test_volume(), &path).expect("save");
-        let bytes = std::fs::read(&path).unwrap();
+        let bytes = std::fs::read(&path).expect("synthetic storage fixture round-trips");
         assert_eq!(&bytes[0..8], b"\x89HDF\r\n\x1a\n", "HDF5 signature");
     }
 
     #[test]
     fn f32_volume_round_trips_through_the_f64_archive() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempfile::tempdir().expect("synthetic storage fixture round-trips");
         let path = dir.path().join("f32.h5");
         let grid =
             VoxelGrid::<f32>::axis_aligned([2, 2, 2], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap();
+                .expect("synthetic storage fixture round-trips");
         let original = Volume::from_shape_fn(grid, |idx| (idx[0] + 2 * idx[1] + 4 * idx[2]) as f32);
         save_volume_hdf5(&original, &path).expect("save");
         let loaded: Volume<f32> = load_volume_hdf5(&path).expect("load");
@@ -322,7 +322,7 @@ mod tests {
 
     #[test]
     fn oriented_grid_pose_round_trips_through_hdf5() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempfile::tempdir().expect("synthetic storage fixture round-trips");
         let path = dir.path().join("oriented.h5");
         let rotation = helios_math::UnitQuaternion::try_from_rotation_columns(
             Vector3::new(0.0, 1.0, 0.0),
@@ -358,9 +358,9 @@ mod tests {
             load_volume_hdf5::<f64>("does_not_exist.h5"),
             Err(HeliosError::Storage { .. })
         ));
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempfile::tempdir().expect("synthetic storage fixture round-trips");
         let path = dir.path().join("garbage.h5");
-        std::fs::write(&path, b"not an hdf5 file").unwrap();
+        std::fs::write(&path, b"not an hdf5 file").expect("synthetic storage fixture round-trips");
         assert!(matches!(
             load_volume_hdf5::<f64>(&path),
             Err(HeliosError::Storage { .. })
