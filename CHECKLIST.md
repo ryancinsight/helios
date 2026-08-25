@@ -1,5 +1,27 @@
 # Helios Checklist (tactical)
 
+## current session — H-118a typed Python surface [patch] — in-progress
+
+- [x] Add the five-function `helios.pyi` contract and `py.typed` marker.
+- [x] Include both files in the maturin wheel and enforce missing Rust docs;
+      disable the unsupported cdylib Rust test target so the workspace doctest
+      gate can traverse the binding package.
+- [x] Verify the stub and wheel contents against the built extension contract.
+      Maturin emits `helios.pyi` and `helios/py.typed` without a duplicate
+      root marker; mypy 2.3.1 resolves a consumer snippet in strict mode.
+- [ ] Run the binding, package, and provider documentation gates; push the
+      exact head for hosted verification.
+
+## current session — H-103a executable book oracle [patch] — done
+
+- [x] Add a self-contained Rust analytical check to the Compton chapter. Its
+      tolerance is derived from the supplied electron-radius precision and
+      f64 rounding.
+- [x] Run `mdbook test docs/book` (one executable Rust sample passes),
+      `mdbook build`, and `mdbook-linkcheck2 --standalone --no-cache`.
+- [ ] Synchronize the changelog and push the exact head for hosted Pages
+      verification.
+
 ## current session — H-101 examples-only `book_*.rs` GPU placement seam [patch] — done 2026-08-07
 
 - [x] Added `crates/helios-gpu/examples/book_gpu_placement_hint.rs`.

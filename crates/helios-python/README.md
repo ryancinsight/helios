@@ -14,6 +14,10 @@ python -m pip install helios-python
 The wheels use the stable CPython 3.9 ABI. One wheel per supported operating
 system serves CPython 3.9 and newer.
 
+The wheel includes `helios.pyi` and the PEP 561 `py.typed` marker, so type
+checkers resolve the five exported functions without importing the extension
+at analysis time.
+
 ## Example
 
 ```python

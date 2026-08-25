@@ -24,6 +24,7 @@ rust-version.workspace = true
 # test harness cannot link — the binding surface is verified from pytest.
 name = "helios"
 crate-type = ["cdylib"]
+test = false
 
 [lints]
 workspace = true
