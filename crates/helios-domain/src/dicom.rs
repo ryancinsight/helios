@@ -420,7 +420,7 @@ mod tests {
         output.extend_from_slice(&vr);
         if matches!(
             vr,
-            [b'O', b'B'] | [b'O', b'W'] | [b'O', b'F'] | [b'S', b'Q'] | [b'U', b'T'] | [b'U', b'N']
+            [b'O', b'B' | b'W' | b'F'] | [b'S', b'Q'] | [b'U', b'T' | b'N']
         ) {
             output.extend_from_slice(&[0, 0]);
             output.extend_from_slice(
@@ -655,7 +655,7 @@ mod tests {
 
     #[test]
     fn round_trips_a_synthetic_ct_slice_to_hu_volume() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempfile::tempdir().expect("test scratch dir is creatable");
         let path = dir.path().join("slice.dcm");
         write_slice_at(&path, [10, 20, 30, 40], 9.0, "2.25.4242");
 
@@ -681,7 +681,8 @@ mod tests {
 
     #[test]
     fn missing_file_is_a_dicom_error_not_a_panic() {
-        let err = load_ct_slice::<f64>("does_not_exist.dcm").unwrap_err();
+        let err = load_ct_slice::<f64>("does_not_exist.dcm")
+            .expect_err("a missing file is a Dicom error, not a panic");
         assert!(matches!(err, HeliosError::Dicom { .. }));
     }
 
@@ -697,7 +698,7 @@ mod tests {
         ];
 
         for (index, (omitted, name)) in cases.into_iter().enumerate() {
-            let dir = tempfile::tempdir().unwrap();
+            let dir = tempfile::tempdir().expect("test scratch dir is creatable");
             let path = dir.path().join("missing-geometry.dcm");
             write_slice_at_with_geometry(
                 &path,
@@ -739,7 +740,7 @@ mod tests {
 
     #[test]
     fn series_stacks_sorted_by_position_with_derived_spacing() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempfile::tempdir().expect("test scratch dir is creatable");
         let paths = write_series(dir.path());
         let vol: Volume<f64> = load_ct_series(&paths).expect("series load");
 
@@ -758,11 +759,13 @@ mod tests {
 
     #[test]
     fn single_path_series_equals_single_slice_load() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempfile::tempdir().expect("test scratch dir is creatable");
         let path = dir.path().join("one.dcm");
         write_slice_at(&path, [10, 20, 30, 40], 9.0, "2.25.9");
-        let series: Volume<f64> = load_ct_series(std::slice::from_ref(&path)).unwrap();
-        let single: Volume<f64> = load_ct_slice(&path).unwrap();
+        let series: Volume<f64> =
+            load_ct_series(std::slice::from_ref(&path)).expect("synthetic series round-trips");
+        let single: Volume<f64> =
+            load_ct_slice(&path).expect("synthetic DICOM fixture round-trips");
         assert_eq!(series.grid().dims(), single.grid().dims());
         for j in 0..2 {
             for i in 0..2 {
@@ -773,7 +776,7 @@ mod tests {
 
     #[test]
     fn load_slice_preserves_oriented_iop_pose() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempfile::tempdir().expect("test scratch dir is creatable");
         let path = dir.path().join("oriented.dcm");
         // row_dir = +Y, col_dir = -X, normal = +Z (right-handed).
         write_slice_at_with_orientation(
@@ -807,7 +810,7 @@ mod tests {
         ));
 
         // Slices at z = 0, 4, 10 → gap (missing slice) → non-uniform spacing.
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempfile::tempdir().expect("test scratch dir is creatable");
         let mut paths = Vec::new();
         for (i, z) in [0.0, 4.0, 10.0].iter().enumerate() {
             let p = dir.path().join(format!("g{i}.dcm"));

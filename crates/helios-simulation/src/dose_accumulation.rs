@@ -9,7 +9,7 @@
 //! frames — the input the DVH / gamma analysis consumes.
 //!
 //! # Beam geometry
-//! A helical TomoTherapy fan: at gantry angle `θ` the beam travels along the
+//! A helical `TomoTherapy` fan: at gantry angle `θ` the beam travels along the
 //! axial-plane direction `d = (cosθ, sinθ, 0)`; each binary-MLC leaf is a beamlet
 //! laterally offset along the in-plane perpendicular `p = (−sinθ, cosθ, 0)` by
 //! `(leaf − centre)·leaf_width`, at the couch `z` slice. [`BeamGeometry`] selects
@@ -53,7 +53,7 @@ pub enum BeamGeometry<T: GeometryScalar> {
     },
     /// Divergent fan from a point source at `source_axis` from isocentre (SAD):
     /// each beamlet runs from the focal spot through its isocentre-plane offset
-    /// point, so beamlets diverge with depth — the true TomoTherapy fan geometry.
+    /// point, so beamlets diverge with depth — the true `TomoTherapy` fan geometry.
     /// Reduces to [`Parallel`](Self::Parallel) as `source_axis → ∞`.
     PointSource {
         /// Source-to-axis distance / SAD (mm).
@@ -340,6 +340,10 @@ pub(crate) fn gantry_basis<T: GeometryScalar + UnitScalar>(
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;

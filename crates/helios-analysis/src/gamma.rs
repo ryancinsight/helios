@@ -128,7 +128,7 @@ fn gamma_impl<T: Scalar + UnitScalar>(
     match norm {
         Norm::Global(d) => require_positive_finite(*d.as_base(), "gamma::normalization_dose")?,
         Norm::Local { cutoff } => {
-            require_positive_finite(*cutoff.as_base(), "gamma::low_dose_cutoff")?
+            require_positive_finite(*cutoff.as_base(), "gamma::low_dose_cutoff")?;
         }
     }
 
@@ -222,6 +222,10 @@ pub fn gamma_pass_rate<T: Scalar>(
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;

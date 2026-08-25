@@ -27,6 +27,11 @@
 //!
 //! [← LINAC-Based Step-and-Shoot Delivery](../../docs/book/workflow_linac.md)
 
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
+
 use aequitas::systems::si::{
     quantities::{Angle, AreaPerMass, EnergyPerArea, Length, MassDensity},
     units::{GramPerCubicCentimeter, Gray, Millimeter, Radian, SquareCentimeterPerGram},
@@ -68,8 +73,7 @@ fn main() {
 
     // ── 1. Build water phantom (attenuation map) ──────────────────────────────
     println!(
-        "Phantom: {}×{}×1 voxels, {} mm spacing, uniform water (μ = {:.4} cm⁻¹)",
-        N, N, SPACING_MM, MU_WATER_CM
+        "Phantom: {N}×{N}×1 voxels, {SPACING_MM} mm spacing, uniform water (μ = {MU_WATER_CM:.4} cm⁻¹)"
     );
 
     // μ/ρ for water at 6 MV ≈ 0.0636 / 1.0 = 0.0636 cm²/g
@@ -142,7 +146,7 @@ fn main() {
     );
 
     // DVH monotonicity
-    let levels: Vec<f64> = (0..=20).map(|k| k as f64 / 20.0).collect();
+    let levels: Vec<f64> = (0..=20).map(|k| f64::from(k) / 20.0).collect();
     let doses: Vec<f64> = levels
         .iter()
         .map(|&v| dvh.dose_at_volume_fraction(v).into_base())

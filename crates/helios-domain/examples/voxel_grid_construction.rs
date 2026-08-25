@@ -6,7 +6,16 @@
 //! `Volume<T>` is generic over `T: Scalar` — built once, sampled either at
 //! voxel index (fast, integer) or in world coordinates (trilinear, sub-voxel).
 //!
-//! Run with:  cargo run --example voxel_grid_construction -p helios-domain
+//! Run with:  cargo run --example `voxel_grid_construction` -p helios-domain
+
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
+#![expect(
+    clippy::unwrap_used,
+    reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+)]
 
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{Point3, Scalar};

@@ -37,6 +37,44 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(loom)'] }
 [workspace.lints.clippy]
 # Production-path lints are enforced with -D warnings in the pre-merge gate.
 all = { level = "warn", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+
+# Pedantic floor ratchet: every class listed below already fires in this
+# workspace and is allowed at its measured baseline; every class NOT listed
+# is a hard error. Counts are `cargo clippy --all-targets` hits at the time
+# the floor was established (total / production, production excluding
+# `#[cfg(test)]` modules and test, bench and example targets). Burn a class
+# down to zero, then delete its line -- the floor tightens, never loosens.
+
+# --- Numeric conversion debt (228 sites, 74 in production) ---
+# Voxel index <-> physical coordinate conversions across the dose/imaging grids.
+cast_precision_loss = "allow"     # 156 (40 prod)
+cast_possible_wrap = "allow"      # 29 (13 prod)
+cast_sign_loss = "allow"          # 25 (13 prod)
+cast_possible_truncation = "allow" # 18 (8 prod)
+
+# --- Documentation debt (15 sites, 15 in production) ---
+missing_panics_doc = "allow" # 15 (15 prod)
+
+# --- Style debt (9 sites, 2 in production) ---
+similar_names = "allow"    # 5 (2 prod)
+too_many_lines = "allow"   # 4 (0 prod; chapter-mapped book examples)
+
+# --- Float comparison (3 sites, 0 genuine production) ---
+# Every hit is attributed to the `assert_eq!`/proptest macro definition site in
+# core/proptest, expanded from exact-equality assertions in test targets. There
+# is no production strict float comparison in this workspace.
+float_cmp = "allow" # 3 (0 prod)
+
+# --- Restriction floor ---
+# `unwrap_used` is denied outright: no workspace-wide allow, and no production
+# `unwrap()` sites exist to pin.
+unwrap_used = "deny"
+dbg_macro = "deny"
+# Library `src/` carries zero print sites; the CLI surface is examples and xtask,
+# whose targets are exempted per-target rather than by a workspace-wide allow.
+print_stdout = "deny"
+print_stderr = "deny"
 
 [workspace.dependencies]
 # ── Internal Helios crates (added as they are created, per architecture_scoping

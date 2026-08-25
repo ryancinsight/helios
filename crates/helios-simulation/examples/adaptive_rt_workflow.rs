@@ -29,6 +29,11 @@
 //!
 //! [← Adaptive Radiotherapy with MVCT](../../docs/book/workflow_adaptive.md)
 
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
+
 use aequitas::systems::si::{
     quantities::{AbsorbedDose, Angle, AreaPerMass, EnergyPerArea, Length, MassDensity},
     units::{GramPerCubicCentimeter, Gray, Millimeter, Radian, SquareCentimeterPerGram},

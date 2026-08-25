@@ -4,6 +4,198 @@ Physics, numerics, accuracy, architecture, and integration gaps. Closed by
 evidence, not silence. Each gap: ID, description, class, current evidence tier,
 target closure.
 
+## Finding 2026-08-20: helios scope-vs-delivery audit
+
+Static, read-only audit at detached HEAD `f31f261` (the working tree carried one
+pre-existing peer edit: `crates/helios-python/Cargo.toml`). No cargo command was
+run; every number below is a file or grep measurement, so no test-suite result
+is claimed here.
+
+### Measured baseline
+
+| Quantity | Value | How measured |
+|---|---|---|
+| Workspace members | 12 (11 `helios-*` + `xtask`) | `Cargo.toml` `[workspace].members` |
+| Source LOC | 14,304 (`crates/*/src` + `xtask/src`) | recursive `wc -l` over `*.rs` |
+| `#[test]` functions | 293 in crates, 0 in xtask, plus 10 pytest cases | grep |
+| `proptest!` sites | 3 | grep |
+| Runnable examples | 18 across 8 crates | `crates/*/examples` |
+| Bench binaries | 4 (`dvh_queries`, `projection_throughput`, `transmission_throughput`, `scatter_superposition`) | `crates/*/benches` |
+| Book | 25 numbered chapters + 18 example pages + 3 appendices | `docs/book/SUMMARY.md` |
+| ADRs | 16 files, all `Accepted`; numbering hole at 0011 | `docs/adr/` |
+| `todo!(` / `unimplemented!(` / TODO / FIXME / HACK | 0 / 0 / 0 | grep over `crates`, `xtask` |
+| Production `.unwrap()` outside `#[cfg(test)]` | 0 (30 `expect(` carrying stated invariants) | per-file awk scan |
+| `#[allow(` sites | 0 | grep |
+| Files over the 500-line target | 7 | `wc -l` scan |
+| `#[ignore]`d tests | 11, all in `helios-gpu` (which holds 10 `#[test]` fns) | grep |
+
+The Atlas conformance baseline for helios is corroborated: 7 oversized files,
+0 production unwraps, 0 allow sites, 1 existence-only assertion
+(`crates/helios-imaging/src/radon.rs:254`, `assert!(ok.is_ok())`), 1 crate
+missing `deny(missing_docs)` (`crates/helios-python/src/lib.rs`), 2 re-export
+shims (`crates/helios-gpu/src/lib.rs:28-29`, re-exporting
+`hephaestus_core::{HephaestusError, Result}` and `hephaestus_wgpu::WgpuDevice`),
+and 1 implementation-bearing manifest (`crates/helios-math/src/lib.rs`, 103
+lines carrying the `ShippedScalar` trait and its impls).
+
+### Dose-engine state
+
+The only dose engine is a separable convolution/superposition model: terma from
+ray deposition (`crates/helios-solver/src/deposition.rs`, parallel and divergent
+point-source variants) convolved with per-axis kernels
+(`crates/helios-solver/src/scatter.rs`: `symmetric_deposition_kernel`,
+`forward_peaked_kernel`, `poly_forward_peaked_kernel`, `scatter_superposition`,
+`anisotropic_scatter_superposition`) plus a beam-following orientation pass
+(`crates/helios-solver/src/oriented_scatter.rs`,
+`crates/helios-simulation/src/dose_accumulation.rs::CollapsedCone`).
+
+There is no pencil-beam engine and no Monte-Carlo engine in the tree; a
+case-insensitive grep for `monte carlo` and `pencil beam` returns prose only.
+The module header at `crates/helios-solver/src/scatter.rs:12-13` states that a
+true collapsed-cone (cone-angle transport) kernel is a later increment, which
+remains accurate.
+
+### Verification tier
+
+Strong at the analytical tier and honestly labelled:
+
+- `crates/helios-solver/src/deposition.rs:520-532` derives a 256-ulp bound from
+  subtractive-cancellation and `exp` rounding analysis and asserts the textbook
+  `PDD(d) = exp(-mu*(d-d0)) * ((SSD+d0)/(SSD+d))^2` law at `f32` and `f64`.
+- `crates/helios-simulation/tests/end_to_end.rs:430` runs gamma against an
+  independently constructed scaled comparison field with a failing negative
+  control.
+- `crates/helios-imaging/src/radon.rs:181-199` asserts the analytical cylinder
+  chord `2*mu0*sqrt(r^2 - s^2)`.
+- GPU paths are differentially checked against the CPU reference kernels.
+
+Not present, and correctly not claimed by the repository (`gap_audit.md` G-16;
+`crates/helios-simulation/tests/end_to_end.rs:14-16`): any comparison against a
+measured beam, a reference Monte-Carlo engine (TOPAS/GATE/EGSnrc), TG-119, or a
+licensed clinical dataset. Helios is research and simulation software: it
+carries no clinical validation and makes no regulatory claim. The
+delivered-dose evidence tier is analytical-oracle plus differential only.
+
+Two mechanical weaknesses in the verification surface:
+
+1. `mdbook test docs/book` (`.github/workflows/ci.yml:65-66`) and the Pages
+   caller's `mdbook-test: true` (`.github/workflows/book-pages.yml:42`) are
+   vacuous. The book contains zero rust code fences (73 bare, 69 `text`, 4
+   `bash`), so the gate cannot fail. It is precisely the gate that would have
+   caught the false code samples corrected in this pass.
+2. Every `helios-gpu` test is `#[ignore]`d, so hosted CI exercises no GPU
+   kernel; GPU evidence lives only in the local reports under
+   `validation_reports/`.
+
+### Substrate consumption
+
+Consumed by at least one member crate: `aequitas`, `eunomia`, `leto`, `gaia`,
+`hyperion`, `proteus`, `asclepius` (+ `asclepius-coeus`),
+`coeus-{core,tensor,autograd}`, `consus-{core,hdf5,io}`,
+`hephaestus-{core,wgpu}`, `moirai` / `moirai-parallel`, `themis`, `tyche-core`,
+`horae`, `ritk-dicom`.
+
+Declared in the workspace SSOT but consumed by no member: `ritk-core`,
+`ritk-io`, `ritk-registration`, `apollo` (`apollo-fft`), `hermes-simd`,
+`mnemosyne-core`, `consus-compression`. Two of those are substituted by
+Helios-local implementations rather than being merely unused vocabulary:
+
+- `crates/helios-imaging/src/registration.rs` hand-rolls exhaustive whole-voxel
+  SSD and NCC registration while `ritk-registration` is never declared at member
+  level.
+- `crates/helios-imaging/src/fbp.rs:21-39` builds the Ram-Lak ramp in the
+  spatial domain and convolves directly while `apollo-fft` is declared and
+  unused.
+
+`mnemosyne-core` is the sharpest case: `docs/book/memory.md` documented an arena
+integration that exists nowhere in the source (zero `mnemosyne` matches under
+`crates/`).
+
+### Clinical-pipeline coverage
+
+Implemented: CT/MVCT DICOM image import (`load_ct_slice`, `load_ct_series`,
+feature `dicom`); voxel grid and volume domain; HU calibration and Compton
+physics; Radon, FBP, SIRT reconstruction and quantum noise; rigid whole-voxel
+IGRT registration; binary-MLC leaf-open-time sinogram, field aperture, helical
+delivery kinematics; terma plus separable and anisotropic superposition dose;
+DVH, gamma, ROI and image-quality metrics; projected-gradient and
+Coeus-autodiff DVH/gEUD beam-weight optimization; GPU attenuation, projection
+and transmission.
+
+Declared or implied but absent: DICOM-RT `RTSTRUCT` / `RTPLAN` / `RTDOSE` I/O
+(grep returns zero matches; ROIs are analytic box and sphere masks only),
+contour-based structure sets, a machine and beam commissioning model (no monitor
+units, no absolute dose-rate calibration, no measured spectrum), pencil-beam and
+Monte-Carlo engines, leaf sequencing / DAO / VMAT, OS-SEM and MLEM
+reconstruction, deformable or mutual-information registration, and delivery QA.
+
+One structural break sits inside the implemented set:
+`helios_planning::DoseInfluence` has no producer anywhere in the workspace. The
+only constructors are an example
+(`crates/helios-planning/examples/dvh_optimization.rs:62`) and the Python
+wrapper (`crates/helios-python/src/lib.rs:90`). The optimizer is therefore not
+wired to the dose engine, so "planning" is a solver over a caller-supplied
+matrix rather than an end-to-end inverse-planning stage.
+
+### Python binding surface
+
+`crates/helios-python/src/lib.rs` is 113 lines and correctly thin: 5
+`#[pyfunction]`s, `Python::detach` around the one compute-heavy call, typed
+errors mapped to `ValueError`, no domain logic, `#![forbid(unsafe_code)]`.
+`pyproject.toml` metadata is complete (readme, `requires-python >=3.9` matching
+abi3-py39, license, classifiers, urls) and `.github/workflows/python-release.yml`
+uses the Atlas trusted-publishing workflow under `id-token: write`.
+
+Residuals: no `py.typed` and no `.pyi` stubs anywhere in the repository, so the
+surface is untyped to mypy and IDEs; no NumPy zero-copy path (H-040b); the
+crate lacks `deny(missing_docs)`; and 10 of the 11 crates have no README (only
+`crates/helios-python/README.md` exists).
+
+### Documentation and figure drift
+
+- Four chapters asserted facts contradicted by the tree; all four are corrected
+  in this pass (H-110 records what was corrected and why the gate missed them).
+- 12 committed SVGs under `docs/book/figures/ch23` through `ch34` are
+  referenced by no chapter. They belong to a removed "Atlas migration" part
+  (`fig01_23_migration_overview.svg` through `fig01_34_migration_validation.svg`).
+- Chapters 23, 24 and 25 embed figures numbered 35.1, 36.1 and 37.1 drawn from
+  `figures/ch35`, `ch36` and `ch37`: the figure tree still uses a retired
+  37-chapter numbering.
+- `xtask check-figures` cannot see either problem. It scans only
+  `docs/book/SUMMARY.md` and `docs/book/README.md`
+  (`xtask/src/check_figures.rs:1-5`), and `FIGURE_SPECS` covers 7 figures while
+  59 chapter and appendix SVGs are committed. `xtask/src/prebook.rs:12-15` also
+  states the figures are `HandAuthored`, the opposite of the
+  regenerated-from-data requirement.
+
+### PM hygiene
+
+- `backlog.md` H-003b is `blocked` on gaia's leto migration, but
+  `crates/helios-math/src/lib.rs:76` already re-exports `gaia::{Aabb, Ray}` with
+  a bridge test exercising it, and this file already calls G-11 "effectively
+  resolved".
+- H-103 (mdbook snippet conversion) is `todo`, but the conversion landed (zero
+  rust fences) and both workflows enable the gate; the `CHANGELOG.md` Unreleased
+  entry still states that "the separate mdBook sample gate remains disabled".
+- Duplicate IDs on the board: two different `H-101` rows and two `H-086` rows.
+- `docs/adr/` has no 0011. The record exists only on the unmerged commit
+  `aa70fab` as `0011-attenuation-physical-quantities.md`.
+- Root carries `SPRINT_1.md` and `SPRINT_2.md` (roadmap duplicated in
+  `README.md`) plus the generated `parity_artefacts/INDEX.html`.
+
+### Completeness
+
+Approximately 60% of the repository's own declared scope is delivered and
+verified. Denominator: the five README sprints, the 25 book chapters, and the 16
+Accepted ADRs. Weighting per the audit rubric: capabilities without stubs 0.60
+(zero stubs, but no RT-object I/O, no machine model, no Monte-Carlo or
+pencil-beam engine, no leaf sequencing, and no optimizer-to-dose-engine wiring);
+verification depth 0.55 (excellent analytical tier, but no reference-engine or
+published-benchmark dose validation, a vacuous mdbook gate, and GPU untested in
+CI); documentation 0.60 (complete book and example map, but four factually wrong
+chapters, orphan figures, and 10 crates without READMEs); conformance floor
+0.70.
+
 ## Inverse-planning dose objective metrics (H-099, 2026-08-05)
 
 The live planning audit found one remaining public Aequitas gap spanning the
@@ -246,10 +438,12 @@ and attenuation, and `AreaPerMass` for mass attenuation. `EnergyMeV` and
   (including oriented Beer–Lambert and HDF5 pose round trips, live GPU checks);
   warning-denied Clippy, doctest/rustdoc, workspace example build, workspace
   format check, and four 196/196-package SemVer checks are clean.
-- H-004d remains externally sequenced: RITK's public DICOM tags currently omit
-  `ImageOrientationPatient`, and both permitted RITK worktree lanes carry
-  active peer migrations. Helios will consume the named provider tag once that
-  owner lane is available.
+- H-004d is in the consumer cutover phase: Helios now uses
+  `ritk_dicom::tags::IMAGE_ORIENTATION_PATIENT` and no longer owns a duplicate
+  `(0020,0037)` constant. RITK PR #149 carries the provider SSOT and its 37/37
+  focused nextest evidence; the exact-head cross-repository gate remains open
+  until that PR merges. The typed-slope lockfile and RITK peer lane remain
+  outside this slice.
 
 ## Open gaps
 

@@ -3,6 +3,10 @@
 //! μ volume uploads once; each batch round-trips only the rays in and one
 //! scalar per ray out.
 #![allow(missing_docs)] // criterion_group! generates an undocumented harness item.
+#![expect(
+    clippy::print_stderr,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use helios_domain::{Volume, VoxelGrid};

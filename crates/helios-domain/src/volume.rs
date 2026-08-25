@@ -176,6 +176,10 @@ impl<T: Scalar> Volume<T> {
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
     use eunomia::assert_relative_eq;
     use helios_math::ShippedScalar;

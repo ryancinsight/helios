@@ -28,9 +28,21 @@ heterogeneity correction in the collapsed-cone solver.
 
 ## Analytical Oracles
 
-The helios-analysis crate provides:
-- **Cylinder radon oracle**: exact Radon transform of a uniform cylinder
-- **Exponential depth-dose**: pencil beam in homogeneous water
+The oracles are written into the tests and examples that use them, not exposed
+as a crate API:
+
+- **Cylinder Radon oracle** — the exact chord `2*mu0*sqrt(r^2 - s^2)`, asserted
+  by `disk_sinogram_matches_analytical_chord` in
+  `crates/helios-imaging/src/radon.rs`, and end-to-end through FBP recovery in
+  `crates/helios-imaging/src/fbp.rs` and
+  `crates/helios-analysis/examples/validation_regression.rs`.
+- **Percentage depth dose in water** — the analytical
+  `PDD(d) = exp(-mu*(d - d0)) * ((SSD + d0)/(SSD + d))^2` law, asserted against
+  the primary terma kernel in `crates/helios-solver/src/deposition.rs` with a
+  tolerance derived from `T::EPSILON`.
+
+`helios-analysis` itself exports the evaluation metrics (`Dvh`, `gamma_index_3d`,
+ROI and image-quality statistics), not oracle generators.
 
 ## Further Reading
 

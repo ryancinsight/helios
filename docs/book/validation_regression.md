@@ -16,7 +16,10 @@ For a cylinder of radius
 R(t) = 2μ₀√(r² − t²)  for |t| < r, zero otherwise
 ```
 
-This oracle is tested in helios-imaging/tests/radon_oracle.rs.
+This oracle is asserted in the `helios-imaging` unit tests
+(`crates/helios-imaging/src/{radon,fbp}.rs`) and in the runnable
+`helios-analysis` example `validation_regression`; `helios-imaging` has no
+separate `tests/` directory.
 
 ## FBP Reconstruction Error
 

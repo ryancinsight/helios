@@ -1,3 +1,14 @@
+//! Helios workspace automation tasks.
+//!
+//! `xtask` is the committed home for repository chores that would otherwise be
+//! ad hoc scripts: book figure provenance (`prebook`), figure/doc SSOT drift
+//! (`check-figures`), and dependency migration audits.
+
+#![expect(
+    clippy::print_stdout,
+    reason = "xtask is the repository CLI surface; its report output is the deliverable"
+)]
+
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::{Path, PathBuf};
@@ -29,7 +40,7 @@ enum Command {
     /// byte fingerprint each file currently has on disk; re-running on
     /// unchanged inputs produces byte-identical output (CI evidence chain).
     Prebook,
-    /// Verify SUMMARY.md + README.md figure links are listed in FIGURE_SPECS.
+    /// Verify SUMMARY.md + README.md figure links are listed in `FIGURE_SPECS`.
     /// Returns exit code 1 on drift so the CI gate fails loudly when the
     /// SSOT contract between figures and book source breaks.
     CheckFigures,
@@ -83,6 +94,5 @@ fn workspace_root() -> PathBuf {
     let xtask_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     xtask_dir
         .parent()
-        .map(PathBuf::from)
-        .unwrap_or_else(|| xtask_dir)
+        .map_or_else(|| xtask_dir.clone(), PathBuf::from)
 }

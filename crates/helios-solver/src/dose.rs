@@ -157,6 +157,10 @@ pub fn dose_convolution_x<T: Scalar>(terma: &Volume<T>, kernel: &[T]) -> Volume<
 
 #[cfg(test)]
 mod tests {
+    #![expect(
+        clippy::unwrap_used,
+        reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
+    )]
     use super::*;
     use eunomia::assert_relative_eq;
     use helios_math::Point3;

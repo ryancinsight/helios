@@ -102,8 +102,7 @@ fn projection_parallel_threshold() -> usize {
 #[inline]
 fn effective_parallel_units() -> usize {
     let topology_units = CpuTopology::detect()
-        .map(|topology| topology.logical_processors())
-        .unwrap_or(1)
+        .map_or(1, |topology| topology.logical_processors())
         .max(1);
     let runtime_workers = moirai::global().worker_count().max(1);
     topology_units.min(runtime_workers)

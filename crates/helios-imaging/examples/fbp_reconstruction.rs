@@ -5,7 +5,12 @@
 //! Validates that the reconstructed attenuation at the disk centre matches μ₀
 //! to within 15% — the typical FBP discretization tolerance.
 //!
-//! Run with: cargo run --example fbp_reconstruction -p helios-imaging
+//! Run with: cargo run --example `fbp_reconstruction` -p helios-imaging
+
+#![expect(
+    clippy::print_stdout,
+    reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
+)]
 
 use aequitas::systems::si::{
     quantities::{Angle, Length},
