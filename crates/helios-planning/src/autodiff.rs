@@ -2,8 +2,7 @@
 //!
 //! Computes `∇ₓ ½‖A·x − d‖²` by reverse-mode automatic differentiation over the
 //! coeus tape (the mandated Atlas tensor/autodiff component) instead of the
-//! hand-derived `Aᵀ(A·x − d)` in [`optimize_beam_weights`]
-//! (crate::optimize_beam_weights). For the quadratic objective the two are
+//! hand-derived `Aᵀ(A·x − d)` in [`optimize_beam_weights`]. For the quadratic objective the two are
 //! mathematically identical — the differential test pins them against each other
 //! — and the autodiff path is what generalizes to non-quadratic (DVH/biological)
 //! objectives, where no closed-form gradient exists.
@@ -21,6 +20,10 @@ use coeus_tensor::Tensor;
 use helios_core::HeliosError;
 
 /// A constant (non-differentiated) scalar `Var` of shape `[1]` on `backend`.
+#[expect(
+    clippy::trivially_copy_pass_by_ref,
+    reason = "Tensor::from_slice_on borrows the backend; callers keep ownership"
+)]
 fn scalar_const(value: f64, backend: &MoiraiBackend) -> Var<f64, MoiraiBackend> {
     Var::new(Tensor::from_slice_on(vec![1], &[value], backend), false)
 }
@@ -330,13 +333,15 @@ mod tests {
     /// 3×2 influence with distinct entries; the differential oracle is the exact
     /// hand gradient Aᵀ(A·x − d) from the projected-gradient solver.
     fn influence() -> DoseInfluence<f64> {
-        DoseInfluence::from_rows(3, 2, vec![1.0, 2.0, 0.5, -1.0, 3.0, 4.0]).unwrap()
+        DoseInfluence::from_rows(3, 2, vec![1.0, 2.0, 0.5, -1.0, 3.0, 4.0])
+            .expect("synthetic dose-influence matrix is well-formed")
     }
 
     // All-positive 3×2 influence so `A·x > 0` for positive `x` (gEUD with a
     // non-integer `a` needs positive dose).
     fn positive_influence() -> DoseInfluence<f64> {
-        DoseInfluence::from_rows(3, 2, vec![1.0, 0.5, 2.0, 1.0, 0.5, 1.5]).unwrap()
+        DoseInfluence::from_rows(3, 2, vec![1.0, 0.5, 2.0, 1.0, 0.5, 1.5])
+            .expect("synthetic dose-influence matrix is well-formed")
     }
 
     #[test]
@@ -352,7 +357,8 @@ mod tests {
             kind: EudKind::UpperLimit,
             weight: 1.0,
         };
-        let (value, _) = eud_objective_gradient_autodiff(&inf, &x, &penalty).unwrap();
+        let (value, _) = eud_objective_gradient_autodiff(&inf, &x, &penalty)
+            .expect("planning fixture round-trips");
         let analytic = geud_ref(&inf.apply(&x), a);
         assert_relative_eq!(value.sqrt(), analytic, max_relative = 1e-10);
     }
@@ -374,10 +380,11 @@ mod tests {
         };
         let value_at = |x: &[f64]| {
             eud_objective_gradient_autodiff(&inf, x, &penalty)
-                .unwrap()
+                .expect("finite sample points keep the objective solvable")
                 .0
         };
-        let (_, grad) = eud_objective_gradient_autodiff(&inf, &x, &penalty).unwrap();
+        let (_, grad) = eud_objective_gradient_autodiff(&inf, &x, &penalty)
+            .expect("planning fixture round-trips");
         let h = 1e-6;
         for k in 0..x.len() {
             let (mut xp, mut xm) = (x, x);
@@ -401,7 +408,8 @@ mod tests {
             kind: EudKind::UpperLimit,
             weight: 5.0,
         };
-        let (value, grad) = eud_objective_gradient_autodiff(&inf, &x, &penalty).unwrap();
+        let (value, grad) = eud_objective_gradient_autodiff(&inf, &x, &penalty)
+            .expect("planning fixture round-trips");
         assert_relative_eq!(value, 0.0, epsilon = 1e-12);
         for g in grad {
             assert_relative_eq!(g, 0.0, epsilon = 1e-12);
@@ -465,7 +473,8 @@ mod tests {
     #[test]
     fn gradient_is_zero_at_the_least_squares_optimum() {
         // Identity influence: optimum x* = d exactly → ∇ = 0.
-        let inf = DoseInfluence::from_rows(2, 2, vec![1.0, 0.0, 0.0, 1.0]).unwrap();
+        let inf = DoseInfluence::from_rows(2, 2, vec![1.0, 0.0, 0.0, 1.0])
+            .expect("planning fixture round-trips");
         let d = [2.0, -1.5];
         let grad = objective_gradient_autodiff(&inf, &d, &d).expect("gradient");
         for &g in &grad {
@@ -522,7 +531,8 @@ mod tests {
     fn gradient_is_zero_inside_the_penalty_band() {
         // Dose strictly between floor and ceiling everywhere → both hinges
         // inactive → L = 0 and ∇L = 0 (the band is free).
-        let inf = DoseInfluence::from_rows(2, 2, vec![1.0, 0.0, 0.0, 1.0]).unwrap();
+        let inf = DoseInfluence::from_rows(2, 2, vec![1.0, 0.0, 0.0, 1.0])
+            .expect("planning fixture round-trips");
         let x = [1.0, 1.0]; // dose = [1, 1]
         let penalty = DvhPenalty {
             floor: &[dose(0.5), dose(0.5)],
@@ -543,7 +553,8 @@ mod tests {
         // Beamlet 0 doses both (target 1.0, OAR 0.5/unit); beamlet 1 doses only
         // the target. The optimum uses beamlet 1 (OAR-sparing) to reach the floor
         // while keeping the OAR under its ceiling.
-        let inf = DoseInfluence::from_rows(2, 2, vec![1.0, 1.0, 0.5, 0.0]).unwrap();
+        let inf = DoseInfluence::from_rows(2, 2, vec![1.0, 1.0, 0.5, 0.0])
+            .expect("planning fixture round-trips");
         let penalty = DvhPenalty {
             floor: &[dose(1.0), dose(0.0)],
             ceiling: &[dose(10.0), dose(0.3)],
