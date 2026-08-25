@@ -136,7 +136,7 @@ consus-io = { git = "https://github.com/ryancinsight/consus", features = ["std"]
 consus-compression = { git = "https://github.com/ryancinsight/consus", features = ["std", "deflate"] }
 # Numeric datatype SSOT (Scalar seam: RealField/FloatElement/NumericElement).
 aequitas = { git = "https://github.com/ryancinsight/aequitas", default-features = false, features = ["std"] }
-proteus = { git = "https://github.com/ryancinsight/proteus" }
+proteus = { package = "proteus-mat", git = "https://github.com/ryancinsight/proteus" }
 hyperion = { git = "https://github.com/ryancinsight/hyperion" }
 eunomia = { git = "https://github.com/ryancinsight/eunomia" }
 tyche-core = { version = "0.2.0", git = "https://github.com/ryancinsight/tyche" }
