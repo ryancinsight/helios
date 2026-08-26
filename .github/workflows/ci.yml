@@ -13,6 +13,17 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+# Superseded runs cancel rather than queue. Without this, every force-push
+# or rapid commit series on one branch accumulated a full three-job pipeline
+# per push; helios runs have repeatedly shown multi-minute-to-hour gaps
+# between run creation and first job start while superseded pipelines held
+# queue positions (e.g. run 32436531185: 92 queued minutes for 5.7 minutes
+# of compute; run 32892598325's book deploy waited 57 minutes to publish a
+# 2.6-minute build).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # Guards the one artifact whose correctness cannot be checked from inside the
   # overlay environment that produces it. Calls the shared Atlas workflow.
