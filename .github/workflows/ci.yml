@@ -52,14 +52,19 @@ jobs:
         with:
           tool: cargo-nextest@0.9.140,cargo-audit@0.22.2,cargo-deny@0.20.2
 
-      - name: Cache cargo dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      # Shared-key rust-cache instead of a lockfile-hash actions/cache: the
+      # hash key wipes the whole target/ directory whenever Cargo.lock moves
+      # (e.g. a first-party dependency repin), forcing a full workspace
+      # rebuild on exactly the routine dependency-bump PRs. rust-cache
+      # invalidates incrementally and shares one entry across jobs, written
+      # from main only so concurrent branches cannot evict each other.
+      # Mirrors the CFDrs #375 / ritk #211 lever under ATLAS-CI-RUNNER-
+      # SATURATION.
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          workspaces: .
+          shared-key: helios
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Format
         run: cargo fmt -- --check
