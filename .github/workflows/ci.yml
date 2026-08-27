@@ -33,38 +33,28 @@ jobs:
     permissions:
       contents: read
 
-  rust:
-    name: rust workspace
+  fast-lint:
+    name: fast lint
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-        with:
-          fetch-depth: 0
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
         with:
           components: clippy, rustfmt
 
-      - name: Install Rust verification tools
+      - name: Install verification tools
         uses: taiki-e/install-action@f47c9687269207d6b374de4134cb8b1fa5b49649
         with:
-          tool: cargo-nextest@0.9.140,cargo-audit@0.22.2,cargo-deny@0.20.2
+          tool: cargo-audit@0.22.2,cargo-deny@0.20.2
 
-      # Shared-key rust-cache instead of a lockfile-hash actions/cache: the
-      # hash key wipes the whole target/ directory whenever Cargo.lock moves
-      # (e.g. a first-party dependency repin), forcing a full workspace
-      # rebuild on exactly the routine dependency-bump PRs. rust-cache
-      # invalidates incrementally and shares one entry across jobs, written
-      # from main only so concurrent branches cannot evict each other.
-      # Mirrors the CFDrs #375 / ritk #211 lever under ATLAS-CI-RUNNER-
-      # SATURATION.
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
           workspaces: .
           shared-key: helios
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          save-if: false
 
       - name: Format
         run: cargo fmt -- --check
@@ -72,11 +62,56 @@ jobs:
       - name: Clippy
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
+      - name: RustSec audit
+        run: cargo audit --deny warnings --ignore RUSTSEC-2021-0153
+
+      - name: Dependency policy
+        run: cargo deny check
+
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+
+      - name: Install nextest
+        uses: taiki-e/install-action@f47c9687269207d6b374de4134cb8b1fa5b49649
+        with:
+          tool: cargo-nextest@0.9.140
+
+      # Shared cache; only the tests job writes (it produces the most
+      # dependency artifacts). Other jobs restore with save-if: false.
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+        with:
+          workspaces: .
+          shared-key: helios
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
       - name: Tests
         run: cargo nextest run --workspace --all-features --profile ci
 
       - name: Doctests
         run: cargo test --workspace --all-features --doc
+
+  docs:
+    name: documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+        with:
+          workspaces: .
+          shared-key: helios
+          save-if: false
 
       - name: Documentation
         env:
@@ -94,20 +129,12 @@ jobs:
       - name: Test book documentation
         run: mdbook test docs/book
 
-      - name: RustSec audit
-        run: cargo audit --deny warnings --ignore RUSTSEC-2021-0153
-
-      - name: Dependency policy
-        run: cargo deny check
-
   python-bindings:
     name: python bindings
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
