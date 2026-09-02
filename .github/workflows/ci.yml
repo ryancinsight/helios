@@ -192,7 +192,7 @@ jobs:
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           repository: ryancinsight/atlas
-          ref: ceafa3d951f7db9ffcd93a79e5efbbdd09e199de
+          ref: 12a92b53f87e37ef936d12007a172ada25305d6c
           path: atlas-tool
 
       - name: Install Rust toolchain
@@ -269,7 +269,10 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Record each executable's path: the identity step compares baseline
+          # and candidate binaries before any timing runs.
           for revision in helios-candidate helios-baseline; do
+            mkdir -p "bench-executables/$revision"
             while IFS=: read -r package benchmark; do
               [[ -n "$package" ]] || continue
               cargo bench \
@@ -278,9 +281,39 @@ jobs:
                 --package "$package" \
                 --bench "$benchmark" \
                 --locked \
-                --no-run
+                --no-run \
+                --message-format=json \
+                | jq -r 'select(.reason == "compiler-artifact" and .executable != null) | .executable' \
+                | tail -n 1 > "bench-executables/$revision/$package-$benchmark.path"
+              [[ -s "bench-executables/$revision/$package-$benchmark.path" ]] \
+                || { echo "::error::no executable recorded for $revision $package/$benchmark"; exit 1; }
             done <<<"$BENCHMARK_TARGETS"
           done
+
+      - name: Decide whether the candidate carries different code
+        id: identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Two builds of identical source from different directories are never
+          # byte-identical (symbol hashes, build id, .strtab follow the path);
+          # the comparer decides on the sections the CPU executes plus .rodata.
+          # Timing identical code on a shared runner reports scheduler noise as
+          # a regression (helios#81: +1.7% then +0.4%, run orders disagreeing).
+          measurements_required=false
+          while IFS=: read -r package benchmark; do
+            [[ -n "$package" ]] || continue
+            rc=0
+            python3 atlas-tool/scripts/bench_executable_identity.py \
+              "$(cat "bench-executables/helios-baseline/$package-$benchmark.path")" \
+              "$(cat "bench-executables/helios-candidate/$package-$benchmark.path")" || rc=$?
+            case "$rc" in
+              0) ;;
+              1) measurements_required=true ;;
+              *) echo "::error::bench_executable_identity failed on $package/$benchmark (exit $rc)"; exit "$rc" ;;
+            esac
+          done <<<"$BENCHMARK_TARGETS"
+          echo "measurements_required=$measurements_required" >> "$GITHUB_OUTPUT"
 
       - name: Smoke and measure phase-reversed replications
         shell: bash
@@ -320,6 +353,11 @@ jobs:
             helios-candidate \
             "$BENCH_SMOKE_TIMEOUT_SECONDS" \
             --test
+
+          if [[ "${{ steps.identity.outputs.measurements_required }}" != "true" ]]; then
+            echo "::notice::candidate benchmark code is identical to the baseline; the smoke ran, no timing comparison is needed"
+            exit 0
+          fi
 
           compare_pair() {
             local report_root="$1"
