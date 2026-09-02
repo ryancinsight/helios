@@ -410,6 +410,8 @@ jobs:
             helios-candidate
 
       - name: Classify replicated comparisons
+        # No reports exist when the identity step found the code unchanged.
+        if: steps.identity.outputs.measurements_required == 'true'
         run: >-
           cargo run
           --manifest-path atlas-tool/tools/criterion-regression/Cargo.toml
