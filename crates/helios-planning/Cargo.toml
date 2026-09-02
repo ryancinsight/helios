@@ -15,6 +15,7 @@ workspace = true
 helios-core = { workspace = true }
 # Only the Scalar seam is needed; the geometry vocabulary is not.
 helios-math = { path = "../helios-math", default-features = false }
+mnemosyne-arena = { workspace = true }
 aequitas = { workspace = true, optional = true }
 asclepius = { workspace = true, optional = true }
 asclepius-coeus = { workspace = true, optional = true }

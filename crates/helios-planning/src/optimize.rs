@@ -2,17 +2,22 @@
 
 use helios_core::HeliosError;
 use helios_math::{NumericElement, Scalar};
+use mnemosyne_arena::{AlignedVec, ScratchElement};
 
 /// A dense linear dose-influence matrix `A` (rows = voxels, columns = beamlets):
 /// `dose = A · x`. Row-major.
+///
+/// The matrix elements are stored in a 64-byte cache-line–aligned
+/// [`AlignedVec<T>`] so that SIMD-accelerated dot-product kernels in `apply`
+/// and `transpose_apply` can access rows without alignment adjustments.
 #[derive(Debug, Clone, PartialEq)]
-pub struct DoseInfluence<T: Scalar> {
+pub struct DoseInfluence<T: Scalar + ScratchElement> {
     voxels: usize,
     beamlets: usize,
-    data: Vec<T>,
+    data: AlignedVec<T>,
 }
 
-impl<T: Scalar> DoseInfluence<T> {
+impl<T: Scalar + ScratchElement> DoseInfluence<T> {
     /// Construct from a row-major `voxels × beamlets` matrix.
     ///
     /// # Errors
@@ -28,7 +33,7 @@ impl<T: Scalar> DoseInfluence<T> {
         Ok(Self {
             voxels,
             beamlets,
-            data,
+            data: AlignedVec::from_slice(&data),
         })
     }
 
@@ -73,7 +78,7 @@ impl<T: Scalar> DoseInfluence<T> {
 
 /// Quadratic objective `½‖A x − d‖²`.
 #[must_use]
-pub fn objective_value<T: Scalar>(influence: &DoseInfluence<T>, x: &[T], prescription: &[T]) -> T {
+pub fn objective_value<T: Scalar + ScratchElement>(influence: &DoseInfluence<T>, x: &[T], prescription: &[T]) -> T {
     let zero = <T as NumericElement>::ZERO;
     let dose = influence.apply(x);
     let sum_sq = dose.iter().zip(prescription).fold(zero, |acc, (&di, &pi)| {
@@ -89,7 +94,7 @@ pub fn objective_value<T: Scalar>(influence: &DoseInfluence<T>, x: &[T], prescri
 /// `step` must satisfy `step < 2/‖AᵀA‖`. Returns the optimized non-negative
 /// beamlet weights (length `beamlets`).
 #[must_use]
-pub fn optimize_beam_weights<T: Scalar>(
+pub fn optimize_beam_weights<T: Scalar + ScratchElement>(
     influence: &DoseInfluence<T>,
     prescription: &[T],
     iterations: usize,
@@ -238,3 +243,4 @@ mod tests {
         optimizer_recovers_a_separable_prescription::<f64>();
     }
 }
+
