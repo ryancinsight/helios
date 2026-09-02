@@ -6,6 +6,24 @@ gaps → architecture drift → missing tests → docs → PM cleanup.
 
 Status: `todo` · `in-progress` · `review` · `done`
 
+## HELIOS-BENCH-REGRESSION-BUDGET-2026-09-01 — The benchmark regression check runs 57 minutes on a lock-only PR [patch] — todo
+
+- **Observed (PR #80, a `Cargo.lock`-only advance of hermes-simd):**
+  `benchmark regression check` started 01:17 UTC and finished 02:14 UTC
+  while every other job finished inside five minutes. A verification job
+  targets five minutes; a 57-minute pull-request job is the investigation
+  trigger, not a ceiling to accept — and on a lock-only change with no
+  plausible codegen delta it measured for an hour to say nothing.
+- **Outcome:** apollo's shape — an identity job comparing the two benchmark
+  executables' code sections (`apollo/scripts/bench_executable_identity.py`,
+  apollo#250) that skips the pair jobs when the code is identical — and a
+  benchmark time model (`performance_engineering: benchmark time budget`)
+  that sizes the pair jobs to the committed bound; timing runs beyond it are
+  local instruments, not CI.
+- **Acceptance oracle:** a lock-only PR completes the regression workflow in
+  under five minutes with `no code delta`; a real kernel change still runs the
+  pairs within the committed budget.
+
 ## Current integration slice — 2026-07-14
 
 | ID | Item | Class | Status | Owner | Scope |
