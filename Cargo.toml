@@ -151,9 +151,9 @@ hermes-simd = { git = "https://github.com/ryancinsight/hermes" }
 # Memory management / placement.
 mnemosyne-core = { git = "https://github.com/ryancinsight/Mnemosyne.git", package = "mnemosyne-memory-core" }
 # mnemosyne-arena: scratch pools, AlignedVec, segment management for planning compute buffers.
-mnemosyne-arena = { git = "https://github.com/ryancinsight/Mnemosyne.git", rev = "caf66d0", version = "0.4.0" }
+mnemosyne-arena = { git = "https://github.com/ryancinsight/Mnemosyne.git", rev = "98efee0", version = "0.4.0" }
 # mnemosyne-memory: full facade crate for global allocator wiring in binary targets.
-mnemosyne = { package = "mnemosyne-memory", git = "https://github.com/ryancinsight/Mnemosyne.git", rev = "caf66d0", version = "0.7.0" }
+mnemosyne = { package = "mnemosyne-memory", git = "https://github.com/ryancinsight/Mnemosyne.git", rev = "98efee0", version = "0.7.0" }
 themis = { git = "https://github.com/ryancinsight/themis", package = "themis-topology" }
 # Spectral / transform methods.
 apollo = { git = "https://github.com/ryancinsight/apollo", package = "apollo-fft" }
