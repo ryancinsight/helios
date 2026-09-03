@@ -151,7 +151,7 @@ hermes-simd = { git = "https://github.com/ryancinsight/hermes" }
 # Memory management / placement.
 mnemosyne-core = { git = "https://github.com/ryancinsight/Mnemosyne.git", package = "mnemosyne-memory-core" }
 # mnemosyne-arena: scratch pools, AlignedVec, segment management for planning compute buffers.
-mnemosyne-arena = { git = "https://github.com/ryancinsight/Mnemosyne.git", rev = "a88a839", version = "0.4.0" }
+mnemosyne-arena = { git = "https://github.com/ryancinsight/Mnemosyne.git", rev = "062dda8", version = "0.4.0" }
 themis = { git = "https://github.com/ryancinsight/themis", package = "themis-topology" }
 # Spectral / transform methods.
 apollo = { git = "https://github.com/ryancinsight/apollo", package = "apollo-fft" }
@@ -184,4 +184,5 @@ strip = "symbols"
 # members; cargo treats unused subkeys as warnings only.
 
 # ATLAS-PATH-DEP-AUDIT-2 round-4 closure
+
 
