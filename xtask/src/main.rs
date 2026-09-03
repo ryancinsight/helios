@@ -9,6 +9,11 @@
     reason = "xtask is the repository CLI surface; its report output is the deliverable"
 )]
 
+use mnemosyne::Mnemosyne;
+
+#[global_allocator]
+static ALLOC: Mnemosyne = Mnemosyne;
+
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::{Path, PathBuf};

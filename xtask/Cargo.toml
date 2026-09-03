@@ -10,6 +10,7 @@ name = "xtask"
 path = "src/main.rs"
 
 [dependencies]
+mnemosyne = { workspace = true }
 anyhow = { workspace = true }
 clap = { version = "4.0", features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
