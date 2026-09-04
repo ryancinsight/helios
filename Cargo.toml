@@ -149,7 +149,7 @@ horae = { git = "https://github.com/ryancinsight/horae" }
 leto = { git = "https://github.com/ryancinsight/leto", default-features = false, features = ["std"] }
 hermes-simd = { git = "https://github.com/ryancinsight/hermes" }
 # Memory management / placement.
-mnemosyne-core = { git = "https://github.com/ryancinsight/Mnemosyne.git", package = "mnemosyne-memory-core", rev = "c3c3f4fbe97e463fe1c585df111064a4eddd0515" }
+mnemosyne-core = { git = "https://github.com/ryancinsight/Mnemosyne.git", package = "mnemosyne-memory-core", rev = "7f1737513c6688daf012f3439159a27253c81184" }
 themis = { git = "https://github.com/ryancinsight/themis", package = "themis-topology" }
 # Spectral / transform methods.
 apollo = { git = "https://github.com/ryancinsight/apollo", package = "apollo-fft" }
