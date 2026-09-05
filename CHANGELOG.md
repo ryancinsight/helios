@@ -162,6 +162,8 @@ under a Breaking subsection.
   book indexes; Python and benchmark CI lanes refresh Cargo after Atlas path
   dependency materialization.
 
+- The benchmark regression gate runs its two phase-reversed replication pairs as parallel matrix jobs (schedule `A B B A / B A A B` preserved; compare roots retained as artifacts for the fail-closed classifier), so no runner owes more than the committed per-target budget (two legs x four targets x 300 s = 40 minutes of measurement, one compile pass, one 60 s-per-target smoke). The previous single-runner shape owed eight legs and died red against its own 60-minute timeout (helios#88); lock-only pull requests still skip timing entirely at the executable-identity gate, with a dependency-cache prefix fallback so a lock advance no longer forces a cold compile.
+
 - H-085 precompiles each exact Criterion target outside its execution budget,
   smoke-runs every benchmark ID under a 60-second deadline, and bounds each
   full benchmark binary at 300 seconds without changing workloads, baselines,
