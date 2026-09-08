@@ -13,7 +13,7 @@ workspace = true
 
 [dependencies]
 aequitas = { workspace = true }
-bytemuck = { workspace = true }
+eunomia = { workspace = true }
 helios-core = { workspace = true }
 helios-domain = { workspace = true }
 helios-math = { workspace = true }
@@ -24,7 +24,6 @@ themis = { workspace = true }
 
 [dev-dependencies]
 aequitas = { workspace = true }
-eunomia = { workspace = true }
 # Differential references for the GPU projector / attenuation tests only.
 helios-solver = { workspace = true }
 hyperion = { workspace = true }
