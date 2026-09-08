@@ -130,7 +130,7 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 [[package]]
 name = "apollo-fft"
 version = "0.27.0"
-source = "git+https://github.com/ryancinsight/apollo#4c468c4c3e4dab117d630b74e84ebde707360833"
+source = "git+https://github.com/ryancinsight/apollo#705a0ed12ea3ef7e54d1987934deb84d0523fca4"
 dependencies = [
  "apollo-fft-macros",
  "apollo-leto-interop",
@@ -151,7 +151,7 @@ dependencies = [
 [[package]]
 name = "apollo-fft-macros"
 version = "0.2.0"
-source = "git+https://github.com/ryancinsight/apollo#4c468c4c3e4dab117d630b74e84ebde707360833"
+source = "git+https://github.com/ryancinsight/apollo#705a0ed12ea3ef7e54d1987934deb84d0523fca4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -161,7 +161,7 @@ dependencies = [
 [[package]]
 name = "apollo-leto-interop"
 version = "0.18.0"
-source = "git+https://github.com/ryancinsight/apollo#4c468c4c3e4dab117d630b74e84ebde707360833"
+source = "git+https://github.com/ryancinsight/apollo#705a0ed12ea3ef7e54d1987934deb84d0523fca4"
 dependencies = [
  "leto",
 ]
@@ -498,7 +498,7 @@ dependencies = [
 [[package]]
 name = "coeus-autograd"
 version = "0.10.0"
-source = "git+https://github.com/ryancinsight/Coeus.git#3cf2d67055891ab934ca40693794bc4acc2f2b8e"
+source = "git+https://github.com/ryancinsight/Coeus.git#3263fa473bee28150ebc4759bc210e04f600b557"
 dependencies = [
  "apollo-fft",
  "coeus-core",
@@ -514,7 +514,7 @@ dependencies = [
 [[package]]
 name = "coeus-core"
 version = "0.10.0"
-source = "git+https://github.com/ryancinsight/Coeus.git#3cf2d67055891ab934ca40693794bc4acc2f2b8e"
+source = "git+https://github.com/ryancinsight/Coeus.git#3263fa473bee28150ebc4759bc210e04f600b557"
 dependencies = [
  "bytemuck",
  "eunomia",
@@ -529,7 +529,7 @@ dependencies = [
 [[package]]
 name = "coeus-leto"
 version = "0.10.0"
-source = "git+https://github.com/ryancinsight/Coeus.git#3cf2d67055891ab934ca40693794bc4acc2f2b8e"
+source = "git+https://github.com/ryancinsight/Coeus.git#3263fa473bee28150ebc4759bc210e04f600b557"
 dependencies = [
  "coeus-core",
  "leto",
@@ -539,7 +539,7 @@ dependencies = [
 [[package]]
 name = "coeus-ops"
 version = "0.10.0"
-source = "git+https://github.com/ryancinsight/Coeus.git#3cf2d67055891ab934ca40693794bc4acc2f2b8e"
+source = "git+https://github.com/ryancinsight/Coeus.git#3263fa473bee28150ebc4759bc210e04f600b557"
 dependencies = [
  "bytemuck",
  "coeus-core",
@@ -557,7 +557,7 @@ dependencies = [
 [[package]]
 name = "coeus-sparse"
 version = "0.10.0"
-source = "git+https://github.com/ryancinsight/Coeus.git#3cf2d67055891ab934ca40693794bc4acc2f2b8e"
+source = "git+https://github.com/ryancinsight/Coeus.git#3263fa473bee28150ebc4759bc210e04f600b557"
 dependencies = [
  "coeus-core",
  "coeus-tensor",
@@ -568,7 +568,7 @@ dependencies = [
 [[package]]
 name = "coeus-tensor"
 version = "0.10.0"
-source = "git+https://github.com/ryancinsight/Coeus.git#3cf2d67055891ab934ca40693794bc4acc2f2b8e"
+source = "git+https://github.com/ryancinsight/Coeus.git#3263fa473bee28150ebc4759bc210e04f600b557"
 dependencies = [
  "bytemuck",
  "coeus-core",
@@ -1475,7 +1475,7 @@ dependencies = [
 [[package]]
 name = "hephaestus-core"
 version = "0.19.0"
-source = "git+https://github.com/ryancinsight/hephaestus#f6f55f450b28ccc30fb5ae46a5a2d5d895893cad"
+source = "git+https://github.com/ryancinsight/hephaestus#1c34d1418e71d44c68956f49b9d0e37ae43544cf"
 dependencies = [
  "aequitas",
  "eunomia",
@@ -1487,7 +1487,7 @@ dependencies = [
 [[package]]
 name = "hephaestus-wgpu"
 version = "0.19.0"
-source = "git+https://github.com/ryancinsight/hephaestus#f6f55f450b28ccc30fb5ae46a5a2d5d895893cad"
+source = "git+https://github.com/ryancinsight/hephaestus#1c34d1418e71d44c68956f49b9d0e37ae43544cf"
 dependencies = [
  "eunomia",
  "futures",
