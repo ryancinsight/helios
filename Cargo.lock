@@ -1361,7 +1361,6 @@ name = "helios-gpu"
 version = "0.1.0"
 dependencies = [
  "aequitas",
- "bytemuck",
  "criterion",
  "eunomia",
  "helios-core",
@@ -1887,7 +1886,7 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 [[package]]
 name = "leto"
 version = "0.43.0"
-source = "git+https://github.com/ryancinsight/leto#ba8a879b683df1b8928e22aa4c725bbae0aa7db5"
+source = "git+https://github.com/ryancinsight/leto#d9ca3252cd68700d77f1a727144b3ee0ad931219"
 dependencies = [
  "aequitas",
  "eunomia",
@@ -1899,7 +1898,7 @@ dependencies = [
 [[package]]
 name = "leto-ops"
 version = "0.43.0"
-source = "git+https://github.com/ryancinsight/leto#ba8a879b683df1b8928e22aa4c725bbae0aa7db5"
+source = "git+https://github.com/ryancinsight/leto#d9ca3252cd68700d77f1a727144b3ee0ad931219"
 dependencies = [
  "eunomia",
  "hermes-simd",

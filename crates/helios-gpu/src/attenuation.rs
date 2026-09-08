@@ -18,7 +18,7 @@ use aequitas::systems::si::{
     quantities::{AreaPerMass, MassDensity},
     units::{GramPerCubicCentimeter, SquareCentimeterPerGram},
 };
-use bytemuck::{Pod, Zeroable};
+use eunomia::{Pod, Zeroable};
 use hephaestus_core::{
     Binding, BindingDecl, DispatchGrid, HephaestusError, KernelDevice, KernelInterface,
     KernelSource, Result, Wgsl,
