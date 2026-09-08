@@ -108,12 +108,12 @@ criterion = "0.5"
 #    opt in as the corresponding Helios layer is built out.
 #    Layer map is authoritative in ARCHITECTURE.md. ──
 # Imaging foundation (DICOM/MVCT I/O, registration, VTK).
-ritk-core = { git = "https://github.com/ryancinsight/ritk" }
-ritk-io = { git = "https://github.com/ryancinsight/ritk" }
-ritk-registration = { git = "https://github.com/ryancinsight/ritk" }
+ritk-core = { version = "0.10.0", git = "https://github.com/ryancinsight/ritk" }
+ritk-io = { version = "0.3.0", git = "https://github.com/ryancinsight/ritk" }
+ritk-registration = { version = "0.54.0", git = "https://github.com/ryancinsight/ritk" }
 # Native DICOM parse/decode (CT/MVCT real-input path). ritk-dicom owns parsing,
 # typed attribute access, transfer-syntax dispatch, and pixel decoding.
-ritk-dicom = { git = "https://github.com/ryancinsight/ritk" }
+ritk-dicom = { version = "0.2.0", git = "https://github.com/ryancinsight/ritk" }
 # Geometry kernel (binary MLC, collimators, jaws, patient meshes).
 gaia = { package = "gaia-mesh", version = "0.5.0", git = "https://github.com/ryancinsight/gaia", default-features = false }
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.
@@ -122,37 +122,37 @@ hephaestus-wgpu = { version = "0.19.0", git = "https://github.com/ryancinsight/h
 moirai = { version = "0.6.0", git = "https://github.com/ryancinsight/Moirai.git", package = "moirai-runtime" }
 moirai-parallel = { version = "0.6.0", git = "https://github.com/ryancinsight/Moirai.git", default-features = false, features = ["parallel"] }
 # Tensors, autodiff, optimizers, neural surrogates.
-coeus-core = { git = "https://github.com/ryancinsight/Coeus.git" }
-coeus-tensor = { git = "https://github.com/ryancinsight/Coeus.git" }
-coeus-autograd = { git = "https://github.com/ryancinsight/Coeus.git" }
-coeus-optim = { git = "https://github.com/ryancinsight/Coeus.git" }
+coeus-core = { version = "0.10.0", git = "https://github.com/ryancinsight/Coeus.git" }
+coeus-tensor = { version = "0.10.0", git = "https://github.com/ryancinsight/Coeus.git" }
+coeus-autograd = { version = "0.10.0", git = "https://github.com/ryancinsight/Coeus.git" }
+coeus-optim = { version = "0.10.0", git = "https://github.com/ryancinsight/Coeus.git" }
 # Biological-response laws and their Coeus tape construction.
-asclepius = { git = "https://github.com/ryancinsight/asclepius" }
-asclepius-coeus = { git = "https://github.com/ryancinsight/asclepius" }
+asclepius = { version = "0.1.0", git = "https://github.com/ryancinsight/asclepius" }
+asclepius-coeus = { version = "0.1.0", git = "https://github.com/ryancinsight/asclepius" }
 # Volumetric storage (HDF5/Zarr, compression).
-consus-core = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
-consus-hdf5 = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
-consus-io = { git = "https://github.com/ryancinsight/consus", features = ["std"] }
-consus-compression = { git = "https://github.com/ryancinsight/consus", features = ["std", "deflate"] }
+consus-core = { version = "0.1.0", git = "https://github.com/ryancinsight/consus", features = ["std"] }
+consus-hdf5 = { version = "0.1.0", git = "https://github.com/ryancinsight/consus", features = ["std"] }
+consus-io = { version = "0.1.0", git = "https://github.com/ryancinsight/consus", features = ["std"] }
+consus-compression = { version = "0.1.0", git = "https://github.com/ryancinsight/consus", features = ["std", "deflate"] }
 # Numeric datatype SSOT (Scalar seam: RealField/FloatElement/NumericElement).
-aequitas = { git = "https://github.com/ryancinsight/aequitas", default-features = false, features = ["std"] }
-proteus = { package = "proteus-mat", git = "https://github.com/ryancinsight/proteus" }
-hyperion = { git = "https://github.com/ryancinsight/hyperion" }
-eunomia = { git = "https://github.com/ryancinsight/eunomia" }
+aequitas = { version = "0.2.0", git = "https://github.com/ryancinsight/aequitas", default-features = false, features = ["std"] }
+proteus = { version = "0.1.0", package = "proteus-mat", git = "https://github.com/ryancinsight/proteus" }
+hyperion = { version = "0.1.0", git = "https://github.com/ryancinsight/hyperion" }
+eunomia = { version = "0.8.0", git = "https://github.com/ryancinsight/eunomia" }
 tyche-core = { version = "0.2.0", git = "https://github.com/ryancinsight/tyche" }
-horae = { git = "https://github.com/ryancinsight/horae" }
+horae = { version = "0.1.0", git = "https://github.com/ryancinsight/horae" }
 # Array substrate + geometry primitives, and portable SIMD.
 # default-features disabled: leto's default `mnemosyne-memory` feature pulls an
 # mnemosyne rev pinned to themis ^0.8 (skewed against themis HEAD 0.9.x). Helios
 # opts into mnemosyne placement explicitly at the layer that needs it (themis/
 # mnemosyne integration), not transitively through the geometry substrate.
-leto = { git = "https://github.com/ryancinsight/leto", default-features = false, features = ["std"] }
-hermes-simd = { git = "https://github.com/ryancinsight/hermes" }
+leto = { version = "0.43.0", git = "https://github.com/ryancinsight/leto", default-features = false, features = ["std"] }
+hermes-simd = { version = "0.7.0", git = "https://github.com/ryancinsight/hermes" }
 # Memory management / placement.
-mnemosyne-core = { git = "https://github.com/ryancinsight/Mnemosyne.git", package = "mnemosyne-memory-core", rev = "f532b0e" }
-themis = { git = "https://github.com/ryancinsight/themis", package = "themis-topology" }
+mnemosyne-core = { version = "0.2.0", git = "https://github.com/ryancinsight/Mnemosyne.git", package = "mnemosyne-memory-core", rev = "f532b0e" }
+themis = { version = "0.10.1", git = "https://github.com/ryancinsight/themis", package = "themis-topology" }
 # Spectral / transform methods.
-apollo = { git = "https://github.com/ryancinsight/apollo", package = "apollo-fft" }
+apollo = { version = "0.27.0", git = "https://github.com/ryancinsight/apollo", package = "apollo-fft" }
 
 # ── Synchronized local-checkout patches (H-050) ──
 # The Atlas stack under D:/atlas/repos is a synchronized submodule checkout that
