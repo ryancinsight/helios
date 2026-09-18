@@ -6,7 +6,7 @@ gaps → architecture drift → missing tests → docs → PM cleanup.
 
 Status: `todo` · `in-progress` · `review` · `done`
 
-## HELIOS-BENCH-REGRESSION-BUDGET-2026-09-01 — The benchmark regression check runs 57 minutes on a lock-only PR [patch] — todo
+## HELIOS-BENCH-REGRESSION-BUDGET-2026-09-01 — The benchmark regression check runs 57 minutes on a lock-only PR [patch] — done 2026-09-05
 
 - **Observed (PR #80, a `Cargo.lock`-only advance of hermes-simd):**
   `benchmark regression check` started 01:17 UTC and finished 02:14 UTC
@@ -23,6 +23,36 @@ Status: `todo` · `in-progress` · `review` · `done`
 - **Acceptance oracle:** a lock-only PR completes the regression workflow in
   under five minutes with `no code delta`; a real kernel change still runs the
   pairs within the committed budget.
+
+- **Delivered 2026-09-05 (CI restructure, no workload or instrument change):**
+  the identity gate itself had landed Sep 2 (`42bbfb4`, `49950e8`) and
+  discharges the first oracle clause — PR #83 (workflow-only, identical code)
+  completed the gate in 3m45s against the five-minute target. The second
+  clause stayed open: PR #88 (a lock-only hermes-simd advance, real codegen
+  delta) ran the full schedule on one runner and died red mid-schedule —
+  exit 124 after the baseline `projection_throughput` leg passed its 300 s
+  cap; the log's group timeline shows eight measured legs (~66-71 minutes
+  plus smoke and compile) could never fit the job's 60-minute timeout.
+- The two replication pairs now run as parallel matrix jobs (one runner per
+  pair, schedule `A B B A / B A A B` preserved), sized by the committed time
+  model: two legs x four targets x 300 s = 40 minutes of measurement plus
+  one compile pass and one 60 s-per-target smoke. Each pair job emits its
+  comparison root as an artifact; the classify job collects all four and
+  runs the unchanged `check-replicated-counterbalanced` classifier, which
+  fails closed on incomplete evidence — a leg that dies mid-schedule now
+  surfaces as a red classify instead of a partial-schedule timeout.
+- Parallel-pair execution is explicitly sanctioned by the classifier's own
+  contract ("the two replications ... may execute ... as isolated pair
+  jobs"), and the shared-confidence step stays exact: `required-confidence`
+  derives the family-wise level from the benchmark-universe count, so
+  per-pair derivation equals the single-runner value.
+- The bench cache gains a `restore-keys` prefix fallback so a lock-only PR
+  (whose exact key changes by construction) restores the previous
+  dependency closure instead of cold-compiling the world.
+- Remaining work for the next lock-only PR: observe the gate end-to-end
+  once on hosted CI to record the sub-five-minute run; the oracle's second
+  clause is sized by construction (40 min measurement bound per pair job,
+  under the 60-minute ceiling) but awaits its first real codegen-delta run.
 
 ## Current integration slice — 2026-07-14
 
