@@ -56,6 +56,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-103a | Add one self-contained executable Rust analytical oracle to the book and verify the mdBook test gate; broader text-fence conversion remains H-103. | [patch] | done | Codex | `docs/book/examples/compton_physics.md`, PM artifacts |
 | H-118a | Ship PEP 561 typing metadata for the five-function `helios` PyO3 module: a typed stub, `py.typed`, package inclusion, and a missing-docs lint floor. | [patch] | in-progress | Codex | `crates/helios-python/**`, PM artifacts |
 | H-120 | Restore the Atlas oversized-file ratchet by partitioning the replicated benchmark runner into cohesive schedule, checkout, and measurement modules without changing its schedule, budgets, process invocations, or verdict semantics. | [patch] | review | Codex `/root/fit` | `xtask/src/bench_replicated.rs`, `xtask/src/bench_replicated/**`, `backlog.md` |
+| H-121 | Repair the standalone provider lock graph exposed by the merged H-098 `--locked` CI gate: align Apollo and Hermes package revisions so the locked workspace compiles against one coherent API graph, then rerun the hosted lint and test jobs. | [patch] | in-progress | Codex `/root` | `Cargo.lock`, `backlog.md`, provider-graph evidence |
 
 ## Sprint 1 — Foundation
 
