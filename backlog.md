@@ -82,6 +82,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-103 | Convert source-backed Helios book snippets into checked `mdbook test` samples, or mark non-runnable explanatory fragments as non-code while retaining runnable crate examples as the executable documentation surface. | [patch] | todo | — | `docs/book/**`, `crates/*/examples/**`, `.github/workflows/book-pages.yml`, PM artifacts |
 | H-103a | Add one self-contained executable Rust analytical oracle to the book and verify the mdBook test gate; broader text-fence conversion remains H-103. | [patch] | done | Codex | `docs/book/examples/compton_physics.md`, PM artifacts |
 | H-118a | Ship PEP 561 typing metadata for the five-function `helios` PyO3 module: a typed stub, `py.typed`, package inclusion, and a missing-docs lint floor. | [patch] | in-progress | Codex | `crates/helios-python/**`, PM artifacts |
+| H-119 | Carry required DICOM `BitsStored` through Helios's RITK pixel layout, reject missing, out-of-range, and multi-valued metadata at the input boundary, and advance the standalone lock to the merged provider contract. | [patch] | review | Codex `/root/fit` | `crates/helios-domain/src/dicom.rs`, `Cargo.lock`, `backlog.md` |
 
 ## Sprint 1 — Foundation
 
