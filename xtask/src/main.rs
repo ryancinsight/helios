@@ -2,7 +2,9 @@
 //!
 //! `xtask` is the committed home for repository chores that would otherwise be
 //! ad hoc scripts: book figure provenance (`prebook`), figure/doc SSOT drift
-//! (`check-figures`), and dependency migration audits.
+//! (`check-figures`), dependency migration audits, and the local replicated
+//! benchmark instrument (`bench-replicated`, the sole producer of timing
+//! evidence per ADR 0003).
 
 #![expect(
     clippy::print_stdout,
@@ -13,6 +15,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::{Path, PathBuf};
 
+mod bench_replicated;
 mod check_figures;
 mod migration_audit;
 mod prebook;
@@ -44,6 +47,11 @@ enum Command {
     /// Returns exit code 1 on drift so the CI gate fails loudly when the
     /// SSOT contract between figures and book source breaks.
     CheckFigures,
+    /// Run the local replicated benchmark instrument: the paired `A B B A` /
+    /// `B A A B` schedule on this host with the candidate bench sources held
+    /// constant, classified through the Atlas criterion-regression gate.
+    /// The sole producer of timing evidence (ADR 0003); CI only smokes benches.
+    BenchReplicated(Box<bench_replicated::BenchReplicatedArgs>),
 }
 
 fn main() -> Result<()> {
@@ -57,6 +65,7 @@ fn main() -> Result<()> {
         Command::RefreshBurnAllowlist => migration_audit::refresh_burn_allowlist(&root),
         Command::Prebook => run_prebook(&root),
         Command::CheckFigures => run_check_figures(&root),
+        Command::BenchReplicated(args) => bench_replicated::run_bench_replicated(&args, &root),
     }
 }
 
