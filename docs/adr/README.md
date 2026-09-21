@@ -11,7 +11,7 @@
 | --- | ----- | ------ |
 | [0001](0001-aequitas-domain-units.md) | Aequitas-backed clinical quantities | Accepted |
 | [0002](0002-proteus-material-density.md) | Proteus material-density boundary | Accepted |
-| [0003](0003-atlas-benchmark-gate.md) | Adopt the Atlas Criterion regression gate | Accepted |
+| [0003](0003-atlas-benchmark-gate.md) | Benchmarks are a local instrument; CI keeps only the bench smoke | Accepted |
 | [0004](0004-asclepius-response-ownership.md) | Asclepius owns biological-response laws | Accepted |
 | [0005](0005-tyche-noise-stream.md) | Tyche-owned quantum-noise stream | Accepted |
 | [0006](0006-dvh-dose-quantities.md) | Typed dose-valued DVH metrics | Accepted |
