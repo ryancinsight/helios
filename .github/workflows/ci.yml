@@ -174,18 +174,28 @@ jobs:
         working-directory: crates/helios-python
         run: python -m pytest tests -q
 
-  benchmark-regression:
-    name: benchmark regression check
-    if: github.event_name == 'pull_request'
+  bench-smoke:
+    # ADR 0003 (revision 2026-09-21): benchmarks are a local instrument.
+    # Shared-runner wall-clock timings are noise, not evidence, so CI never
+    # classifies performance and the hosted `benchmark-regression` timing
+    # gate is deleted. CI keeps only this single-iteration smoke: Criterion
+    # test mode executes every benchmark ID exactly once inside a committed
+    # per-target budget, proving benches build and run. Timing evidence
+    # arrives as PR-attached local reports from `cargo xtask bench-replicated`.
+    name: benchmark smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # Tests-job parity: the ceiling covers cold-cache bench compilation;
+    # per-target 120 s smoke bounds still apply inside it.
+    timeout-minutes: 30
     env:
       CARGO_TARGET_DIR: ${{ github.workspace }}/target
-      # Criterion 0.5 defaults to 3 s warm-up + 5 s measurement per ID. The
-      # largest Helios binary has ten IDs (80 s modelled measurement time);
-      # 300 s bounds initialization, slow iterations, and runner variance.
-      BENCH_FULL_TIMEOUT_SECONDS: 300
-      BENCH_SMOKE_TIMEOUT_SECONDS: 60
+      # Criterion test mode executes every benchmark ID exactly once. The
+      # same target list drives smoke and local full runs, so new binaries
+      # cannot enter local regression measurement unsmoked. The 120 s
+      # per-target bound derives from a measured 71 s single-iteration sweep
+      # of the slowest target (`projection_throughput`, 4 IDs) on the
+      # calibration host, with headroom for slower shared runners.
+      BENCH_SMOKE_TIMEOUT_SECONDS: 120
       BENCH_TIMEOUT_KILL_GRACE_SECONDS: 10
       BENCHMARK_TARGETS: |
         helios-analysis:dvh_queries
@@ -193,249 +203,33 @@ jobs:
         helios-gpu:transmission_throughput
         helios-solver:scatter_superposition
     steps:
-      - name: Checkout baseline
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          path: helios-baseline
-
-      - name: Checkout candidate
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-        with:
-          path: helios-candidate
-
-      - name: Checkout Atlas benchmark gate
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-        with:
-          repository: ryancinsight/atlas
-          ref: 12a92b53f87e37ef936d12007a172ada25305d6c
-          path: atlas-tool
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
 
-      - name: Cache cargo dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: ${{ runner.os }}-helios-bench-${{ hashFiles('helios-candidate/Cargo.lock') }}
+          workspaces: .
+          shared-key: helios
+          save-if: false
 
-      - name: Normalize historical baseline lock
-        # The baseline manifest predates the Gaia package-identity cutover.
-        # Keep its historical source and code revision, but update the
-        # dependency alias required by the provider checkout recorded in the
-        # Atlas graph. This edits only the ephemeral baseline checkout.
+      - name: Benchmark smoke (single iteration per benchmark ID)
         shell: bash
         run: |
           set -euo pipefail
-          old='gaia = { git = "https://github.com/ryancinsight/gaia", default-features = false }'
-          new='gaia = { package = "gaia-mesh", git = "https://github.com/ryancinsight/gaia", default-features = false }'
-          manifest=helios-baseline/Cargo.toml
-          if grep --fixed-strings --quiet "$old" "$manifest"; then
-            sed --in-place "s#${old}#${new}#" "$manifest"
-          elif grep --fixed-strings --quiet 'gaia = { package = "gaia-mesh"' "$manifest" \
-              && grep --fixed-strings --quiet 'git = "https://github.com/ryancinsight/gaia"' "$manifest"; then
-            # The baseline may already include the package identity together
-            # with a version requirement; that shape needs no rewrite.
-            :
-          else
-            echo "historical baseline Gaia dependency has an unexpected shape" >&2
-            exit 1
-          fi
-
-          cargo metadata \
-            --manifest-path helios-baseline/Cargo.toml \
-            --format-version 1 \
-            --all-features > /dev/null
-
-      - name: Normalize candidate lock
-        # The committed candidate lock records git sources; the benchmark gate
-        # materializes path providers, so regenerate the ephemeral candidate
-        # lock against the materialized graph before locked builds.
-        run: >-
-          cargo metadata
-          --manifest-path helios-candidate/Cargo.toml
-          --format-version 1
-          --all-features
-          > /dev/null
-
-      - name: Hold the candidate benchmark instrument constant
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf \
-            helios-baseline/crates/helios-analysis/benches \
-            helios-baseline/crates/helios-gpu/benches \
-            helios-baseline/crates/helios-solver/benches
-          git -C helios-candidate archive HEAD \
-            crates/helios-analysis/benches \
-            crates/helios-gpu/benches \
-            crates/helios-solver/benches \
-            | tar -x -C helios-baseline
-          for crate in helios-analysis helios-gpu helios-solver; do
-            diff --recursive --unified \
-              "helios-baseline/crates/$crate/benches" \
-              "helios-candidate/crates/$crate/benches"
-          done
-
-      - name: Compile benchmark binaries outside runtime budgets
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          # Record each executable's path: the identity step compares baseline
-          # and candidate binaries before any timing runs.
-          for revision in helios-candidate helios-baseline; do
-            mkdir -p "bench-executables/$revision"
-            while IFS=: read -r package benchmark; do
-              [[ -n "$package" ]] || continue
+          while IFS=: read -r package benchmark; do
+            [[ -n "$package" ]] || continue
+            echo "::group::$package/$benchmark (${BENCH_SMOKE_TIMEOUT_SECONDS}s budget)"
+            timeout \
+              --foreground \
+              --kill-after="${BENCH_TIMEOUT_KILL_GRACE_SECONDS}s" \
+              "${BENCH_SMOKE_TIMEOUT_SECONDS}s" \
               cargo bench \
-                --manifest-path "$revision/Cargo.toml" \
                 --all-features \
                 --package "$package" \
                 --bench "$benchmark" \
-                --locked \
-                --no-run \
-                --message-format=json \
-                | jq -r 'select(.reason == "compiler-artifact" and .executable != null) | .executable' \
-                | tail -n 1 > "bench-executables/$revision/$package-$benchmark.path"
-              [[ -s "bench-executables/$revision/$package-$benchmark.path" ]] \
-                || { echo "::error::no executable recorded for $revision $package/$benchmark"; exit 1; }
-            done <<<"$BENCHMARK_TARGETS"
-          done
-
-      - name: Decide whether the candidate carries different code
-        id: identity
-        shell: bash
-        run: |
-          set -euo pipefail
-          # Two builds of identical source from different directories are never
-          # byte-identical (symbol hashes, build id, .strtab follow the path);
-          # the comparer decides on the sections the CPU executes plus .rodata.
-          # Timing identical code on a shared runner reports scheduler noise as
-          # a regression (helios#81: +1.7% then +0.4%, run orders disagreeing).
-          measurements_required=false
-          while IFS=: read -r package benchmark; do
-            [[ -n "$package" ]] || continue
-            rc=0
-            python3 atlas-tool/scripts/bench_executable_identity.py \
-              "$(cat "bench-executables/helios-baseline/$package-$benchmark.path")" \
-              "$(cat "bench-executables/helios-candidate/$package-$benchmark.path")" || rc=$?
-            case "$rc" in
-              0) ;;
-              1) measurements_required=true ;;
-              *) echo "::error::bench_executable_identity failed on $package/$benchmark (exit $rc)"; exit "$rc" ;;
-            esac
+                -- \
+                --test
+            echo "::endgroup::"
           done <<<"$BENCHMARK_TARGETS"
-          echo "measurements_required=$measurements_required" >> "$GITHUB_OUTPUT"
-
-      - name: Smoke and measure phase-reversed replications
-        shell: bash
-        run: |
-          set -euo pipefail
-          confidence=""
-          gate_manifest="atlas-tool/tools/criterion-regression/Cargo.toml"
-
-          run_benches() {
-            local revision="$1"
-            local budget_seconds="$2"
-            shift 2
-
-            while IFS=: read -r package benchmark; do
-              [[ -n "$package" ]] || continue
-              echo "::group::$revision $package/$benchmark (${budget_seconds}s budget)"
-              timeout \
-                --foreground \
-                --kill-after="${BENCH_TIMEOUT_KILL_GRACE_SECONDS}s" \
-                "${budget_seconds}s" \
-                cargo bench \
-                  --manifest-path "$revision/Cargo.toml" \
-                  --all-features \
-                  --package "$package" \
-                  --bench "$benchmark" \
-                  --locked \
-                  -- \
-                  "$@"
-              echo "::endgroup::"
-            done <<<"$BENCHMARK_TARGETS"
-          }
-
-          # Criterion test mode executes every benchmark ID exactly once. The
-          # same suite list drives smoke and full runs, so new binaries cannot
-          # enter regression measurement without the 60 s smoke gate.
-          run_benches \
-            helios-candidate \
-            "$BENCH_SMOKE_TIMEOUT_SECONDS" \
-            --test
-
-          if [[ "${{ steps.identity.outputs.measurements_required }}" != "true" ]]; then
-            echo "::notice::candidate benchmark code is identical to the baseline; the smoke ran, no timing comparison is needed"
-            exit 0
-          fi
-
-          compare_pair() {
-            local report_root="$1"
-            local first_revision="$2"
-            local second_revision="$3"
-
-            rm -rf "$CARGO_TARGET_DIR/criterion"
-            run_benches \
-              "$first_revision" \
-              "$BENCH_FULL_TIMEOUT_SECONDS" \
-              --save-baseline atlas-base
-
-            if [[ -z "$confidence" ]]; then
-              confidence="$(
-                cargo run \
-                  --manifest-path "$gate_manifest" \
-                  --locked \
-                  -- \
-                  required-confidence \
-                  --criterion-root "$CARGO_TARGET_DIR/criterion" \
-                  --baseline atlas-base
-              )"
-            fi
-
-            run_benches \
-              "$second_revision" \
-              "$BENCH_FULL_TIMEOUT_SECONDS" \
-              --baseline atlas-base \
-              --confidence-level "$confidence"
-
-            mkdir -p "$(dirname "$report_root")"
-            mv "$CARGO_TARGET_DIR/criterion" "$report_root"
-          }
-
-          compare_pair \
-            reports/first/baseline-first \
-            helios-baseline \
-            helios-candidate
-          compare_pair \
-            reports/first/candidate-first \
-            helios-candidate \
-            helios-baseline
-          compare_pair \
-            reports/second/candidate-first \
-            helios-candidate \
-            helios-baseline
-          compare_pair \
-            reports/second/baseline-first \
-            helios-baseline \
-            helios-candidate
-
-      - name: Classify replicated comparisons
-        # No reports exist when the identity step found the code unchanged.
-        if: steps.identity.outputs.measurements_required == 'true'
-        run: >-
-          cargo run
-          --manifest-path atlas-tool/tools/criterion-regression/Cargo.toml
-          --locked
-          --
-          check-replicated-counterbalanced
-          --first-baseline-first-root reports/first/baseline-first
-          --first-candidate-first-root reports/first/candidate-first
-          --second-baseline-first-root reports/second/baseline-first
-          --second-candidate-first-root reports/second/candidate-first
-          --baseline atlas-base

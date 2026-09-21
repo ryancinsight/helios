@@ -1,7 +1,20 @@
-# ADR 0003: Adopt the Atlas Criterion regression gate
+# ADR 0003: Benchmarks are a local instrument; CI keeps only the bench smoke
 
 - Status: Accepted
 - Date: 2026-07-20
+- Revision: 2026-09-21 — the hosted timing gate is removed. The
+  single-runner `benchmark-regression` job owes eight measured legs
+  (four `compare_pair` calls over two revisions) against a 60-minute
+  cap and dies red mid-schedule (exit 124, recorded on the
+  `ci/bench-pair-budget` branch against PR #88's schedule); splitting
+  the same legs across four hosted runners (draft PR #90) keeps the
+  defect and adds cross-runner variance. Shared-runner wall-clock
+  timings are noise, not evidence, and the Atlas-owned classifier
+  contract (`tools/criterion-regression/README.md`) already states
+  that the four pairs run within the committed local timing budget
+  while CI only smoke-runs benchmarks. The decision below records the
+  correction. What follows is the now-valid contract; git history is
+  the archive of the superseded hosted-gate text.
 - Class: `[arch]` `[patch]`
 
 ## Context
@@ -18,18 +31,30 @@ only the consumer orchestration for its four Criterion benchmark targets.
 ## Decision
 
 Helios pins Atlas merge `9bfb722` for `tools/criterion-regression`.
-Pull-request CI:
+Benchmark timing evidence is produced only by the committed local
+instrument; pull-request CI never classifies performance:
 
-1. checks out the pull-request base and candidate revisions on one runner;
-2. copies the candidate benchmark sources into the baseline checkout so both
-   revisions use one measurement instrument;
-3. runs ABBA followed by its BAAB phase reversal;
-4. invokes the four declared Criterion binaries directly so benchmark-only
-   arguments never reach Rust's library test harnesses;
-5. retains the four Criterion comparison roots;
-6. derives the per-case confidence from the complete benchmark family; and
-7. delegates classification to Atlas
-   `check-replicated-counterbalanced`.
+1. the operator runs the paired schedule locally via the committed
+   runner (`xtask bench-replicated`: `A B B A` followed by its `B A A B`
+   phase reversal) on one controlled host, holding the candidate
+   benchmark sources constant across both revisions;
+2. each leg runs the four declared Criterion binaries
+   (`helios-analysis:dvh_queries`, `helios-gpu:projection_throughput`,
+   `helios-gpu:transmission_throughput`,
+   `helios-solver:scatter_superposition`) with abbreviated sampling sized
+   to the derived 1500 s suite bound (measured 1101 s same-revision
+   calibration on the reference host, floored by ~15 s single iterations
+   in `projection_throughput`);
+3. the four retained Criterion comparison roots plus the derived
+   confidence are attached to the PR as the performance evidence, and
+   classification delegates to Atlas `check-replicated-counterbalanced`;
+4. CI runs only the single-iteration bench smoke
+   (`cargo test --benches`, equivalently Criterion `--test`) inside the
+   standard test budget; a smoke failure blocks merge, a timing
+   comparison never does;
+5. the `benchmark-regression` and `classify` CI jobs are deleted, and
+   draft PR #90 (parallel hosted pairs) closes with this ADR as its
+   verdict.
 
 The complete schedule is `A B B A B A A B`. Baseline and candidate each occupy
 positions with sum 18 and squared sum 102, balancing exposure to constant,
@@ -66,6 +91,10 @@ candidate lock is never regenerated.
 - A Helios-owned Rust port would preserve duplicate statistical ownership.
 - One ABBA block remains exposed to run-phase effects already falsified by the
   Apollo hosted canary recorded in Atlas ADR 0024.
+- Splitting the eight hosted legs across four runners (draft PR #90) keeps
+  the category error and adds cross-runner variance: each leg still times
+  on a shared runner, and the classifier's replication contract assumes
+  co-located pairs on one controlled host.
 
 ## Consequences
 
@@ -76,8 +105,9 @@ candidate lock is never regenerated.
 - Candidate benchmark sources must compile against the baseline production
   revision. An incompatible instrument change fails visibly rather than
   producing a mixed-instrument claim.
-- Static and synthetic evidence verifies classifier integration; only the
-  hosted base/candidate lane supplies performance evidence.
+- Static and synthetic evidence verifies classifier integration; only a
+  controlled local host supplies performance evidence, never a shared CI
+  runner.
 - Each measured revision runs only the declared `harness = false` benchmark
   binaries. Workspace library targets remain part of the Rust correctness job
   and do not receive Criterion command-line arguments.
@@ -88,15 +118,21 @@ candidate lock is never regenerated.
 
 ## Verification
 
-- Parse the workflow as YAML and scan it for the exact Atlas pin, four report
-  roots, Nextest, doctests, and absence of the Python classifier.
+- Parse the workflow as YAML and confirm the `benchmark-regression` and
+  `classify` jobs are absent while a bench-smoke step runs
+  `cargo test --benches` inside the standard test budget.
+- Run the committed local runner (`cargo xtask bench-replicated --help`
+  documents the paired schedule); one full local schedule completes
+  inside the derived 1500 s suite bound on the reference host class,
+  with per-pair elapsed times printed for attribution.
 - Run workspace format, warning-denied Clippy, configured Nextest, doctests,
   and warning-clean rustdoc locally.
 - Pin the scatter-convolution rewrite against the unchanged Criterion
   instrument. Local paired evidence on the development host reports
   50.46% lower median time at 32³ and 51.02% at 64³; a bitwise differential
   test covers every axis and asymmetric boundary truncation.
-- Require the exact pull-request head's Rust and benchmark jobs to pass.
+- Require the exact pull-request head's Rust and bench-smoke jobs to pass;
+  timing evidence arrives as PR-attached local reports, never as a CI gate.
 
 ## References
 

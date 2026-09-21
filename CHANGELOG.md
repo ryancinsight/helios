@@ -32,6 +32,17 @@ under a Breaking subsection.
 
 ### Changed
 
+- Benchmarks are a local instrument; CI no longer classifies performance
+  (ADR 0003, revision 2026-09-21). The hosted `benchmark-regression` timing
+  gate — eight measured legs against a 60-minute cap it died inside of — and
+  the `classify` job are deleted; CI keeps only the single-iteration bench
+  smoke (`bench-smoke`, 120 s per-target bound derived from a measured 71 s
+  slowest-target sweep). The paired `A B B A B A A B` schedule runs via the
+  committed `cargo xtask bench-replicated` runner on one controlled host
+  with the candidate bench sources held constant, classified through the
+  Atlas criterion-regression gate (derived 1500 s suite bound from a
+  measured 1101 s calibration). Draft PR #90 closes with the ADR as verdict.
+
 - The Pages book caller now rebuilds when Helios source, examples, manifests,
   or the lockfile change and installs the pinned `mdbook-linkcheck2` renderer.
   CI runs `mdbook test docs/book`; the remaining explanatory `text` fences are

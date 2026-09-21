@@ -6,7 +6,7 @@ gaps → architecture drift → missing tests → docs → PM cleanup.
 
 Status: `todo` · `in-progress` · `review` · `done`
 
-## HELIOS-BENCH-REGRESSION-BUDGET-2026-09-01 — The benchmark regression check runs 57 minutes on a lock-only PR [patch] — todo
+## HELIOS-BENCH-REGRESSION-BUDGET-2026-09-01 — The benchmark regression check runs 57 minutes on a lock-only PR [patch] — done 2026-09-21
 
 - **Observed (PR #80, a `Cargo.lock`-only advance of hermes-simd):**
   `benchmark regression check` started 01:17 UTC and finished 02:14 UTC
@@ -23,6 +23,16 @@ Status: `todo` · `in-progress` · `review` · `done`
 - **Acceptance oracle:** a lock-only PR completes the regression workflow in
   under five minutes with `no code delta`; a real kernel change still runs the
   pairs within the committed budget.
+- **Closed 2026-09-21 by deletion, not optimization:** ADR 0003 (revision
+  2026-09-21) removes the hosted timing gate outright — shared-runner
+  wall-clock timings are noise, not evidence, so no identity-job or time
+  model can repair the category. CI keeps only the single-iteration bench
+  smoke (`bench-smoke` job, 120 s per-target bound derived from a measured
+  71 s slowest-target sweep); the paired `A B B A B A A B` schedule runs as
+  the committed local instrument (`cargo xtask bench-replicated`, derived
+  1500 s suite bound from a measured 1101 s calibration). Tracked under
+  Atlas `ATLAS-HELIOS-BENCH-LOCAL-INSTRUMENT-2026-09-18`; draft PR #90
+  (parallel hosted pairs) closes with the ADR as its verdict.
 
 ## Current integration slice — 2026-07-14
 
