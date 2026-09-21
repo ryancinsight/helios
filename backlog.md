@@ -6,34 +6,6 @@ gaps → architecture drift → missing tests → docs → PM cleanup.
 
 Status: `todo` · `in-progress` · `review` · `done`
 
-## HELIOS-BENCH-REGRESSION-BUDGET-2026-09-01 — The benchmark regression check runs 57 minutes on a lock-only PR [patch] — done 2026-09-21
-
-- **Observed (PR #80, a `Cargo.lock`-only advance of hermes-simd):**
-  `benchmark regression check` started 01:17 UTC and finished 02:14 UTC
-  while every other job finished inside five minutes. A verification job
-  targets five minutes; a 57-minute pull-request job is the investigation
-  trigger, not a ceiling to accept — and on a lock-only change with no
-  plausible codegen delta it measured for an hour to say nothing.
-- **Outcome:** apollo's shape — an identity job comparing the two benchmark
-  executables' code sections (`apollo/scripts/bench_executable_identity.py`,
-  apollo#250) that skips the pair jobs when the code is identical — and a
-  benchmark time model (`performance_engineering: benchmark time budget`)
-  that sizes the pair jobs to the committed bound; timing runs beyond it are
-  local instruments, not CI.
-- **Acceptance oracle:** a lock-only PR completes the regression workflow in
-  under five minutes with `no code delta`; a real kernel change still runs the
-  pairs within the committed budget.
-- **Closed 2026-09-21 by deletion, not optimization:** ADR 0003 (revision
-  2026-09-21) removes the hosted timing gate outright — shared-runner
-  wall-clock timings are noise, not evidence, so no identity-job or time
-  model can repair the category. CI keeps only the single-iteration bench
-  smoke (`bench-smoke` job, 120 s per-target bound derived from a measured
-  71 s slowest-target sweep); the paired `A B B A B A A B` schedule runs as
-  the committed local instrument (`cargo xtask bench-replicated`, derived
-  1500 s suite bound from a measured 1101 s calibration). Tracked under
-  Atlas `ATLAS-HELIOS-BENCH-LOCAL-INSTRUMENT-2026-09-18`; draft PR #90
-  (parallel hosted pairs) closes with the ADR as its verdict.
-
 ## Current integration slice — 2026-07-14
 
 | ID | Item | Class | Status | Owner | Scope |
@@ -98,20 +70,6 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-004d | `helios-domain`: `CtVolume`/`MvctVolume` HU-semantic newtypes + `ImageOrientationPatient` → oriented grid pose (pairs with H-003d oriented `VoxelGrid`). The Helios consumer now uses RITK’s provider-owned named tag; exact cross-repo closure waits for RITK PR #149 to merge. | [minor] | in-progress | Codex | `crates/helios-domain/**`, `backlog.md`, `gap_audit.md`, `checklist.md` |
 | H-005 | Superseded by H-020b's binary-MLC `LeafOpenTimeSinogram`/`MlcModel` and H-020k's gaia-backed `FieldAperture`/delivery collimation; roadmap reconciled and the formatter gate restored. | [patch] | done | Codex | `README.md`, `backlog.md`, `gap_audit.md`, `CHANGELOG.md`, `crates/helios-{math,solver}/src/**` |
 | H-006 | ~~Shared `CARGO_TARGET_DIR`~~ — resolved: inherited from `repos/.cargo/config.toml` (shared `D:/atlas/target`) | [patch] | done | claude-helios | — |
-
-## Integration unblock (gaia/hephaestus now green)
-
-| ID | Item | Class | Status | Owner | Scope |
-|----|------|-------|--------|-------|-------|
-| H-050 | Wire Helios to the synchronized local Atlas checkout: `[patch]` redirecting `leto`/`eunomia`/`gaia` git sources to local paths (one consistent source). **Done** for geometry; hephaestus-wgpu patch added when GPU kernel lands (H-010). | [arch] | done | claude-helios | `Cargo.toml` |
-| H-003b | `helios-math` re-exports `gaia::{Aabb, Ray}` (consumed the migrated geometry); bridge test green. | [minor] | done | claude-helios | `crates/helios-math/**` |
-
-Context: as of this session gaia's leto migration is finalized + green (927 tests)
-and hephaestus builds with wgpu GPU tests passing (130 tests, adapter available).
-The remaining blocker is purely dependency *wiring* (git-dep version skew across the
-leto/mnemosyne/themis cluster → use local path/patch). Merging gaia's `refactor!`
-migration to its default branch + pushing is a separate co-evolution step (breaking
-for kwavers) requiring consumer coordination.
 
 ## Sprint 2 — GPU foundation
 
@@ -196,25 +154,6 @@ for kwavers) requiring consumer coordination.
 | H-042 | Validation report: gamma/DVH vs reference; MVCT image metrics | [minor] | todo | — | `validation_reports/**` |
 | H-043 | Performance: GPU-vs-CPU scaling study — criterion benchmark of `beam_transmission_into` across sizes (`helios-gpu/benches/transmission_throughput.rs`) + quantitative report. Finding: the isolated transmission kernel is transfer-bound; GPU does not beat CPU at any tested size (RTX 5080 vs Core Ultra 9 285K). | [minor] | done | claude-helios | `crates/helios-gpu/benches/**`, `validation_reports/**` |
 | H-043b | Performance: on-device pipeline. **Step 1 done** — upstreamed hephaestus `ExpNegOp` (fused `exp(−x)`, one dispatch, no intermediate buffer; hephaestus commit 669a9b3) and consumed it in `beam_transmission_into`: GPU +30% at 4M (373→485 Melem/s) but still transfer-bound at 0.66–0.73× CPU (report addendum). **Step 2 done — RESOLVED:** upstreamed hephaestus `ray_line_integrals` (volume ray-integral kernel, commits 792ccc3/9354260, 4 live-GPU oracles) and consumed it as `helios_gpu::GpuProjector` (μ resident on device, batched sinogram projection). Measured: **171×/371× vs single-thread CPU** at 90×128 / 360×256 sinograms on a 128³ volume (report `2026-07-02-gpu-projection-throughput.md`); per-ray differential vs `forward_project_ray` within 1e-3. | [major] | done | claude-helios | `crates/helios-gpu/**`, `crates/helios-solver/**` |
-
-## HELIOS-HERMES-LOCKSTEP-001 — Coeus/Hermes consumer lock [patch] — done
-
-- Owner: current Atlas session; scope: the clean `build/hermes-lockstep`
-  lane's `Cargo.lock`, `backlog.md`, `checklist.md`, and `gap_audit.md` only.
-  The active dirty Helios checkout is excluded.
-- Acceptance: Helios resolves the verified Coeus default `32d7f4e8` and its
-  transitive Hermes default `eb1a2f87` without compatibility or local-path
-  shims; locked package, test, lint, documentation, and CI supply-chain gates
-  pass. Satisfied in the clean `build/hermes-lockstep` lane: all-feature
-  check, format, strict Clippy, 283/283 Nextest, doctests, Rustdoc, audit, and
-  all-feature cargo-deny all pass.
-- The resolver must update the dependency-ordered first-party graph together;
-  hand-editing only Hermes would leave the older Coeus `hermes-simd ^0.6.0`
-  requirement unsatisfiable.
-
-The license policy adds only the two precise transitive licenses required by
-the optional DICOM provider, CC0-1.0 and IJG, matching the existing allowance
-in sibling Atlas providers.
 
 ## Gap-audit slice — 2026-08-20 (owner: atlas-gap-audit)
 
