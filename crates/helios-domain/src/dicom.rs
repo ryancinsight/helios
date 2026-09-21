@@ -5,9 +5,10 @@
 //! `RescaleSlope`/`RescaleIntercept` calibration), and this module maps the frame
 //! plus the geometry attributes (`Rows`, `Columns`, `PixelSpacing`,
 //! `ImagePositionPatient`, `ImageOrientationPatient`) into a typed [`Volume`] on
-//! an oriented
-//! [`VoxelGrid`]. This is the trust boundary: external file bytes become validated
-//! typed domain values here.
+//! an oriented [`VoxelGrid`]. The pixel layout carries both `BitsAllocated` and
+//! required `BitsStored`, so container padding cannot change decoded values. This
+//! is the trust boundary: external file bytes become validated typed domain values
+//! here.
 //!
 //! Both single-slice and multi-slice series paths are provided:
 //! [`load_ct_slice`] loads one slice (`nz = 1`), and [`load_ct_series`] validates
@@ -119,6 +120,9 @@ fn read_slice(path: &std::path::Path) -> Result<SliceRaw, HeliosError> {
         1,
     )?);
     let bits_allocated = opt_u16(&obj, tags::BITS_ALLOCATED, "BitsAllocated", 16)?;
+    let bits_stored = obj
+        .required_unsigned(tags::BITS_STORED, "BitsStored")
+        .map_err(|e| dicom_err("BitsStored", e))?;
     let pixel_representation =
         if opt_u16(&obj, tags::PIXEL_REPRESENTATION, "PixelRepresentation", 0)? == 1 {
             PixelSignedness::Signed
@@ -167,6 +171,7 @@ fn read_slice(path: &std::path::Path) -> Result<SliceRaw, HeliosError> {
                 cols,
                 samples_per_pixel,
                 bits_allocated,
+                bits_stored,
                 pixel_representation,
                 rescale_slope,
                 rescale_intercept,
@@ -458,6 +463,13 @@ mod tests {
         ImageOrientation,
     }
 
+    #[derive(Clone, Copy)]
+    enum BitsStoredFixture {
+        Missing,
+        Value(u16),
+        Values([u16; 2]),
+    }
+
     // Write a synthetic 2×2 unsigned-16 CT slice at position `z_mm` with a known
     // HU pattern and geometry (no external fixture). Slope 2, intercept −10;
     // PixelSpacing 0.8 (row) / 1.25 (col) mm; in-plane origin (5,7); configurable
@@ -468,7 +480,8 @@ mod tests {
         z_mm: f64,
         uid: &str,
         image_orientation_patient: &str,
-        omit: OmittedGeometry,
+        omitted_geometry: OmittedGeometry,
+        bits_stored: BitsStoredFixture,
     ) {
         let sop_class = "1.2.840.10008.5.1.4.1.1.2";
         let transfer_syntax = "1.2.840.10008.1.2.1";
@@ -552,17 +565,34 @@ mod tests {
             *b"US",
             &unsigned_value(16),
         );
-        append_element(
-            &mut bytes,
-            DicomTag::new(0x0028, 0x0101),
-            *b"US",
-            &unsigned_value(16),
-        );
+        let bits_stored_value = match bits_stored {
+            BitsStoredFixture::Missing => 16,
+            BitsStoredFixture::Value(value) => {
+                append_element(
+                    &mut bytes,
+                    tags::BITS_STORED,
+                    *b"US",
+                    &unsigned_value(value),
+                );
+                value
+            }
+            BitsStoredFixture::Values([first, second]) => {
+                let [first_low, first_high] = first.to_le_bytes();
+                let [second_low, second_high] = second.to_le_bytes();
+                append_element(
+                    &mut bytes,
+                    tags::BITS_STORED,
+                    *b"US",
+                    &[first_low, first_high, second_low, second_high],
+                );
+                first
+            }
+        };
         append_element(
             &mut bytes,
             DicomTag::new(0x0028, 0x0102),
             *b"US",
-            &unsigned_value(15),
+            &unsigned_value(bits_stored_value.saturating_sub(1)),
         );
         append_element(
             &mut bytes,
@@ -588,7 +618,7 @@ mod tests {
             *b"DS",
             &text_value(*b"DS", "-10"),
         );
-        if omit != OmittedGeometry::PixelSpacing {
+        if omitted_geometry != OmittedGeometry::PixelSpacing {
             append_element(
                 &mut bytes,
                 tags::PIXEL_SPACING,
@@ -602,7 +632,7 @@ mod tests {
             *b"DS",
             &text_value(*b"DS", "3"),
         );
-        if omit != OmittedGeometry::ImagePosition {
+        if omitted_geometry != OmittedGeometry::ImagePosition {
             append_element(
                 &mut bytes,
                 tags::IMAGE_POSITION_PATIENT,
@@ -610,7 +640,7 @@ mod tests {
                 &text_value(*b"DS", &format!("5\\7\\{z_mm}")),
             );
         }
-        if omit != OmittedGeometry::ImageOrientation {
+        if omitted_geometry != OmittedGeometry::ImageOrientation {
             append_element(
                 &mut bytes,
                 IMAGE_ORIENTATION_PATIENT,
@@ -646,6 +676,7 @@ mod tests {
             uid,
             image_orientation_patient,
             OmittedGeometry::None,
+            BitsStoredFixture::Value(16),
         );
     }
 
@@ -680,6 +711,28 @@ mod tests {
     }
 
     #[test]
+    fn twelve_bit_stored_samples_ignore_container_padding() {
+        let dir = tempfile::tempdir().expect("test scratch dir is creatable");
+        let path = dir.path().join("twelve-bit.dcm");
+        write_slice_at_with_geometry(
+            &path,
+            [0xF000, 0xA001, 0xB800, 0xFFFF],
+            9.0,
+            "2.25.4244",
+            "1\\0\\0\\0\\1\\0",
+            OmittedGeometry::None,
+            BitsStoredFixture::Value(12),
+        );
+
+        let volume: Volume<f64> = load_ct_slice(&path).expect("load twelve-bit slice");
+        assert_eq!(volume.grid().dims(), [2, 2, 1]);
+        assert_eq!(volume.get(0, 0, 0), Some(-10.0));
+        assert_eq!(volume.get(1, 0, 0), Some(-8.0));
+        assert_eq!(volume.get(0, 1, 0), Some(4086.0));
+        assert_eq!(volume.get(1, 1, 0), Some(8180.0));
+    }
+
+    #[test]
     fn missing_file_is_a_dicom_error_not_a_panic() {
         let err = load_ct_slice::<f64>("does_not_exist.dcm")
             .expect_err("a missing file is a Dicom error, not a panic");
@@ -707,6 +760,7 @@ mod tests {
                 &format!("2.25.4242.{index}"),
                 "1\\0\\0\\0\\1\\0",
                 omitted,
+                BitsStoredFixture::Value(16),
             );
 
             match load_ct_slice::<f64>(&path) {
@@ -715,6 +769,41 @@ mod tests {
                 }
                 Err(other) => panic!("unexpected DICOM error: {other}"),
                 Ok(_) => panic!("missing {name} was accepted"),
+            }
+        }
+    }
+
+    #[test]
+    fn missing_and_malformed_bits_stored_are_rejected_at_dicom_boundary() {
+        let cases = [
+            (BitsStoredFixture::Missing, "BitsStored: missing BitsStored"),
+            (
+                BitsStoredFixture::Value(17),
+                "decode: bits_stored=17 is outside 1..=bits_allocated (16)",
+            ),
+            (
+                BitsStoredFixture::Values([12, 16]),
+                "BitsStored: BitsStored (0028,0101) has cardinality=2; expected exactly 1",
+            ),
+        ];
+
+        for (index, (case, expected)) in cases.into_iter().enumerate() {
+            let dir = tempfile::tempdir().expect("test scratch dir is creatable");
+            let path = dir.path().join("invalid-bits-stored.dcm");
+            write_slice_at_with_geometry(
+                &path,
+                [10, 20, 30, 40],
+                9.0,
+                &format!("2.25.4243.{index}"),
+                "1\\0\\0\\0\\1\\0",
+                OmittedGeometry::None,
+                case,
+            );
+
+            match load_ct_slice::<f64>(&path) {
+                Err(HeliosError::Dicom { reason }) => assert_eq!(reason, expected),
+                Err(other) => panic!("unexpected DICOM error: {other}"),
+                Ok(_) => panic!("missing or malformed BitsStored metadata was accepted"),
             }
         }
     }
