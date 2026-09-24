@@ -32,6 +32,24 @@ fn normalize_weights_by_sum<T: Scalar>(weights: &mut [T], sum: T) {
     }
 }
 
+#[inline]
+fn normalized_kernel_from_taps<T, F>(taps: usize, mut tap_weight: F) -> Vec<T>
+where
+    T: Scalar,
+    F: FnMut(usize) -> T,
+{
+    let zero = <T as NumericElement>::ZERO;
+    let mut kernel = Vec::with_capacity(taps);
+    let mut sum = zero;
+    for tap in 0..taps {
+        let weight = tap_weight(tap);
+        kernel.push(weight);
+        sum += weight;
+    }
+    normalize_weights_by_sum(&mut kernel, sum);
+    kernel
+}
+
 /// Symmetric normalized deposition kernel `k[d] ∝ exp(−|offset|·voxel_spacing / range)`
 /// over offsets `[−radius, radius]` (length `2·radius + 1`), normalized so `Σ = 1`.
 ///
@@ -45,22 +63,15 @@ pub fn symmetric_deposition_kernel<T: Scalar>(
     voxel_spacing: Length<T>,
     radius: usize,
 ) -> Vec<T> {
-    let zero = <T as NumericElement>::ZERO;
     let taps = 2 * radius + 1;
     let range_cm = range.into_base() * T::from_f64(CM_PER_M);
     let voxel_cm = voxel_spacing.into_base() * T::from_f64(CM_PER_M);
     let inv_range = range_cm.recip();
-    let mut kernel = Vec::with_capacity(taps);
-    let mut sum = zero;
-    for t in 0..taps {
+    normalized_kernel_from_taps(taps, |t| {
         let offset = (t as f64 - radius as f64).abs();
         let distance = T::from_f64(offset) * voxel_cm;
-        let weight = (-(distance * inv_range)).exp();
-        kernel.push(weight);
-        sum += weight;
-    }
-    normalize_weights_by_sum(&mut kernel, sum);
-    kernel
+        (-(distance * inv_range)).exp()
+    })
 }
 
 /// Convolve `vol` with a centred 1-D `kernel` along `axis` (0 = x, 1 = y, 2 = z).
@@ -170,23 +181,17 @@ pub fn forward_peaked_kernel<T: Scalar>(
     radius_up: usize,
     radius_down: usize,
 ) -> (Vec<T>, usize) {
-    let zero = <T as NumericElement>::ZERO;
     let taps = radius_up + radius_down + 1;
     let range_up_cm = range_up.into_base() * T::from_f64(CM_PER_M);
     let range_down_cm = range_down.into_base() * T::from_f64(CM_PER_M);
     let voxel_cm = voxel_spacing.into_base() * T::from_f64(CM_PER_M);
     let (inv_up, inv_down) = (range_up_cm.recip(), range_down_cm.recip());
-    let mut kernel = Vec::with_capacity(taps);
-    let mut sum = zero;
-    for t in 0..taps {
+    let kernel = normalized_kernel_from_taps(taps, |t| {
         let offset = t as f64 - radius_up as f64; // <0 upstream, >0 downstream
         let distance = T::from_f64(offset.abs()) * voxel_cm;
         let inv_range = if offset < 0.0 { inv_up } else { inv_down };
-        let weight = (-(distance * inv_range)).exp();
-        kernel.push(weight);
-        sum += weight;
-    }
-    normalize_weights_by_sum(&mut kernel, sum);
+        (-(distance * inv_range)).exp()
+    });
     (kernel, radius_up)
 }
 
