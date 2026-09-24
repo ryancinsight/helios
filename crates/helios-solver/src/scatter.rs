@@ -21,6 +21,17 @@ use helios_core::constants::CM_PER_M;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{NumericElement, Scalar};
 
+#[inline]
+fn normalize_weights_by_sum<T: Scalar>(weights: &mut [T], sum: T) {
+    let zero = <T as NumericElement>::ZERO;
+    if sum > zero {
+        let inv_sum = sum.recip();
+        for weight in weights {
+            *weight *= inv_sum;
+        }
+    }
+}
+
 /// Symmetric normalized deposition kernel `k[d] ∝ exp(−|offset|·voxel_spacing / range)`
 /// over offsets `[−radius, radius]` (length `2·radius + 1`), normalized so `Σ = 1`.
 ///
@@ -48,12 +59,7 @@ pub fn symmetric_deposition_kernel<T: Scalar>(
         kernel.push(weight);
         sum += weight;
     }
-    if sum > zero {
-        let inv_sum = sum.recip();
-        for w in &mut kernel {
-            *w *= inv_sum;
-        }
-    }
+    normalize_weights_by_sum(&mut kernel, sum);
     kernel
 }
 
@@ -180,12 +186,7 @@ pub fn forward_peaked_kernel<T: Scalar>(
         kernel.push(weight);
         sum += weight;
     }
-    if sum > zero {
-        let inv_sum = sum.recip();
-        for w in &mut kernel {
-            *w *= inv_sum;
-        }
-    }
+    normalize_weights_by_sum(&mut kernel, sum);
     (kernel, radius_up)
 }
 
@@ -248,10 +249,7 @@ pub fn poly_forward_peaked_kernel<T: Scalar>(
         total_weight += weight;
     }
     if total_weight > zero {
-        let inv = total_weight.recip();
-        for a in &mut acc {
-            *a *= inv;
-        }
+        normalize_weights_by_sum(&mut acc, total_weight);
     } else {
         acc[radius_up] = <T as NumericElement>::ONE; // degenerate ⇒ identity.
     }
