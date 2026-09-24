@@ -9,7 +9,7 @@
 //! fluence, and attenuation multiplies each reading by `exp(−τ)`.
 
 use crate::delivery::DeliveryFrame;
-use crate::dose_accumulation::{beamlet_ray, gantry_basis, BeamGeometry};
+use crate::dose_accumulation::{for_each_positive_leaf_beamlet, BeamGeometry};
 use aequitas::systems::si::{
     quantities::{Dimensionless, EnergyPerArea, Length},
     units::Millimeter,
@@ -44,27 +44,25 @@ pub fn frame_portal_fluence<T: GeometryScalar + UnitScalar>(
 ) -> Result<Vec<EnergyPerArea<T>>, TransportError<T>> {
     let zero = <T as NumericElement>::ZERO;
     let step_mm = step.in_unit::<Millimeter>();
-    let (centre, dir, perp) = gantry_basis(mu.grid(), frame.gantry_angle_rad);
-    frame
-        .leaf_fluence
-        .iter()
-        .enumerate()
-        .map(|(leaf, fluence)| {
-            let fluence_base = *fluence.as_base();
-            if fluence_base <= zero {
-                return Ok(EnergyPerArea::from_base(zero)); // closed leaf: no exit signal.
-            }
-            let tau = beamlet_ray(centre, dir, perp, frame, leaf, leaf_width, geometry)
+    let mut exit_fluence = vec![EnergyPerArea::from_base(zero); frame.leaf_fluence.len()];
+    for_each_positive_leaf_beamlet(
+        frame,
+        mu.grid(),
+        geometry,
+        leaf_width,
+        |leaf, fluence_base, beamlet| {
+            let tau = beamlet
                 .and_then(|beamlet| forward_project_ray(mu, &beamlet.ray, step_mm))
                 .unwrap_or(zero);
             let transmission: Dimensionless<T> = OpticalDepth::new(Dimensionless::from_base(tau))?
                 .transmission()
                 .into_quantity();
             let delivered_fluence = EnergyPerArea::from_base(fluence_base);
-            let exit_fluence: EnergyPerArea<T> = delivered_fluence * transmission;
-            Ok(exit_fluence)
-        })
-        .collect()
+            exit_fluence[leaf] = delivered_fluence * transmission;
+            Ok(())
+        },
+    )?;
+    Ok(exit_fluence)
 }
 
 #[cfg(test)]

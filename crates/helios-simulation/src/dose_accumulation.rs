@@ -88,6 +88,35 @@ pub fn accumulate_delivered_dose<T: GeometryScalar + UnitScalar>(
     Ok(dose)
 }
 
+/// Visit each positive-fluence leaf beamlet for one delivery `frame`, sharing the
+/// per-frame gantry basis and beamlet geometry construction between dose and
+/// portal kernels. The callback receives the leaf index, leaf fluence in base
+/// units, and the optional constructed beamlet (degenerate rays map to `None`).
+#[inline]
+pub(crate) fn for_each_positive_leaf_beamlet<T, E, F>(
+    frame: &DeliveryFrame<T>,
+    grid: &helios_domain::VoxelGrid<T>,
+    geometry: BeamGeometry<T>,
+    leaf_width: Length<T>,
+    mut visit: F,
+) -> Result<(), E>
+where
+    T: GeometryScalar + UnitScalar,
+    F: FnMut(usize, T, Option<Beamlet<T>>) -> Result<(), E>,
+{
+    let zero = <T as NumericElement>::ZERO;
+    let (centre, dir, perp) = gantry_basis(grid, frame.gantry_angle_rad);
+    for (leaf, fluence) in frame.leaf_fluence.iter().enumerate() {
+        let weight = *fluence.as_base();
+        if weight <= zero {
+            continue;
+        }
+        let beamlet = beamlet_ray(centre, dir, perp, frame, leaf, leaf_width, geometry);
+        visit(leaf, weight, beamlet)?;
+    }
+    Ok(())
+}
+
 /// Deposit one `frame`'s per-leaf beamlet terma into `dose`, returning the beam's
 /// forward unit direction (the gantry central axis) — the SSOT deposition loop
 /// shared by the isotropic accumulation and the per-frame anisotropic path, so
@@ -100,25 +129,26 @@ fn deposit_frame_terma<T: GeometryScalar + UnitScalar>(
     leaf_width: Length<T>,
     step: Length<T>,
 ) -> Result<Vector3<T>, TransportError<T>> {
-    let zero = <T as NumericElement>::ZERO;
     let step_mm = step.in_unit::<Millimeter>();
-    let (centre, dir, perp) = gantry_basis(mu.grid(), frame.gantry_angle_rad);
-    for (leaf, fluence) in frame.leaf_fluence.iter().enumerate() {
-        let weight = *fluence.as_base();
-        if weight <= zero {
-            continue; // closed/leak-free leaf deposits nothing.
-        }
-        let Some(beamlet) = beamlet_ray(centre, dir, perp, frame, leaf, leaf_width, geometry)
-        else {
-            continue;
-        };
-        let _deposited: AbsorbedDose<T> = match beamlet.falloff {
-            Some((focal, sad)) => {
-                deposit_ray_terma_diverging(dose, mu, &beamlet.ray, weight, step_mm, focal, sad)
-            }
-            None => deposit_ray_terma(dose, mu, &beamlet.ray, weight, step_mm),
-        }?;
-    }
+    let (_, dir, _) = gantry_basis(mu.grid(), frame.gantry_angle_rad);
+    for_each_positive_leaf_beamlet(
+        frame,
+        mu.grid(),
+        geometry,
+        leaf_width,
+        |_, weight, beamlet| {
+            let Some(beamlet) = beamlet else {
+                return Ok(());
+            };
+            let _deposited: AbsorbedDose<T> = match beamlet.falloff {
+                Some((focal, sad)) => {
+                    deposit_ray_terma_diverging(dose, mu, &beamlet.ray, weight, step_mm, focal, sad)
+                }
+                None => deposit_ray_terma(dose, mu, &beamlet.ray, weight, step_mm),
+            }?;
+            Ok(())
+        },
+    )?;
     Ok(dir)
 }
 
