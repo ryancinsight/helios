@@ -1452,6 +1452,7 @@ dependencies = [
  "eunomia",
  "helios-core",
  "helios-math",
+ "mnemosyne-arena",
 ]
 
 [[package]]
