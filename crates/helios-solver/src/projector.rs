@@ -19,6 +19,56 @@ use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{Aabb, GeometryScalar, Point3, Ray, Vector3};
 
+/// Precomputed uniform ray-march plan for an in-grid interval.
+///
+/// Chooses `steps = ceil(length / step_mm)` (clamped to at least 1) so the
+/// effective substep divides the clipped interval exactly.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) struct RayMarchPlan<T: GeometryScalar> {
+    t_enter: T,
+    steps: usize,
+    step_mm: T,
+}
+
+impl<T: GeometryScalar> RayMarchPlan<T> {
+    /// Build a plan for `[t_enter, t_exit]`; returns `None` for non-positive
+    /// intervals (hit at a point or numerically inverted bounds).
+    #[inline]
+    pub(crate) fn from_interval(t_enter: T, t_exit: T, step_mm: T) -> Option<Self> {
+        let length = t_exit - t_enter;
+        if length <= T::ZERO {
+            return None;
+        }
+        let steps = ((length * step_mm.recip()).ceil().to_f64() as usize).max(1);
+        let step_mm = length * <T as GeometryScalar>::from_f64(steps as f64).recip();
+        Some(Self {
+            t_enter,
+            steps,
+            step_mm,
+        })
+    }
+
+    /// Number of uniform midpoint samples.
+    #[inline]
+    pub(crate) fn steps(self) -> usize {
+        self.steps
+    }
+
+    /// Substep length in centimetres.
+    #[inline]
+    pub(crate) fn step_cm(self) -> T {
+        self.step_mm * <T as GeometryScalar>::from_f64(MM_PER_CM).recip()
+    }
+
+    /// World-space ray parameter at the midpoint of substep `sample`.
+    #[inline]
+    pub(crate) fn midpoint_t(self, sample: usize) -> T {
+        debug_assert!(sample < self.steps, "midpoint index out of range");
+        let half = <T as GeometryScalar>::from_f64(0.5);
+        self.t_enter + (<T as GeometryScalar>::from_f64(sample as f64) + half) * self.step_mm
+    }
+}
+
 /// Intersect a world-space unit ray with the grid's node-centre box.
 ///
 /// Clipping occurs in continuous index coordinates, where the node-centre box
@@ -73,23 +123,14 @@ pub fn forward_project_ray<T: GeometryScalar>(
 ) -> Option<T> {
     let grid = *mu.grid();
     let (t_enter, t_exit) = ray_grid_interval(&grid, ray)?;
-
-    let length = t_exit - t_enter;
-    if length <= T::ZERO {
+    let Some(plan) = RayMarchPlan::from_interval(t_enter, t_exit, step_mm) else {
         return Some(T::ZERO);
-    }
-    // Number of substeps so the step divides the length exactly (>= 1).
-    let n_f = (length * step_mm.recip()).ceil();
-    let n = (n_f.to_f64() as usize).max(1);
-    let actual_step = length * <T as GeometryScalar>::from_f64(n as f64).recip();
-    // Segment length in cm so cm⁻¹ · cm is dimensionless.
-    let step_cm = actual_step * <T as GeometryScalar>::from_f64(MM_PER_CM).recip();
-    let half = <T as GeometryScalar>::from_f64(0.5);
+    };
+    let step_cm = plan.step_cm();
 
     let mut tau = T::ZERO;
-    for i in 0..n {
-        let t_mid = t_enter + (<T as GeometryScalar>::from_f64(i as f64) + half) * actual_step;
-        let world_pt: Point3<T> = ray.point_at(t_mid);
+    for i in 0..plan.steps() {
+        let world_pt: Point3<T> = ray.point_at(plan.midpoint_t(i));
         let index = grid.world_to_index(world_pt);
         let mu_sample = mu.sample_trilinear(index).unwrap_or(T::ZERO);
         tau += mu_sample * step_cm;

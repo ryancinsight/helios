@@ -6,13 +6,12 @@
 //! voxel, producing the terma (total energy released per unit mass) that a
 //! collapsed-cone/convolution dose engine spreads with a scatter kernel.
 
-use crate::projector::ray_grid_interval;
+use crate::projector::{ray_grid_interval, RayMarchPlan};
 use aequitas::systems::si::{
     quantities::{AbsorbedDose, Length, ReciprocalLength},
     units::{Centimeter, PerCentimeter},
 };
 use eunomia::UnitScalar;
-use helios_core::constants::MM_PER_CM;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray};
 use hyperion::{
@@ -115,20 +114,13 @@ fn deposit_terma_impl<T: GeometryScalar + UnitScalar>(
     let Some((t_enter, t_exit)) = ray_grid_interval(&grid, ray) else {
         return Ok(AbsorbedDose::from_base(T::ZERO));
     };
-    let length = t_exit - t_enter;
-    if length <= T::ZERO {
+    let Some(plan) = RayMarchPlan::from_interval(t_enter, t_exit, step_mm) else {
         return Ok(AbsorbedDose::from_base(T::ZERO));
-    }
-
-    // Substeps so the step divides the traversed length exactly (>= 1).
-    let n = ((length * step_mm.recip()).ceil().to_f64() as usize).max(1);
-    let actual_step = length * <T as GeometryScalar>::from_f64(n as f64).recip();
-    let step_cm = actual_step * <T as GeometryScalar>::from_f64(MM_PER_CM).recip();
-    let path = PathLength::new(Length::from_unit::<Centimeter>(step_cm))?;
-    let half = <T as GeometryScalar>::from_f64(0.5);
+    };
+    let path = PathLength::new(Length::from_unit::<Centimeter>(plan.step_cm()))?;
     let [nx, ny, nz] = grid.dims();
     let sample = |i: usize| {
-        let t_mid = t_enter + (<T as GeometryScalar>::from_f64(i as f64) + half) * actual_step;
+        let t_mid = plan.midpoint_t(i);
         let world_pt: Point3<T> = ray.point_at(t_mid);
         let index = grid.world_to_index(world_pt);
         let mu_sample = mu.sample_trilinear(index).unwrap_or(T::ZERO);
@@ -137,7 +129,7 @@ fn deposit_terma_impl<T: GeometryScalar + UnitScalar>(
 
     // Validate the complete ray before mutating the output. Non-negative
     // segment depths make every partial sum bounded by this checked total.
-    let _validated_total = (0..n).try_fold(OpticalDepth::zero(), |total, i| {
+    let _validated_total = (0..plan.steps()).try_fold(OpticalDepth::zero(), |total, i| {
         let (_, _, mu_sample) = sample(i);
         let coefficient =
             InteractionCoefficient::<T, LinearAttenuation>::new(ReciprocalLength::from_unit::<
@@ -149,7 +141,7 @@ fn deposit_terma_impl<T: GeometryScalar + UnitScalar>(
     let mut optical_depth = OpticalDepth::zero();
     let mut trans_before = <T as NumericElement>::ONE; // e^{−τ} at τ = 0.
     let mut total = T::ZERO;
-    for i in 0..n {
+    for i in 0..plan.steps() {
         let (world_pt, index, mu_sample) = sample(i);
         let coefficient =
             InteractionCoefficient::<T, LinearAttenuation>::new(ReciprocalLength::from_unit::<
@@ -586,7 +578,9 @@ mod tests {
         for i in 2..=8usize {
             let depth = depth_mm(i);
             // exp(−μ·Δdepth) with μ in cm⁻¹ and the depth difference in cm.
-            let attenuation = cast(-WATER_MU_PER_CM * (depth - reference_depth) / MM_PER_CM).exp();
+            let attenuation =
+                cast(-WATER_MU_PER_CM * (depth - reference_depth) / helios_core::constants::MM_PER_CM)
+                    .exp();
             let divergence = cast(((PDD_SSD_MM + reference_depth) / (PDD_SSD_MM + depth)).powi(2));
             let expected = attenuation * divergence;
             let pdd = dose.get(i, 1, 1).expect("in-grid voxel") * reference.recip();
@@ -606,7 +600,11 @@ mod tests {
         // strictly below pure attenuation, by the (810/950)² = 0.727 factor.
         let deepest = dose.get(8, 1, 1).expect("in-grid voxel") * reference.recip();
         let attenuation_only =
-            cast(-WATER_MU_PER_CM * (depth_mm(8) - reference_depth) / MM_PER_CM).exp();
+            cast(
+                -WATER_MU_PER_CM * (depth_mm(8) - reference_depth)
+                    / helios_core::constants::MM_PER_CM,
+            )
+            .exp();
         assert!(
             deepest < attenuation_only,
             "inverse-square divergence must steepen the depth-dose curve: \
