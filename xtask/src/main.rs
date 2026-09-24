@@ -15,6 +15,12 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::{Path, PathBuf};
 
+// Helios runs on the Atlas memory subsystem -- the workspace allocation package.
+// The `bench-replicated` instrument measures Helios inside this process, so the
+// process allocator *is* the allocator under measurement; installing it here is
+// what makes that instrument report the production configuration.
+helios_core::install_global_allocator!();
+
 mod bench_replicated;
 mod check_figures;
 mod migration_audit;

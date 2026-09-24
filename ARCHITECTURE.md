@@ -34,7 +34,7 @@ A lower layer never depends on a higher one. `helios-core` is the innermost crat
 
 | Crate | Responsibility | Status |
 |-------|----------------|--------|
-| `helios-core` | Typed errors, physical constants, validating domain newtypes, config, logging, arena hooks. | **implemented (0.0.1)** |
+| `helios-core` | Typed errors, physical constants, validating domain newtypes, config, logging, and the memory seam (`memory`: the workspace `Mnemosyne` allocator + scratch pools). | **implemented (0.0.1)** |
 | `helios-math` | Numeric seam (`Scalar` = `eunomia::RealField`), leto linear-algebra substrate re-export, numerical methods. Geometry *primitives* (`Aabb`/`Ray`/mesh) are consumed from **gaia**, not defined here. | **implemented (0.0.1)** |
 | `helios-domain` | Patient/imaging geometry (CT/MVCT), beam/source/sensor models, binary MLC + collimator geometry, helical delivery kinematics. Landed: `VoxelGrid` + `Volume`, including a Leto `Isometry3` oriented-grid pose; `HelicalDelivery`; binary-MLC `MlcModel`; DICOM ingest (`load_ct_slice`/`load_ct_series` → HU `Volume`, via `ritk-dicom`, feature `dicom`); and HDF5 volumetric storage (`save_volume_hdf5`/`load_volume_hdf5`, via consus, feature `storage`). HU-semantic newtypes and DICOM `ImageOrientationPatient` ingestion remain provider-sequenced; `FieldAperture` (jaw field-shaping + penumbra over a gaia `Aabb`) landed. | **partial (0.1.0)** |
 | `helios-physics` | Helios-specific radiation physics that is not a shared transport law: HU→relative-density calibration and Compton cross-section/energy-transfer models. It returns Hyperion coefficient types instead of owning or re-exporting a parallel coefficient vocabulary. | **partial (0.1.0)** |
@@ -69,7 +69,7 @@ the SSOT in the root `Cargo.toml` `[workspace.dependencies]`.
 | **consus** | `consus-core`, `consus-hdf5`, `consus-io` (**consumed**, feature `storage`) | domain | Volumetric storage: `Volume` ↔ standard HDF5 archive (`save_volume_hdf5`/`load_volume_hdf5`, data plus validated rigid grid geometry). Zarr/compression pending. |
 | **leto** | `leto` | math | Strided/typed array substrate. |
 | **hermes** | `hermes-simd` | math | Portable SIMD for field/kernel/projection kernels. |
-| **mnemosyne** | `mnemosyne-core` | core | Arena allocation and memory management for large 3D/4D datasets. |
+| **mnemosyne** | `mnemosyne` (= `mnemosyne-memory`) (**consumed**, feature `mnemosyne-memory`), `mnemosyne-arena` (**consumed**) | core, planning | The workspace allocation package. `helios-core::memory` is the single seam that re-exports the `Mnemosyne` global allocator and the scratch surface (`ScratchPool`/`ScratchBank`/`AlignedVec`); every Helios program installs it with `install_global_allocator!()`. `helios-planning` consumes `AlignedVec` directly for cache-line-aligned dose-influence rows. `mnemosyne-core` (arena placement) is declared but unconsumed. |
 | **themis** | `themis` | core | Optimal placement (NUMA/CPU/GPU) for large medical datasets. |
 | **apollo** | `apollo` (`apollo-fft`) | solver, imaging | Spectral/transform methods for convolution kernels and reconstruction. |
 
@@ -89,6 +89,11 @@ the SSOT in the root `Cargo.toml` `[workspace.dependencies]`.
 - **Validating boundaries.** External input (DICOM, PyO3 args) is validated into
   typed domain newtypes at the boundary; invalid states are unrepresentable in the
   core (`EnergyMeV`, `HounsfieldUnit`, `VoxelSpacingMm`, …).
+- **Allocator ownership.** The workspace allocator is named once, in
+  `helios-core::memory`, and *installed* only by programs — the `xtask` binary,
+  examples, and benches — never by a library, so no Helios crate imposes an
+  allocator on a consumer. `helios-python` is deliberately exempt: as a `cdylib`
+  loaded into CPython it must not replace the host interpreter's allocator.
 
 ## Verification tiers
 

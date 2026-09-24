@@ -150,12 +150,18 @@ leto = { version = "0.43.0", git = "https://github.com/ryancinsight/leto", defau
 hermes-simd = { version = "0.7.0", git = "https://github.com/ryancinsight/hermes" }
 # Memory management / placement.
 #
-# Both entries name the repository exactly as `leto` does: same URL, no `rev`.
-# Cargo keys a git source on `(url, ref)`, so a `rev` here is a *second* source
-# for a repository the graph already carries through leto's `mnemosyne-memory`.
-# The two sources resolve to different commits, so cargo would compile the whole
-# mnemosyne stack twice -- arena, backend and memory-core -- instead of sharing
-# it. The exact revision stays pinned where it belongs, in `Cargo.lock`.
+# All three entries name the repository exactly as `leto` does: same URL, no
+# `rev`. Cargo keys a git source on `(url, ref)`, so a `rev` here is a *second*
+# source for a repository the graph already carries through leto's
+# `mnemosyne-memory`. The two sources resolve to different commits, so cargo
+# would compile the whole mnemosyne stack twice -- arena, backend, memory and
+# memory-core -- instead of sharing it. The exact revision stays pinned where it
+# belongs, in `Cargo.lock`.
+#
+# mnemosyne-memory is the allocator facade: the `Mnemosyne` global allocator plus
+# the thread-local scratch pools. Its `[lib] name` is `mnemosyne`, so crates
+# import it as `mnemosyne`, exactly as `leto` and `apollo` do.
+mnemosyne = { version = "0.7.0", git = "https://github.com/ryancinsight/Mnemosyne", package = "mnemosyne-memory", features = ["eunomia"] }
 mnemosyne-core = { version = "0.2.0", git = "https://github.com/ryancinsight/Mnemosyne", package = "mnemosyne-memory-core" }
 # mnemosyne-arena: cache-line-aligned vectors, so the planning compute buffers
 # (the dense dose-influence matrix) load without alignment fixups in SIMD kernels.

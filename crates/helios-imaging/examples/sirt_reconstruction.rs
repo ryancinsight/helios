@@ -46,6 +46,9 @@
     reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
 )]
 
+// Helios runs on the Atlas memory subsystem -- the workspace allocation package.
+// A program opts in here, once, so the libraries above it stay allocator-agnostic.
+helios_core::install_global_allocator!();
 use aequitas::systems::si::{
     quantities::{Angle, Length},
     units::{Millimeter, Radian},

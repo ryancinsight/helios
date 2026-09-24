@@ -1361,6 +1361,7 @@ version = "0.1.0"
 dependencies = [
  "aequitas",
  "eunomia",
+ "mnemosyne-memory",
  "proptest",
  "thiserror 2.0.20",
  "tracing",
@@ -3886,6 +3887,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "helios-core",
  "serde",
  "serde_json",
  "sha2",

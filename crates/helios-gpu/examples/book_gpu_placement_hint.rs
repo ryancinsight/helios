@@ -4,6 +4,9 @@
 //! hints internally (`PlacementHint::Tier(MemoryTier::Device)`), so callers keep
 //! a simple physics-facing API.
 
+// Helios runs on the Atlas memory subsystem -- the workspace allocation package.
+// A program opts in here, once, so the libraries above it stay allocator-agnostic.
+helios_core::install_global_allocator!();
 use aequitas::systems::si::{
     quantities::{AreaPerMass, MassDensity},
     units::{GramPerCubicCentimeter, SquareCentimeterPerGram},
