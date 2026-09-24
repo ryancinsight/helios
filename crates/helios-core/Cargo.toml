@@ -11,8 +11,17 @@ rust-version.workspace = true
 [lints]
 workspace = true
 
+[features]
+default = ["mnemosyne-memory"]
+# Adopt the Atlas memory subsystem -- the `Mnemosyne` global allocator and its
+# thread-local scratch pools -- as the workspace allocation package. Default-on so
+# every Helios binary that links `helios-core` shares one allocator; disable it
+# only for a leaf that must not link Mnemosyne.
+mnemosyne-memory = ["dep:mnemosyne"]
+
 [dependencies]
 aequitas = { workspace = true }
+mnemosyne = { workspace = true, optional = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 

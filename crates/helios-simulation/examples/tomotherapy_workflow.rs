@@ -23,6 +23,9 @@
     reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
 )]
 
+// Helios runs on the Atlas memory subsystem -- the workspace allocation package.
+// A program opts in here, once, so the libraries above it stay allocator-agnostic.
+helios_core::install_global_allocator!();
 use std::path::{Path, PathBuf};
 
 use aequitas::systems::si::{
