@@ -195,6 +195,14 @@ jobs:
       # per-target bound derives from a measured 71 s single-iteration sweep
       # of the slowest target (`projection_throughput`, 4 IDs) on the
       # calibration host, with headroom for slower shared runners.
+      #
+      # It is a *sweep* bound, so the cold-cache compilation it cannot
+      # describe is done by the build step below, outside it. This job
+      # restores no cache (measured: "No cache found" on every run), and the
+      # first target alone compiled for 100 s of its 120 s before this was
+      # split -- adding one dependency to `helios-imaging`, which
+      # `helios-analysis` builds through its dev-dependencies, was enough to
+      # spend the remaining 20 s and kill the job at `timeout`'s exit 124.
       BENCH_SMOKE_TIMEOUT_SECONDS: 120
       BENCH_TIMEOUT_KILL_GRACE_SECONDS: 10
       BENCHMARK_TARGETS: |
@@ -214,6 +222,20 @@ jobs:
           workspaces: .
           shared-key: helios
           save-if: false
+
+      - name: Build benchmarks (cold-cache compilation, outside the smoke bound)
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS=: read -r package benchmark; do
+            [[ -n "$package" ]] || continue
+            cargo bench \
+              --locked \
+              --all-features \
+              --package "$package" \
+              --bench "$benchmark" \
+              --no-run
+          done <<<"$BENCHMARK_TARGETS"
 
       - name: Benchmark smoke (single iteration per benchmark ID)
         shell: bash

@@ -11,7 +11,8 @@ under a Breaking subsection.
 
 - `helios-imaging` exposes the FBP ramp-filter stage on its own:
   `ramp_filter_rows` (filter every projection row of a flat sinogram buffer in
-  place), `ram_lak_kernel`, and `RampMethod`. A new `ramp_filter` bench target
+  place), `ram_lak_kernel`, `RampMethod`, and `FFT_CROSSOVER` (the detector width
+  at which `RampMethod::Auto` switches paths). A new `ramp_filter` bench target
   measures both convolution paths per detector width and is registered in the
   shared `BENCHMARK_TARGETS` list.
 
