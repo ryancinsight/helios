@@ -19,13 +19,56 @@ use coeus_core::MoiraiBackend;
 use coeus_tensor::Tensor;
 use helios_core::HeliosError;
 
+type AutodiffVar = Var<f64, MoiraiBackend>;
+
 /// A constant (non-differentiated) scalar `Var` of shape `[1]` on `backend`.
 #[expect(
     clippy::trivially_copy_pass_by_ref,
     reason = "Tensor::from_slice_on borrows the backend; callers keep ownership"
 )]
-fn scalar_const(value: f64, backend: &MoiraiBackend) -> Var<f64, MoiraiBackend> {
+fn scalar_const(value: f64, backend: &MoiraiBackend) -> AutodiffVar {
     Var::new(Tensor::from_slice_on(vec![1], &[value], backend), false)
+}
+
+#[inline]
+fn require_beamlet_weights(
+    x: &[f64],
+    beamlets: usize,
+    field: &'static str,
+) -> Result<(), HeliosError> {
+    if x.len() == beamlets {
+        return Ok(());
+    }
+    Err(HeliosError::InvalidDomainValue {
+        field,
+        value: x.len() as f64,
+        reason: "weight count must equal the beamlet count",
+    })
+}
+
+#[inline]
+fn design_and_weight_var(
+    influence: &DoseInfluence<f64>,
+    x: &[f64],
+    backend: &MoiraiBackend,
+) -> (AutodiffVar, AutodiffVar) {
+    let (voxels, beamlets) = influence.dims();
+    let a = Var::new(
+        Tensor::from_slice_on(vec![voxels, beamlets], influence.rows(), backend),
+        false,
+    );
+    let xv = Var::new(Tensor::from_slice_on(vec![beamlets, 1], x, backend), true);
+    (a, xv)
+}
+
+#[inline]
+fn require_gradient(xv: &AutodiffVar, field: &'static str) -> Result<Vec<f64>, HeliosError> {
+    let grad = xv.grad().ok_or(HeliosError::InvalidDomainValue {
+        field,
+        value: f64::NAN,
+        reason: "autograd tape produced no gradient for x",
+    })?;
+    Ok(grad.as_slice().to_vec())
 }
 
 /// Gradient of the quadratic objective `½‖A·x − d‖²` with respect to `x`,
@@ -49,13 +92,7 @@ pub fn objective_gradient_autodiff(
     prescription: &[f64],
 ) -> Result<Vec<f64>, HeliosError> {
     let (voxels, beamlets) = influence.dims();
-    if x.len() != beamlets {
-        return Err(HeliosError::InvalidDomainValue {
-            field: "objective_gradient_autodiff::x",
-            value: x.len() as f64,
-            reason: "weight count must equal the beamlet count",
-        });
-    }
+    require_beamlet_weights(x, beamlets, "objective_gradient_autodiff::x")?;
     if prescription.len() != voxels {
         return Err(HeliosError::InvalidDomainValue {
             field: "objective_gradient_autodiff::prescription",
@@ -66,11 +103,7 @@ pub fn objective_gradient_autodiff(
 
     let backend = MoiraiBackend::new();
     // A: constants (no gradient tracked); x: the differentiated variable.
-    let a = Var::<f64, MoiraiBackend>::new(
-        Tensor::from_slice_on(vec![voxels, beamlets], influence.rows(), &backend),
-        false,
-    );
-    let xv = Var::new(Tensor::from_slice_on(vec![beamlets, 1], x, &backend), true);
+    let (a, xv) = design_and_weight_var(influence, x, &backend);
     let d = Var::new(
         Tensor::from_slice_on(vec![voxels, 1], prescription, &backend),
         false,
@@ -80,12 +113,8 @@ pub fn objective_gradient_autodiff(
     let loss = sum(&mul(&r, &r)); // ‖r‖² — tape gradient wrt x is 2·Aᵀr.
     let _ = loss.backward();
 
-    let grad = xv.grad().ok_or(HeliosError::InvalidDomainValue {
-        field: "objective_gradient_autodiff::grad",
-        value: f64::NAN,
-        reason: "autograd tape produced no gradient for x",
-    })?;
-    Ok(grad.as_slice().iter().map(|&g| 0.5 * g).collect())
+    let grad = require_gradient(&xv, "objective_gradient_autodiff::grad")?;
+    Ok(grad.into_iter().map(|g| 0.5 * g).collect())
 }
 
 /// One-sided DVH-style penalty band for the non-quadratic planning objective:
@@ -124,29 +153,25 @@ pub fn dvh_objective_gradient_autodiff(
     penalty: &DvhPenalty<'_>,
 ) -> Result<(f64, Vec<f64>), HeliosError> {
     let (voxels, beamlets) = influence.dims();
-    for (label, len, want) in [
-        ("x", x.len(), beamlets),
-        ("floor", penalty.floor.len(), voxels),
-        ("ceiling", penalty.ceiling.len(), voxels),
-    ] {
-        if len != want {
+    if x.len() != beamlets {
+        return Err(HeliosError::InvalidDomainValue {
+            field: "dvh_objective_gradient_autodiff",
+            value: x.len() as f64,
+            reason: "weight count must equal the beamlet count",
+        });
+    }
+    for len in [penalty.floor.len(), penalty.ceiling.len()] {
+        if len != voxels {
             return Err(HeliosError::InvalidDomainValue {
                 field: "dvh_objective_gradient_autodiff",
                 value: len as f64,
-                reason: match label {
-                    "x" => "weight count must equal the beamlet count",
-                    _ => "penalty band length must equal the voxel count",
-                },
+                reason: "penalty band length must equal the voxel count",
             });
         }
     }
 
     let backend = MoiraiBackend::new();
-    let a = Var::<f64, MoiraiBackend>::new(
-        Tensor::from_slice_on(vec![voxels, beamlets], influence.rows(), &backend),
-        false,
-    );
-    let xv = Var::new(Tensor::from_slice_on(vec![beamlets, 1], x, &backend), true);
+    let (a, xv) = design_and_weight_var(influence, x, &backend);
     // The autodiff tensor is a scalar numerical boundary. Preserve the
     // physical dose type through the public contract and unwrap it once here.
     let floor_values: Vec<f64> = penalty.floor.iter().map(|dose| *dose.as_base()).collect();
@@ -178,12 +203,8 @@ pub fn dvh_objective_gradient_autodiff(
     let value = loss.tensor.as_slice()[0];
     let _ = loss.backward();
 
-    let grad = xv.grad().ok_or(HeliosError::InvalidDomainValue {
-        field: "dvh_objective_gradient_autodiff::grad",
-        value: f64::NAN,
-        reason: "autograd tape produced no gradient for x",
-    })?;
-    Ok((value, grad.as_slice().to_vec()))
+    let grad = require_gradient(&xv, "dvh_objective_gradient_autodiff::grad")?;
+    Ok((value, grad))
 }
 
 /// Projected-gradient descent on the non-quadratic DVH-penalty objective, using
@@ -254,14 +275,8 @@ pub fn eud_objective_gradient_autodiff(
     x: &[f64],
     penalty: &EudPenalty,
 ) -> Result<(f64, Vec<f64>), HeliosError> {
-    let (voxels, beamlets) = influence.dims();
-    if x.len() != beamlets {
-        return Err(HeliosError::InvalidDomainValue {
-            field: "eud_objective_gradient_autodiff::x",
-            value: x.len() as f64,
-            reason: "weight count must equal the beamlet count",
-        });
-    }
+    let (_, beamlets) = influence.dims();
+    require_beamlet_weights(x, beamlets, "eud_objective_gradient_autodiff::x")?;
     let volume_effect =
         VolumeEffect::new(*penalty.a.as_base()).map_err(|_| HeliosError::InvalidDomainValue {
             field: "eud_objective_gradient_autodiff::a",
@@ -270,11 +285,7 @@ pub fn eud_objective_gradient_autodiff(
         })?;
 
     let backend = MoiraiBackend::new();
-    let a = Var::<f64, MoiraiBackend>::new(
-        Tensor::from_slice_on(vec![voxels, beamlets], influence.rows(), &backend),
-        false,
-    );
-    let xv = Var::new(Tensor::from_slice_on(vec![beamlets, 1], x, &backend), true);
+    let (a, xv) = design_and_weight_var(influence, x, &backend);
 
     let dose = matmul(&a, &xv);
     let geud = generalized_equivalent_uniform_dose(&dose, volume_effect).map_err(|error| {
@@ -301,12 +312,8 @@ pub fn eud_objective_gradient_autodiff(
 
     let value = loss.tensor.as_slice()[0];
     let _ = loss.backward();
-    let grad = xv.grad().ok_or(HeliosError::InvalidDomainValue {
-        field: "eud_objective_gradient_autodiff::grad",
-        value: f64::NAN,
-        reason: "autograd tape produced no gradient for x",
-    })?;
-    Ok((value, grad.as_slice().to_vec()))
+    let grad = require_gradient(&xv, "eud_objective_gradient_autodiff::grad")?;
+    Ok((value, grad))
 }
 
 #[cfg(test)]
