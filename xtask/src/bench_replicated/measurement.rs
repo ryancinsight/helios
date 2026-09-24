@@ -12,6 +12,7 @@ const BENCHMARK_TARGETS: &[(&str, &str)] = &[
     ("helios-analysis", "dvh_queries"),
     ("helios-gpu", "projection_throughput"),
     ("helios-gpu", "transmission_throughput"),
+    ("helios-imaging", "ramp_filter"),
     ("helios-solver", "scatter_superposition"),
 ];
 
@@ -228,7 +229,7 @@ mod tests {
     fn every_target_names_a_nonempty_package_and_bench() {
         // The CI smoke job and this runner share BENCHMARK_TARGETS through
         // this file; the smoke list is asserted identical by construction.
-        assert_eq!(BENCHMARK_TARGETS.len(), 4);
+        assert_eq!(BENCHMARK_TARGETS.len(), 5);
         for (package, bench) in BENCHMARK_TARGETS {
             assert!(!package.is_empty() && !bench.is_empty());
         }

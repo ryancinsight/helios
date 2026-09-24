@@ -1406,6 +1406,8 @@ name = "helios-imaging"
 version = "0.1.0"
 dependencies = [
  "aequitas",
+ "apollo-fft",
+ "criterion",
  "eunomia",
  "helios-analysis",
  "helios-core",

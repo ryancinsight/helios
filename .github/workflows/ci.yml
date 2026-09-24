@@ -201,6 +201,7 @@ jobs:
         helios-analysis:dvh_queries
         helios-gpu:projection_throughput
         helios-gpu:transmission_throughput
+        helios-imaging:ramp_filter
         helios-solver:scatter_superposition
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803

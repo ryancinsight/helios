@@ -8,36 +8,18 @@
 //!
 //! Assumes uniformly-spaced projection angles over `[0, π)` and uniformly-spaced
 //! detector offsets — the standard parallel-beam FBP sampling.
+//!
+//! The ramp-filter stage — the reconstruction's only super-linear-cost step — is
+//! performed in the frequency domain through the Atlas transform provider; see
+//! the `ramp` module. It runs in `f64` regardless of the sinogram's storage
+//! width, which enters only at the boundary conversion.
 
 use crate::radon::Sinogram;
+use crate::ramp::{ram_lak_kernel, ramp_filter_rows, RampMethod};
 use aequitas::systems::si::units::{Millimeter, Radian};
 use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
-use helios_math::{GeometryScalar, NumericElement};
-
-/// Ram-Lak ramp-filter kernel `h[n]` for `n ∈ [−(len−1), len−1]`, sample spacing
-/// `ds_cm`. `h[0]=1/(4Δs²)`, `h[odd]=−1/(π²n²Δs²)`, `h[even≠0]=0`. Returned as a
-/// `2·len−1` vector indexed by `n + (len−1)`.
-fn ram_lak_kernel<T: GeometryScalar>(len: usize, ds_cm: T) -> Vec<T> {
-    let zero = <T as NumericElement>::ZERO;
-    let inv_ds_sq = (ds_cm * ds_cm).recip();
-    let quarter = <T as GeometryScalar>::from_f64(0.25);
-    let pi_sq = T::PI * T::PI;
-    let mut kernel = vec![zero; 2 * len - 1];
-    let base = len as isize - 1;
-    for n in -base..=base {
-        let value = if n == 0 {
-            quarter * inv_ds_sq
-        } else if n % 2 != 0 {
-            let n_t = <T as GeometryScalar>::from_f64((n * n) as f64);
-            -(pi_sq * n_t).recip() * inv_ds_sq
-        } else {
-            zero
-        };
-        kernel[(n + base) as usize] = value;
-    }
-    kernel
-}
+use helios_math::GeometryScalar;
 
 /// Reconstruct the axial `μ` slice from `sinogram` onto `recon` by filtered
 /// back-projection.
@@ -50,30 +32,29 @@ pub fn filtered_back_projection<T: GeometryScalar + eunomia::UnitScalar>(
     sinogram: &Sinogram<T>,
     recon: &VoxelGrid<T>,
 ) -> Volume<T> {
-    let zero = <T as NumericElement>::ZERO;
     let (n_ang, n_off) = sinogram.dims();
     let angles = sinogram.angles();
     let offsets = sinogram.offsets();
-    let mm_to_cm = <T as GeometryScalar>::from_f64(MM_PER_CM).recip();
+    let mm_to_cm = MM_PER_CM.recip();
 
-    // Detector spacing in cm (drives the ramp-filter sample spacing).
-    let ds_cm =
-        (offsets[1].in_unit::<Millimeter>() - offsets[0].in_unit::<Millimeter>()) * mm_to_cm;
-    let kernel = ram_lak_kernel::<T>(n_off, ds_cm);
-    let base = n_off as isize - 1;
+    // Detector spacing in cm (drives the ramp-filter sample spacing). The filter
+    // itself runs in f64, so the spacing is taken there rather than in `T`.
+    let ds_cm = (offsets[1].in_unit::<Millimeter>() - offsets[0].in_unit::<Millimeter>()).to_f64()
+        * mm_to_cm;
 
-    // Ram-Lak-filtered projections: filtered[a][i] = Δs · Σ_k p[a][k]·h[i−k].
-    let mut filtered = vec![zero; n_ang * n_off];
+    // Ramp-filter the projections: rows[a * n_off + i] = Δs · Σ_k p[a][k]·h[i−k].
+    let mut rows: Vec<f64> = Vec::with_capacity(n_ang * n_off);
     for a in 0..n_ang {
-        for i in 0..n_off {
-            let mut acc = zero;
-            for k in 0..n_off {
-                let m = i as isize - k as isize; // in [-(n_off-1), n_off-1]
-                acc += sinogram.get(a, k) * kernel[(m + base) as usize];
-            }
-            filtered[a * n_off + i] = acc * ds_cm;
+        for k in 0..n_off {
+            rows.push(sinogram.get(a, k).to_f64());
         }
     }
+    let kernel = ram_lak_kernel(n_off, ds_cm);
+    ramp_filter_rows(&mut rows, n_ang, n_off, &kernel, ds_cm, RampMethod::Auto);
+    let filtered: Vec<T> = rows
+        .iter()
+        .map(|v| <T as GeometryScalar>::from_f64(*v))
+        .collect();
 
     // Back-project the ramp-filtered rows, weighted by the angular step Δθ.
     let d_theta = if n_ang > 1 {
@@ -264,21 +245,6 @@ mod tests {
             std_low > std_high,
             "lower flux must be noisier: {std_low} !> {std_high}"
         );
-    }
-
-    #[test]
-    fn ram_lak_kernel_has_expected_structure() {
-        let k = ram_lak_kernel::<f64>(4, 0.1); // len 4 → indices n=-3..3
-        let base = 3;
-        // Even taps (n=±2) are zero.
-        assert_eq!(k[base + 2], 0.0);
-        assert_eq!(k[base - 2], 0.0);
-        // Peak at n=0 is positive; odd taps negative.
-        assert!(k[base] > 0.0);
-        assert!(k[base + 1] < 0.0 && k[base + 3] < 0.0);
-        // Symmetric.
-        assert_relative_eq!(k[base + 1], k[base - 1], epsilon = 1e-15);
-        assert_relative_eq!(k[base + 3], k[base - 3], epsilon = 1e-15);
     }
 
     /// Reconstruction accuracy tolerated at the centre of a uniform disk.
