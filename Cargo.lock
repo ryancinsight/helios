@@ -566,6 +566,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "coeus-nn"
+version = "0.10.0"
+source = "git+https://github.com/ryancinsight/Coeus.git#bfb90c5c3caaffaa8f330b6c27025e931b852d08"
+dependencies = [
+ "coeus-autograd",
+ "coeus-core",
+ "coeus-leto",
+ "coeus-ops",
+ "coeus-tensor",
+ "smallvec",
+ "thiserror 2.0.20",
+]
+
+[[package]]
 name = "coeus-ops"
 version = "0.10.0"
 source = "git+https://github.com/ryancinsight/Coeus.git#bfb90c5c3caaffaa8f330b6c27025e931b852d08"
@@ -579,6 +593,20 @@ dependencies = [
  "leto",
  "leto-ops",
  "smallvec",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "coeus-optim"
+version = "0.10.0"
+source = "git+https://github.com/ryancinsight/Coeus.git#bfb90c5c3caaffaa8f330b6c27025e931b852d08"
+dependencies = [
+ "coeus-autograd",
+ "coeus-core",
+ "coeus-ops",
+ "coeus-tensor",
+ "leto",
+ "leto-ops",
  "thiserror 2.0.20",
 ]
 
@@ -1415,6 +1443,7 @@ dependencies = [
  "helios-math",
  "helios-solver",
  "hyperion",
+ "ritk-registration",
  "tyche-core",
 ]
 
@@ -2940,18 +2969,45 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19b30a45b0cd0bcca8037f3d0dc3421eaf95327a17cad11964fb8179b4fc4832"
 
 [[package]]
+name = "ritk-annotation"
+version = "0.2.0"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
+dependencies = [
+ "ritk-spatial",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+]
+
+[[package]]
 name = "ritk-codecs"
 version = "0.6.0"
-source = "git+https://github.com/ryancinsight/ritk#28e2acdf4ee8a937d55f452635a93c532df5487a"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
 dependencies = [
  "anyhow",
  "consus-raster",
 ]
 
 [[package]]
+name = "ritk-core"
+version = "0.10.0"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
+dependencies = [
+ "coeus-core",
+ "coeus-tensor",
+ "mnemosyne-memory",
+ "ritk-annotation",
+ "ritk-image",
+ "ritk-morphology",
+ "ritk-spatial",
+ "ritk-statistics",
+ "ritk-tensor-ops",
+]
+
+[[package]]
 name = "ritk-dicom"
 version = "0.2.0"
-source = "git+https://github.com/ryancinsight/ritk#28e2acdf4ee8a937d55f452635a93c532df5487a"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -2968,7 +3024,7 @@ dependencies = [
 [[package]]
 name = "ritk-diffusion-scheme"
 version = "0.2.0"
-source = "git+https://github.com/ryancinsight/ritk#28e2acdf4ee8a937d55f452635a93c532df5487a"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
 dependencies = [
  "aequitas",
  "ritk-spatial",
@@ -2976,14 +3032,201 @@ dependencies = [
 ]
 
 [[package]]
+name = "ritk-filter"
+version = "0.4.0"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
+dependencies = [
+ "anyhow",
+ "apollo-fft",
+ "coeus-core",
+ "coeus-ops",
+ "coeus-tensor",
+ "eunomia",
+ "gaia-mesh",
+ "leto",
+ "leto-ops",
+ "mnemosyne-memory",
+ "moirai-runtime",
+ "rand 0.9.5",
+ "ritk-annotation",
+ "ritk-core",
+ "ritk-image",
+ "ritk-interpolation",
+ "ritk-morphology",
+ "ritk-spatial",
+ "ritk-statistics",
+ "ritk-tensor-ops",
+ "ritk-transform",
+ "ritk-wgpu-compat",
+ "serde",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "ritk-image"
+version = "0.4.0"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
+dependencies = [
+ "anyhow",
+ "coeus-autograd",
+ "coeus-core",
+ "coeus-nn",
+ "coeus-ops",
+ "coeus-optim",
+ "coeus-tensor",
+ "rand 0.9.5",
+ "ritk-spatial",
+ "ritk-wgpu-compat",
+]
+
+[[package]]
+name = "ritk-interpolation"
+version = "0.5.0"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
+dependencies = [
+ "anyhow",
+ "coeus-core",
+ "coeus-ops",
+ "coeus-tensor",
+ "eunomia",
+ "ritk-core",
+ "ritk-image",
+ "ritk-spatial",
+ "ritk-tensor-ops",
+ "ritk-wgpu-compat",
+ "serde",
+]
+
+[[package]]
+name = "ritk-morphology"
+version = "0.2.0"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
+
+[[package]]
+name = "ritk-parcellation"
+version = "0.1.0"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
+dependencies = [
+ "ritk-annotation",
+ "ritk-spatial",
+ "serde",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "ritk-registration"
+version = "0.54.0"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
+dependencies = [
+ "anyhow",
+ "coeus-autograd",
+ "coeus-core",
+ "coeus-nn",
+ "coeus-ops",
+ "coeus-optim",
+ "coeus-tensor",
+ "eunomia",
+ "leto",
+ "leto-ops",
+ "moirai-runtime",
+ "ritk-core",
+ "ritk-filter",
+ "ritk-image",
+ "ritk-interpolation",
+ "ritk-parcellation",
+ "ritk-segmentation",
+ "ritk-spatial",
+ "ritk-tensor-ops",
+ "ritk-transform",
+ "serde",
+ "thiserror 2.0.20",
+ "tracing",
+]
+
+[[package]]
+name = "ritk-segmentation"
+version = "0.3.0"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
+dependencies = [
+ "anyhow",
+ "coeus-core",
+ "coeus-tensor",
+ "leto",
+ "leto-ops",
+ "mnemosyne-memory",
+ "moirai-runtime",
+ "ritk-core",
+ "ritk-filter",
+ "ritk-image",
+ "ritk-tensor-ops",
+ "tracing",
+]
+
+[[package]]
 name = "ritk-spatial"
 version = "0.2.0"
-source = "git+https://github.com/ryancinsight/ritk#28e2acdf4ee8a937d55f452635a93c532df5487a"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
 dependencies = [
  "leto",
  "serde",
  "thiserror 2.0.20",
 ]
+
+[[package]]
+name = "ritk-statistics"
+version = "0.4.0"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
+dependencies = [
+ "anyhow",
+ "coeus-core",
+ "coeus-tensor",
+ "moirai-runtime",
+ "ritk-image",
+ "ritk-spatial",
+ "ritk-tensor-ops",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "ritk-tensor-ops"
+version = "0.2.0"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
+dependencies = [
+ "anyhow",
+ "coeus-core",
+ "coeus-leto",
+ "coeus-ops",
+ "coeus-tensor",
+ "eunomia",
+ "ritk-image",
+ "ritk-spatial",
+]
+
+[[package]]
+name = "ritk-transform"
+version = "0.2.0"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
+dependencies = [
+ "coeus-autograd",
+ "coeus-core",
+ "coeus-nn",
+ "coeus-ops",
+ "coeus-tensor",
+ "ritk-core",
+ "ritk-image",
+ "ritk-interpolation",
+ "ritk-spatial",
+ "ritk-tensor-ops",
+ "ritk-wgpu-compat",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "ritk-wgpu-compat"
+version = "0.2.0"
+source = "git+https://github.com/ryancinsight/ritk#1f5df21386a2cc9e4499fbf13c191faae51d7d6f"
 
 [[package]]
 name = "rkyv"
