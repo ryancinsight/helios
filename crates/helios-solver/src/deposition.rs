@@ -20,6 +20,17 @@ use hyperion::{
     TransportError,
 };
 
+#[inline]
+fn segment_optical_depth<T: GeometryScalar + UnitScalar>(
+    mu_sample: T,
+    path: PathLength<T>,
+) -> Result<OpticalDepth<T>, TransportError<T>> {
+    let coefficient = InteractionCoefficient::<T, LinearAttenuation>::new(
+        ReciprocalLength::from_unit::<PerCentimeter>(mu_sample),
+    )?;
+    coefficient.optical_depth(path)
+}
+
 /// Nearest voxel index along one axis for a continuous index `coord`, clamped to
 /// `[0, n−1]`. Segment midpoints lie inside the node-centre AABB, so the clamp
 /// only guards floating-point boundary rounding.
@@ -131,11 +142,7 @@ fn deposit_terma_impl<T: GeometryScalar + UnitScalar>(
     // segment depths make every partial sum bounded by this checked total.
     let _validated_total = (0..plan.steps()).try_fold(OpticalDepth::zero(), |total, i| {
         let (_, _, mu_sample) = sample(i);
-        let coefficient =
-            InteractionCoefficient::<T, LinearAttenuation>::new(ReciprocalLength::from_unit::<
-                PerCentimeter,
-            >(mu_sample))?;
-        total.checked_add(coefficient.optical_depth(path)?)
+        total.checked_add(segment_optical_depth(mu_sample, path)?)
     })?;
 
     let mut optical_depth = OpticalDepth::zero();
@@ -143,11 +150,7 @@ fn deposit_terma_impl<T: GeometryScalar + UnitScalar>(
     let mut total = T::ZERO;
     for i in 0..plan.steps() {
         let (world_pt, index, mu_sample) = sample(i);
-        let coefficient =
-            InteractionCoefficient::<T, LinearAttenuation>::new(ReciprocalLength::from_unit::<
-                PerCentimeter,
-            >(mu_sample))?;
-        optical_depth = optical_depth.checked_add(coefficient.optical_depth(path)?)?;
+        optical_depth = optical_depth.checked_add(segment_optical_depth(mu_sample, path)?)?;
         let trans_after = optical_depth.transmission().into_quantity().into_base();
         let mut absorbed = weight * (trans_before - trans_after);
         if let Some((focal, sad)) = falloff {
