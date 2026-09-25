@@ -6,7 +6,7 @@
 //! voxel, producing the terma (total energy released per unit mass) that a
 //! collapsed-cone/convolution dose engine spreads with a scatter kernel.
 
-use crate::projector::{ray_grid_interval, RayMarchPlan};
+use crate::projector::{ray_grid_interval, sample_volume_along_ray, RayMarchPlan};
 use aequitas::systems::si::{
     quantities::{AbsorbedDose, Length, ReciprocalLength},
     units::{Centimeter, PerCentimeter},
@@ -25,9 +25,10 @@ fn segment_optical_depth<T: GeometryScalar + UnitScalar>(
     mu_sample: T,
     path: PathLength<T>,
 ) -> Result<OpticalDepth<T>, TransportError<T>> {
-    let coefficient = InteractionCoefficient::<T, LinearAttenuation>::new(
-        ReciprocalLength::from_unit::<PerCentimeter>(mu_sample),
-    )?;
+    let coefficient =
+        InteractionCoefficient::<T, LinearAttenuation>::new(ReciprocalLength::from_unit::<
+            PerCentimeter,
+        >(mu_sample))?;
     coefficient.optical_depth(path)
 }
 
@@ -130,18 +131,11 @@ fn deposit_terma_impl<T: GeometryScalar + UnitScalar>(
     };
     let path = PathLength::new(Length::from_unit::<Centimeter>(plan.step_cm()))?;
     let [nx, ny, nz] = grid.dims();
-    let sample = |i: usize| {
-        let t_mid = plan.midpoint_t(i);
-        let world_pt: Point3<T> = ray.point_at(t_mid);
-        let index = grid.world_to_index(world_pt);
-        let mu_sample = mu.sample_trilinear(index).unwrap_or(T::ZERO);
-        (world_pt, index, mu_sample)
-    };
 
     // Validate the complete ray before mutating the output. Non-negative
     // segment depths make every partial sum bounded by this checked total.
     let _validated_total = (0..plan.steps()).try_fold(OpticalDepth::zero(), |total, i| {
-        let (_, _, mu_sample) = sample(i);
+        let (_, _, mu_sample) = sample_volume_along_ray(mu, ray, plan, i);
         total.checked_add(segment_optical_depth(mu_sample, path)?)
     })?;
 
@@ -149,7 +143,7 @@ fn deposit_terma_impl<T: GeometryScalar + UnitScalar>(
     let mut trans_before = <T as NumericElement>::ONE; // e^{−τ} at τ = 0.
     let mut total = T::ZERO;
     for i in 0..plan.steps() {
-        let (world_pt, index, mu_sample) = sample(i);
+        let (world_pt, index, mu_sample) = sample_volume_along_ray(mu, ray, plan, i);
         optical_depth = optical_depth.checked_add(segment_optical_depth(mu_sample, path)?)?;
         let trans_after = optical_depth.transmission().into_quantity().into_base();
         let mut absorbed = weight * (trans_before - trans_after);
@@ -581,9 +575,10 @@ mod tests {
         for i in 2..=8usize {
             let depth = depth_mm(i);
             // exp(−μ·Δdepth) with μ in cm⁻¹ and the depth difference in cm.
-            let attenuation =
-                cast(-WATER_MU_PER_CM * (depth - reference_depth) / helios_core::constants::MM_PER_CM)
-                    .exp();
+            let attenuation = cast(
+                -WATER_MU_PER_CM * (depth - reference_depth) / helios_core::constants::MM_PER_CM,
+            )
+            .exp();
             let divergence = cast(((PDD_SSD_MM + reference_depth) / (PDD_SSD_MM + depth)).powi(2));
             let expected = attenuation * divergence;
             let pdd = dose.get(i, 1, 1).expect("in-grid voxel") * reference.recip();
@@ -602,12 +597,10 @@ mod tests {
         // The divergence term is not decorative: at 15 cm the full law sits
         // strictly below pure attenuation, by the (810/950)² = 0.727 factor.
         let deepest = dose.get(8, 1, 1).expect("in-grid voxel") * reference.recip();
-        let attenuation_only =
-            cast(
-                -WATER_MU_PER_CM * (depth_mm(8) - reference_depth)
-                    / helios_core::constants::MM_PER_CM,
-            )
-            .exp();
+        let attenuation_only = cast(
+            -WATER_MU_PER_CM * (depth_mm(8) - reference_depth) / helios_core::constants::MM_PER_CM,
+        )
+        .exp();
         assert!(
             deepest < attenuation_only,
             "inverse-square divergence must steepen the depth-dose curve: \

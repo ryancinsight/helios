@@ -105,6 +105,21 @@ pub(crate) fn ray_grid_interval<T: GeometryScalar>(
     Some((enter * local_speed.recip(), exit * local_speed.recip()))
 }
 
+/// Midpoint-sample `vol` at a ray-march step, returning the world-space sample
+/// point, its continuous grid index, and the trilinearly interpolated value.
+#[inline]
+pub(crate) fn sample_volume_along_ray<T: GeometryScalar>(
+    vol: &Volume<T>,
+    ray: &Ray<T>,
+    plan: RayMarchPlan<T>,
+    sample: usize,
+) -> (Point3<T>, Point3<T>, T) {
+    let world_pt: Point3<T> = ray.point_at(plan.midpoint_t(sample));
+    let index = vol.grid().world_to_index(world_pt);
+    let value = vol.sample_trilinear(index).unwrap_or(T::ZERO);
+    (world_pt, index, value)
+}
+
 /// Ray-march the optical depth `τ = ∫ μ dl` of `ray` through the `mu` volume.
 ///
 /// The `mu` volume holds the linear attenuation coefficient in **cm⁻¹** (physics
@@ -130,9 +145,7 @@ pub fn forward_project_ray<T: GeometryScalar>(
 
     let mut tau = T::ZERO;
     for i in 0..plan.steps() {
-        let world_pt: Point3<T> = ray.point_at(plan.midpoint_t(i));
-        let index = grid.world_to_index(world_pt);
-        let mu_sample = mu.sample_trilinear(index).unwrap_or(T::ZERO);
+        let (_, _, mu_sample) = sample_volume_along_ray(mu, ray, plan, i);
         tau += mu_sample * step_cm;
     }
     Some(tau)
