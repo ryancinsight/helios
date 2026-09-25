@@ -16,6 +16,12 @@ under a Breaking subsection.
   measures both convolution paths per detector width and is registered in the
   shared `BENCHMARK_TARGETS` list.
 
+- `helios-imaging::register_translation` and `register_translation_ncc` now
+  report a typed `TranslationRegistrationError` — re-exported from
+  `ritk-registration` — instead of a sentinel displacement, and pin the
+  delegated kernel's error surface with tests for a mismatched grid, a
+  non-finite voxel in either buffer, and an all-zero-variance NCC search.
+
 - The Compton-scattering book chapter now carries an executable Rust
   Thomson-limit oracle; `mdbook test` runs the analytical check instead of
   leaving the book's Rust-sample gate vacuous.
@@ -51,6 +57,18 @@ under a Breaking subsection.
   internally, so no bound widens at the public seam. Measured on the new
   `ramp_filter` bench target (64 projections per width): **4.3×** at 181
   detector samples, **9.9×** at 512, **19.0×** at 1024 (backlog H-113).
+
+- **Breaking**: `helios-imaging::register_translation` and
+  `register_translation_ncc` delegate the exhaustive integer-voxel search to
+  `ritk-registration` (`classical::translation`, with the `MeanSquaredDifference`
+  and `NormalizedCrossCorrelation` metric policies) and return
+  `Result<[isize; 3], TranslationRegistrationError>`. The hand-rolled search is
+  deleted; the sign convention (`moving(v) ≈ fixed(v − s)`), the axis order, the
+  tie-breaking and the metric definitions are unchanged, so the exact-recovery
+  oracles hold verbatim. A volume that cannot be scored — a grid that does not
+  account for both buffers, a search radius beyond `isize::MAX`, or a non-finite
+  voxel — is now reported instead of silently returning a plausible-looking
+  couch shift. See [H-113](backlog.md).
 
 - Benchmarks are a local instrument; CI no longer classifies performance
   (ADR 0003, revision 2026-09-21). The hosted `benchmark-regression` timing

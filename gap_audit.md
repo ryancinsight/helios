@@ -96,20 +96,22 @@ Consumed by at least one member crate: `aequitas`, `eunomia`, `leto`, `gaia`,
 `horae`, `ritk-dicom`, `apollo` (`apollo-fft`).
 
 Declared in the workspace SSOT but consumed by no member: `ritk-core`,
-`ritk-io`, `ritk-registration`, `hermes-simd`, `mnemosyne-core`,
-`consus-compression`. One of those is substituted by a Helios-local
-implementation rather than being merely unused vocabulary:
+`ritk-io`, `hermes-simd`, `mnemosyne-core`, `consus-compression`. Both
+Helios-local substitutions that stood in for a provider that owns the capability
+are now resolved (H-113):
 
-- `crates/helios-imaging/src/registration.rs` hand-rolls exhaustive whole-voxel
-  SSD and NCC registration while `ritk-registration` is never declared at member
-  level.
+- `crates/helios-imaging/src/registration.rs` hand-rolled exhaustive whole-voxel
+  SSD and NCC registration while `ritk-registration` was never declared at member
+  level; it now delegates the search to
+  `ritk-registration::classical::translation` and returns the provider's typed
+  error.
 
-The second substitution is resolved. `crates/helios-imaging/src/ramp.rs` now
-performs the Ram-Lak ramp convolution through `apollo-fft` — a zero-padded
-linear convolution whose pad length (`N ≥ 3·n_off − 2`) leaves no sample touched
-by circular wrap-around, so the transform path reproduces the spatial form it
-replaced. The spatial convolution is retained as the reference the transform
-path is differentially tested against (H-113).
+- `crates/helios-imaging/src/ramp.rs` now
+  performs the Ram-Lak ramp convolution through `apollo-fft` — a zero-padded
+  linear convolution whose pad length (`N ≥ 3·n_off − 2`) leaves no sample touched
+  by circular wrap-around, so the transform path reproduces the spatial form it
+  replaced. The spatial convolution is retained as the reference the transform
+  path is differentially tested against.
 
 `mnemosyne-core` is the sharpest case: `docs/book/memory.md` documented an arena
 integration that exists nowhere in the source (zero `mnemosyne` matches under

@@ -149,7 +149,8 @@ fn main() {
         &plan_ct,
         &daily_ct,
         [4, 4, 0], // search ±4 voxels in x/y, 0 in z (2D phantom)
-    );
+    )
+    .expect("planning and daily CT share the phantom grid and are finite");
     println!(
         "  Applied shift:    [{}, {}]",
         applied_shift[0], applied_shift[1]
