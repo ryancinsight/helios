@@ -5,13 +5,30 @@
 //! difference over their overlap — the setup-error / couch-shift estimate that
 //! image-guided radiation therapy applies before delivery.
 //!
-//! This is the translation-only, whole-voxel core. Sub-voxel interpolation,
-//! rotation, and deformable registration (mutual-information, via `ritk`) extend
-//! it; the exhaustive whole-voxel search here is the deterministic, analytically
-//! verifiable base case (recovering a known applied shift exactly).
+//! The exhaustive search is `ritk-registration`'s
+//! [`classical::translation`](ritk_registration::classical::translation) kernel:
+//! two borrowed flat buffers, a zero-sized metric policy resolved statically, and
+//! no allocation. Helios supplies the [`Volume`] views and the displacement sign
+//! convention, and re-exports the kernel's typed error as
+//! [`TranslationRegistrationError`] so callers need not name the provider.
+//! Sub-voxel interpolation, rotation, and deformable registration (mutual
+//! information, also `ritk`) extend it; the whole-voxel search here is the
+//! deterministic, analytically verifiable base case (recovering a known applied
+//! shift exactly).
 
 use helios_domain::Volume;
 use helios_math::GeometryScalar;
+use ritk_registration::classical::translation::{
+    self, MeanSquaredDifference, NormalizedCrossCorrelation,
+};
+
+/// Why a translation search produced no displacement.
+///
+/// Re-exported from `ritk-registration`, which owns the search and the checks
+/// that precede it: a shape that does not match the buffers, a search radius that
+/// is not representable as a signed offset, a non-finite voxel, or a search in
+/// which every candidate had an undefined metric.
+pub use ritk_registration::classical::translation::TranslationRegistrationError;
 
 /// Estimate the integer-voxel displacement `s` of `moving` relative to `fixed`.
 ///
@@ -21,64 +38,35 @@ use helios_math::GeometryScalar;
 /// the minimum (zero) is at exactly that `s` — so `s` is the setup displacement to
 /// correct. `fixed` and `moving` are assumed to share a grid.
 ///
+/// # Errors
+///
+/// [`TranslationRegistrationError::ShapeMismatch`] when the grid dimensions do not
+/// account for both buffers (including a dimension product that overflows),
+/// [`TranslationRegistrationError::SearchRadiusOverflow`] when a radius exceeds
+/// `isize::MAX`, [`TranslationRegistrationError::NonFiniteInput`] when either
+/// volume holds a NaN or infinite voxel — every candidate cost is then undefined,
+/// so the volume is reported rather than silently scored — and
+/// [`TranslationRegistrationError::UndefinedMetric`] when no candidate had a
+/// non-empty overlap.
+///
 /// The mean-over-overlap SSD assumes **textured** images (real CT/MVCT), where any
 /// misalignment leaves residual structure; on a near-flat image a large shift that
-/// slides all features out of the overlap can tie the true minimum. A masked /
-/// normalized-cross-correlation metric (H-044b) removes that assumption.
+/// slides all features out of the overlap can tie the true minimum. Use
+/// [`register_translation_ncc`] for that case.
 ///
 /// Cost: `∏(2·max_shift + 1)` candidate shifts × overlap voxels (exhaustive); a
 /// coarse-to-fine search and `ritk` mutual-information registration scale it up.
-#[must_use]
 pub fn register_translation<T: GeometryScalar>(
     fixed: &Volume<T>,
     moving: &Volume<T>,
     max_shift: [usize; 3],
-) -> [isize; 3] {
-    let dims = fixed.grid().dims();
-    let r = [
-        max_shift[0] as isize,
-        max_shift[1] as isize,
-        max_shift[2] as isize,
-    ];
-
-    let mut best = [0isize; 3];
-    let mut best_cost = f64::INFINITY;
-    for s0 in -r[0]..=r[0] {
-        for s1 in -r[1]..=r[1] {
-            for s2 in -r[2]..=r[2] {
-                let mut ssd = 0.0f64;
-                let mut count = 0usize;
-                for i in 0..dims[0] {
-                    for j in 0..dims[1] {
-                        for k in 0..dims[2] {
-                            let (fi, fj, fk) = (i as isize - s0, j as isize - s1, k as isize - s2);
-                            if fi < 0 || fj < 0 || fk < 0 {
-                                continue;
-                            }
-                            let (Some(m), Some(f)) = (
-                                moving.get(i, j, k),
-                                fixed.get(fi as usize, fj as usize, fk as usize),
-                            ) else {
-                                continue;
-                            };
-                            let d = m.to_f64() - f.to_f64();
-                            ssd += d * d;
-                            count += 1;
-                        }
-                    }
-                }
-                if count == 0 {
-                    continue;
-                }
-                let cost = ssd / count as f64;
-                if cost < best_cost {
-                    best_cost = cost;
-                    best = [s0, s1, s2];
-                }
-            }
-        }
-    }
-    best
+) -> Result<[isize; 3], TranslationRegistrationError> {
+    translation::register_translation::<T, MeanSquaredDifference>(
+        fixed.as_slice(),
+        moving.as_slice(),
+        fixed.grid().dims(),
+        max_shift,
+    )
 }
 
 /// Normalized-cross-correlation (NCC) variant of [`register_translation`],
@@ -89,74 +77,28 @@ pub fn register_translation<T: GeometryScalar>(
 /// `NCC(s) = Σ(m−m̄)(f−f̄) / (N·σ_m·σ_f)`, `m = moving(v)`, `f = fixed(v − s)`.
 /// Because NCC measures *correlation* (invariant to intensity offset/scale), a
 /// shift that slides all structure out of the overlap leaves a near-constant
-/// (zero-variance) region — which is rejected rather than scored as a perfect
-/// match, curing the SSD false-minimum on near-flat images (the H-044 limitation).
-/// Overlaps with fewer than two voxels or vanishing variance are skipped; if no
-/// shift yields a valid correlation the result is `[0, 0, 0]`.
-#[must_use]
+/// (zero-variance) region — which the metric rejects rather than scoring as a
+/// perfect match, curing the SSD false-minimum on near-flat images (the H-044
+/// limitation). Candidates whose variance product is not positive are skipped; if
+/// no shift yields a valid correlation the search reports
+/// [`TranslationRegistrationError::UndefinedMetric`].
+///
+/// # Errors
+///
+/// As [`register_translation`], except that an all-zero-variance search reaches
+/// [`TranslationRegistrationError::UndefinedMetric`] rather than returning a
+/// displacement.
 pub fn register_translation_ncc<T: GeometryScalar>(
     fixed: &Volume<T>,
     moving: &Volume<T>,
     max_shift: [usize; 3],
-) -> [isize; 3] {
-    let dims = fixed.grid().dims();
-    let r = [
-        max_shift[0] as isize,
-        max_shift[1] as isize,
-        max_shift[2] as isize,
-    ];
-
-    let mut best = [0isize; 3];
-    let mut best_ncc = f64::NEG_INFINITY;
-    for s0 in -r[0]..=r[0] {
-        for s1 in -r[1]..=r[1] {
-            for s2 in -r[2]..=r[2] {
-                let (mut sm, mut sf, mut smf, mut smm, mut sff) = (0.0, 0.0, 0.0, 0.0, 0.0);
-                let mut count = 0usize;
-                for i in 0..dims[0] {
-                    for j in 0..dims[1] {
-                        for k in 0..dims[2] {
-                            let (fi, fj, fk) = (i as isize - s0, j as isize - s1, k as isize - s2);
-                            if fi < 0 || fj < 0 || fk < 0 {
-                                continue;
-                            }
-                            let (Some(m), Some(f)) = (
-                                moving.get(i, j, k),
-                                fixed.get(fi as usize, fj as usize, fk as usize),
-                            ) else {
-                                continue;
-                            };
-                            let (m, f) = (m.to_f64(), f.to_f64());
-                            sm += m;
-                            sf += f;
-                            smf += m * f;
-                            smm += m * m;
-                            sff += f * f;
-                            count += 1;
-                        }
-                    }
-                }
-                if count < 2 {
-                    continue;
-                }
-                let n = count as f64;
-                let (mbar, fbar) = (sm / n, sf / n);
-                let cov = smf / n - mbar * fbar;
-                let var_m = (smm / n - mbar * mbar).max(0.0);
-                let var_f = (sff / n - fbar * fbar).max(0.0);
-                let denom = (var_m * var_f).sqrt();
-                if denom <= 1e-12 {
-                    continue; // near-constant overlap carries no correlation signal
-                }
-                let ncc = cov / denom;
-                if ncc > best_ncc {
-                    best_ncc = ncc;
-                    best = [s0, s1, s2];
-                }
-            }
-        }
-    }
-    best
+) -> Result<[isize; 3], TranslationRegistrationError> {
+    translation::register_translation::<T, NormalizedCrossCorrelation>(
+        fixed.as_slice(),
+        moving.as_slice(),
+        fixed.grid().dims(),
+        max_shift,
+    )
 }
 
 #[cfg(test)]
@@ -189,13 +131,19 @@ mod tests {
         // moving bowl centred at (4,4), fixed at (2,5) → displacement (2,−1,0).
         let fixed = bowl(2.0, 5.0);
         let moving = bowl(4.0, 4.0);
-        assert_eq!(register_translation(&fixed, &moving, [3, 3, 0]), [2, -1, 0]);
+        assert_eq!(
+            register_translation(&fixed, &moving, [3, 3, 0]),
+            Ok([2, -1, 0])
+        );
     }
 
     #[test]
     fn identical_images_register_to_zero() {
         let fixed = bowl(4.0, 4.0);
-        assert_eq!(register_translation(&fixed, &fixed, [2, 2, 0]), [0, 0, 0]);
+        assert_eq!(
+            register_translation(&fixed, &fixed, [2, 2, 0]),
+            Ok([0, 0, 0])
+        );
     }
 
     #[test]
@@ -205,7 +153,7 @@ mod tests {
         let moving = bowl(3.0, 4.0);
         assert_eq!(
             register_translation(&fixed, &moving, [3, 3, 0]),
-            [-3, -2, 0]
+            Ok([-3, -2, 0])
         );
     }
 
@@ -236,7 +184,7 @@ mod tests {
 
         assert_eq!(
             register_translation(&bowl(3.0, 3.0), &bowl(5.0, 2.0), [3, 3, 0]),
-            [2, -1, 0]
+            Ok([2, -1, 0])
         );
     }
 
@@ -273,7 +221,7 @@ mod tests {
         let moving = spike(4, 2);
         assert_eq!(
             register_translation_ncc(&fixed, &moving, [3, 3, 0]),
-            [2, -1, 0]
+            Ok([2, -1, 0])
         );
     }
 
@@ -281,11 +229,11 @@ mod tests {
     fn ncc_recovers_shift_on_a_textured_image_and_zero_for_identical() {
         assert_eq!(
             register_translation_ncc(&bowl(2.0, 5.0), &bowl(4.0, 4.0), [3, 3, 0]),
-            [2, -1, 0]
+            Ok([2, -1, 0])
         );
         assert_eq!(
             register_translation_ncc(&bowl(4.0, 4.0), &bowl(4.0, 4.0), [2, 2, 0]),
-            [0, 0, 0]
+            Ok([0, 0, 0])
         );
     }
 
@@ -317,7 +265,7 @@ mod tests {
 
         assert_eq!(
             register_translation_ncc(&spike(3, 3), &spike(5, 2), [3, 3, 0]),
-            [2, -1, 0]
+            Ok([2, -1, 0])
         );
     }
 
@@ -329,5 +277,65 @@ mod tests {
     #[test]
     fn ncc_registration_recovers_a_known_shift_in_double_precision() {
         ncc_registration_recovers_a_known_shift::<f64>();
+    }
+
+    // ── Delegated-kernel error surface ────────────────────────────────────────
+    //
+    // These pin the checks the `ritk-registration` kernel performs before the
+    // search. They matter because the alternative — scoring a volume that cannot
+    // be scored — returns a plausible-looking displacement, which on an IGRT
+    // couch-shift estimate is a silently wrong correction.
+
+    #[test]
+    fn a_volume_that_does_not_match_the_reference_grid_is_reported() {
+        let fixed = bowl(4.0, 4.0);
+        let grid = VoxelGrid::axis_aligned([5, 5, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
+            .unwrap();
+        let moving = Volume::from_shape_fn(grid, |_| 1.0);
+        assert_eq!(
+            register_translation(&fixed, &moving, [1, 1, 0]),
+            Err(TranslationRegistrationError::ShapeMismatch {
+                dimensions: [9, 9, 1],
+                expected: Some(81),
+                fixed_len: 81,
+                moving_len: 25,
+            })
+        );
+    }
+
+    #[test]
+    fn a_non_finite_voxel_is_reported_rather_than_scored() {
+        let grid = VoxelGrid::axis_aligned([9, 9, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
+            .unwrap();
+        // Flat index of voxel (3, 0, 0) in the (i·ny + j)·nz + k layout.
+        let poisoned =
+            Volume::from_shape_fn(grid, |idx| if idx == [3, 0, 0] { f64::NAN } else { 1.0 });
+        assert_eq!(
+            register_translation(&poisoned, &poisoned, [1, 1, 0]),
+            Err(TranslationRegistrationError::NonFiniteInput {
+                buffer: "fixed",
+                index: 27,
+            })
+        );
+        // The moving buffer is checked too, and the label says which one failed.
+        let clean = bowl(4.0, 4.0);
+        assert_eq!(
+            register_translation(&clean, &poisoned, [1, 1, 0]),
+            Err(TranslationRegistrationError::NonFiniteInput {
+                buffer: "moving",
+                index: 27,
+            })
+        );
+    }
+
+    #[test]
+    fn ncc_over_a_constant_volume_has_no_defined_metric() {
+        let grid = VoxelGrid::axis_aligned([4, 4, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
+            .unwrap();
+        let flat = Volume::from_shape_fn(grid, |_| 1.0);
+        assert_eq!(
+            register_translation_ncc(&flat, &flat, [1, 1, 0]),
+            Err(TranslationRegistrationError::UndefinedMetric)
+        );
     }
 }

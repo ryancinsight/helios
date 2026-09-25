@@ -96,16 +96,16 @@ Consumed by at least one member crate: `aequitas`, `eunomia`, `leto`, `gaia`,
 `horae`, `ritk-dicom`.
 
 Declared in the workspace SSOT but consumed by no member: `ritk-core`,
-`ritk-io`, `ritk-registration`, `apollo` (`apollo-fft`), `hermes-simd`,
-`mnemosyne-core`, `consus-compression`. Two of those are substituted by
-Helios-local implementations rather than being merely unused vocabulary:
+`ritk-io`, `apollo` (`apollo-fft`), `hermes-simd`, `mnemosyne-core`,
+`consus-compression`. One former entry was a substitution by a Helios-local
+implementation rather than merely unused vocabulary, and is now closed (H-113):
 
-- `crates/helios-imaging/src/registration.rs` hand-rolls exhaustive whole-voxel
-  SSD and NCC registration while `ritk-registration` is never declared at member
-  level.
-- `crates/helios-imaging/src/fbp.rs:21-39` builds the Ram-Lak ramp in the
-  spatial domain and convolves directly while `apollo-fft` is declared and
-  unused.
+- `crates/helios-imaging/src/registration.rs` hand-rolled exhaustive whole-voxel
+  SSD and NCC registration; it now delegates the search to
+  `ritk-registration::classical::translation` and returns the provider's typed
+  error. The remaining substitution case — the spatial-domain Ram-Lak ramp in
+  `crates/helios-imaging/src/fbp.rs` beside an unconsumed `apollo-fft` — is open
+  as PR #114.
 
 `mnemosyne-core` is the sharpest case: `docs/book/memory.md` documented an arena
 integration that exists nowhere in the source (zero `mnemosyne` matches under

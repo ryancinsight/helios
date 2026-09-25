@@ -170,7 +170,7 @@ H-117).
 | H-110 | Re-ground the book's factual claims against the tree and prevent recurrence. | [patch] | todo | — | `docs/book/**`, `xtask/src/check_figures.rs` |
 | H-111 | Make the mdBook sample gate non-vacuous. | [patch] | todo | — | `docs/book/**`, `.github/workflows/{ci,book-pages}.yml` |
 | H-112 | Establish a reference-engine or published-benchmark dose validation tier (G-16 closure path). | [major] | todo | — | `crates/helios-{solver,simulation,analysis}/**`, `validation_reports/**` |
-| H-113 | Resolve the declared-but-unconsumed Atlas provider set. | [arch] [minor] | todo | — | `Cargo.toml`, `crates/helios-imaging/**` |
+| H-113 | Resolve the declared-but-unconsumed Atlas provider set. | [arch] [minor] | in-progress | — | `Cargo.toml`, `crates/helios-imaging/**` |
 | H-114 | Wire inverse planning to the dose engine: a `DoseInfluence` producer. | [minor] | todo | — | `crates/helios-{planning,simulation,solver}/**` |
 | H-115 | DICOM-RT object I/O and contour-based structure sets. | [minor] | todo | — | `crates/helios-domain/**`, `crates/helios-analysis/src/roi.rs` |
 | H-116 | Reconcile the book figure tree with the 25-chapter SUMMARY. | [patch] | todo | — | `docs/book/figures/**`, `xtask/src/{prebook,check_figures}.rs` |
@@ -253,9 +253,11 @@ H-117).
   `hermes-simd`, `mnemosyne-core`, `consus-compression`. Decide per entry:
   adopt at the member that needs it, or delete the SSOT declaration.
   Substitution cases to adjudicate first: `crates/helios-imaging/src/registration.rs`
-  hand-rolls exhaustive SSD/NCC registration beside an unconsumed
-  `ritk-registration`; `crates/helios-imaging/src/fbp.rs:21-39` convolves a
-  spatial-domain Ram-Lak ramp beside an unconsumed `apollo-fft`.
+  hand-rolled exhaustive SSD/NCC registration beside an unconsumed
+  `ritk-registration` — **closed**: the search is delegated to the provider and
+  the typed error re-exported; `crates/helios-imaging/src/fbp.rs:21-39` convolves
+  a spatial-domain Ram-Lak ramp beside an unconsumed `apollo-fft` — open as PR
+  #114.
   **Non-goals:** adopting a provider whose capability Helios does not need;
   a wholesale imaging rewrite in one item.
 - **Acceptance oracle:** a scripted check reports zero workspace dependency
