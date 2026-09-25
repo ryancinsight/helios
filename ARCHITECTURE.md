@@ -71,7 +71,7 @@ the SSOT in the root `Cargo.toml` `[workspace.dependencies]`.
 | **hermes** | `hermes-simd` | math | Portable SIMD for field/kernel/projection kernels. |
 | **mnemosyne** | `mnemosyne-core` | core | Arena allocation and memory management for large 3D/4D datasets. |
 | **themis** | `themis` | core | Optimal placement (NUMA/CPU/GPU) for large medical datasets. |
-| **apollo** | `apollo` (`apollo-fft`) | solver, imaging | Spectral/transform methods for convolution kernels and reconstruction. |
+| **apollo** | `apollo` (`apollo-fft`, **consumed**) | imaging | Transform provider for the FBP ramp-filter stage (`helios_imaging::ramp`): the zero-padded linear convolution that replaces the spatial `O(n_ang · n_off²)` form with `O(n_ang · n_off log n_off)`. |
 
 ## Key architectural invariants
 

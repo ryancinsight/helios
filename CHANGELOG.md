@@ -9,6 +9,13 @@ under a Breaking subsection.
 
 ### Added
 
+- `helios-imaging` exposes the FBP ramp-filter stage on its own:
+  `ramp_filter_rows` (filter every projection row of a flat sinogram buffer in
+  place), `ram_lak_kernel`, `RampMethod`, and `FFT_CROSSOVER` (the detector width
+  at which `RampMethod::Auto` switches paths). A new `ramp_filter` bench target
+  measures both convolution paths per detector width and is registered in the
+  shared `BENCHMARK_TARGETS` list.
+
 - `helios-imaging::register_translation` and `register_translation_ncc` now
   report a typed `TranslationRegistrationError` — re-exported from
   `ritk-registration` — instead of a sentinel displacement, and pin the
@@ -37,6 +44,19 @@ under a Breaking subsection.
   `1/r` divergence law satisfies.
 
 ### Changed
+
+- The FBP ramp filter is now a frequency-domain convolution through the Atlas
+  transform provider (`apollo-fft`), replacing the spatial
+  `O(n_ang · n_off²)` form with `O(n_ang · n_off log n_off)`. The pad length
+  (`N ≥ 3·n_off − 2`) is the exact length of the linear convolution of a row
+  with the `2·n_off − 1`-tap kernel, so no output sample is touched by circular
+  wrap-around: the transform path reproduces the spatial result rather than
+  approximating it. The spatial form is retained as `RampMethod::Direct`, the
+  reference the transform path is differentially tested against, and
+  `filtered_back_projection`'s signature is unchanged — the filter runs in `f64`
+  internally, so no bound widens at the public seam. Measured on the new
+  `ramp_filter` bench target (64 projections per width): **4.3×** at 181
+  detector samples, **9.9×** at 512, **19.0×** at 1024 (backlog H-113).
 
 - **Breaking**: `helios-imaging::register_translation` and
   `register_translation_ncc` delegate the exhaustive integer-voxel search to

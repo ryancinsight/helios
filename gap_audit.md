@@ -93,19 +93,25 @@ Consumed by at least one member crate: `aequitas`, `eunomia`, `leto`, `gaia`,
 `hyperion`, `proteus`, `asclepius` (+ `asclepius-coeus`),
 `coeus-{core,tensor,autograd}`, `consus-{core,hdf5,io}`,
 `hephaestus-{core,wgpu}`, `moirai` / `moirai-parallel`, `themis`, `tyche-core`,
-`horae`, `ritk-dicom`.
+`horae`, `ritk-dicom`, `apollo` (`apollo-fft`).
 
 Declared in the workspace SSOT but consumed by no member: `ritk-core`,
-`ritk-io`, `apollo` (`apollo-fft`), `hermes-simd`, `mnemosyne-core`,
-`consus-compression`. One former entry was a substitution by a Helios-local
-implementation rather than merely unused vocabulary, and is now closed (H-113):
+`ritk-io`, `hermes-simd`, `mnemosyne-core`, `consus-compression`. Both
+Helios-local substitutions that stood in for a provider that owns the capability
+are now resolved (H-113):
 
 - `crates/helios-imaging/src/registration.rs` hand-rolled exhaustive whole-voxel
-  SSD and NCC registration; it now delegates the search to
+  SSD and NCC registration while `ritk-registration` was never declared at member
+  level; it now delegates the search to
   `ritk-registration::classical::translation` and returns the provider's typed
-  error. The remaining substitution case — the spatial-domain Ram-Lak ramp in
-  `crates/helios-imaging/src/fbp.rs` beside an unconsumed `apollo-fft` — is open
-  as PR #114.
+  error.
+
+- `crates/helios-imaging/src/ramp.rs` now
+  performs the Ram-Lak ramp convolution through `apollo-fft` — a zero-padded
+  linear convolution whose pad length (`N ≥ 3·n_off − 2`) leaves no sample touched
+  by circular wrap-around, so the transform path reproduces the spatial form it
+  replaced. The spatial convolution is retained as the reference the transform
+  path is differentially tested against.
 
 `mnemosyne-core` is the sharpest case: `docs/book/memory.md` documented an arena
 integration that exists nowhere in the source (zero `mnemosyne` matches under

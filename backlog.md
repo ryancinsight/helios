@@ -170,7 +170,7 @@ H-117).
 | H-110 | Re-ground the book's factual claims against the tree and prevent recurrence. | [patch] | todo | — | `docs/book/**`, `xtask/src/check_figures.rs` |
 | H-111 | Make the mdBook sample gate non-vacuous. | [patch] | todo | — | `docs/book/**`, `.github/workflows/{ci,book-pages}.yml` |
 | H-112 | Establish a reference-engine or published-benchmark dose validation tier (G-16 closure path). | [major] | todo | — | `crates/helios-{solver,simulation,analysis}/**`, `validation_reports/**` |
-| H-113 | Resolve the declared-but-unconsumed Atlas provider set. | [arch] [minor] | in-progress | — | `Cargo.toml`, `crates/helios-imaging/**` |
+| H-113 | Resolve the declared-but-unconsumed Atlas provider set. Both Helios-local substitutions are resolved: the `apollo-fft` half (the FBP ramp filter now transforms in the frequency domain) and the `ritk-registration` half (IGRT translation registration now delegates to the provider). | [arch] [minor] | in-progress | — | `Cargo.toml`, `crates/helios-imaging/**` |
 | H-114 | Wire inverse planning to the dose engine: a `DoseInfluence` producer. | [minor] | todo | — | `crates/helios-{planning,simulation,solver}/**` |
 | H-115 | DICOM-RT object I/O and contour-based structure sets. | [minor] | todo | — | `crates/helios-domain/**`, `crates/helios-analysis/src/roi.rs` |
 | H-116 | Reconcile the book figure tree with the 25-chapter SUMMARY. | [patch] | todo | — | `docs/book/figures/**`, `xtask/src/{prebook,check_figures}.rs` |
@@ -252,12 +252,12 @@ H-117).
 - **Scope:** `ritk-core`, `ritk-io`, `ritk-registration`, `apollo` (`apollo-fft`),
   `hermes-simd`, `mnemosyne-core`, `consus-compression`. Decide per entry:
   adopt at the member that needs it, or delete the SSOT declaration.
-  Substitution cases to adjudicate first: `crates/helios-imaging/src/registration.rs`
-  hand-rolled exhaustive SSD/NCC registration beside an unconsumed
-  `ritk-registration` — **closed**: the search is delegated to the provider and
-  the typed error re-exported; `crates/helios-imaging/src/fbp.rs:21-39` convolves
-  a spatial-domain Ram-Lak ramp beside an unconsumed `apollo-fft` — open as PR
-  #114.
+  Substitution cases to adjudicate first, both now closed:
+  `crates/helios-imaging/src/registration.rs` hand-rolled exhaustive SSD/NCC
+  registration beside an unconsumed `ritk-registration` — the search is delegated
+  to the provider and the typed error re-exported;
+  `crates/helios-imaging/src/fbp.rs` convolved a spatial-domain Ram-Lak ramp
+  beside an unconsumed `apollo-fft` — resolved in PR #114.
   **Non-goals:** adopting a provider whose capability Helios does not need;
   a wholesale imaging rewrite in one item.
 - **Acceptance oracle:** a scripted check reports zero workspace dependency
@@ -268,6 +268,33 @@ H-117).
 - **Dependencies:** upstream ownership — a capability gap in `ritk-registration`
   or `apollo-fft` is closed upstream, not worked around here.
 - **Risk:** `[arch]` because it moves ownership of two imaging capabilities.
+- **Progress 2026-09-24 — the `apollo-fft` substitution is resolved.** The FBP
+  ramp filter moved to `crates/helios-imaging/src/ramp.rs`, where the Ram-Lak
+  convolution runs as a zero-padded linear transform through `apollo-fft`; the
+  pad length (`N ≥ 3·n_off − 2`) is the exact length of the linear convolution,
+  so no sample is touched by circular wrap-around and the transform path
+  reproduces the spatial form rather than approximating it. The spatial
+  convolution is retained as the reference the transform path is differentially
+  tested against, and `filtered_back_projection`'s signature is unchanged (the
+  filter runs in `f64` internally, so no bound widens at the public seam). A new
+  `ramp_filter` bench target measures both paths per detector width and is
+  registered in the shared `BENCHMARK_TARGETS` list. Remaining scope:
+  `ritk-core`, `ritk-io`, `ritk-registration`, `hermes-simd`, `mnemosyne-core`,
+  `consus-compression`.
+- **Progress 2026-09-24 — the `ritk-registration` substitution is resolved.**
+  `crates/helios-imaging/src/registration.rs` delegates the exhaustive
+  integer-voxel search to `ritk-registration::classical::translation`
+  (`MeanSquaredDifference` / `NormalizedCrossCorrelation`) over
+  `Volume::as_slice()`, and re-exports the kernel's typed error; the two entry
+  points now return `Result<[isize; 3], TranslationRegistrationError>` rather
+  than a bare displacement, so a volume that cannot be scored is reported
+  instead of silently yielding `[0, 0, 0]`. The sign convention, axis order,
+  tie-breaking and metric definitions are unchanged, so the four exact-recovery
+  oracles hold verbatim; three tests pin the delegated error surface. The
+  adoption required the upstream manifest fix in ryancinsight/ritk#649, which
+  drops four dependencies `ritk-registration`'s library never names and takes
+  its library graph from 348 to 214 packages (−39%). Remaining scope:
+  `ritk-core`, `ritk-io`, `hermes-simd`, `mnemosyne-core`, `consus-compression`.
 
 ### H-114 — DoseInfluence producer [minor]
 
