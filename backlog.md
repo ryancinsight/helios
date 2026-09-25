@@ -170,7 +170,7 @@ H-117).
 | H-110 | Re-ground the book's factual claims against the tree and prevent recurrence. | [patch] | todo | — | `docs/book/**`, `xtask/src/check_figures.rs` |
 | H-111 | Make the mdBook sample gate non-vacuous. | [patch] | todo | — | `docs/book/**`, `.github/workflows/{ci,book-pages}.yml` |
 | H-112 | Establish a reference-engine or published-benchmark dose validation tier (G-16 closure path). | [major] | todo | — | `crates/helios-{solver,simulation,analysis}/**`, `validation_reports/**` |
-| H-113 | Resolve the declared-but-unconsumed Atlas provider set. | [arch] [minor] | todo | — | `Cargo.toml`, `crates/helios-imaging/**` |
+| H-113 | Resolve the declared-but-unconsumed Atlas provider set. The `apollo-fft` half is resolved (FBP ramp filter now transforms in the frequency domain). | [arch] [minor] | in-progress | — | `Cargo.toml`, `crates/helios-imaging/**` |
 | H-114 | Wire inverse planning to the dose engine: a `DoseInfluence` producer. | [minor] | todo | — | `crates/helios-{planning,simulation,solver}/**` |
 | H-115 | DICOM-RT object I/O and contour-based structure sets. | [minor] | todo | — | `crates/helios-domain/**`, `crates/helios-analysis/src/roi.rs` |
 | H-116 | Reconcile the book figure tree with the 25-chapter SUMMARY. | [patch] | todo | — | `docs/book/figures/**`, `xtask/src/{prebook,check_figures}.rs` |
@@ -266,6 +266,19 @@ H-117).
 - **Dependencies:** upstream ownership — a capability gap in `ritk-registration`
   or `apollo-fft` is closed upstream, not worked around here.
 - **Risk:** `[arch]` because it moves ownership of two imaging capabilities.
+- **Progress 2026-09-24 — the `apollo-fft` substitution is resolved.** The FBP
+  ramp filter moved to `crates/helios-imaging/src/ramp.rs`, where the Ram-Lak
+  convolution runs as a zero-padded linear transform through `apollo-fft`; the
+  pad length (`N ≥ 3·n_off − 2`) is the exact length of the linear convolution,
+  so no sample is touched by circular wrap-around and the transform path
+  reproduces the spatial form rather than approximating it. The spatial
+  convolution is retained as the reference the transform path is differentially
+  tested against, and `filtered_back_projection`'s signature is unchanged (the
+  filter runs in `f64` internally, so no bound widens at the public seam). A new
+  `ramp_filter` bench target measures both paths per detector width and is
+  registered in the shared `BENCHMARK_TARGETS` list. Remaining scope:
+  `ritk-core`, `ritk-io`, `ritk-registration`, `hermes-simd`, `mnemosyne-core`,
+  `consus-compression`.
 
 ### H-114 — DoseInfluence producer [minor]
 
