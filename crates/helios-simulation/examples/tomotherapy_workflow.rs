@@ -23,6 +23,8 @@
     reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
 )]
 
+// Programs allocate through Mnemosyne (ADR 0018).
+helios_allocator::install_global_allocator!();
 use std::path::{Path, PathBuf};
 
 use aequitas::systems::si::{

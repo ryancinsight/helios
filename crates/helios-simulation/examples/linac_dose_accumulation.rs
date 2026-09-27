@@ -32,6 +32,8 @@
     reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
 )]
 
+// Programs allocate through Mnemosyne (ADR 0018).
+helios_allocator::install_global_allocator!();
 use aequitas::systems::si::{
     quantities::{Angle, AreaPerMass, EnergyPerArea, Length, MassDensity},
     units::{GramPerCubicCentimeter, Gray, Millimeter, Radian, SquareCentimeterPerGram},

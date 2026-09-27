@@ -39,6 +39,8 @@
     reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
 )]
 
+// Programs allocate through Mnemosyne (ADR 0018).
+helios_allocator::install_global_allocator!();
 use helios_domain::{Volume, VoxelGrid};
 use helios_imaging::register_translation;
 use helios_math::Point3;

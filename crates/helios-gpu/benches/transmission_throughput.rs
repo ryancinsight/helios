@@ -16,6 +16,8 @@
     reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
 )]
 
+// Programs allocate through Mnemosyne (ADR 0018).
+helios_allocator::install_global_allocator!();
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use helios_gpu::{beam_transmission_into, default_device};
 

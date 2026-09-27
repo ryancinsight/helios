@@ -22,6 +22,8 @@ hyperion = { workspace = true }
 proteus = { workspace = true }
 
 [dev-dependencies]
+# Examples and benches install the program allocator (ADR 0018).
+helios-allocator = { workspace = true }
 criterion = { workspace = true }
 
 [[bench]]

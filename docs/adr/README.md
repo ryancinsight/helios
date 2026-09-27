@@ -25,3 +25,4 @@
 | [0015](0015-helical-acquisition-outcomes.md) | Type helical acquisition outcomes | Accepted |
 | [0016](0016-radon-geometry-quantities.md) | Type Radon imaging geometry quantities | Accepted |
 | [0017](0017-planning-dose-quantities.md) | Type inverse-planning dose objectives | Accepted |
+| [0018](0018-program-owned-global-allocator.md) | Programs own the global allocator; libraries depend only on what they use | Accepted |

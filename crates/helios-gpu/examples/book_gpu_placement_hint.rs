@@ -4,6 +4,8 @@
 //! hints internally (`PlacementHint::Tier(MemoryTier::Device)`), so callers keep
 //! a simple physics-facing API.
 
+// Programs allocate through Mnemosyne (ADR 0018).
+helios_allocator::install_global_allocator!();
 use aequitas::systems::si::{
     quantities::{AreaPerMass, MassDensity},
     units::{GramPerCubicCentimeter, SquareCentimeterPerGram},

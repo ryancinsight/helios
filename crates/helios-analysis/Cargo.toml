@@ -20,6 +20,8 @@ helios-math = { workspace = true }
 helios-domain = { workspace = true }
 
 [dev-dependencies]
+# Examples and benches install the program allocator (ADR 0018).
+helios-allocator = { workspace = true }
 criterion = { workspace = true }
 helios-imaging = { workspace = true }
 

@@ -16,6 +16,9 @@
 
 use helios_core::{EnergyMeV, HeliosError, HounsfieldUnit, VoxelSpacingMm};
 
+// Programs allocate through Mnemosyne (ADR 0018).
+helios_allocator::install_global_allocator!();
+
 /// Returns the canonical clinical water slot: 6 MV beam, 0 HU water, 1.0 mm
 /// voxel pitch. Demonstrates that the three slots carry independent unit
 /// domains and round-trip identity per axis.

@@ -1370,6 +1370,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "helios-allocator"
+version = "0.1.0"
+dependencies = [
+ "mnemosyne-memory",
+]
+
+[[package]]
 name = "helios-analysis"
 version = "0.1.0"
 dependencies = [
@@ -1377,6 +1384,7 @@ dependencies = [
  "asclepius",
  "criterion",
  "eunomia",
+ "helios-allocator",
  "helios-core",
  "helios-domain",
  "helios-imaging",
@@ -1389,6 +1397,7 @@ version = "0.1.0"
 dependencies = [
  "aequitas",
  "eunomia",
+ "helios-allocator",
  "proptest",
  "thiserror 2.0.20",
  "tracing",
@@ -1403,6 +1412,7 @@ dependencies = [
  "consus-hdf5",
  "consus-io",
  "eunomia",
+ "helios-allocator",
  "helios-core",
  "helios-math",
  "horae",
@@ -1418,6 +1428,7 @@ dependencies = [
  "aequitas",
  "criterion",
  "eunomia",
+ "helios-allocator",
  "helios-core",
  "helios-domain",
  "helios-math",
@@ -1437,6 +1448,7 @@ dependencies = [
  "apollo-fft",
  "criterion",
  "eunomia",
+ "helios-allocator",
  "helios-analysis",
  "helios-core",
  "helios-domain",
@@ -1463,6 +1475,7 @@ version = "0.1.0"
 dependencies = [
  "aequitas",
  "eunomia",
+ "helios-allocator",
  "helios-core",
  "helios-math",
  "hyperion",
@@ -1482,6 +1495,7 @@ dependencies = [
  "coeus-tensor",
  "criterion",
  "eunomia",
+ "helios-allocator",
  "helios-core",
  "helios-math",
  "mnemosyne-arena",
@@ -1503,6 +1517,7 @@ version = "0.1.0"
 dependencies = [
  "aequitas",
  "eunomia",
+ "helios-allocator",
  "helios-analysis",
  "helios-core",
  "helios-domain",
@@ -1524,6 +1539,7 @@ dependencies = [
  "aequitas",
  "criterion",
  "eunomia",
+ "helios-allocator",
  "helios-core",
  "helios-domain",
  "helios-math",

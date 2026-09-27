@@ -17,6 +17,8 @@
     reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
 )]
 
+// Programs allocate through Mnemosyne (ADR 0018).
+helios_allocator::install_global_allocator!();
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{Point3, Scalar};
 

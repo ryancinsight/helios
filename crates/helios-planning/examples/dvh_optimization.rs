@@ -39,6 +39,8 @@
     reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
 )]
 
+// Programs allocate through Mnemosyne (ADR 0018).
+helios_allocator::install_global_allocator!();
 use helios_planning::{objective_value, optimize_beam_weights, DoseInfluence};
 
 fn main() {

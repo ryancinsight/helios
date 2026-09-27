@@ -34,7 +34,7 @@ A lower layer never depends on a higher one. `helios-core` is the innermost crat
 
 | Crate | Responsibility | Status |
 |-------|----------------|--------|
-| `helios-core` | Typed errors, physical constants, validating domain newtypes, config, logging, arena hooks. | **implemented (0.0.1)** |
+| `helios-core` | Typed errors, physical constants, validating domain newtypes, config, logging. | **implemented (0.0.1)** |
 | `helios-math` | Numeric seam (`Scalar` = `eunomia::RealField`), leto linear-algebra substrate re-export, numerical methods. Geometry *primitives* (`Aabb`/`Ray`/mesh) are consumed from **gaia**, not defined here. | **implemented (0.0.1)** |
 | `helios-domain` | Patient/imaging geometry (CT/MVCT), beam/source/sensor models, binary MLC + collimator geometry, helical delivery kinematics. Landed: `VoxelGrid` + `Volume`, including a Leto `Isometry3` oriented-grid pose; `HelicalDelivery`; binary-MLC `MlcModel`; DICOM ingest (`load_ct_slice`/`load_ct_series` → HU `Volume`, via `ritk-dicom`, feature `dicom`); and HDF5 volumetric storage (`save_volume_hdf5`/`load_volume_hdf5`, via consus, feature `storage`). HU-semantic newtypes and DICOM `ImageOrientationPatient` ingestion remain provider-sequenced; `FieldAperture` (jaw field-shaping + penumbra over a gaia `Aabb`) landed. | **partial (0.1.0)** |
 | `helios-physics` | Helios-specific radiation physics that is not a shared transport law: HU→relative-density calibration and Compton cross-section/energy-transfer models. It returns Hyperion coefficient types instead of owning or re-exporting a parallel coefficient vocabulary. | **partial (0.1.0)** |
@@ -45,6 +45,7 @@ A lower layer never depends on a higher one. `helios-core` is the innermost crat
 | `helios-imaging` | MVCT acquisition modeling, reconstruction, and IGRT workflows. Landed (0.0.1): parallel-beam Radon forward transform (`Sinogram`), Ram-Lak FBP + SIRT iterative reconstruction, Hyperion-validated deterministic quantum noise, and rigid translation registration (`register_translation` SSD + `register_translation_ncc`, delegated to `ritk-registration`). Sub-voxel and deformable registration remain pending. | **partial (0.0.1)** |
 | `helios-gpu` | GPU dispatch over `hephaestus_core::ComputeDevice` + hephaestus-wgpu. `beam_transmission_into` (GPU `exp(−τ)`), `GpuAttenuationMapper` (HU→μ fused affine-clamp), and an axis-aligned `GpuProjector` landed; the latter rejects a non-identity `VoxelGrid` pose before upload until Hephaestus owns pose-bearing field geometry. Resident pipeline throughput reports live under `validation_reports/`. | **partial (0.1.0)** |
 | `helios-python` | Thin PyO3 API (`import helios`): geometry-free physics/planning wrappers (Thomson/Klein–Nishina cross-sections, Compton μ/ρ, HU→density, projected-gradient beam-weight optimization). abi3-py39 wheel; GIL released around the planning solve. No domain logic. | **implemented (0.0.1)** |
+| `helios-allocator` | Program allocator: `install_global_allocator!()` installs the `Mnemosyne` global allocator in an example, bench, or binary. A `[dev-dependencies]` edge only; no library depends on it (ADR 0018). | **implemented (0.1.0)** |
 
 Crates are created only when their layer is built (architecture_scoping growth
 triggers — no speculative empty-crate scaffolding). The workspace `members` list
@@ -69,7 +70,7 @@ the SSOT in the root `Cargo.toml` `[workspace.dependencies]`.
 | **consus** | `consus-core`, `consus-hdf5`, `consus-io` (**consumed**, feature `storage`) | domain | Volumetric storage: `Volume` ↔ standard HDF5 archive (`save_volume_hdf5`/`load_volume_hdf5`, data plus validated rigid grid geometry). Zarr/compression pending. |
 | **leto** | `leto` | math | Strided/typed array substrate. |
 | **hermes** | `hermes-simd` | math | Portable SIMD for field/kernel/projection kernels. |
-| **mnemosyne** | `mnemosyne-core` | core | Arena allocation and memory management for large 3D/4D datasets. |
+| **mnemosyne** | `mnemosyne` (= `mnemosyne-memory`) (**consumed** by `helios-allocator`), `mnemosyne-arena` (**consumed** by `helios-planning`) | allocator, planning | `helios-allocator` installs the `Mnemosyne` global allocator in every example and bench (ADR 0018). `helios-planning` stores the dose-influence matrix in `AlignedVec` (64-byte aligned buffer start, unpadded rows). `mnemosyne-core` (arena placement) is declared but unconsumed. |
 | **themis** | `themis` | core | Optimal placement (NUMA/CPU/GPU) for large medical datasets. |
 | **apollo** | `apollo` (`apollo-fft`, **consumed**) | imaging | Transform provider for the FBP ramp-filter stage (`helios_imaging::ramp`): the zero-padded linear convolution that replaces the spatial `O(n_ang · n_off²)` form with `O(n_ang · n_off log n_off)`. |
 
@@ -89,6 +90,14 @@ the SSOT in the root `Cargo.toml` `[workspace.dependencies]`.
 - **Validating boundaries.** External input (DICOM, PyO3 args) is validated into
   typed domain newtypes at the boundary; invalid states are unrepresentable in the
   core (`EnergyMeV`, `HounsfieldUnit`, `VoxelSpacingMm`, …).
+- **Allocator ownership (ADR 0018).** The global allocator is a program
+  decision: `helios-allocator` names it once, every example and bench installs
+  it with `install_global_allocator!()`, and each crate reaches
+  `helios-allocator` only through `[dev-dependencies]`. Library crates depend
+  only on the capability they use, so no library consumer compiles the
+  allocator. `helios-python` (a `cdylib` inside CPython) installs and links no
+  allocator; `xtask` installs none, because `bench-replicated` measures
+  separately spawned `cargo bench` processes that install their own.
 
 ## Verification tiers
 

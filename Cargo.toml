@@ -17,6 +17,7 @@ members = [
     "crates/helios-simulation",
     "crates/helios-imaging",
     "crates/helios-planning",
+    "crates/helios-allocator",
     "crates/helios-python",
     "xtask",
 ]
@@ -80,6 +81,7 @@ print_stderr = "deny"
 # ── Internal Helios crates (added as they are created, per architecture_scoping
 #    growth triggers — no speculative empty-crate scaffolding). ──
 helios-core = { path = "crates/helios-core", version = "0.1.0" }
+helios-allocator = { path = "crates/helios-allocator", version = "0.1.0" }
 helios-math = { path = "crates/helios-math", version = "0.1.0" }
 helios-domain = { path = "crates/helios-domain", version = "0.1.0" }
 helios-physics = { path = "crates/helios-physics", version = "0.1.0" }
@@ -150,12 +152,18 @@ leto = { version = "0.43.0", git = "https://github.com/ryancinsight/leto", defau
 hermes-simd = { version = "0.7.0", git = "https://github.com/ryancinsight/hermes" }
 # Memory management / placement.
 #
-# Both entries name the repository exactly as `leto` does: same URL, no `rev`.
-# Cargo keys a git source on `(url, ref)`, so a `rev` here is a *second* source
-# for a repository the graph already carries through leto's `mnemosyne-memory`.
-# The two sources resolve to different commits, so cargo would compile the whole
-# mnemosyne stack twice -- arena, backend and memory-core -- instead of sharing
-# it. The exact revision stays pinned where it belongs, in `Cargo.lock`.
+# All three entries name the repository exactly as `leto` does: same URL, no
+# `rev`. Cargo keys a git source on `(url, ref)`, so a `rev` here is a *second*
+# source for a repository the graph already carries through leto's
+# `mnemosyne-memory`. The two sources resolve to different commits, so cargo
+# would compile the whole mnemosyne stack twice -- arena, backend, memory and
+# memory-core -- instead of sharing it. The exact revision stays pinned where it
+# belongs, in `Cargo.lock`.
+#
+# mnemosyne-memory is the allocator facade; `helios-allocator` installs its
+# `Mnemosyne` global allocator in programs (ADR 0018). Its `[lib] name` is
+# `mnemosyne`.
+mnemosyne = { version = "0.7.0", git = "https://github.com/ryancinsight/Mnemosyne", package = "mnemosyne-memory" }
 mnemosyne-core = { version = "0.2.0", git = "https://github.com/ryancinsight/Mnemosyne", package = "mnemosyne-memory-core" }
 # mnemosyne-arena: cache-line-aligned vectors, so the planning compute buffers
 # (the dense dose-influence matrix) load without alignment fixups in SIMD kernels.

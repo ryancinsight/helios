@@ -17,5 +17,7 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]
+# Examples and benches install the program allocator (ADR 0018).
+helios-allocator = { workspace = true }
 eunomia = { workspace = true }
 proptest = { workspace = true }

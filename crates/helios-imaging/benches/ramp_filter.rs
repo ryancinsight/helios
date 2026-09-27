@@ -10,6 +10,9 @@
 //! body. Baselines are recorded in the corresponding CHANGELOG/commit entry.
 #![allow(missing_docs)] // criterion_group! generates an undocumented harness item.
 
+// Programs allocate through Mnemosyne (ADR 0018).
+helios_allocator::install_global_allocator!();
+
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use helios_imaging::{ram_lak_kernel, ramp_filter_rows, RampMethod};
 
