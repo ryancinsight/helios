@@ -52,7 +52,7 @@ use aequitas::systems::si::{quantities::{AbsorbedDose, Length}, units::Millimete
 use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, Dvh};
 
 // Register daily to planning
-let shift = register_translation(&plan_ct, &daily_ct, [4, 4, 0]);
+let shift = register_translation(&plan_ct, &daily_ct, [4, 4, 0])?;
 
 // Recompute dose on corrected anatomy
 let corrected = shift_phantom(&daily_ct, -shift[0], -shift[1]);

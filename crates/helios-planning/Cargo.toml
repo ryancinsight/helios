@@ -38,4 +38,9 @@ autodiff = [
 ]
 
 [dev-dependencies]
+criterion = { workspace = true }
 eunomia = { workspace = true }
+
+[[bench]]
+name = "beam_weight_optimizer"
+harness = false

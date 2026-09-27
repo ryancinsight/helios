@@ -27,12 +27,17 @@ on a 32×32×32 synthetic water/bone phantom with a known applied setup error.
 use helios_imaging::register_translation;
 
 // Max search radius ±5 voxels per axis (covers ≤15 mm at 3 mm resolution)
-let detected_shift = register_translation(&reference, &daily, [5, 5, 5]);
+let detected_shift = register_translation(&reference, &daily, [5, 5, 5])
+    .expect("shared grid, finite voxels");
 // → [3, -2, 1] exactly matching the applied error
 
 // Convert to mm for couch shift table
 let couch_mm: Vec<f64> = detected_shift.iter().map(|&s| s as f64 * voxel_mm).collect();
 ```
+
+The registrar returns a typed error rather than a sentinel displacement: a grid
+that does not account for both buffers, a search radius beyond `isize::MAX`, a
+non-finite voxel, or a search in which no candidate had a defined metric.
 
 ## Physics Background
 

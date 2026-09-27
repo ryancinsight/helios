@@ -142,7 +142,10 @@ fn shared_mu_drives_imaging_and_delivery_end_to_end() {
             0.0
         }
     });
-    assert_eq!(register_translation(&fixed, &moving, [3, 3, 0]), [2, -1, 0]);
+    assert_eq!(
+        register_translation(&fixed, &moving, [3, 3, 0]),
+        Ok([2, -1, 0])
+    );
 
     // ── Therapy branch: helical MLC delivery → dose. ──
     let leaves = 9;

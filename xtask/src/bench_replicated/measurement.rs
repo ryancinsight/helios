@@ -12,6 +12,8 @@ const BENCHMARK_TARGETS: &[(&str, &str)] = &[
     ("helios-analysis", "dvh_queries"),
     ("helios-gpu", "projection_throughput"),
     ("helios-gpu", "transmission_throughput"),
+    ("helios-imaging", "ramp_filter"),
+    ("helios-planning", "beam_weight_optimizer"),
     ("helios-solver", "scatter_superposition"),
 ];
 
@@ -225,13 +227,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn every_target_names_a_nonempty_package_and_bench() {
-        // The CI smoke job and this runner share BENCHMARK_TARGETS through
-        // this file; the smoke list is asserted identical by construction.
-        assert_eq!(BENCHMARK_TARGETS.len(), 4);
-        for (package, bench) in BENCHMARK_TARGETS {
-            assert!(!package.is_empty() && !bench.is_empty());
-        }
+    fn targets_match_the_ci_smoke_list() {
+        // The CI smoke job carries the same `package:bench` list in its
+        // `BENCHMARK_TARGETS` block scalar; a binary in one list and not the
+        // other would be measured unsmoked or smoked unmeasured.
+        let workflow = include_str!("../../../.github/workflows/ci.yml");
+        let smoke: Vec<(&str, &str)> = workflow
+            .lines()
+            .skip_while(|line| line.trim() != "BENCHMARK_TARGETS: |")
+            .skip(1)
+            .take_while(|line| line.starts_with("        ") && !line.trim().is_empty())
+            .filter_map(|line| line.trim().split_once(':'))
+            .collect();
+        assert_eq!(smoke, BENCHMARK_TARGETS);
     }
 
     #[test]
