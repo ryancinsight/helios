@@ -2,17 +2,35 @@
 
 use helios_core::HeliosError;
 use helios_math::{NumericElement, Scalar};
+use mnemosyne_arena::{AlignedVec, ScratchElement};
 
 /// A dense linear dose-influence matrix `A` (rows = voxels, columns = beamlets):
 /// `dose = A · x`. Row-major.
+///
+/// Entries are held in an [`AlignedVec<T>`], whose buffer *start* sits on a
+/// 64-byte cache line. Rows are packed without padding, so row `i` begins
+/// `i · beamlets · size_of::<T>()` bytes past that start: a row is itself
+/// line-aligned only when `beamlets · size_of::<T>()` is a multiple of 64 (for
+/// example 8 `f64` or 16 `f32` beamlets). Rows are deliberately not padded to
+/// the line: the optimizer's measured gain at 57 beamlets per row (misaligned
+/// rows) is at least its gain at 64 (aligned rows), so row alignment is not
+/// what [`optimize_beam_weights`] gains from.
+///
+/// # The `ScratchElement` bound
+///
+/// [`AlignedVec`] only admits [`ScratchElement`] elements, so `T` carries that
+/// bound in addition to [`Scalar`]. This is not a narrowing of the accepted
+/// set: [`Scalar`] is `eunomia::RealField`, whose supertrait `NumericElement` is
+/// sealed and whose implementors are exactly `f32` and `f64` — both of which
+/// implement `ScratchElement`.
 #[derive(Debug, Clone, PartialEq)]
-pub struct DoseInfluence<T: Scalar> {
+pub struct DoseInfluence<T: Scalar + ScratchElement> {
     voxels: usize,
     beamlets: usize,
-    data: Vec<T>,
+    data: AlignedVec<T>,
 }
 
-impl<T: Scalar> DoseInfluence<T> {
+impl<T: Scalar + ScratchElement> DoseInfluence<T> {
     /// Construct from a row-major `voxels × beamlets` matrix.
     ///
     /// # Errors
@@ -28,7 +46,10 @@ impl<T: Scalar> DoseInfluence<T> {
         Ok(Self {
             voxels,
             beamlets,
-            data,
+            // The caller hands the matrix over, so consume the `Vec` rather than
+            // borrowing it. `AlignedVec` cannot adopt the allocation (the global
+            // allocator gives no alignment guarantee), so this copies once.
+            data: data.into(),
         })
     }
 
@@ -47,33 +68,55 @@ impl<T: Scalar> DoseInfluence<T> {
     /// Dose `A · x` from beamlet weights `x` (length `beamlets`).
     #[must_use]
     pub fn apply(&self, x: &[T]) -> Vec<T> {
+        let mut out = vec![<T as NumericElement>::ZERO; self.voxels];
+        self.apply_into(x, &mut out);
+        out
+    }
+
+    /// Writes `A · x` into `out` (length `voxels`), reusing the caller's buffer.
+    ///
+    /// The row-wise dot product is the innermost loop of the optimizer, so it is
+    /// kept separate from [`apply`](Self::apply) to let the iteration reuse one
+    /// dose buffer instead of allocating a fresh vector per step.
+    fn apply_into(&self, x: &[T], out: &mut [T]) {
         let zero = <T as NumericElement>::ZERO;
-        (0..self.voxels)
-            .map(|i| {
-                let row = &self.data[i * self.beamlets..(i + 1) * self.beamlets];
-                row.iter().zip(x).fold(zero, |acc, (&a, &xj)| acc + a * xj)
-            })
-            .collect()
+        for (i, o) in out.iter_mut().enumerate() {
+            let row = &self.data[i * self.beamlets..(i + 1) * self.beamlets];
+            *o = row.iter().zip(x).fold(zero, |acc, (&a, &xj)| acc + a * xj);
+        }
     }
 
     /// `Aᵀ · r` from a voxel-space residual `r` (length `voxels`).
     #[must_use]
     pub fn transpose_apply(&self, r: &[T]) -> Vec<T> {
-        let zero = <T as NumericElement>::ZERO;
-        let mut out = vec![zero; self.beamlets];
+        let mut out = vec![<T as NumericElement>::ZERO; self.beamlets];
+        self.transpose_apply_into(r, &mut out);
+        out
+    }
+
+    /// Writes `Aᵀ · r` into `out` (length `beamlets`), reusing the caller's
+    /// buffer. `out` is overwritten, not accumulated into.
+    ///
+    /// Like [`apply_into`](Self::apply_into), this exists so the optimizer can
+    /// keep one gradient buffer across all iterations.
+    fn transpose_apply_into(&self, r: &[T], out: &mut [T]) {
+        out.fill(<T as NumericElement>::ZERO);
         for (i, &ri) in r.iter().enumerate() {
             let row = &self.data[i * self.beamlets..(i + 1) * self.beamlets];
             for (o, &a) in out.iter_mut().zip(row) {
                 *o += a * ri;
             }
         }
-        out
     }
 }
 
 /// Quadratic objective `½‖A x − d‖²`.
 #[must_use]
-pub fn objective_value<T: Scalar>(influence: &DoseInfluence<T>, x: &[T], prescription: &[T]) -> T {
+pub fn objective_value<T: Scalar + ScratchElement>(
+    influence: &DoseInfluence<T>,
+    x: &[T],
+    prescription: &[T],
+) -> T {
     let zero = <T as NumericElement>::ZERO;
     let dose = influence.apply(x);
     let sum_sq = dose.iter().zip(prescription).fold(zero, |acc, (&di, &pi)| {
@@ -88,24 +131,28 @@ pub fn objective_value<T: Scalar>(influence: &DoseInfluence<T>, x: &[T], prescri
 /// Iterates `x ← max(0, x − step·Aᵀ(A x − d))` from `x = 0`. For convergence the
 /// `step` must satisfy `step < 2/‖AᵀA‖`. Returns the optimized non-negative
 /// beamlet weights (length `beamlets`).
+///
+/// The three voxel-/beamlet-space work vectors are allocated once and reused
+/// across the iteration, so the loop body itself performs no allocation.
 #[must_use]
-pub fn optimize_beam_weights<T: Scalar>(
+pub fn optimize_beam_weights<T: Scalar + ScratchElement>(
     influence: &DoseInfluence<T>,
     prescription: &[T],
     iterations: usize,
     step: T,
 ) -> Vec<T> {
     let zero = <T as NumericElement>::ZERO;
-    let (_voxels, beamlets) = influence.dims();
+    let (voxels, beamlets) = influence.dims();
     let mut x = vec![zero; beamlets];
+    let mut dose = vec![zero; voxels];
+    let mut residual = vec![zero; voxels];
+    let mut grad = vec![zero; beamlets];
     for _ in 0..iterations {
-        let dose = influence.apply(&x);
-        let residual: Vec<T> = dose
-            .iter()
-            .zip(prescription)
-            .map(|(&di, &pi)| di - pi)
-            .collect();
-        let grad = influence.transpose_apply(&residual);
+        influence.apply_into(&x, &mut dose);
+        for (r, (&di, &pi)) in residual.iter_mut().zip(dose.iter().zip(prescription)) {
+            *r = di - pi;
+        }
+        influence.transpose_apply_into(&residual, &mut grad);
         for (xj, &gj) in x.iter_mut().zip(&grad) {
             *xj = (*xj - step * gj).max_scalar(zero);
         }
@@ -147,6 +194,67 @@ mod tests {
         assert_eq!(a.apply(&[1.0, 1.0]), vec![3.0, 1.0, 3.0]);
         // Aᵀ·[1,1,1] = column sums = [1+0+3, 2+1+0] = [4, 3].
         assert_eq!(a.transpose_apply(&[1.0, 1.0, 1.0]), vec![4.0, 3.0]);
+    }
+
+    /// The aligned backing store must not disturb the row stride.
+    ///
+    /// A row here is 7 `f64` = 56 bytes, so it neither divides nor is divided by
+    /// the 64-byte alignment: consecutive rows straddle cache lines, and 37 rows
+    /// span many of them. Both kernels are compared against a naive row-major
+    /// reference that sums in the same order, so the comparison is exact.
+    #[test]
+    fn aligned_storage_preserves_the_row_stride() {
+        let (voxels, beamlets) = (37, 7);
+        let data: Vec<f64> = (0..voxels * beamlets)
+            .map(|i| (i * 37 % 101) as f64 - 50.0)
+            .collect();
+        let a = DoseInfluence::from_rows(voxels, beamlets, data.clone()).unwrap();
+        assert_eq!(a.rows(), data.as_slice());
+
+        let x: Vec<f64> = (0..beamlets).map(|j| j as f64 - 3.0).collect();
+        let expected: Vec<f64> = (0..voxels)
+            .map(|i| (0..beamlets).map(|j| data[i * beamlets + j] * x[j]).sum())
+            .collect();
+        assert_eq!(a.apply(&x), expected);
+
+        let r: Vec<f64> = (0..voxels).map(|i| i as f64 * 0.5 - 1.0).collect();
+        let expected_transpose: Vec<f64> = (0..beamlets)
+            .map(|j| (0..voxels).map(|i| data[i * beamlets + j] * r[i]).sum())
+            .collect();
+        assert_eq!(a.transpose_apply(&r), expected_transpose);
+    }
+
+    /// The buffer-reusing iteration reproduces the allocating transcription of
+    /// the update rule bit for bit: both evaluate the same kernels in the same
+    /// summation order, so no rounding difference is admissible.
+    #[test]
+    fn optimizer_matches_the_allocating_update_rule_bitwise() {
+        let (voxels, beamlets) = (37, 7);
+        let data: Vec<f64> = (0..voxels * beamlets)
+            .map(|i| (i * 37 % 101) as f64 / 101.0)
+            .collect();
+        let a = DoseInfluence::from_rows(voxels, beamlets, data).unwrap();
+        let prescription: Vec<f64> = (0..voxels).map(|i| 1.0 + (i % 5) as f64 * 0.1).collect();
+        let step = 1.0 / (voxels * beamlets) as f64;
+
+        let mut expected = vec![0.0; beamlets];
+        for _ in 0..50 {
+            let dose = a.apply(&expected);
+            let residual: Vec<f64> = dose
+                .iter()
+                .zip(&prescription)
+                .map(|(&d, &p)| d - p)
+                .collect();
+            let grad = a.transpose_apply(&residual);
+            for (xj, &gj) in expected.iter_mut().zip(&grad) {
+                *xj = (*xj - step * gj).max_scalar(0.0);
+            }
+        }
+
+        let got = optimize_beam_weights(&a, &prescription, 50, step);
+        let bits = |v: &[f64]| v.iter().map(|x| x.to_bits()).collect::<Vec<_>>();
+        assert_eq!(bits(&got), bits(&expected));
+        assert!(expected.iter().any(|&x| x > 0.0));
     }
 
     #[test]
@@ -207,7 +315,7 @@ mod tests {
     const CONVERGENCE_TOLERANCE: f64 = 1.0e-3;
 
     /// Asserts the optimizer recovers a separable prescription in one width.
-    fn optimizer_recovers_a_separable_prescription<T: ShippedScalar>() {
+    fn optimizer_recovers_a_separable_prescription<T: ShippedScalar + ScratchElement>() {
         let zero = T::from_f64(0.0);
         let one = T::from_f64(1.0);
 
