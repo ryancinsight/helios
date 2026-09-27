@@ -12,9 +12,9 @@ use mnemosyne_arena::{AlignedVec, ScratchElement};
 /// `i · beamlets · size_of::<T>()` bytes past that start: a row is itself
 /// line-aligned only when `beamlets · size_of::<T>()` is a multiple of 64 (for
 /// example 8 `f64` or 16 `f32` beamlets). Rows are deliberately not padded to
-/// the line: the optimizer's measured gain is the same at 57 beamlets per row
-/// (misaligned rows) as at 64 (aligned rows), so row alignment is not what
-/// [`optimize_beam_weights`] depends on.
+/// the line: the optimizer's measured gain at 57 beamlets per row (misaligned
+/// rows) is at least its gain at 64 (aligned rows), so row alignment is not
+/// what [`optimize_beam_weights`] gains from.
 ///
 /// # The `ScratchElement` bound
 ///

@@ -18,8 +18,9 @@ store of the dense dose-influence matrix (`DoseInfluence::data` in
 cache-line aligned; rows are packed without padding, so row `i` begins
 `i · beamlets · size_of::<T>()` bytes past it and is itself line-aligned only
 when `beamlets · size_of::<T>()` is a multiple of 64. Rows are not padded: the
-optimizer's measured gain comes from its allocation-free iteration and is the
-same at 57 beamlets per row as at 64. It is the only structure that opts in;
+optimizer's measured gain at 57 beamlets per row (misaligned rows) is at least
+its gain at 64 (aligned rows), so row alignment is not its source. It is the
+only structure that opts in;
 every other dense array still goes through the leto array substrate described
 above.
 
