@@ -3,10 +3,9 @@
 //! `helios-core` is the innermost crate of the Helios workspace: it depends on
 //! nothing project-local and everything else depends inward on it. It owns the
 //! cross-cutting vocabulary shared by every higher layer — the typed error
-//! surface, physical constants for radiation transport and dosimetry, the
+//! surface, physical constants for radiation transport and dosimetry, and the
 //! validating domain newtypes that make invalid states unrepresentable at the
-//! parse/deserialize boundary, and the memory seam ([`memory`]) that names the
-//! workspace allocator once for everyone else.
+//! parse/deserialize boundary.
 //!
 //! Domain compute is deliberately absent here: the generic numeric seam
 //! (`Scalar`, backed by `hermes`/`leto`) lands in `helios-math`, and physics,
@@ -18,9 +17,6 @@
 
 pub mod constants;
 mod error;
-/// The workspace memory seam: the one place Helios names its allocator.
-#[cfg(feature = "mnemosyne-memory")]
-pub mod memory;
 mod units;
 
 pub use error::{HeliosError, Result};

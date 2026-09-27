@@ -11,6 +11,9 @@
 //! Measurement instrument only: optimization changes the kernel, never this
 //! body. Baselines are recorded in the delivering PR.
 
+// Programs allocate through Mnemosyne (ADR 0018).
+helios_allocator::install_global_allocator!();
+
 use criterion::{BenchmarkId, Criterion, Throughput};
 use helios_planning::{optimize_beam_weights, DoseInfluence};
 use std::hint::black_box;

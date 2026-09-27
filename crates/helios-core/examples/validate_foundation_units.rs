@@ -16,10 +16,8 @@
 
 use helios_core::{EnergyMeV, HeliosError, HounsfieldUnit, VoxelSpacingMm};
 
-// Helios runs on the Atlas memory subsystem. The workspace seam lives in
-// `helios_core::memory`; a binary opts in here, exactly once, so the libraries
-// above it stay allocator-agnostic.
-helios_core::install_global_allocator!();
+// Programs allocate through Mnemosyne (ADR 0018).
+helios_allocator::install_global_allocator!();
 
 /// Returns the canonical clinical water slot: 6 MV beam, 0 HU water, 1.0 mm
 /// voxel pitch. Demonstrates that the three slots carry independent unit

@@ -27,6 +27,8 @@ moirai-parallel = { workspace = true }
 themis = { workspace = true }
 
 [dev-dependencies]
+# Examples and benches install the program allocator (ADR 0018).
+helios-allocator = { workspace = true }
 # End-to-end workflow test only: the higher application layers (imaging recon /
 # registration, dosimetric analysis) are pulled as dev-deps so the integrated
 # imaging+delivery pipeline can be validated across seams. Test-only, so no

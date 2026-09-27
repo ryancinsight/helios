@@ -10,32 +10,22 @@ Helios allocates every dense physics array through the leto array substrate:
 and sinograms, dose grids, and terma volumes are built once and then read
 through borrowed slices.
 
-## The Workspace Allocator — `Mnemosyne`
+## The Program Allocator — `Mnemosyne`
 
-Helios adopts the Atlas memory subsystem as its allocation package. The
-allocator is named in exactly one place, `helios_core::memory`, which re-exports
-`Mnemosyne` (a `GlobalAlloc` implementation) together with the thread-local
-scratch surface (`ScratchPool`, `ScratchBank`, `AlignedVec`, `ScratchElement`).
-Every other crate depends on that seam rather than on `mnemosyne` directly, so
-the choice can be changed by editing one file. The seam is gated on the
-default-on `mnemosyne-memory` feature.
+Every Helios example and criterion bench allocates through Mnemosyne, the Atlas
+user-space allocator. The choice is named in one crate, `helios-allocator`, and
+each program installs it with one line at its crate root:
+`helios_allocator::install_global_allocator!();`.
 
-A **program** opts in with one line at its crate root:
-
-```rust,ignore
-helios_core::install_global_allocator!();
-```
-
-That covers the `xtask` binary, all examples, and the criterion benches. A
-**library** never installs it: choosing the allocator is the application's
-decision, not a dependency's, and a library that installs one cannot coexist
-with a consumer that has its own.
-
-`helios-python` is deliberately excluded. It is a `cdylib` extension module
-loaded *into* the CPython process, so a global allocator there would commandeer
-the host interpreter's allocator for every Python object allocation — a
-side effect on a process Helios does not own. The module links the memory
-subsystem but leaves the allocator alone.
+Only programs depend on `helios-allocator`, and each owning crate lists it under
+`[dev-dependencies]`, so the allocator never enters a library consumer's
+dependency graph (ADR 0018, `docs/adr/0018-program-owned-global-allocator.md`).
+Library crates depend only on the Mnemosyne capability they use:
+`helios-planning` takes `mnemosyne-arena` for `AlignedVec`, and `helios-core`
+takes nothing. `helios-python` is a `cdylib` loaded into CPython; it installs no
+allocator, since that would replace the host interpreter's, and links none.
+`xtask` installs none either: `bench-replicated` measures separately spawned
+`cargo bench` processes, which install their own.
 
 ### Why a global allocator rather than an allocator-backed container
 
@@ -86,11 +76,10 @@ pipelines from CT → μ → terma → dose.
 
 ## Measuring
 
-The allocator is part of the measurement configuration, not a neutral backdrop.
-Call `helios_core::memory::warm_current_thread()` before opening a timing window:
-it flushes thread-local initialisation traffic — options parsing, arena segment
-acquisition, per-thread allocator setup — so the window contains the code under
-test rather than the allocator's first-touch cost.
+The allocator is part of the measurement configuration. Criterion's warm-up
+phase runs each routine before any sample is recorded, so the allocator's
+per-thread first-touch cost (thread-local setup, segment acquisition) falls
+outside the timing window.
 
 ## Further Reading
 

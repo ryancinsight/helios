@@ -23,6 +23,8 @@ helios-core = { workspace = true }
 helios-math = { path = "../helios-math", default-features = false }
 
 [dev-dependencies]
+# Examples and benches install the program allocator (ADR 0018).
+helios-allocator = { workspace = true }
 eunomia = { workspace = true }
 proptest = { workspace = true }
 proteus = { workspace = true }
