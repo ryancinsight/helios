@@ -13,15 +13,24 @@ workspace = true
 
 [dependencies]
 aequitas = { workspace = true }
+apollo = { workspace = true }
 eunomia = { workspace = true }
 helios-core = { workspace = true }
 helios-math = { workspace = true }
 helios-domain = { workspace = true }
 helios-solver = { workspace = true }
 hyperion = { workspace = true }
+# IGRT translation registration: the exhaustive integer-voxel search and its
+# metric policies live in the provider, not here (H-113).
+ritk-registration = { workspace = true }
 tyche-core = { workspace = true }
 
 [dev-dependencies]
 # Quantify reconstruction accuracy / contrast with the analysis image-quality
 # metrics in an end-to-end recon test (analysis is a lower layer; dev-only).
 helios-analysis = { workspace = true }
+criterion = { workspace = true }
+
+[[bench]]
+name = "ramp_filter"
+harness = false

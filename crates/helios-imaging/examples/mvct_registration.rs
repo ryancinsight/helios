@@ -105,7 +105,8 @@ fn main() {
     //
     // Search up to ±5 voxels per axis (covers clinical ≤15 mm at 3 mm resolution).
     let max_shift = [5usize; 3];
-    let detected_shift = register_translation(&reference, &daily, max_shift);
+    let detected_shift = register_translation(&reference, &daily, max_shift)
+        .expect("reference and daily share the reconstruction grid and are finite");
 
     println!("\nRegistration result:");
     println!(
