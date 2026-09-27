@@ -15,6 +15,8 @@
   while CI only smoke-runs benchmarks. The decision below records the
   correction. What follows is the now-valid contract; git history is
   the archive of the superseded hosted-gate text.
+- Revision: 2026-09-26 — the target list names the `ramp_filter` and
+  `beam_weight_optimizer` binaries added since, and cites the list's owner.
 - Class: `[arch]` `[patch]`
 
 ## Context
@@ -26,7 +28,7 @@ threshold had no error model. The Rust job also bypassed the committed Nextest
 timeout profile with bare `cargo test`.
 
 Atlas ADR 0024 owns the statistical and cross-repository contract. Helios needs
-only the consumer orchestration for its four Criterion benchmark targets.
+only the consumer orchestration for its declared Criterion benchmark targets.
 
 ## Decision
 
@@ -38,14 +40,16 @@ instrument; pull-request CI never classifies performance:
    runner (`xtask bench-replicated`: `A B B A` followed by its `B A A B`
    phase reversal) on one controlled host, holding the candidate
    benchmark sources constant across both revisions;
-2. each leg runs the four declared Criterion binaries
-   (`helios-analysis:dvh_queries`, `helios-gpu:projection_throughput`,
-   `helios-gpu:transmission_throughput`,
-   `helios-solver:scatter_superposition`) with abbreviated sampling sized
+2. each leg runs the declared Criterion binaries — the single list
+   `BENCHMARK_TARGETS` in `xtask/src/bench_replicated/measurement.rs`,
+   mirrored by the CI smoke job (`helios-analysis:dvh_queries`,
+   `helios-gpu:projection_throughput`, `helios-gpu:transmission_throughput`,
+   `helios-imaging:ramp_filter`, `helios-planning:beam_weight_optimizer`,
+   `helios-solver:scatter_superposition`) — with abbreviated sampling sized
    to the derived 1500 s suite bound (measured 1101 s same-revision
    calibration on the reference host, floored by ~15 s single iterations
    in `projection_throughput`);
-3. the four retained Criterion comparison roots plus the derived
+3. the retained Criterion comparison roots (one per target) plus the derived
    confidence are attached to the PR as the performance evidence, and
    classification delegates to Atlas `check-replicated-counterbalanced`;
 4. CI runs only the single-iteration bench smoke
