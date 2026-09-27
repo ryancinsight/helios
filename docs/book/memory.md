@@ -14,11 +14,14 @@ through borrowed slices.
 
 `helios-planning` consumes `mnemosyne-arena`'s `AlignedVec<T>` as the backing
 store of the dense dose-influence matrix (`DoseInfluence::data` in
-`crates/helios-planning/src/optimize.rs`). Its rows are therefore 64-byte
-cache-line aligned, so the row-wise dot product in `apply` and the row-wise
-accumulation in `transpose_apply` read aligned rows without a realignment
-fixup. It is the only structure that opts in; every other dense array still
-goes through the leto array substrate described above.
+`crates/helios-planning/src/optimize.rs`). The buffer *start* is 64-byte
+cache-line aligned; rows are packed without padding, so row `i` begins
+`i · beamlets · size_of::<T>()` bytes past it and is itself line-aligned only
+when `beamlets · size_of::<T>()` is a multiple of 64. Rows are not padded: the
+optimizer's measured gain comes from its allocation-free iteration and is the
+same at 57 beamlets per row as at 64. It is the only structure that opts in;
+every other dense array still goes through the leto array substrate described
+above.
 
 Arena-backed *placement* for the large intermediate buffers is still tracked
 work, not current behaviour: `mnemosyne-core` is declared in the workspace
@@ -34,7 +37,7 @@ which hints GPU-resident buffers.
 | Volumetric arrays | C-contiguous (row-major) | Cache-friendly 3D iteration |
 | Sinogram | Row per angle | Independent-angle parallelism |
 | Dose grid | C-contiguous | Same as CT for subtraction |
-| Dose-influence matrix | Row-major, 64-byte aligned rows | SIMD row access without alignment fixup |
+| Dose-influence matrix | Row-major, unpadded rows, 64-byte aligned buffer start | Row-wise kernels over one contiguous buffer |
 
 ## Zero-Copy Slicing
 

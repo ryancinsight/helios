@@ -7,10 +7,14 @@ use mnemosyne_arena::{AlignedVec, ScratchElement};
 /// A dense linear dose-influence matrix `A` (rows = voxels, columns = beamlets):
 /// `dose = A · x`. Row-major.
 ///
-/// Entries are held in a 64-byte cache-line-aligned [`AlignedVec<T>`], so the
-/// row-wise dot product in [`apply`](Self::apply) and the row-wise accumulation
-/// in [`transpose_apply`](Self::transpose_apply) walk cache-line-aligned rows
-/// without a realignment fixup.
+/// Entries are held in an [`AlignedVec<T>`], whose buffer *start* sits on a
+/// 64-byte cache line. Rows are packed without padding, so row `i` begins
+/// `i · beamlets · size_of::<T>()` bytes past that start: a row is itself
+/// line-aligned only when `beamlets · size_of::<T>()` is a multiple of 64 (for
+/// example 8 `f64` or 16 `f32` beamlets). Rows are deliberately not padded to
+/// the line: the optimizer's measured gain is the same at 57 beamlets per row
+/// (misaligned rows) as at 64 (aligned rows), so row alignment is not what
+/// [`optimize_beam_weights`] depends on.
 ///
 /// # The `ScratchElement` bound
 ///
