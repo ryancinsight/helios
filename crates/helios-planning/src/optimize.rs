@@ -224,6 +224,39 @@ mod tests {
         assert_eq!(a.transpose_apply(&r), expected_transpose);
     }
 
+    /// The buffer-reusing iteration reproduces the allocating transcription of
+    /// the update rule bit for bit: both evaluate the same kernels in the same
+    /// summation order, so no rounding difference is admissible.
+    #[test]
+    fn optimizer_matches_the_allocating_update_rule_bitwise() {
+        let (voxels, beamlets) = (37, 7);
+        let data: Vec<f64> = (0..voxels * beamlets)
+            .map(|i| (i * 37 % 101) as f64 / 101.0)
+            .collect();
+        let a = DoseInfluence::from_rows(voxels, beamlets, data).unwrap();
+        let prescription: Vec<f64> = (0..voxels).map(|i| 1.0 + (i % 5) as f64 * 0.1).collect();
+        let step = 1.0 / (voxels * beamlets) as f64;
+
+        let mut expected = vec![0.0; beamlets];
+        for _ in 0..50 {
+            let dose = a.apply(&expected);
+            let residual: Vec<f64> = dose
+                .iter()
+                .zip(&prescription)
+                .map(|(&d, &p)| d - p)
+                .collect();
+            let grad = a.transpose_apply(&residual);
+            for (xj, &gj) in expected.iter_mut().zip(&grad) {
+                *xj = (*xj - step * gj).max_scalar(0.0);
+            }
+        }
+
+        let got = optimize_beam_weights(&a, &prescription, 50, step);
+        let bits = |v: &[f64]| v.iter().map(|x| x.to_bits()).collect::<Vec<_>>();
+        assert_eq!(bits(&got), bits(&expected));
+        assert!(expected.iter().any(|&x| x > 0.0));
+    }
+
     #[test]
     fn identity_problem_converges_to_prescription() {
         // min ½‖x − d‖² s.t. x≥0, d≥0 → x = d.
