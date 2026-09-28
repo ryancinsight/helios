@@ -65,6 +65,12 @@ impl<T: Scalar + ScratchElement> DoseInfluence<T> {
         &self.data
     }
 
+    /// Row `i` as a contiguous beamlet slice.
+    #[inline]
+    fn row_slice(&self, i: usize) -> &[T] {
+        &self.data[i * self.beamlets..(i + 1) * self.beamlets]
+    }
+
     /// Dose `A · x` from beamlet weights `x` (length `beamlets`).
     #[must_use]
     pub fn apply(&self, x: &[T]) -> Vec<T> {
@@ -81,7 +87,7 @@ impl<T: Scalar + ScratchElement> DoseInfluence<T> {
     fn apply_into(&self, x: &[T], out: &mut [T]) {
         let zero = <T as NumericElement>::ZERO;
         for (i, o) in out.iter_mut().enumerate() {
-            let row = &self.data[i * self.beamlets..(i + 1) * self.beamlets];
+            let row = self.row_slice(i);
             *o = row.iter().zip(x).fold(zero, |acc, (&a, &xj)| acc + a * xj);
         }
     }
@@ -102,7 +108,7 @@ impl<T: Scalar + ScratchElement> DoseInfluence<T> {
     fn transpose_apply_into(&self, r: &[T], out: &mut [T]) {
         out.fill(<T as NumericElement>::ZERO);
         for (i, &ri) in r.iter().enumerate() {
-            let row = &self.data[i * self.beamlets..(i + 1) * self.beamlets];
+            let row = self.row_slice(i);
             for (o, &a) in out.iter_mut().zip(row) {
                 *o += a * ri;
             }
