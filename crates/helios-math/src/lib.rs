@@ -75,6 +75,14 @@ pub use leto::geometry::{
 #[cfg(feature = "geometry")]
 pub use gaia::{Aabb, Ray};
 
+/// Shared geometry predicates over the re-exported primitives (currently the
+/// axis-aligned-box signed-distance field). Gated on the `geometry` feature.
+#[cfg(feature = "geometry")]
+mod geometry;
+
+#[cfg(feature = "geometry")]
+pub use geometry::aabb_signed_distance;
+
 /// The scalar bound required by gaia's geometry primitives ([`Ray`], [`Aabb`]).
 ///
 /// This is gaia's `Scalar` trait — a supertrait of [`Scalar`] (`eunomia::RealField`)

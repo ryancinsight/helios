@@ -16,6 +16,10 @@ mod dose;
 mod oriented_scatter;
 mod projector;
 mod scatter;
+mod transport;
+
+#[cfg(test)]
+mod test_support;
 
 pub use attenuation_map::{attenuation_map, AttenuationMapError};
 pub use deposition::{deposit_ray_terma, deposit_ray_terma_diverging};
@@ -26,3 +30,4 @@ pub use scatter::{
     anisotropic_scatter_superposition, forward_peaked_kernel, poly_forward_peaked_kernel,
     scatter_superposition, symmetric_deposition_kernel, SpectralComponent,
 };
+pub use transport::transmission_of;

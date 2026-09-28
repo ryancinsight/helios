@@ -43,8 +43,7 @@ pub(crate) fn back_project_rows<T: GeometryScalar + eunomia::UnitScalar>(
         .collect();
 
     let grid = *recon;
-    let [nx, ny, nz] = grid.dims();
-    let centre = grid.voxel_center((nx - 1) / 2, (ny - 1) / 2, (nz - 1) / 2);
+    let centre = grid.index_centre();
 
     Volume::from_shape_fn(grid, |idx| {
         let world = grid.voxel_center(idx[0], idx[1], idx[2]);

@@ -176,6 +176,18 @@ impl<T: Scalar> VoxelGrid<T> {
             T::from_f64(k as f64),
         ))
     }
+
+    /// World-space center of the **centre voxel** `((nx−1)/2, (ny−1)/2, (nz−1)/2)`
+    /// — the grid's axial centre used as the isocentre/rotation point by the
+    /// projectors and the gantry basis.
+    #[must_use]
+    pub fn index_centre(&self) -> Point3<T> {
+        self.voxel_center(
+            (self.dims[0] - 1) / 2,
+            (self.dims[1] - 1) / 2,
+            (self.dims[2] - 1) / 2,
+        )
+    }
 }
 
 #[cfg(test)]

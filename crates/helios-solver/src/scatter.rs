@@ -92,7 +92,11 @@ fn convolve_axis<T: Scalar, const AXIS: usize>(vol: &Volume<T>, kernel: &[T]) ->
 /// [`convolve_axis`] with an explicit zero-offset index `center` — the general
 /// form serving **asymmetric** (forward-peaked) kernels, where offset 0 is not
 /// the midpoint. `center = len/2` recovers the centred behaviour exactly.
-fn convolve_axis_at<T: Scalar>(
+///
+/// `pub(crate)` so [`dose_convolution_x`](crate::dose_convolution_x) reuses this
+/// exact gather (with `center = 0`) rather than maintaining a second, identical
+/// stencil; the two are bit-identical.
+pub(crate) fn convolve_axis_at<T: Scalar>(
     vol: &Volume<T>,
     kernel: &[T],
     center: usize,
@@ -296,6 +300,7 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
+    use crate::test_support::{grid, length_cm};
     use eunomia::assert_relative_eq;
     use helios_math::Point3;
     use helios_math::ShippedScalar;
@@ -324,18 +329,12 @@ mod tests {
         })
     }
 
-    fn grid() -> VoxelGrid<f64> {
-        VoxelGrid::axis_aligned([7, 7, 7], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-            .expect("grid")
-    }
-
     // Terma concentrated in the single centre voxel (3,3,3).
     fn point_terma() -> Volume<f64> {
-        Volume::from_shape_fn(grid(), |idx| if idx == [3, 3, 3] { 1.0 } else { 0.0 })
-    }
-
-    fn length_cm<T: ShippedScalar>(value: T) -> Length<T> {
-        Length::from_base(value * T::from_f64(0.01))
+        Volume::from_shape_fn(
+            grid([7, 7, 7]),
+            |idx| if idx == [3, 3, 3] { 1.0 } else { 0.0 },
+        )
     }
 
     fn relative_weight<T: ShippedScalar>(value: T) -> Dimensionless<T> {
@@ -577,7 +576,7 @@ mod tests {
 
     #[test]
     fn const_axis_matches_bounds_checked_reference_bitwise() {
-        let terma = Volume::from_shape_fn(grid(), |[i, j, k]| {
+        let terma = Volume::from_shape_fn(grid([7, 7, 7]), |[i, j, k]| {
             (i * 49 + j * 7 + k) as f64 * 0.125 - 3.0
         });
         let kernel = [0.125, 0.25, 0.375, 0.25];
@@ -598,7 +597,9 @@ mod tests {
     #[test]
     fn delta_kernel_is_identity() {
         // [1] on every axis deposits energy locally → dose == terma exactly.
-        let terma = Volume::from_shape_fn(grid(), |idx| (idx[0] + 2 * idx[1] + 3 * idx[2]) as f64);
+        let terma = Volume::from_shape_fn(grid([7, 7, 7]), |idx| {
+            (idx[0] + 2 * idx[1] + 3 * idx[2]) as f64
+        });
         let dose = scatter_superposition(&terma, &[1.0], &[1.0], &[1.0]);
         for i in 0..7 {
             for j in 0..7 {

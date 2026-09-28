@@ -357,8 +357,7 @@ pub(crate) fn gantry_basis<T: GeometryScalar + UnitScalar>(
     gantry_angle_rad: Angle<T>,
 ) -> (Point3<T>, Vector3<T>, Vector3<T>) {
     let zero = <T as NumericElement>::ZERO;
-    let [nx, ny, nz] = grid.dims();
-    let centre = grid.voxel_center((nx - 1) / 2, (ny - 1) / 2, (nz - 1) / 2);
+    let centre = grid.index_centre();
     let angle = gantry_angle_rad.in_unit::<Radian>();
     let (cos, sin) = (angle.cos(), angle.sin());
     (

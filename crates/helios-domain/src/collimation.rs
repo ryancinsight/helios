@@ -11,8 +11,8 @@
 //! fluence.
 
 use aequitas::systems::si::quantities::Length;
-use helios_core::HeliosError;
-use helios_math::{Aabb, GeometryScalar, NumericElement, Point3};
+use helios_core::{constants::MM_PER_M, HeliosError};
+use helios_math::{aabb_signed_distance, Aabb, GeometryScalar, NumericElement, Point3};
 
 /// A rectangular collimator field aperture (a gaia `Aabb` open region) with a
 /// linear geometric penumbra at its edges.
@@ -20,26 +20,6 @@ use helios_math::{Aabb, GeometryScalar, NumericElement, Point3};
 pub struct FieldAperture<T: GeometryScalar> {
     open: Aabb<T>,
     penumbra: Length<T>,
-}
-
-/// `|x|` for a `GeometryScalar`, via the ordered field (exact, no `f64` round-trip).
-#[inline]
-fn abs<T: GeometryScalar>(x: T) -> T {
-    if x < <T as NumericElement>::ZERO {
-        -x
-    } else {
-        x
-    }
-}
-
-/// `max(a, b)` via the ordered field.
-#[inline]
-fn max2<T: GeometryScalar>(a: T, b: T) -> T {
-    if a > b {
-        a
-    } else {
-        b
-    }
 }
 
 impl<T: GeometryScalar> FieldAperture<T> {
@@ -105,29 +85,6 @@ impl<T: GeometryScalar> FieldAperture<T> {
         self.open.contains_point(p)
     }
 
-    /// Signed distance from `p` to the open box (the standard AABB SDF): negative
-    /// inside, `0` on the boundary, positive outside.
-    fn signed_distance(&self, p: &Point3<T>) -> T {
-        let zero = <T as NumericElement>::ZERO;
-        let c = self.open.center();
-        let hx = (self.open.max.x - self.open.min.x) * <T as GeometryScalar>::from_f64(0.5);
-        let hy = (self.open.max.y - self.open.min.y) * <T as GeometryScalar>::from_f64(0.5);
-        let hz = (self.open.max.z - self.open.min.z) * <T as GeometryScalar>::from_f64(0.5);
-        // q_i = |p_i − c_i| − h_i : >0 outside that axis's slab, <0 inside.
-        let q = [
-            abs(p.x - c.x) - hx,
-            abs(p.y - c.y) - hy,
-            abs(p.z - c.z) - hz,
-        ];
-        let pos = |v: T| if v > zero { v } else { zero };
-        let outside_sq = pos(q[0]) * pos(q[0]) + pos(q[1]) * pos(q[1]) + pos(q[2]) * pos(q[2]);
-        let outside = outside_sq.sqrt();
-        // Inside distance: the least-negative q (nearest face), clamped ≤ 0.
-        let max_q = max2(max2(q[0], q[1]), q[2]);
-        let inside = if max_q < zero { max_q } else { zero };
-        outside + inside
-    }
-
     /// Beamlet transmission at `p` (collimator coordinates): `1` deep inside the
     /// field, `0` deep outside, `0.5` on the geometric edge, ramping linearly
     /// across the `±penumbra` band. Always in `[0, 1]`.
@@ -135,10 +92,10 @@ impl<T: GeometryScalar> FieldAperture<T> {
     pub fn transmission(&self, p: &Point3<T>) -> T {
         let half = <T as GeometryScalar>::from_f64(0.5);
         let two = <T as GeometryScalar>::from_f64(2.0);
-        let sdf = self.signed_distance(p);
+        let sdf = aabb_signed_distance(&self.open, p);
         // Aequitas stores SI base metres; collimator coordinates in this
         // geometry module remain millimetres.
-        let penumbra_mm = self.penumbra.into_base() * <T as GeometryScalar>::from_f64(1.0e3);
+        let penumbra_mm = self.penumbra.into_base() * <T as GeometryScalar>::from_f64(MM_PER_M);
         // 0.5 at sdf=0; +0.5 per penumbra inside; −0.5 per penumbra outside.
         let t = half - sdf * (two * penumbra_mm).recip();
         let zero = <T as NumericElement>::ZERO;

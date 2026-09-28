@@ -1,19 +1,22 @@
 //! Helical MVCT acquisition: rotate the beam per projection and forward-project.
 
 use aequitas::systems::si::{
-    quantities::{Angle, Dimensionless, Length},
-    units::{Millimeter, Radian},
+    quantities::{Angle, Dimensionless, EnergyPerArea, Length},
+    units::Millimeter,
 };
 use eunomia::UnitScalar;
 use helios_domain::{HelicalDelivery, Volume};
-use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
-use helios_solver::forward_project_ray;
-use hyperion::{quantity::OpticalDepth, TransportError};
+use helios_math::{GeometryScalar, NumericElement};
+use helios_solver::{forward_project_ray, transmission_of};
+use hyperion::TransportError;
 use moirai_parallel::{Adaptive, Sequential};
 use themis::CpuTopology;
 
+use crate::delivery::DeliveryFrame;
+use crate::dose_accumulation::{beamlet_ray, gantry_basis, BeamGeometry};
+
 #[cfg(test)]
-use aequitas::systems::si::quantities::Time;
+use aequitas::systems::si::{quantities::Time, units::Radian};
 
 /// One projection of a helical acquisition: the delivery state (gantry angle,
 /// couch position) and the resulting central-ray measurement.
@@ -61,34 +64,14 @@ pub fn simulate_helical_sinogram<T: GeometryScalar + UnitScalar + Send + Sync>(
     step_mm: Length<T>,
 ) -> Result<Vec<HelicalProjection<T>>, TransportError<T>> {
     let zero = <T as NumericElement>::ZERO;
-    let grid = *mu.grid();
-    let [nx, ny, nz] = grid.dims();
-    // Axial centre of the grid (used for the beam's x–y aim point).
-    let centre = grid.voxel_center((nx - 1) / 2, (ny - 1) / 2, (nz - 1) / 2);
     let threshold = projection_parallel_threshold();
     let projections = if num_projections < threshold {
         moirai_parallel::map_collect_index_with::<Sequential, _, _>(num_projections, |projection| {
-            build_projection(
-                delivery,
-                mu,
-                source_distance_mm,
-                step_mm,
-                &centre,
-                projection,
-                zero,
-            )
+            build_projection(delivery, mu, source_distance_mm, step_mm, projection, zero)
         })
     } else {
         moirai_parallel::map_collect_index_with::<Adaptive, _, _>(num_projections, |projection| {
-            build_projection(
-                delivery,
-                mu,
-                source_distance_mm,
-                step_mm,
-                &centre,
-                projection,
-                zero,
-            )
+            build_projection(delivery, mu, source_distance_mm, step_mm, projection, zero)
         })
     };
     projections.into_iter().collect()
@@ -113,32 +96,39 @@ fn build_projection<T: GeometryScalar + UnitScalar>(
     mu: &Volume<T>,
     source_distance_mm: Length<T>,
     step_mm: Length<T>,
-    centre: &Point3<T>,
     projection: usize,
     zero: T,
 ) -> Result<HelicalProjection<T>, TransportError<T>> {
     let gantry_angle_rad = delivery.gantry_angle_rad(projection);
     let couch_mm = delivery.couch_position_mm(projection);
-    let angle = gantry_angle_rad.in_unit::<Radian>();
-    let couch = couch_mm.in_unit::<Millimeter>();
 
-    // Beam direction rotates in the axial plane; z fixed at the couch slice.
-    let direction = Vector3::new(angle.cos(), angle.sin(), zero);
-    // Aim point: axial centre at the couch z; source sits behind isocentre.
-    let origin = Point3::new(
-        centre.x - direction.x * source_distance_mm.in_unit::<Millimeter>(),
-        centre.y - direction.y * source_distance_mm.in_unit::<Millimeter>(),
-        couch - direction.z * source_distance_mm.in_unit::<Millimeter>(),
-    );
-
-    let optical_depth = Ray::try_new(origin, direction)
-        .ok()
-        .and_then(|ray| forward_project_ray(mu, &ray, step_mm.in_unit::<Millimeter>()))
-        .unwrap_or(zero);
+    // The MVCT central ray is the one-leaf beamlet of the shared fan geometry:
+    // `gantry_basis` supplies the axial-plane centre and direction, and a
+    // single-leaf frame (zero lateral offset) makes `beamlet_ray` reproduce the
+    // `centre − dir·standoff` origin at the couch z-slice.
+    let (centre, dir, perp) = gantry_basis(mu.grid(), gantry_angle_rad);
+    let one_leaf = DeliveryFrame {
+        projection,
+        gantry_angle_rad,
+        couch: couch_mm,
+        leaf_fluence: vec![EnergyPerArea::from_base(zero)],
+    };
+    let optical_depth = beamlet_ray(
+        centre,
+        dir,
+        perp,
+        &one_leaf,
+        0,
+        // A one-leaf frame has zero lateral offset, so the leaf pitch is unused.
+        Length::from_base(zero),
+        BeamGeometry::Parallel {
+            standoff: source_distance_mm,
+        },
+    )
+    .and_then(|beamlet| forward_project_ray(mu, &beamlet.ray, step_mm.in_unit::<Millimeter>()))
+    .unwrap_or(zero);
     let optical_depth = Dimensionless::from_base(optical_depth);
-    let transmission = OpticalDepth::new(optical_depth)?
-        .transmission()
-        .into_quantity();
+    let transmission = transmission_of(optical_depth)?;
 
     Ok(HelicalProjection {
         projection,

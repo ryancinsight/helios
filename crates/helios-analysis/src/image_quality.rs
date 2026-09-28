@@ -31,13 +31,6 @@ pub struct DoseRoiStats<T: Scalar> {
     pub std: AbsorbedDose<T>,
 }
 
-/// Absolute value via the ordered seam (`max(x, −x)`), avoiding a dependency on a
-/// dedicated `abs` method.
-#[inline]
-fn abs<T: Scalar>(x: T) -> T {
-    x.max_scalar(-x)
-}
-
 /// Mean and population standard deviation over the half-open index box
 /// `[min, max)` (inclusive `min`, exclusive `max`) of `volume`.
 ///
@@ -122,7 +115,7 @@ pub fn michelson_contrast<T: Scalar>(a: T, b: T) -> T {
 /// standard MVCT low-contrast metric. `noise_std` must be positive.
 #[must_use]
 pub fn contrast_to_noise_ratio<T: Scalar>(signal_mean: T, background_mean: T, noise_std: T) -> T {
-    abs(signal_mean - background_mean) * noise_std.recip()
+    (signal_mean - background_mean).abs() * noise_std.recip()
 }
 
 /// Accumulate `(Σ(a−b)², Σb², n)` over two equally-shaped volumes.
