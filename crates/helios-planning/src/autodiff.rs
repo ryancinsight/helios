@@ -50,14 +50,14 @@ fn require_beamlet_weights(
 fn design_and_weight_var(
     influence: &DoseInfluence<f64>,
     x: &[f64],
-    backend: &MoiraiBackend,
+    backend: MoiraiBackend,
 ) -> (AutodiffVar, AutodiffVar) {
     let (voxels, beamlets) = influence.dims();
     let a = Var::new(
-        Tensor::from_slice_on(vec![voxels, beamlets], influence.rows(), backend),
+        Tensor::from_slice_on(vec![voxels, beamlets], influence.rows(), &backend),
         false,
     );
-    let xv = Var::new(Tensor::from_slice_on(vec![beamlets, 1], x, backend), true);
+    let xv = Var::new(Tensor::from_slice_on(vec![beamlets, 1], x, &backend), true);
     (a, xv)
 }
 
@@ -103,7 +103,7 @@ pub fn objective_gradient_autodiff(
 
     let backend = MoiraiBackend::new();
     // A: constants (no gradient tracked); x: the differentiated variable.
-    let (a, xv) = design_and_weight_var(influence, x, &backend);
+    let (a, xv) = design_and_weight_var(influence, x, backend);
     let d = Var::new(
         Tensor::from_slice_on(vec![voxels, 1], prescription, &backend),
         false,
@@ -171,7 +171,7 @@ pub fn dvh_objective_gradient_autodiff(
     }
 
     let backend = MoiraiBackend::new();
-    let (a, xv) = design_and_weight_var(influence, x, &backend);
+    let (a, xv) = design_and_weight_var(influence, x, backend);
     // The autodiff tensor is a scalar numerical boundary. Preserve the
     // physical dose type through the public contract and unwrap it once here.
     let floor_values: Vec<f64> = penalty.floor.iter().map(|dose| *dose.as_base()).collect();
@@ -285,7 +285,7 @@ pub fn eud_objective_gradient_autodiff(
         })?;
 
     let backend = MoiraiBackend::new();
-    let (a, xv) = design_and_weight_var(influence, x, &backend);
+    let (a, xv) = design_and_weight_var(influence, x, backend);
 
     let dose = matmul(&a, &xv);
     let geud = generalized_equivalent_uniform_dose(&dose, volume_effect).map_err(|error| {
