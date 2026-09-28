@@ -19,7 +19,8 @@
 use crate::radon::Sinogram;
 use aequitas::systems::si::quantities::Dimensionless;
 use helios_math::GeometryScalar;
-use hyperion::{quantity::OpticalDepth, TransportError};
+use helios_solver::transmission_of;
+use hyperion::TransportError;
 use tyche_core::{Seed, SplitMix64, StandardNormal};
 
 /// Add MVCT quantum noise to a sinogram of line integrals `τ`, returning the
@@ -51,10 +52,10 @@ pub fn add_quantum_noise<T: GeometryScalar>(
     let mut readings = Vec::with_capacity(angle_count * offset_count);
     for angle in 0..angle_count {
         for offset in 0..offset_count {
-            let optical_depth = OpticalDepth::new(Dimensionless::from_base(
+            let transmission = transmission_of(Dimensionless::from_base(
                 sinogram.get(angle, offset).to_f64(),
-            ))?;
-            let transmission = optical_depth.transmission().into_quantity().into_base();
+            ))?
+            .into_base();
             let expected = photons_per_ray * transmission;
             let gaussian = StandardNormal::<f64, SplitMix64>::at(seed, sample_index, 0);
             sample_index = sample_index.wrapping_add(1);

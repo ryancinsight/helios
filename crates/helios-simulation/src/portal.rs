@@ -17,8 +17,8 @@ use aequitas::systems::si::{
 use eunomia::UnitScalar;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement};
-use helios_solver::forward_project_ray;
-use hyperion::{quantity::OpticalDepth, TransportError};
+use helios_solver::{forward_project_ray, transmission_of};
+use hyperion::TransportError;
 
 #[cfg(test)]
 use aequitas::systems::si::{quantities::Angle, units::Radian};
@@ -54,9 +54,7 @@ pub fn frame_portal_fluence<T: GeometryScalar + UnitScalar>(
             let tau = beamlet
                 .and_then(|beamlet| forward_project_ray(mu, &beamlet.ray, step_mm))
                 .unwrap_or(zero);
-            let transmission: Dimensionless<T> = OpticalDepth::new(Dimensionless::from_base(tau))?
-                .transmission()
-                .into_quantity();
+            let transmission: Dimensionless<T> = transmission_of(Dimensionless::from_base(tau))?;
             let delivered_fluence = EnergyPerArea::from_base(fluence_base);
             exit_fluence[leaf] = delivered_fluence * transmission;
             Ok(())

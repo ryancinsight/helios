@@ -104,8 +104,7 @@ pub fn parallel_beam_radon<T: GeometryScalar + eunomia::UnitScalar>(
     let source_distance_mm = source_distance.in_unit::<Millimeter>();
     let step_mm = step.in_unit::<Millimeter>();
     let grid = *mu.grid();
-    let [nx, ny, nz] = grid.dims();
-    let centre = grid.voxel_center((nx - 1) / 2, (ny - 1) / 2, (nz - 1) / 2);
+    let centre = grid.index_centre();
 
     let mut data = Vec::with_capacity(angles.len() * detector_offsets.len());
     for &angle in angles {

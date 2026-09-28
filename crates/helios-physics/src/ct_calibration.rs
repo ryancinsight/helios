@@ -1,5 +1,6 @@
 //! CT-number to relative-density calibration.
 
+use helios_core::constants::HU_SCALE_DENOMINATOR;
 use helios_math::{NumericElement, Scalar};
 
 /// Relative electron and mass density from a CT number, `max(0, 1 + HU/1000)`.
@@ -9,7 +10,7 @@ use helios_math::{NumericElement, Scalar};
 /// Helios imaging concern rather than a photon-transport law.
 #[must_use]
 pub fn relative_electron_density_from_hu<T: Scalar>(hu: T) -> T {
-    let ratio = T::ONE + hu * T::from_f64(1.0e-3);
+    let ratio = T::ONE + hu * T::from_f64(HU_SCALE_DENOMINATOR).recip();
     ratio.max_scalar(<T as NumericElement>::ZERO)
 }
 

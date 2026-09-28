@@ -86,7 +86,7 @@ fn lateral_basis<T: GeometryScalar>(beam: Vector3<T>) -> (Vector3<T>, Vector3<T>
     let zero = <T as NumericElement>::ZERO;
     let one = <T as NumericElement>::ONE;
     // |beam·ẑ| < 0.9 ⇒ ẑ is a safe seed; otherwise the beam is near-vertical, use x̂.
-    let seed = if beam.z.to_f64().abs() < 0.9 {
+    let seed = if beam.z.abs() < <T as GeometryScalar>::from_f64(0.9) {
         Vector3::new(zero, zero, one)
     } else {
         Vector3::new(one, zero, zero)

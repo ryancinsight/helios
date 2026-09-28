@@ -22,7 +22,7 @@ use aequitas::systems::si::{
     units::{Centimeter, PerCentimeter},
 };
 use eunomia::UnitScalar;
-use helios_core::constants::{CM_PER_M, MM_PER_CM};
+use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Scalar;
 use hyperion::{
@@ -30,6 +30,8 @@ use hyperion::{
     quantity::{OpticalDepth, PathLength},
     TransportError,
 };
+
+use crate::scatter::{convolve_axis_at, forward_peaked_kernel};
 
 /// Attenuated primary energy fluence for a parallel beam entering along **+x**.
 ///
@@ -97,30 +99,21 @@ pub fn primary_fluence_parallel_x<T: Scalar + UnitScalar>(
 /// the beam. Both values retain their Aequitas units through this API and are
 /// converted to centimetres only at the exponential formula boundary. Returns
 /// an empty vector when `taps == 0`.
+///
+/// This is exactly [`forward_peaked_kernel`] with equal up/down ranges and a zero
+/// upstream radius, so it is expressed once, there (tap-for-tap identical).
 #[must_use]
 pub fn exponential_deposition_kernel<T: Scalar>(
     range: Length<T>,
     voxel_spacing: Length<T>,
     taps: usize,
 ) -> Vec<T> {
-    let mut kernel = Vec::with_capacity(taps);
-    let mut sum = <T as helios_math::NumericElement>::ZERO;
-    let range_cm = range.into_base() * T::from_f64(CM_PER_M);
-    let voxel_cm = voxel_spacing.into_base() * T::from_f64(CM_PER_M);
-    let inv_range = range_cm.recip();
-    for d in 0..taps {
-        let distance = T::from_f64(d as f64) * voxel_cm;
-        let weight = (-(distance * inv_range)).exp();
-        kernel.push(weight);
-        sum += weight;
+    // `radius_down = taps − 1` would underflow for an empty kernel; an empty
+    // kernel is the documented "no taps" result.
+    if taps == 0 {
+        return Vec::new();
     }
-    if sum > <T as helios_math::NumericElement>::ZERO {
-        let inv_sum = sum.recip();
-        for w in &mut kernel {
-            *w *= inv_sum;
-        }
-    }
-    kernel
+    forward_peaked_kernel(range, range, voxel_spacing, 0, taps - 1).0
 }
 
 /// Dose by 1-D convolution-superposition of a TERMA/energy-release volume with a
@@ -137,22 +130,12 @@ pub fn exponential_deposition_kernel<T: Scalar>(
 /// voxels receive less than the downstream maximum). A single-tap `[1]` kernel is
 /// the identity (dose = TERMA); a normalized kernel conserves energy in the
 /// interior. Returns zeros for an empty kernel.
+///
+/// A forward kernel is one-sided, so its zero-offset tap is index 0: this is the
+/// shared axis-convolution gather with `center = 0`, not a second stencil.
 #[must_use]
 pub fn dose_convolution_x<T: Scalar>(terma: &Volume<T>, kernel: &[T]) -> Volume<T> {
-    let grid: VoxelGrid<T> = *terma.grid();
-    let taps = kernel.len();
-    Volume::from_shape_fn(grid, |idx| {
-        let [i, j, k] = idx;
-        if taps == 0 {
-            return <T as helios_math::NumericElement>::ZERO;
-        }
-        let max_d = i.min(taps - 1);
-        let mut dose = <T as helios_math::NumericElement>::ZERO;
-        for (d, &weight) in kernel.iter().enumerate().take(max_d + 1) {
-            dose += terma.get(i - d, j, k).expect("column index within grid") * weight;
-        }
-        dose
-    })
+    convolve_axis_at(terma, kernel, 0, 0)
 }
 
 #[cfg(test)]
@@ -162,24 +145,15 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
+    use crate::test_support::{grid, length_cm};
     use eunomia::assert_relative_eq;
     use helios_math::Point3;
     use helios_math::ShippedScalar;
 
-    fn grid() -> VoxelGrid<f64> {
-        // 2 mm spacing along x → 0.2 cm per column.
-        VoxelGrid::axis_aligned([6, 2, 2], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-            .expect("grid")
-    }
-
-    fn length_cm(value: f64) -> Length<f64> {
-        Length::from_base(value * 0.01)
-    }
-
     #[test]
     fn homogeneous_medium_gives_exponential_depth_curve() {
         // Uniform μ = 0.3 cm⁻¹, Ψ₀ = 5.0. Ψ(i) = 5·exp(-0.3 · i·0.2).
-        let mu = Volume::from_shape_fn(grid(), |_| 0.3);
+        let mu = Volume::from_shape_fn(grid([6, 2, 2]), |_| 0.3);
         let psi = primary_fluence_parallel_x(&mu, 5.0).expect("valid attenuation volume");
         for i in 0..6 {
             let depth_cm = i as f64 * 0.2;
@@ -190,7 +164,7 @@ mod tests {
 
     #[test]
     fn entry_column_is_unattenuated() {
-        let mu = Volume::from_shape_fn(grid(), |_| 0.9);
+        let mu = Volume::from_shape_fn(grid([6, 2, 2]), |_| 0.9);
         let psi = primary_fluence_parallel_x(&mu, 2.0).expect("valid attenuation volume");
         assert_relative_eq!(psi.get(0, 1, 1).unwrap(), 2.0, epsilon = 1e-15);
     }
@@ -199,7 +173,7 @@ mod tests {
     fn heterogeneous_columns_accumulate_optical_depth() {
         // μ varies along x: column i has μ = 0.1·(i+1). τ to column i =
         // Σ_{i'<i} 0.1·(i'+1) · 0.2.
-        let mu = Volume::from_shape_fn(grid(), |idx| 0.1 * (idx[0] as f64 + 1.0));
+        let mu = Volume::from_shape_fn(grid([6, 2, 2]), |idx| 0.1 * (idx[0] as f64 + 1.0));
         let psi = primary_fluence_parallel_x(&mu, 1.0).expect("valid attenuation volume");
         let mut tau = 0.0_f64;
         for i in 0..6 {
@@ -212,7 +186,7 @@ mod tests {
     #[test]
     fn delta_kernel_is_identity() {
         // A single unit tap deposits all energy locally → dose == TERMA.
-        let terma = Volume::from_shape_fn(grid(), |idx| 1.0 + idx[0] as f64);
+        let terma = Volume::from_shape_fn(grid([6, 2, 2]), |idx| 1.0 + idx[0] as f64);
         let dose = dose_convolution_x(&terma, &[1.0]);
         for i in 0..6 {
             assert_relative_eq!(
@@ -228,7 +202,7 @@ mod tests {
         // Uniform TERMA, normalized 3-tap kernel: once all taps fit (i ≥ 2), dose
         // returns to the uniform value (energy conservation); shallow voxels get
         // less (build-up).
-        let terma = Volume::from_shape_fn(grid(), |_| 4.0);
+        let terma = Volume::from_shape_fn(grid([6, 2, 2]), |_| 4.0);
         let kernel = [0.5, 0.3, 0.2]; // sums to 1
         let dose = dose_convolution_x(&terma, &kernel);
         assert_relative_eq!(dose.get(0, 0, 0).unwrap(), 4.0 * 0.5, epsilon = 1e-15);
@@ -276,7 +250,7 @@ mod tests {
 
     #[test]
     fn empty_kernel_gives_zero_dose() {
-        let terma = Volume::from_shape_fn(grid(), |_| 3.0);
+        let terma = Volume::from_shape_fn(grid([6, 2, 2]), |_| 3.0);
         let dose = dose_convolution_x(&terma, &[]);
         for i in 0..6 {
             assert_relative_eq!(dose.get(i, 0, 0).unwrap(), 0.0, epsilon = 1e-15);
@@ -336,7 +310,8 @@ mod tests {
 
     #[test]
     fn negative_attenuation_is_rejected_before_transmission() {
-        let mu = Volume::from_shape_fn(grid(), |[i, _, _]| if i == 5 { -0.1 } else { 0.3 });
+        let mu =
+            Volume::from_shape_fn(grid([6, 2, 2]), |[i, _, _]| if i == 5 { -0.1 } else { 0.3 });
         let error = primary_fluence_parallel_x(&mu, 1.0).expect_err("negative mu must fail");
         assert!(matches!(
             error,

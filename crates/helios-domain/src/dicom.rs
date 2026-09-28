@@ -256,6 +256,36 @@ fn rotation_from_axes<T: Scalar>(
     })
 }
 
+#[inline]
+fn allclose3(a: [f64; 3], b: [f64; 3], tol: f64) -> bool {
+    (0..3).all(|axis| (a[axis] - b[axis]).abs() <= tol)
+}
+
+fn oriented_grid_from_dicom<T: Scalar>(
+    dims: [usize; 3],
+    spacing_mm: [f64; 3],
+    origin: [f64; 3],
+    row_dir: [f64; 3],
+    col_dir: [f64; 3],
+    normal_dir: [f64; 3],
+) -> Result<VoxelGrid<T>, HeliosError> {
+    let rotation = rotation_from_axes::<T>(row_dir, col_dir, normal_dir)?;
+    VoxelGrid::oriented(
+        dims,
+        [
+            T::from_f64(spacing_mm[0]),
+            T::from_f64(spacing_mm[1]),
+            T::from_f64(spacing_mm[2]),
+        ],
+        Point3::new(
+            T::from_f64(origin[0]),
+            T::from_f64(origin[1]),
+            T::from_f64(origin[2]),
+        ),
+        rotation,
+    )
+}
+
 /// Scatter one slice's row-major HU frame into a stacked C-contiguous
 /// `(i = col, j = row, k)` buffer of shape `[cols, rows, nz]`:
 /// `flat(i, j, k) = (i·rows + j)·nz + k`.
@@ -285,20 +315,13 @@ pub fn load_ct_slice<T: Scalar>(
     path: impl AsRef<std::path::Path>,
 ) -> Result<Volume<T>, HeliosError> {
     let slice = read_slice(path.as_ref())?;
-    let rotation = rotation_from_axes::<T>(slice.row_dir, slice.col_dir, slice.normal_dir)?;
-    let grid = VoxelGrid::oriented(
+    let grid = oriented_grid_from_dicom(
         [slice.cols, slice.rows, 1],
-        [
-            T::from_f64(slice.col_spacing),
-            T::from_f64(slice.row_spacing),
-            T::from_f64(slice.thickness),
-        ],
-        Point3::new(
-            T::from_f64(slice.origin[0]),
-            T::from_f64(slice.origin[1]),
-            T::from_f64(slice.origin[2]),
-        ),
-        rotation,
+        [slice.col_spacing, slice.row_spacing, slice.thickness],
+        slice.origin,
+        slice.row_dir,
+        slice.col_dir,
+        slice.normal_dir,
     )?;
     let mut data = vec![T::from_f64(0.0); slice.rows * slice.cols];
     scatter_slice(&mut data, &slice, 0, 1);
@@ -351,12 +374,6 @@ pub fn load_ct_series<T: Scalar, P: AsRef<std::path::Path>>(
     let in_plane_origin_row = dot3(slices[0].origin, row_dir);
     let in_plane_origin_col = dot3(slices[0].origin, col_dir);
     for s in &slices[1..] {
-        let same_row_dir =
-            (0..3).all(|axis| (s.row_dir[axis] - row_dir[axis]).abs() <= ORIENTATION_TOL);
-        let same_col_dir =
-            (0..3).all(|axis| (s.col_dir[axis] - col_dir[axis]).abs() <= ORIENTATION_TOL);
-        let same_normal_dir =
-            (0..3).all(|axis| (s.normal_dir[axis] - normal_dir[axis]).abs() <= ORIENTATION_TOL);
         let in_plane_row = dot3(s.origin, row_dir);
         let in_plane_col = dot3(s.origin, col_dir);
         let consistent = s.rows == rows
@@ -365,9 +382,9 @@ pub fn load_ct_series<T: Scalar, P: AsRef<std::path::Path>>(
             && (s.row_spacing - row_sp).abs() <= GEOMETRY_TOL_MM
             && (in_plane_row - in_plane_origin_row).abs() <= GEOMETRY_TOL_MM
             && (in_plane_col - in_plane_origin_col).abs() <= GEOMETRY_TOL_MM
-            && same_row_dir
-            && same_col_dir
-            && same_normal_dir;
+            && allclose3(s.row_dir, row_dir, ORIENTATION_TOL)
+            && allclose3(s.col_dir, col_dir, ORIENTATION_TOL)
+            && allclose3(s.normal_dir, normal_dir, ORIENTATION_TOL);
         if !consistent {
             return Err(HeliosError::Dicom {
                 reason: "series slices have inconsistent in-plane geometry".to_owned(),
@@ -391,20 +408,13 @@ pub fn load_ct_series<T: Scalar, P: AsRef<std::path::Path>>(
         }
     }
 
-    let rotation = rotation_from_axes::<T>(row_dir, col_dir, normal_dir)?;
-    let grid = VoxelGrid::oriented(
+    let grid = oriented_grid_from_dicom(
         [cols, rows, nz],
-        [
-            T::from_f64(col_sp),
-            T::from_f64(row_sp),
-            T::from_f64(z_spacing),
-        ],
-        Point3::new(
-            T::from_f64(slices[0].origin[0]),
-            T::from_f64(slices[0].origin[1]),
-            T::from_f64(slices[0].origin[2]),
-        ),
-        rotation,
+        [col_sp, row_sp, z_spacing],
+        slices[0].origin,
+        row_dir,
+        col_dir,
+        normal_dir,
     )?;
 
     let mut data = vec![T::from_f64(0.0); rows * cols * nz];
