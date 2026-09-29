@@ -106,7 +106,7 @@ criterion = "0.5"
 # ── Atlas stack (remote git deps; package names verified against each repo's
 #    manifests). Declared here as the integration SSOT; individual member crates
 #    opt in as the corresponding Helios layer is built out.
-#    Layer map is authoritative in ARCHITECTURE.md. ──
+#    Layer map is authoritative in docs/architecture.md. ──
 # Imaging foundation (DICOM/MVCT I/O, registration, VTK).
 ritk-core = { version = "0.10.0", git = "https://github.com/ryancinsight/ritk" }
 ritk-io = { version = "0.3.0", git = "https://github.com/ryancinsight/ritk" }

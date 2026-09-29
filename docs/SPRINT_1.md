@@ -17,7 +17,7 @@ into Phase 2 (Execution) as the first crate lands.
 2. **Edition 2021 / resolver 2.** Explicit goal directive; matches kwavers. Overrides
    the standards' edition-2024 default (recorded).
 3. **Layering.** Strict unidirectional graph, `helios-core` innermost, `helios-python`
-   the only pyo3 consumer. Full map in `ARCHITECTURE.md`.
+   the only pyo3 consumer. Full map in `docs/architecture.md`.
 4. **No speculative crates.** Only `helios-core` is a member now; the other 10 crates
    are created when their layer is implemented (architecture_scoping growth triggers).
    The full Atlas dependency set is declared in `workspace.dependencies` as SSOT.
@@ -60,5 +60,5 @@ leto substrate; gaia geometry is consumed via H-003b once gaia's migration lands
 
 **H-004b:** `helios-domain` — verified `ritk-io` DICOM (CT/MVCT) load path into
 `Volume`/`VoxelGrid` (pose from `ImageOrientationPatient`, HU rescale), plus
-`CtVolume`/`MvctVolume` HU-semantic newtypes. Decomposed plan in `CHECKLIST.md`.
+`CtVolume`/`MvctVolume` HU-semantic newtypes. Decomposed plan in `checklist.md`.
 (ritk pulls burn+dicom — heavy build.)

@@ -706,7 +706,7 @@ Completed this session:
       found).
 - [x] Read declared scope: `README.md`, `CHANGELOG.md` Unreleased,
       `docs/adr/README.md` + 16 ADR files, `docs/book/SUMMARY.md`, `backlog.md`,
-      `CHECKLIST.md`, `gap_audit.md`.
+      `checklist.md`, `gap_audit.md`.
 - [x] Measured: 12 members, 14,304 src LOC, 293 `#[test]` fns, 3 `proptest!`
       sites, 18 examples, 4 benches, 25 chapters, 0 `todo!`/`unimplemented!`/
       TODO/FIXME, 0 production unwraps, 0 allow sites, 7 oversized files, 11

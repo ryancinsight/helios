@@ -38,7 +38,7 @@ coefficient validation and transport laws; Proteus owns material density;
 Helios owns CT calibration, spatial projection, dose, imaging, and delivery.
 Helios does not mirror or re-export either provider vocabulary. Full crate
 responsibilities and the Atlas dependency map are in
-[`ARCHITECTURE.md`](ARCHITECTURE.md).
+[`architecture.md`](docs/architecture.md).
 
 ## Building
 

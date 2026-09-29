@@ -178,10 +178,13 @@ crate lacks `deny(missing_docs)`; and 10 of the 11 crates have no README (only
   rust fences) and both workflows enable the gate; the `CHANGELOG.md` Unreleased
   entry still states that "the separate mdBook sample gate remains disabled".
 - Duplicate IDs on the board: two different `H-101` rows and two `H-086` rows.
-- `docs/adr/` has no 0011. The record exists only on the unmerged commit
-  `aa70fab` as `0011-attenuation-physical-quantities.md`.
-- Root carries `SPRINT_1.md` and `SPRINT_2.md` (roadmap duplicated in
-  `README.md`) plus the generated `parity_artefacts/INDEX.html`.
+- `docs/adr/` had no 0011; the record existed only on an unmerged commit.
+  **Resolved:** landed as `docs/adr/0011-attenuation-physical-quantities.md`
+  and indexed.
+- Root carried `SPRINT_1.md`, `SPRINT_2.md` (roadmap duplicated in
+  `README.md`), `ARCHITECTURE.md`, and `CHECKLIST.md`. **Resolved:** moved to
+  `docs/SPRINT_1.md`, `docs/SPRINT_2.md`, `docs/architecture.md`, and
+  `checklist.md`. The generated `parity_artefacts/INDEX.html` remains.
 
 ### Completeness
 
@@ -637,7 +640,7 @@ changes, which are outside this item.
   `intersect_aabb`. *Update (this session):* gaia's leto/eunomia migration is now
   **finalized and green** — gaia builds across all targets, **927 tests pass**,
   doctests pass, fmt clean; `Ray`/`Aabb` are committed and re-exported from `gaia`'s
-  crate root (commits `b058eb0`, `ecd4060`). The source blocker is **resolved**.
+  crate root (landed commits `e095720`, `75a3a2b`). The source blocker is **resolved**.
   *Action taken earlier:* removed the duplicate `Ray`/`Aabb` from `helios-math`
   (upstream ownership). **Remaining (consumption wiring, H-003b):** the migration
   lives on gaia's `refactor/migrate-to-leto-geometry` branch, not yet merged to

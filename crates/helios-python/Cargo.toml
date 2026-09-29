@@ -4,7 +4,7 @@
 # Helios compute API to Python and holds no domain logic: each function converts
 # Python arguments to typed Rust values, calls the corresponding helios-* core
 # function, maps HeliosError to a Python exception, and releases the GIL around
-# compute. Domain crates never depend on pyo3 (unidirectional; ARCHITECTURE.md).
+# compute. Domain crates never depend on pyo3 (unidirectional; docs/architecture.md).
 [package]
 name = "helios-python"
 # Required for publish: crates.io rejects a description-less crate at upload,

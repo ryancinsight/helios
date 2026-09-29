@@ -19,6 +19,7 @@
 | [0008](0008-delivery-physical-quantities.md) | Typed delivery physical quantities | Accepted |
 | [0009](0009-image-quality-physical-semantics.md) | Partition image-quality physical semantics | Accepted |
 | [0010](0010-compton-energy-quantity.md) | Type Compton photon energy | Accepted |
+| [0011](0011-attenuation-physical-quantities.md) | Type attenuation density inputs | Accepted |
 | [0012](0012-helical-delivery-quantities.md) | Type Helical Delivery Kinematic Metrics | Accepted |
 | [0013](0013-gpu-attenuation-quantities.md) | Typed GPU attenuation inputs | Accepted |
 | [0014](0014-scatter-kernel-quantities.md) | Type scatter-kernel physical inputs | Accepted |

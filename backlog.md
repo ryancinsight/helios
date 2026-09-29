@@ -13,18 +13,18 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-099 | Type inverse-planning DVH floor/ceiling and gEUD reference doses with Aequitas `AbsorbedDose`, type public DVH gEUD volume-effect parameters as `Dimensionless`, retain scalar extraction only at Coeus/Asclepius boundaries, remove stale RustSec advisory ignores, and refresh the locked direct dependency edge. | [arch] [major] | done | Codex | `Cargo.lock`, `crates/{helios-analysis,helios-planning}/**`, callers, `deny.toml`, `.github/workflows/ci.yml`, ADR 0017 and PM artifacts |
 | H-101 | Type the public Compton photon-energy inputs as Aequitas `Energy<T>`, preserve the validated MeV Python boundary, and reverify the provider graph and value-semantic gates after rebasing PR #34 onto current `main`. | [arch] [major] | done | Codex | `crates/helios-physics/**`, `crates/helios-physics/examples/compton_physics.rs`, `crates/helios-python/src/lib.rs`, `docs/adr/0010-compton-energy-quantity.md`, PM artifacts |
 | H-097 | Type the public `helios-imaging` Radon geometry contract with Aequitas `Angle<T>` and `Length<T>` for sinogram angles, detector offsets, source distance, and ray step; keep scalar extraction at trigonometry, mesh, and filter boundaries, refresh the stale locked provider graph, and document that no complex or imaginary unit applies. | [arch] [major] | done | Codex | `crates/helios-imaging/**`, imaging callers/examples, `Cargo.lock`, `docs/adr/0016-radon-geometry-quantities.md`, PM artifacts |
-| H-098 | Repair the phase-replicated benchmark gate and standalone provider graph: materialize candidate and historical-baseline path dependencies at workspace `.`, require locked metadata and benchmark commands, remove job-level error masking, and verify the merged Gaia/Asclepius Eunomia-0.8 graph at the exact Helios head. | [patch] | done | Codex | `.github/workflows/ci.yml`, `Cargo.toml`, `Cargo.lock`, `gap_audit.md`, `CHECKLIST.md`, `backlog.md` |
+| H-098 | Repair the phase-replicated benchmark gate and standalone provider graph: materialize candidate and historical-baseline path dependencies at workspace `.`, require locked metadata and benchmark commands, remove job-level error masking, and verify the merged Gaia/Asclepius Eunomia-0.8 graph at the exact Helios head. | [patch] | done | Codex | `.github/workflows/ci.yml`, `Cargo.toml`, `Cargo.lock`, `gap_audit.md`, `checklist.md`, `backlog.md` |
   - Follow-up (2026-09-21): every dependency-resolving Cargo invocation in the hosted CI workflow now carries `--locked`, including Clippy, nextest, doctests, rustdoc, figure checks, Python wheel builds and benchmark smoke.
 | H-094 | Type the `helios-gpu::GpuAttenuationMapper` mass-attenuation and water-density constructor inputs with Aequitas; keep cm-based extraction at the fused GPU formula boundary and migrate tests/examples. | [arch] [major] | done | Codex | `crates/helios-gpu/**`, `docs/adr/0013-gpu-attenuation-quantities.md`, PM artifacts |
 | H-095 | Type public scatter/deposition ranges, voxel sampling pitches, and spectral weights with Aequitas; convert to solver-native centimetre/millimetre scalars only at formula and mesh boundaries, and preserve real-only Eunomia scalar execution. | [arch] [major] | done | Codex | `crates/helios-solver/src/{dose,scatter,oriented_scatter}.rs`, `crates/helios-simulation/src/dose_accumulation.rs`, callers, ADR and PM artifacts |
 | H-096 | Type `helios-simulation::HelicalProjection` optical-depth and transmission outcomes as Aequitas `Dimensionless`; preserve Hyperion `OpticalDepth` as the transport-law boundary and migrate value assertions without changing dense-field scalar storage. | [arch] [major] | done | Codex | `crates/helios-simulation/src/acquisition.rs`, callers/tests, PM artifacts; `gap_audit.md` remains peer-dirty and is excluded until reconciliation |
 | H-061 | Compile and audit the three runnable examples against the synchronized Atlas graph; keep the mdBook chapter layout forward-compatible; remove Helios's direct dicom-rs `ndarray` feature activation. | [patch] | done | Codex | `Cargo.toml`, `Cargo.lock`, `crates/*/examples/**`, `docs/book/**`, PM artifacts |
-| H-062 | Reduce repeated DVH threshold-query work without changing the sorted-sample contract; compare linear and binary-bound query paths with value-semantic boundary coverage. | [patch] | done | Codex | `crates/helios-analysis/src/dvh.rs`, `crates/helios-analysis/benches/**`, `CHECKLIST.md`, `gap_audit.md`, `CHANGELOG.md` |
-| H-063 | Align Helios's direct DICOM dependency with the `ritk-dicom` provider graph so one `dicom-core` type crosses the consumer boundary; verify the workspace examples and DICOM feature path. | [patch] | done | Codex | `Cargo.toml`, `Cargo.lock`, `crates/helios-domain/src/dicom.rs`, `CHECKLIST.md`, `gap_audit.md`, `CHANGELOG.md` |
-| H-064 | Move all Helios DICOM parsing, attribute access, decoding, and synthetic-input verification behind `ritk-dicom`; remove the direct `dicom-rs` consumer dependency and preserve the real slice/series value contracts. | [arch] | done | Codex | `Cargo.toml`, `crates/helios-domain/**`, `ARCHITECTURE.md`, `README.md`, `SPRINT_2.md`, PM artifacts |
-| H-065 | Advance Helios's reproducible provider graph to Moirai 0.3.0 after the upstream retirement of the unowned NUMA iterator; compile every example against the resolved graph. | [patch] | done | Codex | `Cargo.lock`, `CHECKLIST.md`, `gap_audit.md`, `CHANGELOG.md` |
-| H-066 | Remove Helios's unused direct `num-traits` dependency while preserving provider-owned transitive requirements; verify the locked workspace graph. | [patch] | done | Codex `/root` stale-peer takeover | `Cargo.toml`, `backlog.md`, `CHECKLIST.md`, `gap_audit.md`, `CHANGELOG.md` |
-| H-067 | Refresh the reproducibility lock to merged `apollo-fft` 0.25.0, Eunomia 0.4.0, Leto 0.38.2, and Hephaestus 0.17.0; remove the obsolete transitive `num-complex` package; verify the complete locked workspace without source or manifest compatibility changes. | [patch] | done | Codex `/root` stale-peer takeover | `Cargo.lock`, `backlog.md`, `CHECKLIST.md`, `gap_audit.md`, `CHANGELOG.md` |
+| H-062 | Reduce repeated DVH threshold-query work without changing the sorted-sample contract; compare linear and binary-bound query paths with value-semantic boundary coverage. | [patch] | done | Codex | `crates/helios-analysis/src/dvh.rs`, `crates/helios-analysis/benches/**`, `checklist.md`, `gap_audit.md`, `CHANGELOG.md` |
+| H-063 | Align Helios's direct DICOM dependency with the `ritk-dicom` provider graph so one `dicom-core` type crosses the consumer boundary; verify the workspace examples and DICOM feature path. | [patch] | done | Codex | `Cargo.toml`, `Cargo.lock`, `crates/helios-domain/src/dicom.rs`, `checklist.md`, `gap_audit.md`, `CHANGELOG.md` |
+| H-064 | Move all Helios DICOM parsing, attribute access, decoding, and synthetic-input verification behind `ritk-dicom`; remove the direct `dicom-rs` consumer dependency and preserve the real slice/series value contracts. | [arch] | done | Codex | `Cargo.toml`, `crates/helios-domain/**`, `docs/architecture.md`, `README.md`, `docs/SPRINT_2.md`, PM artifacts |
+| H-065 | Advance Helios's reproducible provider graph to Moirai 0.3.0 after the upstream retirement of the unowned NUMA iterator; compile every example against the resolved graph. | [patch] | done | Codex | `Cargo.lock`, `checklist.md`, `gap_audit.md`, `CHANGELOG.md` |
+| H-066 | Remove Helios's unused direct `num-traits` dependency while preserving provider-owned transitive requirements; verify the locked workspace graph. | [patch] | done | Codex `/root` stale-peer takeover | `Cargo.toml`, `backlog.md`, `checklist.md`, `gap_audit.md`, `CHANGELOG.md` |
+| H-067 | Refresh the reproducibility lock to merged `apollo-fft` 0.25.0, Eunomia 0.4.0, Leto 0.38.2, and Hephaestus 0.17.0; remove the obsolete transitive `num-complex` package; verify the complete locked workspace without source or manifest compatibility changes. | [patch] | done | Codex `/root` stale-peer takeover | `Cargo.lock`, `backlog.md`, `checklist.md`, `gap_audit.md`, `CHANGELOG.md` |
 | H-068 | Back validated energy and voxel-spacing newtypes with Aequitas quantities while preserving Helios-specific validation and public display units; keep Hounsfield units local as a calibrated non-SI scale. | [arch] | done | Codex `/root` | `Cargo.toml`, `Cargo.lock`, `crates/helios-core/**`, `docs/adr/**`, PM artifacts |
 | H-071 | Replace the tautological same-run benchmark check with Atlas's phase-replicated Criterion gate pinned to merge `9bfb722`; run native tests through the committed Nextest budget and delete the copied Python classifier. | [arch] [patch] | done | Codex `/root` | `.github/workflows/ci.yml`, `.github/scripts/check_regressions.py`, `README.md`, PM artifacts |
 | H-072 | Upgrade the thin Python boundary to PyO3 0.29.0, close RUSTSEC-2025-0020 plus RUSTSEC-2026-0177 without moving domain logic into the binding crate, and enforce value-semantic tests against the built extension. | [patch] | done | Codex `/root` | `Cargo.toml`, `Cargo.lock`, `crates/helios-python/**`, `.github/workflows/ci.yml`, PM artifacts |
@@ -35,7 +35,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-079 | Repair the merged H-078 hosted gate by formatting the full workspace, aligning provider checkout with the lock graph, and materializing the historical baseline's Tyche path dependency. | [patch] | done | Codex `/root` | `.github/workflows/ci.yml`, workspace examples, PM artifacts |
 | H-080 | Replace Helios-owned photon coefficient, NIST-table, projection-law, and raw non-mutating Beer–Lambert paths with direct Hyperion contracts; retain HU calibration, Compton source models, grid traversal, dose deposition, imaging, and delivery in Helios. Acceptance: deleted local owners have zero residue; invalid coefficient/optical-depth inputs return typed provider errors; CPU/GPU transmission differentials use Hyperion as the reference; focused crates pass format, warning-denied Clippy, Nextest, doctest, Rustdoc, and examples. | [arch] [major] | done | Codex `/root` | `Cargo.toml`, `Cargo.lock`, `crates/helios-{physics,solver,imaging,simulation,gpu}/**`, root architecture and PM artifacts |
 | H-081 | Move mutating ray TERMA deposition onto Hyperion optical-depth/transmission while preserving transactional failure semantics and a no-per-segment-allocation hot path. Acceptance: invalid sampled attenuation leaves the dose volume unchanged; energy conservation and step-size invariance remain green; all dose-accumulation callers propagate the typed transport error. | [arch] [major] | done | Codex `/root` | `crates/helios-solver/src/deposition.rs`, `crates/helios-simulation/src/dose_accumulation.rs`, callers, tests, docs |
-| H-082 | Align hosted path-dependency materialization and `Cargo.lock` with Atlas graph `4a69a6a`, which contains the published Aequitas, Proteus, Asclepius, Leto, Hephaestus, and Eunomia revisions required by H-080. Acceptance: a clean checkout resolves the committed provider graph under `--locked`; locked Rust and built-wheel Python jobs pass at one correction head. Evidence: clean all-target compilation passed; hosted run `29882508040` passed both lanes at `22bea48`. | [patch] | done | Codex `/root` | `Cargo.lock`, `.github/workflows/ci.yml`, `CHECKLIST.md`, `backlog.md`, `CHANGELOG.md` |
+| H-082 | Align hosted path-dependency materialization and `Cargo.lock` with Atlas graph `4a69a6a`, which contains the published Aequitas, Proteus, Asclepius, Leto, Hephaestus, and Eunomia revisions required by H-080. Acceptance: a clean checkout resolves the committed provider graph under `--locked`; locked Rust and built-wheel Python jobs pass at one correction head. Evidence: clean all-target compilation passed; hosted run `29882508040` passed both lanes at `22bea48`. | [patch] | done | Codex `/root` | `Cargo.lock`, `.github/workflows/ci.yml`, `checklist.md`, `backlog.md`, `CHANGELOG.md` |
 | H-083 | Recover the stale book-expansion worktree without publishing nonexistent Helios APIs; retain only source-grounded documentation, validate the mdBook and generated parity index, and prove the legacy-surface allowlist against the scanner. | [patch] | done | Codex `/root/architecture_audit` stale-peer takeover | `docs/book/**`, `parity_artefacts/INDEX.md`, `xtask/legacy_surface.allowlist`, PM artifacts |
 | H-084 | Repair the hosted provider checkout after H-080 introduced Hyperion beyond the pinned Atlas snapshot; pin every CI lane to the current Atlas revision containing the Hyperion gitlink and pass the complete hosted matrix. Evidence: PR #18 run `29945796230` passed Rust, Python, and replicated benchmark lanes. | [patch] | done | Codex `/root/architecture_audit` | `.github/workflows/ci.yml`, PM artifacts |
 | H-085 | Enforce the committed runtime budget for every Criterion binary: one-iteration smoke execution terminates at 60 seconds and each full measurement terminates at 300 seconds, while retaining the existing benchmark IDs, workloads, baselines, counterbalancing, and classifier. Evidence: exact-head run `29955993829` passed Rust, Python, 60-second smoke, 300-second full measurements, and replicated classification. | [patch] | done | Codex `/root/architecture_audit` | `.github/workflows/ci.yml`, benchmark PM artifacts |
@@ -50,7 +50,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-092 | Partition image-quality APIs by physical semantic: retain raw scalar MVCT intensity metrics, add Aequitas `AbsorbedDose<T>` ROI statistics and volume RMSE for dose-specific callers, and migrate the clinical validation example. Acceptance: shared value kernels, typed dose mean/std/RMSE, dimensionless contrast/CNR, f32 tests, docs, and focused analysis gates. | [arch] [minor] | done | Codex | `crates/helios-analysis/**`, `crates/helios-simulation/examples/validation_clinical.rs`, `docs/adr/0009-image-quality-physical-semantics.md`, PM artifacts |
 | H-093 | Restore the omitted Aequitas helical-delivery and collimation commits on current `main`: keep `HelicalDelivery` geometry/time/angle/velocity and `FieldAperture` penumbra typed at public boundaries, migrate current callers, and refresh the audit with exact local evidence. | [arch] [major] | done | Codex | `crates/helios-domain/src/{helical,collimation}.rs`, `crates/helios-simulation/**`, PM artifacts |
 | H-100 | Route Helios GPU-resident buffers through the provider-owned Themis placement contract; remove default/current-tier allocation calls without introducing a local placement vocabulary, preserve Melinoe as Moirai-owned transitively, and retain the exact lock edge. | [arch] [minor] | done 2026-08-05 (local source slice; hosted/locked graph pending overlay reconciliation) | Codex | `Cargo.toml`, `Cargo.lock`, `crates/helios-gpu/{Cargo.toml,src/{attenuation,projection,transmission}.rs}`, PM artifacts |
-| H-101 | Add a `book_*.rs` Helios GPU example that exercises the Themis-backed placement seam through the `helios-gpu` API surface without changing solver/domain behavior. | [patch] | done 2026-08-07 | current session | `crates/helios-gpu/examples/book_gpu_placement_hint.rs`, `backlog.md`, `CHECKLIST.md` |
+| H-101 | Add a `book_*.rs` Helios GPU example that exercises the Themis-backed placement seam through the `helios-gpu` API surface without changing solver/domain behavior. | [patch] | done 2026-08-07 | current session | `crates/helios-gpu/examples/book_gpu_placement_hint.rs`, `backlog.md`, `checklist.md` |
 | H-102 | Repair the Helios Pages caller so source, example, manifest, and lockfile changes rebuild the book; install the pinned `mdbook-linkcheck2` renderer in the same hosted build. | [patch] | done 2026-08-16 | current session | `.github/workflows/book-pages.yml`, `backlog.md`, `gap_audit.md` |
 | H-103 | Convert source-backed Helios book snippets into checked `mdbook test` samples, or mark non-runnable explanatory fragments as non-code while retaining runnable crate examples as the executable documentation surface. | [patch] | todo | — | `docs/book/**`, `crates/*/examples/**`, `.github/workflows/book-pages.yml`, PM artifacts |
 | H-103a | Add one self-contained executable Rust analytical oracle to the book and verify the mdBook test gate; broader text-fence conversion remains H-103. | [patch] | done | Codex | `docs/book/examples/compton_physics.md`, PM artifacts |
@@ -80,7 +80,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-010 | `helios-gpu`: dispatch over `hephaestus_core::ComputeDevice` + hephaestus-wgpu. **Done** — `beam_transmission_into` (GPU `exp(-τ)` via NegOp+ExpOp) differentially validated vs CPU on a live adapter; `default_device`. | [minor] | done | claude-helios | `crates/helios-gpu/**` |
 | H-010b | `helios-gpu`: GPU HU→μ kernel. **Done** — `GpuAttenuationMapper` authored over the hephaestus ADR-0004 kernel seam (`KernelInterface`+`KernelSource<Wgsl>`, runtime scale/offset params, fused `max(fma(scale,hu,offset),0)`); differentially validated vs the closed form and vs `helios-solver::attenuation_map` (9/9 helios-gpu tests on live adapter). No substrate fork needed — the blocking dependency (custom op seam) shipped upstream. Remaining split to H-012 (projector) / throughput bench rides existing benches. | [minor] | done | claude-seam | `crates/helios-gpu/**` |
 | H-011 | `helios-physics`: photon attenuation relations — `LinearAttenuation`/`MassAttenuation`, Beer–Lambert, HVL, HU→density calibration | [minor] | done | claude-helios | `crates/helios-physics/**` |
-| H-011b | `helios-physics`: NIST X-ray μ/ρ data tables (energy-indexed, per material) loaded into `MassAttenuation`. **Done** — dry-air, liquid-water, and cortical-bone values at 28 common 10 keV–20 MeV knots; bounded native-precision log-linear interpolation excludes their edge rows and makes no XCOM-output claim. | [minor] | done | Codex | `crates/helios-physics/**`, `backlog.md`, `CHECKLIST.md`, `gap_audit.md`, `CHANGELOG.md` |
+| H-011b | `helios-physics`: NIST X-ray μ/ρ data tables (energy-indexed, per material) loaded into `MassAttenuation`. **Done** — dry-air, liquid-water, and cortical-bone values at 28 common 10 keV–20 MeV knots; bounded native-precision log-linear interpolation excludes their edge rows and makes no XCOM-output claim. | [minor] | done | Codex | `crates/helios-physics/**`, `backlog.md`, `checklist.md`, `gap_audit.md`, `CHANGELOG.md` |
 | H-011d2 | `helios-physics`: Klein–Nishina Compton + Thomson cross-sections; `compton_mass_attenuation`/`electrons_per_gram` (μ/ρ derived from σ_KN, validated vs NIST water) | [minor] | done | claude-helios | `crates/helios-physics/**` |
 | H-011d3 | `helios-physics`: KN differential cross-section + energy-transfer σ_tr (quadrature, self-validated vs closed-form total); `compton_mass_energy_transfer` kerma coefficient (validated vs NIST water μ_tr/ρ at 1 MeV) | [minor] | done | claude-helios | `crates/helios-physics/**` |
 | H-055 | Decouple numeric/physics from geometry: `helios-math` `geometry` feature (default on); `helios-physics` builds without it. Keeps physics buildable during geometry-stack churn (G-14). | [arch] | done | claude-helios | `crates/helios-math/**`, `crates/helios-physics/**` |
@@ -177,7 +177,9 @@ H-117).
 | H-117 | Board and record hygiene: stale statuses, duplicate IDs, ADR numbering hole. | [patch] | todo | — | `backlog.md`, `CHANGELOG.md`, `docs/adr/**`, root `*.md` |
 | H-118 | Per-crate READMEs and a typed Python surface. | [patch] | todo | — | `crates/*/README.md`, `crates/helios-python/**` |
 
+<a id="h-110"></a>
 ### H-110 — book factual re-grounding [patch]
+- **Status:** todo; **Priority:** [patch]
 
 - **Outcome:** every factual claim in `docs/book/` resolves against the tree at
   the same revision.
@@ -201,7 +203,9 @@ H-117).
   TRS-398 as compliance rather than unimplemented targets.
 - **Risk:** docs-only, reversible.
 
+<a id="h-111"></a>
 ### H-111 — non-vacuous mdBook sample gate [patch]
+- **Status:** todo; **Priority:** [patch]
 
 - **Outcome:** `mdbook test docs/book` can fail on a broken sample.
 - **Scope:** convert the illustrative `text` fences that are genuinely Rust into
@@ -218,7 +222,9 @@ H-117).
   the stale H-103, whose stated remedy already landed.
 - **Risk:** docs and CI only.
 
+<a id="h-112"></a>
 ### H-112 — reference-engine dose validation tier [major]
+- **Status:** todo; **Priority:** [major]
 
 - **Outcome:** delivered dose carries an evidence tier above analytical
   self-consistency, or the absence is a recorded, bounded decision with the
@@ -244,7 +250,9 @@ H-117).
   must not be described as clinical or dosimetric commissioning.
 - **Risk:** additive tests and reports; no production behaviour change.
 
+<a id="h-113"></a>
 ### H-113 — declared-but-unconsumed Atlas providers [arch] [minor]
+- **Status:** todo; **Priority:** [arch]
 
 - **Outcome:** every entry in `[workspace.dependencies]` is either consumed by a
   member or removed, and no Helios-local implementation stands in for a provider
@@ -267,7 +275,9 @@ H-117).
   or `apollo-fft` is closed upstream, not worked around here.
 - **Risk:** `[arch]` because it moves ownership of two imaging capabilities.
 
+<a id="h-114"></a>
 ### H-114 — DoseInfluence producer [minor]
+- **Status:** todo; **Priority:** [minor]
 
 - **Outcome:** the inverse-planning optimizer consumes a matrix produced by the
   Helios dose engine rather than only by callers.
@@ -287,7 +297,9 @@ H-117).
 - **Dependencies:** none.
 - **Risk:** additive; the optimizer contract is unchanged.
 
+<a id="h-115"></a>
 ### H-115 — DICOM-RT objects and contour ROIs [minor]
+- **Status:** todo; **Priority:** [minor]
 
 - **Outcome:** structure sets, plans, and dose grids cross the DICOM boundary,
   so DVH and gamma can be evaluated over clinical contours rather than analytic
@@ -304,7 +316,9 @@ H-117).
   closed upstream in ritk (upstream ownership), not parsed locally.
 - **Risk:** feature-gated, additive.
 
+<a id="h-116"></a>
 ### H-116 — book figure tree reconciliation [patch]
+- **Status:** todo; **Priority:** [patch]
 
 - **Outcome:** one figure numbering scheme, no orphan assets, and a gate that
   sees chapter bodies.
@@ -324,7 +338,9 @@ H-117).
 - **Dependencies:** none.
 - **Risk:** docs and tooling only.
 
+<a id="h-117"></a>
 ### H-117 — board and record hygiene [patch]
+- **Status:** todo; **Priority:** [patch]
 
 - **Outcome:** the board, CHANGELOG, ADR set, and repository root each state
   the current truth once.
@@ -338,10 +354,14 @@ H-117).
     entry stating the mdBook sample gate "remains disabled" contradicts
     `.github/workflows/ci.yml:65-66`.
   - Duplicate IDs: two different `H-101` rows and two `H-086` rows.
-  - `docs/adr/` has no 0011; the record exists only on the unmerged commit
-    `aa70fab`. Either land it or record the number as retired in the index.
-  - Root carries `SPRINT_1.md` and `SPRINT_2.md`, duplicating the README sprint
-    roadmap, plus the generated `parity_artefacts/INDEX.html`.
+  - `docs/adr/` had no 0011; the record existed only on an unmerged branch.
+    **Landed** as `docs/adr/0011-attenuation-physical-quantities.md` and
+    indexed; the number is no longer a hole.
+  - Root carried `SPRINT_1.md` and `SPRINT_2.md`, duplicating the README sprint
+    roadmap, plus `ARCHITECTURE.md` and `CHECKLIST.md`. **Moved** to the
+    sanctioned owners: `docs/SPRINT_1.md`, `docs/SPRINT_2.md`,
+    `docs/architecture.md`, `checklist.md`; every reference updated. The
+    generated `parity_artefacts/INDEX.html` remains.
   **Non-goals:** re-statusing another owner's in-progress item; rewriting
   history.
 - **Acceptance oracle:** no duplicate ID on the board; every `todo`/`blocked`
@@ -350,7 +370,9 @@ H-117).
 - **Dependencies:** none.
 - **Risk:** PM artifacts only.
 
+<a id="h-118"></a>
 ### H-118 — crate READMEs and a typed Python surface [patch]
+- **Status:** todo; **Priority:** [patch]
 
 - **Outcome:** each crate has a front page; the Python surface is typed.
 - **Scope:** a README per member (10 of 11 are missing; only

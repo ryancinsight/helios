@@ -1,25 +1,21 @@
+//! Dependency-migration audits for the workspace manifests and sources.
+//!
+//! Two surfaces are audited against committed allowlists: the legacy compute
+//! stack (nalgebra/ndarray/burn/tokio/rayon/…) being retired in favour of the
+//! Atlas providers, and the Burn surface being retired in favour of Coeus. Each
+//! audit scans every manifest and `.rs` file under the workspace root, prints
+//! the sites it finds, and fails when the scan reports a surface the allowlist
+//! does not record (drift) — so an intentional change is recorded by re-running
+//! the matching `refresh-*-allowlist` command.
+
 use anyhow::{bail, Context, Result};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const BURN_MANIFEST_DEPS: &[&str] = &["burn", "burn-ndarray"];
+mod burn;
 
-const BURN_SOURCE_TOKENS: &[&str] = &[
-    "burn::",
-    "burn_ndarray",
-    "AutodiffBackend",
-    "GradientsParams",
-    "TensorData",
-    "Shape::new",
-    "Param<",
-    "Conv1d",
-    "Conv2d",
-    "Conv3d",
-    "BurnPINN",
-    "BurnWave",
-    "burn_wave_equation",
-];
+pub(crate) use burn::{print_burn_migration_audit, refresh_burn_allowlist};
 
 const LEGACY_MANIFEST_DEPS: &[&str] = &[
     "nalgebra",
@@ -49,7 +45,6 @@ const LEGACY_SOURCE_TOKENS: &[&str] = &[
 const ATLAS_MANIFEST_DEPS: &[&str] = &["moirai", "leto", "hephaestus", "coeus"];
 
 const ALLOWLIST_REL_PATH: &str = "xtask/legacy_surface.allowlist";
-const BURN_ALLOWLIST_REL_PATH: &str = "xtask/burn_surface.allowlist";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SourceReference {
@@ -64,19 +59,6 @@ pub(crate) struct LegacyMigrationReport {
     pub(crate) atlas_manifest_references: Vec<PathBuf>,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub(crate) struct CrateBurnSurface {
-    pub(crate) manifest_dependency: bool,
-    pub(crate) source_reference_count: usize,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct BurnMigrationReport {
-    pub(crate) manifest_dependencies: Vec<PathBuf>,
-    pub(crate) source_references: Vec<SourceReference>,
-    pub(crate) by_crate: BTreeMap<String, CrateBurnSurface>,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct AllowlistDiff {
     new_entries: Vec<String>,
@@ -85,7 +67,12 @@ struct AllowlistDiff {
 
 pub(crate) fn print_legacy_migration_audit(root: &Path) -> Result<()> {
     let report = scan_legacy_migration_surface(root)?;
-    let diff = compare_with_allowlist(root, &report)?;
+    let diff = compare_with_allowlist(
+        root,
+        ALLOWLIST_REL_PATH,
+        "refresh-legacy-allowlist",
+        &legacy_allowlist_entries(&report),
+    )?;
 
     println!("Legacy migration audit");
     println!("======================");
@@ -147,132 +134,27 @@ pub(crate) fn print_legacy_migration_audit(root: &Path) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn print_burn_migration_audit(root: &Path) -> Result<()> {
-    let report = scan_burn_migration_surface(root)?;
-    let diff = compare_burn_with_allowlist(root, &report)?;
-
-    println!("Burn migration audit");
-    println!("====================");
-    println!();
-    println!(
-        "Manifest files with Burn deps ({})",
-        report.manifest_dependencies.len()
-    );
-    for path in &report.manifest_dependencies {
-        println!("  - {}", path.display());
-    }
-
-    println!();
-    println!(
-        "Source files with Burn-surface tokens ({})",
-        report.source_references.len()
-    );
-    for source in &report.source_references {
-        println!("  - {} ({})", source.path.display(), source.count);
-    }
-
-    println!();
-    println!("Crate summary:");
-    for (name, surface) in &report.by_crate {
-        println!(
-            "  - {name}: burn(dep={}, tokens={})",
-            surface.manifest_dependency, surface.source_reference_count
-        );
-    }
-
-    println!();
-    if diff.new_entries.is_empty() {
-        println!("Allowlist status: clean");
-    } else {
-        println!(
-            "Allowlist drift: {} new Burn surfaces not in {}",
-            diff.new_entries.len(),
-            BURN_ALLOWLIST_REL_PATH
-        );
-        for entry in &diff.new_entries {
-            println!("  - {entry}");
-        }
-    }
-
-    if !diff.stale_entries.is_empty() {
-        println!();
-        println!("Allowlist cleanup candidates (already migrated):");
-        for entry in &diff.stale_entries {
-            println!("  - {entry}");
-        }
-    }
-
-    if !diff.new_entries.is_empty() {
-        bail!(
-            "Burn migration allowlist drift detected; run `cargo run -p xtask -- refresh-burn-allowlist` after intentional changes"
-        );
-    }
-
-    Ok(())
-}
-
 pub(crate) fn refresh_legacy_allowlist(root: &Path) -> Result<()> {
     let report = scan_legacy_migration_surface(root)?;
-    let mut entries = BTreeSet::new();
-
-    for path in &report.manifest_dependencies {
-        entries.insert(manifest_allowlist_entry(path));
-    }
-    for source in &report.source_references {
-        entries.insert(source_allowlist_entry(&source.path));
-    }
-
-    let allowlist_path = root.join(ALLOWLIST_REL_PATH);
-    if let Some(parent) = allowlist_path.parent() {
-        fs::create_dir_all(parent)
-            .with_context(|| format!("failed creating {}", parent.display()))?;
-    }
-
-    let mut body = String::from(
+    write_allowlist(
+        root,
+        ALLOWLIST_REL_PATH,
         "# Auto-generated by `cargo run -p xtask -- refresh-legacy-allowlist`\n\
          # Each entry tracks an approved legacy surface during Atlas migration.\n",
-    );
-    for entry in entries {
-        body.push_str(&entry);
-        body.push('\n');
-    }
-
-    fs::write(&allowlist_path, body)
-        .with_context(|| format!("failed writing {}", allowlist_path.display()))?;
-    println!("Updated {}", allowlist_path.display());
-    Ok(())
+        legacy_allowlist_entries(&report),
+    )
 }
 
-pub(crate) fn refresh_burn_allowlist(root: &Path) -> Result<()> {
-    let report = scan_burn_migration_surface(root)?;
+/// Allowlist entries the legacy scan reports: manifest and source sites.
+fn legacy_allowlist_entries(report: &LegacyMigrationReport) -> BTreeSet<String> {
     let mut entries = BTreeSet::new();
-
     for path in &report.manifest_dependencies {
         entries.insert(manifest_allowlist_entry(path));
     }
     for source in &report.source_references {
         entries.insert(source_allowlist_entry(&source.path));
     }
-
-    let allowlist_path = root.join(BURN_ALLOWLIST_REL_PATH);
-    if let Some(parent) = allowlist_path.parent() {
-        fs::create_dir_all(parent)
-            .with_context(|| format!("failed creating {}", parent.display()))?;
-    }
-
-    let mut body = String::from(
-        "# Auto-generated by `cargo run -p xtask -- refresh-burn-allowlist`\n\
-         # Each entry tracks an approved Burn surface during Coeus migration.\n",
-    );
-    for entry in entries {
-        body.push_str(&entry);
-        body.push('\n');
-    }
-
-    fs::write(&allowlist_path, body)
-        .with_context(|| format!("failed writing {}", allowlist_path.display()))?;
-    println!("Updated {}", allowlist_path.display());
-    Ok(())
+    entries
 }
 
 pub(crate) fn scan_legacy_migration_surface(root: &Path) -> Result<LegacyMigrationReport> {
@@ -336,126 +218,57 @@ fn legacy_source_reference_count(text: &str) -> usize {
         .sum()
 }
 
-pub(crate) fn scan_burn_migration_surface(root: &Path) -> Result<BurnMigrationReport> {
-    let mut manifest_dependencies = Vec::new();
-    let mut source_references = Vec::new();
-    let mut by_crate = BTreeMap::<String, CrateBurnSurface>::new();
-
-    visit_files(root, &mut |path| {
-        let Some(file_name) = path.file_name().and_then(|name| name.to_str()) else {
-            return Ok(());
-        };
-
-        if file_name == "Cargo.toml" {
-            let text = fs::read_to_string(path)
-                .with_context(|| format!("failed reading {}", path.display()))?;
-            if has_any_manifest_dep(&text, BURN_MANIFEST_DEPS) {
-                let rel = relative(root, path);
-                if let Some(crate_name) = crate_name_from_manifest(root, path) {
-                    by_crate.entry(crate_name).or_default().manifest_dependency = true;
-                }
-                manifest_dependencies.push(rel);
-            }
-        } else if path.extension().and_then(|ext| ext.to_str()) == Some("rs") {
-            let text = fs::read_to_string(path)
-                .with_context(|| format!("failed reading {}", path.display()))?;
-            let count = BURN_SOURCE_TOKENS
-                .iter()
-                .map(|token| text.matches(token).count())
-                .sum::<usize>();
-            if count > 0 {
-                if let Some(crate_name) = crate_name_from_source(root, path) {
-                    by_crate
-                        .entry(crate_name)
-                        .or_default()
-                        .source_reference_count += count;
-                }
-                source_references.push(SourceReference {
-                    path: relative(root, path),
-                    count,
-                });
-            }
-        }
-
-        Ok(())
-    })?;
-
-    manifest_dependencies.sort();
-    source_references.sort_by(|a, b| a.path.cmp(&b.path));
-
-    Ok(BurnMigrationReport {
-        manifest_dependencies,
-        source_references,
-        by_crate,
-    })
-}
-
-fn compare_with_allowlist(root: &Path, report: &LegacyMigrationReport) -> Result<AllowlistDiff> {
-    let allowlist_path = root.join(ALLOWLIST_REL_PATH);
+/// Diff a scan's entries against the committed allowlist at
+/// `allowlist_rel_path`, naming `refresh_command` in the error when the file is
+/// missing. Shared by both migration audits; the two callers differ only in the
+/// allowlist path and the entries they collect.
+fn compare_with_allowlist(
+    root: &Path,
+    allowlist_rel_path: &str,
+    refresh_command: &str,
+    current: &BTreeSet<String>,
+) -> Result<AllowlistDiff> {
+    let allowlist_path = root.join(allowlist_rel_path);
     if !allowlist_path.exists() {
         bail!(
-            "missing {}; run `cargo run -p xtask -- refresh-legacy-allowlist`",
+            "missing {}; run `cargo run -p xtask -- {refresh_command}`",
             allowlist_path.display()
         );
     }
 
     let allowed = load_allowlist(&allowlist_path)?;
-    let mut current = BTreeSet::new();
-
-    for path in &report.manifest_dependencies {
-        current.insert(manifest_allowlist_entry(path));
-    }
-    for source in &report.source_references {
-        current.insert(source_allowlist_entry(&source.path));
-    }
-
-    let new_entries = current
-        .difference(&allowed)
-        .cloned()
-        .collect::<Vec<String>>();
-    let stale_entries = allowed
-        .difference(&current)
-        .cloned()
-        .collect::<Vec<String>>();
-
+    let new_entries = current.difference(&allowed).cloned().collect();
+    let stale_entries = allowed.difference(current).cloned().collect();
     Ok(AllowlistDiff {
         new_entries,
         stale_entries,
     })
 }
 
-fn compare_burn_with_allowlist(root: &Path, report: &BurnMigrationReport) -> Result<AllowlistDiff> {
-    let allowlist_path = root.join(BURN_ALLOWLIST_REL_PATH);
-    if !allowlist_path.exists() {
-        bail!(
-            "missing {}; run `cargo run -p xtask -- refresh-burn-allowlist`",
-            allowlist_path.display()
-        );
+/// Write `entries`, one per line under `header`, to the allowlist at
+/// `allowlist_rel_path`. Shared by the two `refresh-*-allowlist` commands.
+fn write_allowlist(
+    root: &Path,
+    allowlist_rel_path: &str,
+    header: &str,
+    entries: BTreeSet<String>,
+) -> Result<()> {
+    let allowlist_path = root.join(allowlist_rel_path);
+    if let Some(parent) = allowlist_path.parent() {
+        fs::create_dir_all(parent)
+            .with_context(|| format!("failed creating {}", parent.display()))?;
     }
 
-    let allowed = load_allowlist(&allowlist_path)?;
-    let mut current = BTreeSet::new();
-
-    for path in &report.manifest_dependencies {
-        current.insert(manifest_allowlist_entry(path));
-    }
-    for source in &report.source_references {
-        current.insert(source_allowlist_entry(&source.path));
+    let mut body = String::from(header);
+    for entry in entries {
+        body.push_str(&entry);
+        body.push('\n');
     }
 
-    let new_entries = current
-        .difference(&allowed)
-        .cloned()
-        .collect::<Vec<String>>();
-    let stale_entries = allowed
-        .difference(&current)
-        .cloned()
-        .collect::<Vec<String>>();
-
-    Ok(AllowlistDiff {
-        new_entries,
-        stale_entries,
-    })
+    fs::write(&allowlist_path, body)
+        .with_context(|| format!("failed writing {}", allowlist_path.display()))?;
+    println!("Updated {}", allowlist_path.display());
+    Ok(())
 }
 
 fn load_allowlist(path: &Path) -> Result<BTreeSet<String>> {
@@ -521,18 +334,9 @@ fn relative(root: &Path, path: &Path) -> PathBuf {
     path.strip_prefix(root).unwrap_or(path).to_path_buf()
 }
 
-fn crate_name_from_manifest(root: &Path, manifest: &Path) -> Option<String> {
-    let rel = manifest.strip_prefix(root).ok()?;
-    let mut parts = rel.components();
-    match parts.next()?.as_os_str().to_str()? {
-        "crates" => parts.next()?.as_os_str().to_str().map(str::to_owned),
-        "xtask" => Some("xtask".to_owned()),
-        _ => None,
-    }
-}
-
-fn crate_name_from_source(root: &Path, source: &Path) -> Option<String> {
-    let rel = source.strip_prefix(root).ok()?;
+/// The `crates/<name>` or `xtask` owner of a path under the workspace root.
+fn crate_name_from_path(root: &Path, path: &Path) -> Option<String> {
+    let rel = path.strip_prefix(root).ok()?;
     let mut parts = rel.components();
     match parts.next()?.as_os_str().to_str()? {
         "crates" => parts.next()?.as_os_str().to_str().map(str::to_owned),

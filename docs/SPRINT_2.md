@@ -80,4 +80,4 @@ seam and `hephaestus-wgpu` op surface are already scoped.
 
 **H-011b:** energy-indexed NIST XCOM μ/ρ tables (water/air) + log-log interpolation
 and material/mixture lookup, feeding `MassAttenuation` (values sourced/verified from
-NIST). Unblocked. Decomposed plan in `CHECKLIST.md`.
+NIST). Unblocked. Decomposed plan in `checklist.md`.

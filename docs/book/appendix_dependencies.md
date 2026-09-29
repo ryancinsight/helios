@@ -24,7 +24,7 @@ traits (`eunomia`), arrays and linear algebra (`leto`), spatial primitives
 execution (`moirai`), DICOM decoding (`ritk-dicom`), and volume persistence
 (`consus-hdf5`).
 
-The root [architecture document](../../ARCHITECTURE.md) owns the complete
+The [architecture document](../architecture.md) owns the complete
 layering and dependency contract. This appendix is a navigation aid, not a
 second dependency specification.
 

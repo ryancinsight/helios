@@ -859,9 +859,9 @@ under a Breaking subsection.
     differential oracle for the future GPU kernel (H-010).
   - Tests: uniform-water constant μ, air→0/bone-scaling, per-voxel closed-form
     differential match over a heterogeneous field, grid preservation, f32.
-- Foundation documentation: `README.md`, `ARCHITECTURE.md` (layering + Atlas
-  dependency map), and PM artifacts `backlog.md`, `CHECKLIST.md`, `gap_audit.md`,
-  `SPRINT_1.md`, `SPRINT_2.md`.
+- Foundation documentation: `README.md`, `docs/architecture.md` (layering + Atlas
+  dependency map), and PM artifacts `backlog.md`, `checklist.md`, `gap_audit.md`,
+  `docs/SPRINT_1.md`, `docs/SPRINT_2.md`.
 
 ### Verification
 - `cargo build`, `cargo clippy --all-targets --all-features -- -D warnings`,
