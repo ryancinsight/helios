@@ -93,7 +93,7 @@ Consumed by at least one member crate: `aequitas`, `eunomia`, `leto`, `gaia`,
 `hyperion`, `proteus`, `asclepius` (+ `asclepius-coeus`),
 `coeus-{core,tensor,autograd}`, `consus-{core,hdf5,io}`,
 `hephaestus-{core,wgpu}`, `moirai` / `moirai-parallel`, `themis`, `tyche-core`,
-`horae`, `ritk-dicom`, `apollo` (`apollo-fft`).
+`horae-time`, `ritk-dicom`, `apollo` (`apollo-fft`).
 
 Declared in the workspace SSOT but consumed by no member: `ritk-core`,
 `ritk-io`, `hermes-simd`, `mnemosyne-core`, `consus-compression`. Both

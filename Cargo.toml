@@ -142,7 +142,7 @@ proteus = { version = "0.1.0", package = "proteus-mat", git = "https://github.co
 hyperion = { version = "0.1.0", git = "https://github.com/ryancinsight/hyperion" }
 eunomia = { version = "0.8.0", git = "https://github.com/ryancinsight/eunomia" }
 tyche-core = { version = "0.2.0", git = "https://github.com/ryancinsight/tyche" }
-horae = { version = "0.1.0", git = "https://github.com/ryancinsight/horae" }
+horae-time = { version = "0.1.0", git = "https://github.com/ryancinsight/horae" }
 # Array substrate + geometry primitives, and portable SIMD.
 # default-features disabled: leto's default `mnemosyne-memory` feature pulls an
 # mnemosyne rev pinned to themis ^0.8 (skewed against themis HEAD 0.9.x). Helios
