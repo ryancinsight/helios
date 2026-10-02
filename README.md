@@ -28,7 +28,7 @@ helios-domain                                           domain
    │
 helios-math                                             numerics (Scalar seam)
    │
-helios-core                                             foundation
+helios-quantities                                       foundation
 ```
 
 Strictly unidirectional layering; Atlas crates (ritk, gaia, hephaestus, moirai,
@@ -74,7 +74,7 @@ fails closed on a reproduced family-wise regression or incomplete evidence.
 
 ## Sprint roadmap
 
-1. **Sprint 1 — Foundation:** workspace skeleton, `helios-core`, `helios-math`
+1. **Sprint 1 — Foundation:** workspace skeleton, `helios-quantities`, `helios-math`
    seam, `helios-domain` (`VoxelGrid` + `Volume`), and provider-owned CT/MVCT
    DICOM ingest. *(implemented)*
 2. **Sprint 2 — Physics & GPU foundation:** Hyperion-owned photon attenuation,

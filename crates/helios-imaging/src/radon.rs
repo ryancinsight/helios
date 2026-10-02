@@ -4,9 +4,9 @@ use aequitas::systems::si::{
     quantities::{Angle, Length},
     units::{Millimeter, Radian},
 };
-use helios_core::HeliosError;
 use helios_domain::Volume;
 use helios_math::{GeometryScalar, NumericElement, Point3, Ray, Vector3};
+use helios_quantities::HeliosError;
 use helios_solver::forward_project_ray;
 
 /// A parallel-beam sinogram: line integrals `p(θ, s)` over typed projection

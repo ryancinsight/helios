@@ -15,9 +15,9 @@
 //! integration contract holds for every rigid [`VoxelGrid`] pose, including
 //! DICOM orientation-cosine grids.
 
-use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{Aabb, GeometryScalar, Point3, Ray, Vector3};
+use helios_quantities::constants::MM_PER_CM;
 
 /// Precomputed uniform ray-march plan for an in-grid interval.
 ///

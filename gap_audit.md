@@ -435,7 +435,7 @@ changes, which are outside this item.
   Round-trip properties use a bound derived from four machine-epsilon
   roundings. `HounsfieldUnit` remains Helios-owned because it is a calibrated
   non-SI scale. Evidence: warning-denied all-target Clippy, 17/17 configured
-  Nextest tests, doctests, and warning-clean rustdoc for `helios-core`.
+  Nextest tests, doctests, and warning-clean rustdoc for `helios-quantities`.
 
 - **G-25 — RESOLVED (H-067).** The stale local lock changed only the
   `apollo-fft` version field, which was not a complete Cargo resolution and
@@ -543,8 +543,8 @@ changes, which are outside this item.
   reproduced (leto HEAD has no geometry; gaia 86-error build failure).*
   *Mitigation (H-055):* `helios-math`'s geometry vocabulary is now behind a default
   `geometry` feature and `helios-physics` consumes it with `default-features=false`,
-  so `helios-core`, `helios-math` (scalar seam) and `helios-physics` **build/test
-  independently** of the churning geometry stack (`cargo nextest run -p helios-core
+  so `helios-quantities`, `helios-math` (scalar seam) and `helios-physics` **build/test
+  independently** of the churning geometry stack (`cargo nextest run -p helios-quantities
   -p helios-physics`). Only geometry-dependent crates (`helios-domain`/`-solver`,
   whole-workspace `cargo build`) remain blocked until the foundation settles.
 
@@ -579,7 +579,7 @@ changes, which are outside this item.
   relations plus primary-source table-value tests.*
 - **G-2 (numerics):** ~~No `Scalar` seam.~~ **CLOSED (H-003).** `helios-math`
   establishes `Scalar = eunomia::RealField` (the Atlas numeric SSOT) as the Helios
-  compute seam and re-exports the leto linear-algebra substrate. `helios-core`
+  compute seam and re-exports the leto linear-algebra substrate. `helios-quantities`
   constants remain `f64` literals by design and are converted by callers. The seam
   is exercised natively (`f32`/`f64`) by the first compute kernels as they land.
 - **G-3 (accuracy):** *Partially closed (H-032).* The **validation machinery** now

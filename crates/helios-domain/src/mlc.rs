@@ -14,8 +14,8 @@
 //!   underdoses the edge region where a neighbour is more closed, reducing the
 //!   effective fluence by a first-order edge term.
 
-use helios_core::HeliosError;
 use helios_math::{NumericElement, Scalar};
+use helios_quantities::HeliosError;
 
 /// Per-projection, per-leaf open-time fractions in `[0, 1]`, row-major
 /// `[projection][leaf]`.

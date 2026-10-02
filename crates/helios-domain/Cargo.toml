@@ -14,7 +14,7 @@ workspace = true
 [dependencies]
 aequitas = { workspace = true }
 eunomia = { workspace = true }
-helios-core = { workspace = true }
+helios-quantities = { workspace = true }
 helios-math = { workspace = true }
 horae = { workspace = true }
 leto = { workspace = true }

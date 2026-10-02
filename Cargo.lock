@@ -1419,22 +1419,10 @@ dependencies = [
  "criterion",
  "eunomia",
  "helios-allocator",
- "helios-core",
  "helios-domain",
  "helios-imaging",
  "helios-math",
-]
-
-[[package]]
-name = "helios-core"
-version = "0.1.0"
-dependencies = [
- "aequitas",
- "eunomia",
- "helios-allocator",
- "proptest",
- "thiserror 2.0.21",
- "tracing",
+ "helios-quantities",
 ]
 
 [[package]]
@@ -1447,8 +1435,8 @@ dependencies = [
  "consus-io",
  "eunomia",
  "helios-allocator",
- "helios-core",
  "helios-math",
+ "helios-quantities",
  "horae-time",
  "leto",
  "ritk-dicom",
@@ -1463,9 +1451,9 @@ dependencies = [
  "criterion",
  "eunomia",
  "helios-allocator",
- "helios-core",
  "helios-domain",
  "helios-math",
+ "helios-quantities",
  "helios-solver",
  "hephaestus-core",
  "hephaestus-wgpu",
@@ -1484,9 +1472,9 @@ dependencies = [
  "eunomia",
  "helios-allocator",
  "helios-analysis",
- "helios-core",
  "helios-domain",
  "helios-math",
+ "helios-quantities",
  "helios-solver",
  "hyperion",
  "ritk-registration",
@@ -1499,7 +1487,7 @@ version = "0.1.0"
 dependencies = [
  "eunomia",
  "gaia-mesh",
- "helios-core",
+ "helios-quantities",
  "leto",
 ]
 
@@ -1510,8 +1498,8 @@ dependencies = [
  "aequitas",
  "eunomia",
  "helios-allocator",
- "helios-core",
  "helios-math",
+ "helios-quantities",
  "hyperion",
  "proptest",
  "proteus-mat",
@@ -1530,8 +1518,8 @@ dependencies = [
  "criterion",
  "eunomia",
  "helios-allocator",
- "helios-core",
  "helios-math",
+ "helios-quantities",
  "mnemosyne-arena",
 ]
 
@@ -1546,6 +1534,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "helios-quantities"
+version = "0.1.0"
+dependencies = [
+ "aequitas",
+ "eunomia",
+ "helios-allocator",
+ "proptest",
+ "thiserror 2.0.21",
+ "tracing",
+]
+
+[[package]]
 name = "helios-simulation"
 version = "0.1.0"
 dependencies = [
@@ -1553,11 +1553,11 @@ dependencies = [
  "eunomia",
  "helios-allocator",
  "helios-analysis",
- "helios-core",
  "helios-domain",
  "helios-imaging",
  "helios-math",
  "helios-physics",
+ "helios-quantities",
  "helios-solver",
  "hyperion",
  "image",
@@ -1574,10 +1574,10 @@ dependencies = [
  "criterion",
  "eunomia",
  "helios-allocator",
- "helios-core",
  "helios-domain",
  "helios-math",
  "helios-physics",
+ "helios-quantities",
  "hyperion",
  "proteus-mat",
 ]

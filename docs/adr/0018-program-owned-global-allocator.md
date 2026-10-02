@@ -3,25 +3,25 @@
 - Status: Accepted
 - Date: 2026-09-26
 - Scope: `helios-allocator`, every example, benchmark, and binary; the
-  Mnemosyne dependency edges of `helios-core`, `helios-planning`,
+  Mnemosyne dependency edges of `helios-quantities`, `helios-planning`,
   `helios-python`, and `xtask`
 - Delivered by: PR #112
 
 ## Context
 
 PR #112 adopted Mnemosyne as the Helios allocator by making
-`mnemosyne-memory` a default-on dependency of `helios-core` behind a feature
-named `mnemosyne-memory`, with a `helios_core::install_global_allocator!`
+`mnemosyne-memory` a default-on dependency of `helios-quantities` behind a feature
+named `mnemosyne-memory`, with a `helios_quantities::install_global_allocator!`
 macro. Review found four consequences:
 
-- every library consumer of `helios-core` compiled the allocator stack:
-  `cargo tree -e normal -p helios-core` grew from 24 to 46 packages
+- every library consumer of `helios-quantities` compiled the allocator stack:
+  `cargo tree -e normal -p helios-quantities` grew from 24 to 46 packages
   (72 lines), and `helios-python` linked it without installing it;
 - the feature was named after a stack member and existed only to switch a
   dependency off, while the stack's standards admit a capability into the one
   build or delete it;
 - `helios-planning` reached `AlignedVec` through `mnemosyne-arena` while
-  `helios_core::memory` re-exported the same type, so one type had two paths
+  `helios_quantities::memory` re-exported the same type, so one type had two paths
   and the "single naming site" claim was false;
 - `xtask` installed the allocator although `bench-replicated` measures a
   separately spawned `cargo bench` process, and `ramp_filter` did not install
@@ -35,11 +35,11 @@ macro. Review found four consequences:
    Every example and criterion bench invokes it once at its crate root; the
    owning library crate lists `helios-allocator` under `[dev-dependencies]`, so
    the edge never reaches that library's consumers.
-2. Library crates depend only on the capability they use. `helios-core`
+2. Library crates depend only on the capability they use. `helios-quantities`
    carries no Mnemosyne dependency and no memory module. `helios-planning`
    depends on `mnemosyne-arena` directly, because its dose-influence matrix
-   stores entries in `AlignedVec`; routing that type through `helios-core`
-   would put `mnemosyne-arena` under every `helios-core` consumer to serve one
+   stores entries in `AlignedVec`; routing that type through `helios-quantities`
+   would put `mnemosyne-arena` under every `helios-quantities` consumer to serve one
    crate.
 3. No feature gates any of this: each crate's graph holds exactly the
    dependencies its code uses.
@@ -50,9 +50,9 @@ macro. Review found four consequences:
 
 ## Rejected alternatives
 
-- **Default feature on `helios-core`** (PR #112 as opened): the cost lands on
+- **Default feature on `helios-quantities`** (PR #112 as opened): the cost lands on
   every library consumer, and disabling it needs a member-named feature.
-- **Re-export `AlignedVec` from `helios-core`**: one path per type, but it
+- **Re-export `AlignedVec` from `helios-quantities`**: one path per type, but it
   adds `mnemosyne-arena` to all 24 packages' consumers for one user.
 - **A two-line `#[global_allocator]` static in each program** naming
   `mnemosyne` directly: 25 copies of the choice instead of one.

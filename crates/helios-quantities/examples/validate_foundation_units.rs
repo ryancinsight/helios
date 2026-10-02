@@ -1,4 +1,4 @@
-//! Helios-core example: typestate slots for the foundation layer.
+//! Helios-quantities example: typestate slots for the foundation layer.
 //!
 //! Exercises the validating newtypes `EnergyMeV`, `HounsfieldUnit`,
 //! `VoxelSpacingMm` — the typed slots every higher layer passes at construction
@@ -7,14 +7,14 @@
 //! spacings), so upstream callers must build domain values from validated sources
 //! rather than hand-poking the underlying float.
 //!
-//! Run with:  cargo run --example `validate_foundation_units` -p helios-core
+//! Run with:  cargo run --example `validate_foundation_units` -p helios-quantities
 
 #![expect(
     clippy::print_stdout,
     reason = "ratchet HELIOS-PRINT-1: demonstration/CLI output surface"
 )]
 
-use helios_core::{EnergyMeV, HeliosError, HounsfieldUnit, VoxelSpacingMm};
+use helios_quantities::{EnergyMeV, HeliosError, HounsfieldUnit, VoxelSpacingMm};
 
 // Programs allocate through Mnemosyne (ADR 0018).
 helios_allocator::install_global_allocator!();

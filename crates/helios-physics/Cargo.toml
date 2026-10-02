@@ -15,7 +15,7 @@ workspace = true
 aequitas = { workspace = true }
 eunomia = { workspace = true }
 hyperion = { workspace = true }
-helios-core = { workspace = true }
+helios-quantities = { workspace = true }
 # Physics needs only the Scalar seam, not the geometry vocabulary. A direct path
 # dep (not `workspace = true`) is used so `default-features = false` is honored —
 # under workspace inheritance cargo ignores it. This keeps the physics layer

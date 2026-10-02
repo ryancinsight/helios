@@ -1,5 +1,5 @@
 [package]
-name = "helios-core"
+name = "helios-quantities"
 description = "Helios foundation layer: typed errors, physical constants, and validating domain newtypes for radiation therapy and imaging."
 edition.workspace = true
 version.workspace = true

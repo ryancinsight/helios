@@ -22,9 +22,9 @@ use aequitas::systems::si::{
     units::{Centimeter, PerCentimeter},
 };
 use eunomia::UnitScalar;
-use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Scalar;
+use helios_quantities::constants::MM_PER_CM;
 use hyperion::{
     coefficient::{InteractionCoefficient, LinearAttenuation},
     quantity::{OpticalDepth, PathLength},

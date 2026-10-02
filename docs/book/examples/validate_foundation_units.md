@@ -5,13 +5,13 @@
 *Figure 1.2 — Example: Validating Foundation Units*
 <!-- generated-figure-end -->
 
-**Crate**: `helios-core`  
-**Run**: `cargo run -p helios-core --example validate_foundation_units`  
-**Source**: [`crates/helios-core/examples/validate_foundation_units.rs`](../../../crates/helios-core/examples/validate_foundation_units.rs)
+**Crate**: `helios-quantities`  
+**Run**: `cargo run -p helios-quantities --example validate_foundation_units`  
+**Source**: [`crates/helios-quantities/examples/validate_foundation_units.rs`](../../../crates/helios-quantities/examples/validate_foundation_units.rs)
 
 ## What This Example Demonstrates
 
-This example exercises the three typestate boundary-guards in `helios-core`:
+This example exercises the three typestate boundary-guards in `helios-quantities`:
 
 | Type | Accepts | Rejects |
 |---|---|---|
@@ -30,7 +30,7 @@ It confirms that:
 ## Key Code Snippet
 
 ```text
-use helios_core::{EnergyMeV, HeliosError, HounsfieldUnit, VoxelSpacingMm};
+use helios_quantities::{EnergyMeV, HeliosError, HounsfieldUnit, VoxelSpacingMm};
 
 // Valid construction
 let energy = EnergyMeV::try_from(6.0).expect("6 MeV is a clinically valid beam energy");

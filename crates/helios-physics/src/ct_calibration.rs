@@ -1,7 +1,7 @@
 //! CT-number to relative-density calibration.
 
-use helios_core::constants::HU_SCALE_DENOMINATOR;
 use helios_math::{NumericElement, Scalar};
+use helios_quantities::constants::HU_SCALE_DENOMINATOR;
 
 /// Relative electron and mass density from a CT number, `max(0, 1 + HU/1000)`.
 ///

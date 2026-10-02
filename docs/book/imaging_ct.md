@@ -19,7 +19,7 @@ HU = 1000 × (μ − μ_water) / μ_water
 | Soft tissue | +20 to +80 |
 | Cortical bone | +700 to +3000 |
 
-Helios uses HounsfieldUnit (a validated newtype from helios-core) to ensure
+Helios uses HounsfieldUnit (a validated newtype from helios-quantities) to ensure
 only valid HU values enter the attenuation pipeline.
 
 ## Further Reading

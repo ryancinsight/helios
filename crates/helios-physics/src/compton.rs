@@ -19,10 +19,10 @@ use aequitas::systems::si::{
     units::{MegaElectronVolt, SquareCentimeterPerGram},
 };
 use eunomia::UnitScalar;
-use helios_core::constants::{
+use helios_math::{NumericElement, Scalar};
+use helios_quantities::constants::{
     AVOGADRO_PER_MOL, CLASSICAL_ELECTRON_RADIUS_M, ELECTRON_REST_ENERGY_MEV,
 };
-use helios_math::{NumericElement, Scalar};
 use hyperion::coefficient::MassAttenuation;
 
 /// Square centimetres per square metre (`1 m² = 10⁴ cm²`).
@@ -144,7 +144,7 @@ fn integrate_compton<T: Scalar + UnitScalar>(energy_mev: T, steps: usize) -> (T,
 pub fn compton_energy_transfer_cross_section<T: Scalar + UnitScalar>(energy: Energy<T>) -> T {
     integrate_compton(
         energy.in_unit::<MegaElectronVolt>(),
-        helios_core::constants::COMPTON_QUADRATURE_STEPS,
+        helios_quantities::constants::COMPTON_QUADRATURE_STEPS,
     )
     .1
 }
@@ -155,7 +155,7 @@ pub fn compton_energy_transfer_cross_section<T: Scalar + UnitScalar>(energy: Ene
 pub fn compton_mean_energy_transfer_fraction<T: Scalar + UnitScalar>(energy: Energy<T>) -> T {
     let (total, transfer) = integrate_compton(
         energy.in_unit::<MegaElectronVolt>(),
-        helios_core::constants::COMPTON_QUADRATURE_STEPS,
+        helios_quantities::constants::COMPTON_QUADRATURE_STEPS,
     );
     transfer * total.recip()
 }

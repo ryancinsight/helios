@@ -13,7 +13,7 @@ cargo doc --workspace --no-deps --open
 
 ## Selected public APIs
 
-### `helios-core`
+### `helios-quantities`
 
 - `EnergyMeV`, `HounsfieldUnit`, and `VoxelSpacingMm`
 - `HeliosError` and `Result`
