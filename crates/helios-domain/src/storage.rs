@@ -23,8 +23,8 @@
 use crate::grid::VoxelGrid;
 use crate::volume::Volume;
 use core::num::NonZeroUsize;
-use helios_core::HeliosError;
 use helios_math::{Point3, Scalar, Vector3};
+use helios_quantities::HeliosError;
 
 use consus_core::{ByteOrder, Datatype, Shape};
 use consus_hdf5::file::writer::{DatasetCreationProps, FileCreationProps, Hdf5FileBuilder};

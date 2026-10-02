@@ -1,8 +1,8 @@
 //! Dense scalar volume over a [`VoxelGrid`], with trilinear sampling.
 
 use crate::grid::VoxelGrid;
-use helios_core::HeliosError;
 use helios_math::{NumericElement, Point3, Scalar};
+use helios_quantities::HeliosError;
 use leto::Array3;
 
 /// A dense scalar field sampled on a [`VoxelGrid`].

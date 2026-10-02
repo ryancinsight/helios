@@ -21,7 +21,7 @@ Only programs depend on `helios-allocator`, and each owning crate lists it under
 `[dev-dependencies]`, so the allocator never enters a library consumer's
 dependency graph (ADR 0018, `docs/adr/0018-program-owned-global-allocator.md`).
 Library crates depend only on the Mnemosyne capability they use:
-`helios-planning` takes `mnemosyne-arena` for `AlignedVec`, and `helios-core`
+`helios-planning` takes `mnemosyne-arena` for `AlignedVec`, and `helios-quantities`
 takes nothing. `helios-python` is a `cdylib` loaded into CPython; it installs no
 allocator, since that would replace the host interpreter's, and links none.
 `xtask` installs none either: `bench-replicated` measures separately spawned

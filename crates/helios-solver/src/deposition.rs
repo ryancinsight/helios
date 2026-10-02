@@ -576,7 +576,8 @@ mod tests {
             let depth = depth_mm(i);
             // exp(−μ·Δdepth) with μ in cm⁻¹ and the depth difference in cm.
             let attenuation = cast(
-                -WATER_MU_PER_CM * (depth - reference_depth) / helios_core::constants::MM_PER_CM,
+                -WATER_MU_PER_CM * (depth - reference_depth)
+                    / helios_quantities::constants::MM_PER_CM,
             )
             .exp();
             let divergence = cast(((PDD_SSD_MM + reference_depth) / (PDD_SSD_MM + depth)).powi(2));
@@ -598,7 +599,8 @@ mod tests {
         // strictly below pure attenuation, by the (810/950)² = 0.727 factor.
         let deepest = dose.get(8, 1, 1).expect("in-grid voxel") * reference.recip();
         let attenuation_only = cast(
-            -WATER_MU_PER_CM * (depth_mm(8) - reference_depth) / helios_core::constants::MM_PER_CM,
+            -WATER_MU_PER_CM * (depth_mm(8) - reference_depth)
+                / helios_quantities::constants::MM_PER_CM,
         )
         .exp();
         assert!(

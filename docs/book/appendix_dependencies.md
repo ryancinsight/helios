@@ -15,7 +15,7 @@ Primary production edges in the workspace manifests are:
 - `helios-imaging` → `helios-solver` and `helios-domain`;
 - `helios-solver` → `helios-physics` and `helios-domain`;
 - `helios-analysis` → `helios-domain`; and
-- `helios-domain` → `helios-math` and `helios-core`.
+- `helios-domain` → `helios-math` and `helios-quantities`.
 
 The end-to-end examples and tests additionally compose simulation, imaging, and
 analysis through development-only dependencies. Atlas providers own numeric

@@ -16,9 +16,9 @@ use aequitas::systems::si::{
     units::Millimeter,
 };
 use eunomia::UnitScalar;
-use helios_core::HeliosError;
 use helios_domain::Volume;
 use helios_math::{NumericElement, Scalar};
+use helios_quantities::HeliosError;
 
 fn require_positive_finite<T: Scalar>(value: T, field: &'static str) -> Result<(), HeliosError> {
     if !value.is_finite() || value <= <T as NumericElement>::ZERO {

@@ -17,9 +17,9 @@
 use crate::radon::Sinogram;
 use crate::ramp::{ram_lak_kernel, ramp_filter_rows, RampMethod};
 use aequitas::systems::si::units::{Millimeter, Radian};
-use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::GeometryScalar;
+use helios_quantities::constants::MM_PER_CM;
 
 /// Reconstruct the axial `μ` slice from `sinogram` onto `recon` by filtered
 /// back-projection.

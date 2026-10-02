@@ -8,9 +8,9 @@
 //! validation report). Differentially validated against the CPU
 //! [`forward_project_ray`](helios_solver::forward_project_ray) reference.
 
-use helios_core::constants::MM_PER_CM;
 use helios_domain::Volume;
 use helios_math::UnitQuaternion;
+use helios_quantities::constants::MM_PER_CM;
 use hephaestus_core::{BlockWidth, ComputeDevice, HephaestusError, Result};
 use hephaestus_wgpu::{ray_line_integrals_into, FieldGeometry, WgpuBuffer, WgpuDevice, RAY_STRIDE};
 use themis::{MemoryTier, PlacementHint};

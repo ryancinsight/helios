@@ -4,7 +4,7 @@
 //! indices to world/patient coordinates, and the dense [`Volume`] scalar field
 //! (CT/MVCT densities, dose grids, projection stacks) sampled over that grid.
 //!
-//! The pure domain types depend only on `helios-core` (errors, validated units)
+//! The pure domain types depend only on `helios-quantities` (errors, validated units)
 //! and `helios-math` (the `Scalar` seam and leto substrate). DICOM I/O
 //! (`ritk-dicom`) is wired in at the boundary behind the `dicom` feature
 //! (`load_ct_slice`): external file bytes become validated typed [`Volume`]s

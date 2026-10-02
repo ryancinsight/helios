@@ -7,7 +7,7 @@
 # shared version set below via `{ workspace = true }` (SSOT).
 [workspace]
 members = [
-    "crates/helios-core",
+    "crates/helios-quantities",
     "crates/helios-math",
     "crates/helios-domain",
     "crates/helios-physics",
@@ -80,7 +80,7 @@ print_stderr = "deny"
 [workspace.dependencies]
 # ── Internal Helios crates (added as they are created, per architecture_scoping
 #    growth triggers — no speculative empty-crate scaffolding). ──
-helios-core = { path = "crates/helios-core", version = "0.1.0" }
+helios-quantities = { path = "crates/helios-quantities", version = "0.1.0" }
 helios-allocator = { path = "crates/helios-allocator", version = "0.1.0" }
 helios-math = { path = "crates/helios-math", version = "0.1.0" }
 helios-domain = { path = "crates/helios-domain", version = "0.1.0" }

@@ -9,9 +9,9 @@
 //! the [`Scalar`] seam.
 
 use aequitas::systems::si::quantities::AbsorbedDose;
-use helios_core::HeliosError;
 use helios_domain::Volume;
 use helios_math::{NumericElement, Scalar};
+use helios_quantities::HeliosError;
 
 /// Mean and (population) standard deviation of a region of interest.
 #[derive(Debug, Clone, Copy, PartialEq)]

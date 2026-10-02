@@ -17,7 +17,7 @@ use asclepius_coeus::response::radiation::generalized_equivalent_uniform_dose;
 use coeus_autograd::{add, matmul, mul, relu, sub, sum, Var};
 use coeus_core::MoiraiBackend;
 use coeus_tensor::Tensor;
-use helios_core::HeliosError;
+use helios_quantities::HeliosError;
 
 type AutodiffVar = Var<f64, MoiraiBackend>;
 

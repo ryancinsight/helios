@@ -30,7 +30,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let expected = hu
         .iter()
         .map(|v| {
-            (0.0636_f32 * (1.0 + v / helios_core::constants::HU_SCALE_DENOMINATOR as f32)).max(0.0)
+            (0.0636_f32 * (1.0 + v / helios_quantities::constants::HU_SCALE_DENOMINATOR as f32))
+                .max(0.0)
         })
         .collect::<Vec<_>>();
 

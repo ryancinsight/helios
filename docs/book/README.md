@@ -30,9 +30,9 @@ and clinical plan verification — with a consistent zero-copy, zero-cost-abstra
           │helios-math  │  (Scalar seam, Point3, Vector3 via eunomia/leto)
           └──────┬───────┘
                  │
-          ┌──────▼──────┐
-          │helios-core  │  (EnergyMeV, HounsfieldUnit, VoxelSpacingMm, errors)
-          └─────────────┘
+          ┌──────▼───────────┐
+          │helios-quantities │  (EnergyMeV, HounsfieldUnit, VoxelSpacingMm, errors)
+          └──────────────────┘
 ```
 
 ## Atlas Dependencies
@@ -51,7 +51,7 @@ and clinical plan verification — with a consistent zero-copy, zero-cost-abstra
 ## Getting Started
 
 ```bash
-cargo run -p helios-core --example validate_foundation_units
+cargo run -p helios-quantities --example validate_foundation_units
 cargo run -p helios-domain --example voxel_grid_construction
 cargo run -p helios-simulation --example tomotherapy_workflow -- /tmp/helios_output
 ```

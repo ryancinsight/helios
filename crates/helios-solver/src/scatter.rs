@@ -17,9 +17,9 @@
 //! primary-only reference.
 
 use aequitas::systems::si::quantities::{Dimensionless, Length};
-use helios_core::constants::CM_PER_M;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{NumericElement, Scalar};
+use helios_quantities::constants::CM_PER_M;
 
 #[inline]
 fn normalize_weights_by_sum<T: Scalar>(weights: &mut [T], sum: T) {

@@ -6,7 +6,7 @@
 <!-- generated-figure-end -->
 
 Helios enforces physical validity at the type level through **validating newtypes** in
-`helios-core`.  Each domain quantity is a distinct type that cannot be constructed
+`helios-quantities`.  Each domain quantity is a distinct type that cannot be constructed
 from an arbitrary float — it must pass a domain-specific validation contract.
 
 ## The Three Foundation Slots
@@ -21,7 +21,7 @@ All three are created via `TryFrom<f64>`, returning `HeliosError::InvalidDomainV
 on failure.
 
 ```text
-use helios_core::{EnergyMeV, HounsfieldUnit, VoxelSpacingMm};
+use helios_quantities::{EnergyMeV, HounsfieldUnit, VoxelSpacingMm};
 
 let energy  = EnergyMeV::try_from(6.0).unwrap();   // 6 MV photon beam
 let water   = HounsfieldUnit::try_from(0.0).unwrap(); // water = 0 HU
@@ -43,5 +43,5 @@ The typestate pattern ensures that:
 
 ## Further Reading
 
-- [`helios-core` source](../../crates/helios-core/src/)
+- [`helios-quantities` source](../../crates/helios-quantities/src/)
 - [Example: Validating Foundation Units](examples/validate_foundation_units.md)

@@ -4,7 +4,7 @@
 physics** (the shared basis for MVCT forward projection and dose ray-tracing),
 then the GPU foundation (hephaestus + moirai) and the first projection kernel.
 
-**Phase:** 2 (Execution). Sprint 1's domain core (`helios-core`/`math`/`domain`)
+**Phase:** 2 (Execution). Sprint 1's domain core (`helios-quantities`/`math`/`domain`)
 is complete and gate-green.
 
 ## Sequencing note (unblocked vs blocked)

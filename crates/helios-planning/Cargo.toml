@@ -12,7 +12,7 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
-helios-core = { workspace = true }
+helios-quantities = { workspace = true }
 # Only the Scalar seam is needed; the geometry vocabulary is not.
 helios-math = { path = "../helios-math", default-features = false }
 # Cache-line-aligned storage for the dense dose-influence matrix.

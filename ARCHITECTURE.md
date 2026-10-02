@@ -24,17 +24,17 @@ crates form a strictly **unidirectional, layered** dependency graph.
                      │
                 helios-math
                      │
-                helios-core                       (foundation; depends on nothing project-local)
+                helios-quantities                 (foundation; depends on nothing project-local)
 ```
 
-A lower layer never depends on a higher one. `helios-core` is the innermost crate;
+A lower layer never depends on a higher one. `helios-quantities` is the innermost crate;
 `helios-python` is the only crate permitted to depend on `pyo3`.
 
 ## Crate responsibilities
 
 | Crate | Responsibility | Status |
 |-------|----------------|--------|
-| `helios-core` | Typed errors, physical constants, validating domain newtypes, config, logging. | **implemented (0.0.1)** |
+| `helios-quantities` | Typed errors, physical constants, validating domain newtypes, config, logging. | **implemented (0.0.1)** |
 | `helios-math` | Numeric seam (`Scalar` = `eunomia::RealField`), leto linear-algebra substrate re-export, numerical methods. Geometry *primitives* (`Aabb`/`Ray`/mesh) are consumed from **gaia**, not defined here. | **implemented (0.0.1)** |
 | `helios-domain` | Patient/imaging geometry (CT/MVCT), beam/source/sensor models, binary MLC + collimator geometry, helical delivery kinematics. Landed: `VoxelGrid` + `Volume`, including a Leto `Isometry3` oriented-grid pose; `HelicalDelivery`; binary-MLC `MlcModel`; DICOM ingest (`load_ct_slice`/`load_ct_series` → HU `Volume`, via `ritk-dicom`, feature `dicom`); and HDF5 volumetric storage (`save_volume_hdf5`/`load_volume_hdf5`, via consus, feature `storage`). HU-semantic newtypes and DICOM `ImageOrientationPatient` ingestion remain provider-sequenced; `FieldAperture` (jaw field-shaping + penumbra over a gaia `Aabb`) landed. | **partial (0.1.0)** |
 | `helios-physics` | Helios-specific radiation physics that is not a shared transport law: HU→relative-density calibration and Compton cross-section/energy-transfer models. It returns Hyperion coefficient types instead of owning or re-exporting a parallel coefficient vocabulary. | **partial (0.1.0)** |
@@ -78,7 +78,7 @@ the SSOT in the root `Cargo.toml` `[workspace.dependencies]`.
 
 - **Generic-first numeric seam.** All compute is parameterized through a `Scalar`
   trait (backed by `hermes`/`leto`) from first authorship; concrete numeric types
-  appear only at I/O/FFI boundaries. `helios-core` constants are `f64` literals at
+  appear only at I/O/FFI boundaries. `helios-quantities` constants are `f64` literals at
   their definition boundary and are converted into `T: Scalar` by callers.
 - **Backend seams.** GPU/accelerator dispatch is mediated by a `ComputeBackend`
   trait (`hephaestus` wgpu/cuda/metal implementors); execution regimes (sync/async/

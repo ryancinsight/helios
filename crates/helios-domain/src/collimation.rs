@@ -11,8 +11,8 @@
 //! fluence.
 
 use aequitas::systems::si::quantities::Length;
-use helios_core::{constants::MM_PER_M, HeliosError};
 use helios_math::{aabb_signed_distance, Aabb, GeometryScalar, NumericElement, Point3};
+use helios_quantities::{constants::MM_PER_M, HeliosError};
 
 /// A rectangular collimator field aperture (a gaia `Aabb` open region) with a
 /// linear geometric penumbra at its edges.

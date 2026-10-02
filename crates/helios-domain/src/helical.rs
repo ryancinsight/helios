@@ -23,8 +23,8 @@ use aequitas::systems::si::{
     units::{Millimeter, Radian, Second},
 };
 use eunomia::UnitScalar;
-use helios_core::HeliosError;
 use helios_math::{NumericElement, Scalar};
+use helios_quantities::HeliosError;
 use horae::time::StepSize;
 
 /// Helical delivery geometry and timing.

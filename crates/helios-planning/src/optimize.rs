@@ -1,7 +1,7 @@
 //! Projected-gradient beam-weight optimization.
 
-use helios_core::HeliosError;
 use helios_math::{NumericElement, Scalar};
+use helios_quantities::HeliosError;
 use mnemosyne_arena::{AlignedVec, ScratchElement};
 
 /// A dense linear dose-influence matrix `A` (rows = voxels, columns = beamlets):

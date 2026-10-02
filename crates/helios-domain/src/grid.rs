@@ -1,7 +1,7 @@
 //! Voxel-grid geometry: the discrete-index ↔ world/patient coordinate map.
 
-use helios_core::HeliosError;
 use helios_math::{Isometry3, NumericElement, Point3, Scalar, Translation3, UnitQuaternion};
+use helios_quantities::HeliosError;
 
 /// A regular, oriented 3-D voxel grid with anisotropic spacing.
 ///

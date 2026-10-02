@@ -19,8 +19,8 @@
 
 use crate::grid::VoxelGrid;
 use crate::volume::Volume;
-use helios_core::HeliosError;
 use helios_math::{Point3, Scalar, UnitQuaternion, Vector3};
+use helios_quantities::HeliosError;
 use ritk_dicom::{
     decode_frame_with, parse_file_with, tags, DecodeFrameRequest, DicomAttributeRead,
     DicomRsBackend, DicomTag, PixelLayout, PixelSignedness, TransferSyntaxKind,

@@ -10,9 +10,9 @@ use aequitas::systems::si::{
     quantities::{Angle, Length},
     units::{Millimeter, Radian},
 };
-use helios_core::constants::MM_PER_CM;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{GeometryScalar, NumericElement};
+use helios_quantities::constants::MM_PER_CM;
 
 /// Back-project projection `rows` (row-major `[angle][offset]`) onto `recon`,
 /// scaling every voxel by `scale`.

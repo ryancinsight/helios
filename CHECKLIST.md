@@ -308,7 +308,7 @@ remaining GPU-beats-CPU path is the resident on-device μ→projection→transmi
 `Volume::as_slice` zero-copy accessor (documented layout contract); `convolve_axis`
 strided-slice rewrite — **8.3×/7.4× at 32³/64³, bitwise-identical** (baseline report in
 validation_reports/); `save_volume_hdf5` via the slice view; `MM_PER_CM` 5 duplicates →
-one helios-core SSOT constant. 207 `--all-features` tests pass, clippy/fmt clean.
+one helios-quantities SSOT constant. 207 `--all-features` tests pass, clippy/fmt clean.
 
 ### (prior) H-046 done — consus HDF5 volumetric storage (mandated consus consumed)
 
@@ -614,7 +614,7 @@ H-012.
   rust-toolchain, `.config/nextest.toml` 30s/60s budget, `.gitignore`) + Foundation
   artifacts (README, ARCHITECTURE with Atlas dependency map, backlog, gap_audit,
   CHANGELOG, SPRINT_1).
-- [x] **H-002** `helios-core`: `HeliosError` (thiserror, `#[non_exhaustive]`),
+- [x] **H-002** `helios-quantities`: `HeliosError` (thiserror, `#[non_exhaustive]`),
   CODATA/ICRU physical constants with derivation tests, validating newtypes
   (`EnergyMeV`, `HounsfieldUnit`, `VoxelSpacingMm`). 13 tests pass; build + clippy
   `-D warnings` + fmt + nextest green.
@@ -639,11 +639,11 @@ H-012.
 - **Edition 2021 / resolver 2** chosen over the edition-2024 default heuristic:
   explicit user directive in the goal + "exact kwavers/cfdrs process" (kwavers uses
   resolver 2). Recorded override of the standards default.
-- **`helios-core` constants are `f64`** at their definition boundary (not generic
+- **`helios-quantities` constants are `f64`** at their definition boundary (not generic
   over `Scalar`): the generic numeric seam lives in `helios-math` (H-003); constants
   are literals converted by callers. Avoids a premature `Scalar` dependency in the
   foundation crate.
-- **No speculative empty crates:** only `helios-core` is a workspace member; the
+- **No speculative empty crates:** only `helios-quantities` is a workspace member; the
   remaining 10 crates are added when their layer is built (architecture_scoping
   growth triggers). `workspace.dependencies` declares the full Atlas set now as the
   integration SSOT.
