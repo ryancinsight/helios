@@ -53,7 +53,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 [[package]]
 name = "aequitas"
 version = "0.2.0"
-source = "git+https://github.com/ryancinsight/aequitas#00e1c62d9dd4e319a046b0d885f4b7fadc3b46ff"
+source = "git+https://github.com/ryancinsight/aequitas#b70f908f35a099ad9d94b2dae1aebf03f626154f"
 dependencies = [
  "eunomia",
  "typenum",
@@ -1059,7 +1059,7 @@ dependencies = [
 [[package]]
 name = "eunomia"
 version = "0.8.0"
-source = "git+https://github.com/ryancinsight/eunomia#7e3a361b559a1f14d9148285e65efb398003f145"
+source = "git+https://github.com/ryancinsight/eunomia#684de616d51090c80d55d0ca4ead631e89336776"
 dependencies = [
  "bytemuck",
  "eunomia-derive",
@@ -1070,7 +1070,7 @@ dependencies = [
 [[package]]
 name = "eunomia-derive"
 version = "0.8.0"
-source = "git+https://github.com/ryancinsight/eunomia#7e3a361b559a1f14d9148285e65efb398003f145"
+source = "git+https://github.com/ryancinsight/eunomia#684de616d51090c80d55d0ca4ead631e89336776"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1415,7 +1415,7 @@ dependencies = [
  "helios-allocator",
  "helios-core",
  "helios-math",
- "horae",
+ "horae-time",
  "leto",
  "ritk-dicom",
  "tempfile",
@@ -1637,9 +1637,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e17592d60ebacc7d5e169f4663c5f84f9161cc90328abcfe8456f41e4dfcb284"
 
 [[package]]
-name = "horae"
+name = "horae-time"
 version = "0.1.0"
-source = "git+https://github.com/ryancinsight/horae#845659014a835d6890328b5277157bb9fcdfc941"
+source = "git+https://github.com/ryancinsight/horae#4c893ecaa7d66906fabaa32e672722844fa89d2b"
 dependencies = [
  "aequitas",
  "eunomia",
