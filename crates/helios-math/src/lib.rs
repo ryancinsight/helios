@@ -32,7 +32,7 @@ pub use eunomia::RealField as Scalar;
 
 // Re-export the rest of the numeric SSOT surface so downstream crates depend on
 // one vocabulary source.
-pub use eunomia::{CastFrom, CastTo, FloatElement, NumericElement};
+pub use eunomia::{FloatElement, NumericElement};
 
 /// The scalar widths Helios kernels are shipped and verified for.
 ///

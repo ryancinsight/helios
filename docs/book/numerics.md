@@ -20,9 +20,8 @@ eunomia::FloatElement
 eunomia::RealField
 ```
 
-`helios-math` also re-exports `NumericElement`, `FloatElement`,
-`CastFrom`, and `CastTo`; domain crates normally depend only on the
-`Scalar` name.
+`helios-math` also re-exports `NumericElement` and `FloatElement`; domain
+crates normally depend only on the `Scalar` name.
 
 ## Generic kernel
 

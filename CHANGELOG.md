@@ -222,6 +222,13 @@ under a Breaking subsection.
 - The legacy migration allowlist is empty after the audit confirmed zero
   remaining legacy dependency declarations and source tokens.
 
+### Removed
+
+- `helios-math` no longer re-exports `eunomia::CastFrom` and `eunomia::CastTo`;
+  no Helios crate used them, and Eunomia retires both traits. Counts convert
+  through `FloatElement::from_count` and signed integers through
+  `FloatElement::from_integer`.
+
 ## [0.1.0] — 2026-07-22
 
 ### Breaking
