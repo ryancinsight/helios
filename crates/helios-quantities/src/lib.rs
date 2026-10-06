@@ -3,7 +3,7 @@
 //! `helios-quantities` is the innermost crate of the Helios workspace: it depends on
 //! nothing project-local and everything else depends inward on it. It owns the
 //! cross-cutting vocabulary shared by every higher layer — the typed error
-//! surface, physical constants for radiation transport and dosimetry, and the
+//! surface, physical constants for radiation transport and dosimetry, the
 //! validating domain newtypes that make invalid states unrepresentable at the
 //! parse/deserialize boundary.
 //!
