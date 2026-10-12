@@ -4192,6 +4192,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "helios-allocator",
  "serde",
  "serde_json",
  "sha2",
