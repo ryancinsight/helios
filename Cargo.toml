@@ -137,7 +137,7 @@ consus-hdf5 = { version = "0.1.0", git = "https://github.com/ryancinsight/consus
 consus-io = { version = "0.1.0", git = "https://github.com/ryancinsight/consus", features = ["std"] }
 consus-compression = { version = "0.1.0", git = "https://github.com/ryancinsight/consus", features = ["std", "deflate"] }
 # Numeric datatype SSOT (Scalar seam: RealField/FloatElement/NumericElement).
-aequitas = { version = "0.2.0", git = "https://github.com/ryancinsight/aequitas", default-features = false, features = ["std"] }
+aequitas = { version = "0.2.1", git = "https://github.com/ryancinsight/aequitas", default-features = false, features = ["std"] }
 proteus = { version = "0.1.0", package = "proteus-mat", git = "https://github.com/ryancinsight/proteus" }
 hyperion = { version = "0.1.0", git = "https://github.com/ryancinsight/hyperion" }
 eunomia = { version = "0.9.0", git = "https://github.com/ryancinsight/eunomia" }
@@ -168,7 +168,7 @@ mnemosyne-core = { version = "0.3.0", git = "https://github.com/ryancinsight/Mne
 # mnemosyne-arena: cache-line-aligned vectors, so the planning compute buffers
 # (the dense dose-influence matrix) load without alignment fixups in SIMD kernels.
 mnemosyne-arena = { version = "0.6.0", git = "https://github.com/ryancinsight/Mnemosyne" }
-themis = { version = "0.11.0", git = "https://github.com/ryancinsight/themis", package = "themis-topology" }
+themis = { version = "0.11.1", git = "https://github.com/ryancinsight/themis", package = "themis-topology" }
 # Spectral / transform methods.
 apollo = { version = "0.27.0", git = "https://github.com/ryancinsight/apollo", package = "apollo-fft" }
 
