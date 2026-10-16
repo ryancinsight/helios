@@ -132,17 +132,21 @@ fn filter_rows_fft(rows: &mut [f64], n_ang: usize, n_off: usize, kernel: &[f64],
     let kernel_spectrum = apollo::fft_1d_slice::<f64>(&kernel_buf);
 
     let mut row_buf = vec![0.0_f64; nfft];
+    // The product buffer is fixed at the FFT length and can be reused for every
+    // projection row, reducing heap allocations in the O(n_ang) filter loop.
+    let mut product = vec![Complex::new(0.0, 0.0); nfft];
     for a in 0..n_ang {
         let start = a * n_off;
         row_buf[..n_off].copy_from_slice(&rows[start..start + n_off]);
         row_buf[n_off..].fill(0.0);
 
         let row_spectrum = apollo::fft_1d_slice::<f64>(&row_buf);
-        let product: Vec<Complex<f64>> = row_spectrum
-            .iter()
-            .zip(kernel_spectrum.iter())
-            .map(|(p, q)| Complex::new(p.re * q.re - p.im * q.im, p.re * q.im + p.im * q.re))
-            .collect();
+        for (slot, (p, q)) in product
+            .iter_mut()
+            .zip(row_spectrum.iter().zip(kernel_spectrum.iter()))
+        {
+            *slot = Complex::new(p.re * q.re - p.im * q.im, p.re * q.im + p.im * q.re);
+        }
         let convolved = apollo::ifft_1d_slice::<f64>(&product);
 
         for i in 0..n_off {
