@@ -45,6 +45,16 @@ under a Breaking subsection.
 
 ### Changed
 
+- **build(deps)**: Advance the first-party providers to their current cohort.
+  Aequitas to 0.3.1, Apollo FFT to 0.29.3, Asclepius to 0.3.0, CoeUs to
+  0.12.0, the Consus edges to 0.4.0, Eunomia to 0.10.0, Gaia's mesh to
+  0.6.10, Hephaestus to 0.27.0, Hermes to 0.9.2, Horae to 0.2.2, Leto to
+  0.46.4, Mnemosyne to 0.10.1/0.7.1, Moirai to 0.10.0, the RITK edges to
+  0.11.0/0.5.0/0.56.0/0.4.0, Themis to 0.11.1 and Tyche to 0.4.0. The
+  requirements and the lock are the whole change: the cohort's APIs are
+  compatible with the code as it stands, so no source edit accompanies the
+  bump.
+
 - The FBP ramp filter is now a frequency-domain convolution through the Atlas
   transform provider (`apollo-fft`), replacing the spatial
   `O(n_ang · n_off²)` form with `O(n_ang · n_off log n_off)`. The pad length
