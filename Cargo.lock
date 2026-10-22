@@ -53,7 +53,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 [[package]]
 name = "aequitas"
 version = "0.3.1"
-source = "git+https://github.com/ryancinsight/aequitas#1bc917c4c909596b4fb16b4b6c239587f442c1a1"
+source = "git+https://github.com/ryancinsight/aequitas#0d6affee83bc588662b5efff833422b034cdf6d4"
 dependencies = [
  "eunomia",
  "typenum",
@@ -163,15 +163,15 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 [[package]]
 name = "apollo-dctdst-core"
 version = "0.17.1"
-source = "git+https://github.com/ryancinsight/apollo#4a6122b591ee51300b0455b74434e05159d19777"
+source = "git+https://github.com/ryancinsight/apollo#ea60a7e343baf83768055cbcde25bed081770cb0"
 dependencies = [
  "eunomia",
 ]
 
 [[package]]
 name = "apollo-fft"
-version = "0.29.3"
-source = "git+https://github.com/ryancinsight/apollo#4a6122b591ee51300b0455b74434e05159d19777"
+version = "0.29.4"
+source = "git+https://github.com/ryancinsight/apollo#ea60a7e343baf83768055cbcde25bed081770cb0"
 dependencies = [
  "apollo-fft-macros",
  "apollo-leto-interop",
@@ -191,7 +191,7 @@ dependencies = [
 [[package]]
 name = "apollo-fft-macros"
 version = "0.3.1"
-source = "git+https://github.com/ryancinsight/apollo#4a6122b591ee51300b0455b74434e05159d19777"
+source = "git+https://github.com/ryancinsight/apollo#ea60a7e343baf83768055cbcde25bed081770cb0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -201,7 +201,7 @@ dependencies = [
 [[package]]
 name = "apollo-leto-interop"
 version = "0.20.1"
-source = "git+https://github.com/ryancinsight/apollo#4a6122b591ee51300b0455b74434e05159d19777"
+source = "git+https://github.com/ryancinsight/apollo#ea60a7e343baf83768055cbcde25bed081770cb0"
 dependencies = [
  "leto",
 ]
