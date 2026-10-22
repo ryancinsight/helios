@@ -50,10 +50,14 @@ under a Breaking subsection.
   0.12.0, the Consus edges to 0.4.0, Eunomia to 0.10.0, Gaia's mesh to
   0.6.10, Hephaestus to 0.27.0, Hermes to 0.9.2, Horae to 0.2.2, Leto to
   0.46.4, Mnemosyne to 0.10.1/0.7.1, Moirai to 0.10.0, the RITK edges to
-  0.11.0/0.5.0/0.56.0/0.4.0, Themis to 0.11.1 and Tyche to 0.4.0. The
-  requirements and the lock are the whole change: the cohort's APIs are
-  compatible with the code as it stands, so no source edit accompanies the
-  bump.
+  0.11.0/0.5.0/0.56.0/0.4.0, Themis to 0.11.1 and Tyche to 0.4.0.
+
+  The CoeUs 0.12 tensor and autodiff surfaces are fallible, so the planning
+  objective now carries that failure: `Tensor::from_slice_on`, `Var::new`,
+  the tape operations and `Var::backward` report through the new
+  `HeliosError::TensorBackend` variant instead of being absorbed. The
+  objective, its gradient and the analytic differential oracle are
+  unchanged.
 
 - The FBP ramp filter is now a frequency-domain convolution through the Atlas
   transform provider (`apollo-fft`), replacing the spatial

@@ -44,6 +44,18 @@ pub enum HeliosError {
         /// Description of the write/read/parse failure.
         reason: String,
     },
+
+    /// A `CoeUs` tensor, tape, or backend operation failed.
+    ///
+    /// The tensor and autodiff surfaces report allocation, shape, and
+    /// device-transfer failures. This variant carries the backend's own
+    /// reason so the message names the cause instead of collapsing it into a
+    /// domain-value error.
+    #[error("tensor backend error: {reason}")]
+    TensorBackend {
+        /// The backend's own description of the failure.
+        reason: String,
+    },
 }
 
 /// Convenience alias for fallible Helios operations.

@@ -15,19 +15,40 @@ use aequitas::systems::si::quantities::{AbsorbedDose, Dimensionless};
 use asclepius::VolumeEffect;
 use asclepius_coeus::response::radiation::generalized_equivalent_uniform_dose;
 use coeus_autograd::{add, matmul, mul, relu, sub, sum, Var};
-use coeus_core::MoiraiBackend;
+use coeus_core::{BackendError, MoiraiBackend};
 use coeus_tensor::Tensor;
 use helios_quantities::HeliosError;
 
 type AutodiffVar = Var<f64, MoiraiBackend>;
 
+/// The Helios error for a `CoeUs` backend failure.
+///
+/// The tensor and autodiff surfaces report allocation, shape, and
+/// device-transfer failures; the reason the backend gives is carried
+/// through so the message names the cause.
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "map_err hands the error over; taking it by reference would bind the closure to a borrow the error does not outlive"
+)]
+fn backend_error(error: BackendError) -> HeliosError {
+    HeliosError::TensorBackend {
+        reason: error.to_string(),
+    }
+}
+
 /// A constant (non-differentiated) scalar `Var` of shape `[1]` on `backend`.
+///
+/// # Errors
+///
+/// [`HeliosError::TensorBackend`] if the tensor or its gradient buffer
+/// cannot be built.
 #[expect(
     clippy::trivially_copy_pass_by_ref,
     reason = "Tensor::from_slice_on borrows the backend; callers keep ownership"
 )]
-fn scalar_const(value: f64, backend: &MoiraiBackend) -> AutodiffVar {
-    Var::new(Tensor::from_slice_on(vec![1], &[value], backend), false)
+fn scalar_const(value: f64, backend: &MoiraiBackend) -> Result<AutodiffVar, HeliosError> {
+    let tensor = Tensor::from_slice_on(vec![1], &[value], backend).map_err(backend_error)?;
+    Var::new(tensor, false).map_err(backend_error)
 }
 
 #[inline]
@@ -51,14 +72,20 @@ fn design_and_weight_var(
     influence: &DoseInfluence<f64>,
     x: &[f64],
     backend: MoiraiBackend,
-) -> (AutodiffVar, AutodiffVar) {
+) -> Result<(AutodiffVar, AutodiffVar), HeliosError> {
     let (voxels, beamlets) = influence.dims();
     let a = Var::new(
-        Tensor::from_slice_on(vec![voxels, beamlets], influence.rows(), &backend),
+        Tensor::from_slice_on(vec![voxels, beamlets], influence.rows(), &backend)
+            .map_err(backend_error)?,
         false,
-    );
-    let xv = Var::new(Tensor::from_slice_on(vec![beamlets, 1], x, &backend), true);
-    (a, xv)
+    )
+    .map_err(backend_error)?;
+    let xv = Var::new(
+        Tensor::from_slice_on(vec![beamlets, 1], x, &backend).map_err(backend_error)?,
+        true,
+    )
+    .map_err(backend_error)?;
+    Ok((a, xv))
 }
 
 #[inline]
@@ -103,15 +130,17 @@ pub fn objective_gradient_autodiff(
 
     let backend = MoiraiBackend::new();
     // A: constants (no gradient tracked); x: the differentiated variable.
-    let (a, xv) = design_and_weight_var(influence, x, backend);
+    let (a, xv) = design_and_weight_var(influence, x, backend)?;
     let d = Var::new(
-        Tensor::from_slice_on(vec![voxels, 1], prescription, &backend),
+        Tensor::from_slice_on(vec![voxels, 1], prescription, &backend).map_err(backend_error)?,
         false,
-    );
+    )
+    .map_err(backend_error)?;
 
-    let r = sub(&matmul(&a, &xv), &d);
-    let loss = sum(&mul(&r, &r)); // ‖r‖² — tape gradient wrt x is 2·Aᵀr.
-    let _ = loss.backward();
+    let r = sub(&matmul(&a, &xv).map_err(backend_error)?, &d).map_err(backend_error)?;
+    let loss = sum(&mul(&r, &r).map_err(backend_error)?).map_err(backend_error)?;
+    // ‖r‖² — tape gradient wrt x is 2·Aᵀr.
+    loss.backward().map_err(backend_error)?;
 
     let grad = require_gradient(&xv, "objective_gradient_autodiff::grad")?;
     Ok(grad.into_iter().map(|g| 0.5 * g).collect())
@@ -171,37 +200,50 @@ pub fn dvh_objective_gradient_autodiff(
     }
 
     let backend = MoiraiBackend::new();
-    let (a, xv) = design_and_weight_var(influence, x, backend);
+    let (a, xv) = design_and_weight_var(influence, x, backend)?;
     // The autodiff tensor is a scalar numerical boundary. Preserve the
     // physical dose type through the public contract and unwrap it once here.
     let floor_values: Vec<f64> = penalty.floor.iter().map(|dose| *dose.as_base()).collect();
     let ceiling_values: Vec<f64> = penalty.ceiling.iter().map(|dose| *dose.as_base()).collect();
     let floor = Var::new(
-        Tensor::from_slice_on(vec![voxels, 1], &floor_values, &backend),
+        Tensor::from_slice_on(vec![voxels, 1], &floor_values, &backend).map_err(backend_error)?,
         false,
-    );
+    )
+    .map_err(backend_error)?;
     let ceiling = Var::new(
-        Tensor::from_slice_on(vec![voxels, 1], &ceiling_values, &backend),
+        Tensor::from_slice_on(vec![voxels, 1], &ceiling_values, &backend).map_err(backend_error)?,
         false,
-    );
+    )
+    .map_err(backend_error)?;
     let wu = Var::new(
-        Tensor::from_slice_on(vec![1], &[penalty.weight_under], &backend),
+        Tensor::from_slice_on(vec![1], &[penalty.weight_under], &backend).map_err(backend_error)?,
         false,
-    );
+    )
+    .map_err(backend_error)?;
     let wo = Var::new(
-        Tensor::from_slice_on(vec![1], &[penalty.weight_over], &backend),
+        Tensor::from_slice_on(vec![1], &[penalty.weight_over], &backend).map_err(backend_error)?,
         false,
-    );
+    )
+    .map_err(backend_error)?;
 
-    let ax = matmul(&a, &xv);
-    let under = relu(&sub(&floor, &ax)); // relu(floor − dose)
-    let over = relu(&sub(&ax, &ceiling)); // relu(dose − ceiling)
+    let ax = matmul(&a, &xv).map_err(backend_error)?;
+    let under = relu(&sub(&floor, &ax).map_err(backend_error)?).map_err(backend_error)?; // relu(floor − dose)
+    let over = relu(&sub(&ax, &ceiling).map_err(backend_error)?).map_err(backend_error)?; // relu(dose − ceiling)
     let loss = add(
-        &mul(&sum(&mul(&under, &under)), &wu),
-        &mul(&sum(&mul(&over, &over)), &wo),
-    );
+        &mul(
+            &sum(&mul(&under, &under).map_err(backend_error)?).map_err(backend_error)?,
+            &wu,
+        )
+        .map_err(backend_error)?,
+        &mul(
+            &sum(&mul(&over, &over).map_err(backend_error)?).map_err(backend_error)?,
+            &wo,
+        )
+        .map_err(backend_error)?,
+    )
+    .map_err(backend_error)?;
     let value = loss.tensor.as_slice()[0];
-    let _ = loss.backward();
+    loss.backward().map_err(backend_error)?;
 
     let grad = require_gradient(&xv, "dvh_objective_gradient_autodiff::grad")?;
     Ok((value, grad))
@@ -285,33 +327,45 @@ pub fn eud_objective_gradient_autodiff(
         })?;
 
     let backend = MoiraiBackend::new();
-    let (a, xv) = design_and_weight_var(influence, x, backend);
+    let (a, xv) = design_and_weight_var(influence, x, backend)?;
 
-    let dose = matmul(&a, &xv);
-    let geud = generalized_equivalent_uniform_dose(&dose, volume_effect).map_err(|error| {
-        let value = match error {
-            asclepius_coeus::AutodiffResponseError::InvalidDose { value, .. } => value,
-            _ => f64::NAN,
-        };
-        HeliosError::InvalidDomainValue {
-            field: "eud_objective_gradient_autodiff::dose",
-            value,
-            reason: "dose observation violates the Asclepius gEUD domain",
-        }
-    })?;
+    let dose = matmul(&a, &xv).map_err(backend_error)?;
+    let geud =
+        generalized_equivalent_uniform_dose(&dose, volume_effect).map_err(|error| match error {
+            asclepius_coeus::AutodiffResponseError::InvalidDose { value, .. } => {
+                HeliosError::InvalidDomainValue {
+                    field: "eud_objective_gradient_autodiff::dose",
+                    value,
+                    reason: "dose observation violates the Asclepius gEUD domain",
+                }
+            }
+            asclepius_coeus::AutodiffResponseError::EmptyObservation => {
+                HeliosError::InvalidDomainValue {
+                    field: "eud_objective_gradient_autodiff::dose",
+                    value: f64::NAN,
+                    reason: "dose observation must not be empty",
+                }
+            }
+            asclepius_coeus::AutodiffResponseError::Backend(error) => backend_error(error),
+            _ => HeliosError::InvalidDomainValue {
+                field: "eud_objective_gradient_autodiff::dose",
+                value: f64::NAN,
+                reason: "dose observation violates the Asclepius gEUD domain",
+            },
+        })?;
 
     // One-sided hinge: violation = ±(gEUD − reference), penalized when > 0.
-    let reference = scalar_const(*penalty.reference.as_base(), &backend);
+    let reference = scalar_const(*penalty.reference.as_base(), &backend)?;
     let violation = match penalty.kind {
-        EudKind::UpperLimit => sub(&geud, &reference),
-        EudKind::LowerLimit => sub(&reference, &geud),
+        EudKind::UpperLimit => sub(&geud, &reference).map_err(backend_error)?,
+        EudKind::LowerLimit => sub(&reference, &geud).map_err(backend_error)?,
     };
-    let hinge = relu(&violation);
-    let weight = scalar_const(penalty.weight, &backend);
-    let loss = mul(&mul(&hinge, &hinge), &weight);
+    let hinge = relu(&violation).map_err(backend_error)?;
+    let weight = scalar_const(penalty.weight, &backend)?;
+    let loss = mul(&mul(&hinge, &hinge).map_err(backend_error)?, &weight).map_err(backend_error)?;
 
     let value = loss.tensor.as_slice()[0];
-    let _ = loss.backward();
+    loss.backward().map_err(backend_error)?;
     let grad = require_gradient(&xv, "eud_objective_gradient_autodiff::grad")?;
     Ok((value, grad))
 }
