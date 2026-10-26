@@ -133,16 +133,21 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
-    use aequitas::systems::si::units::Millimeter;
     use crate::{
         anisotropic_scatter_superposition, forward_peaked_kernel, symmetric_deposition_kernel,
     };
+    use aequitas::systems::si::units::Millimeter;
     use eunomia::assert_relative_eq;
     use helios_math::Point3 as P3;
     use helios_math::ShippedScalar;
 
     fn grid() -> VoxelGrid<f64> {
-        VoxelGrid::axis_aligned([9, 9, 9], [Length::from_unit::<Millimeter>(2.0); 3], P3::new(0.0, 0.0, 0.0)).expect("grid")
+        VoxelGrid::axis_aligned(
+            [9, 9, 9],
+            [Length::from_unit::<Millimeter>(2.0); 3],
+            P3::new(0.0, 0.0, 0.0),
+        )
+        .expect("grid")
     }
 
     fn point_terma() -> Volume<f64> {
@@ -258,8 +263,12 @@ mod tests {
         let zero = cast(0.0);
         let one = cast(1.0);
         let spacing = cast(2.0);
-        let grid = VoxelGrid::<T>::axis_aligned([9, 9, 9], [Length::from_unit::<Millimeter>(spacing); 3], P3::new(zero, zero, zero))
-            .expect("valid axis-aligned grid");
+        let grid = VoxelGrid::<T>::axis_aligned(
+            [9, 9, 9],
+            [Length::from_unit::<Millimeter>(spacing); 3],
+            P3::new(zero, zero, zero),
+        )
+        .expect("valid axis-aligned grid");
 
         let terma = Volume::from_shape_fn(grid, |idx| if idx == [4, 4, 4] { one } else { zero });
         let length_cm = |value: T| Length::from_base(value * cast(0.01));

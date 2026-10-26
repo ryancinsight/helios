@@ -19,10 +19,7 @@
 
 use crate::grid::VoxelGrid;
 use crate::volume::Volume;
-use aequitas::systems::si::{
-    quantities::Length,
-    units::Millimeter,
-};
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
 use eunomia::UnitScalar;
 use helios_math::{Point3, Scalar, UnitQuaternion, Vector3};
 use helios_quantities::HeliosError;

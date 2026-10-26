@@ -27,8 +27,12 @@ use helios_math::Point3;
 /// Grid is `n×n×1` with voxel spacing `spacing_mm`.
 fn disk_phantom(mu0: f64, radius_mm: f64, n: usize, spacing_mm: f64) -> Volume<f64> {
     let origin = Point3::new(0.0, 0.0, 0.0);
-    let grid =
-        VoxelGrid::axis_aligned([n, n, 1], [Length::from_unit::<Millimeter>(spacing_mm); 3], origin).expect("valid phantom grid");
+    let grid = VoxelGrid::axis_aligned(
+        [n, n, 1],
+        [Length::from_unit::<Millimeter>(spacing_mm); 3],
+        origin,
+    )
+    .expect("valid phantom grid");
     let centre_mm = (n as f64 - 1.0) * spacing_mm / 2.0;
     Volume::from_shape_fn(grid, move |[i, j, _k]| {
         let x = i as f64 * spacing_mm - centre_mm;

@@ -61,8 +61,12 @@ fn main() {
     // ── 1. Synthetic CT phantom ───────────────────────────────────────────────
     let n = 16usize;
     let spacing_mm = 2.0_f64;
-    let grid = VoxelGrid::axis_aligned([n, n, n], [Length::from_unit::<Millimeter>(spacing_mm); 3], Point3::new(0.0, 0.0, 0.0))
-        .expect("valid phantom grid");
+    let grid = VoxelGrid::axis_aligned(
+        [n, n, n],
+        [Length::from_unit::<Millimeter>(spacing_mm); 3],
+        Point3::new(0.0, 0.0, 0.0),
+    )
+    .expect("valid phantom grid");
 
     // HU = 0 (water) in the interior, HU = 700 (bone proxy) in a central block.
     let bone_half = 4usize;

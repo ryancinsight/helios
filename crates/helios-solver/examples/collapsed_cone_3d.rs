@@ -74,8 +74,12 @@ fn main() {
     let nz = 10_usize;
     let spacing_mm = 3.0_f64;
 
-    let grid = VoxelGrid::axis_aligned([nx, ny, nz], [Length::from_unit::<Millimeter>(spacing_mm); 3], Point3::new(0.0, 0.0, 0.0))
-        .expect("valid phantom grid");
+    let grid = VoxelGrid::axis_aligned(
+        [nx, ny, nz],
+        [Length::from_unit::<Millimeter>(spacing_mm); 3],
+        Point3::new(0.0, 0.0, 0.0),
+    )
+    .expect("valid phantom grid");
 
     println!("Phantom: {nx}×{ny}×{nz} voxels, {spacing_mm:.1} mm isotropic spacing");
     println!(

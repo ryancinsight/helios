@@ -47,18 +47,20 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
-    use aequitas::systems::si::{
-        quantities::Length,
-        units::Millimeter,
-    };
     use crate::Dvh;
+    use aequitas::systems::si::{quantities::Length, units::Millimeter};
     use eunomia::assert_relative_eq;
     use helios_domain::Volume;
     use helios_math::ShippedScalar;
 
     fn grid() -> VoxelGrid<f64> {
         // 5×5×1, 2 mm spacing → centre voxel (2,2,0) at world (4,4,0).
-        VoxelGrid::axis_aligned([5, 5, 1], [Length::from_unit::<Millimeter>(2.0); 3], Point3::new(0.0, 0.0, 0.0)).unwrap()
+        VoxelGrid::axis_aligned(
+            [5, 5, 1],
+            [Length::from_unit::<Millimeter>(2.0); 3],
+            Point3::new(0.0, 0.0, 0.0),
+        )
+        .unwrap()
     }
 
     #[test]
@@ -108,9 +110,12 @@ mod tests {
     fn spherical_mask_selects_voxels_within_the_radius<T: ShippedScalar>() {
         let zero = T::from_f64(0.0);
         let spacing = T::from_f64(2.0);
-        let grid =
-            VoxelGrid::<T>::axis_aligned([5, 5, 1], [Length::from_unit::<Millimeter>(spacing); 3], Point3::new(zero, zero, zero))
-                .expect("valid axis-aligned grid");
+        let grid = VoxelGrid::<T>::axis_aligned(
+            [5, 5, 1],
+            [Length::from_unit::<Millimeter>(spacing); 3],
+            Point3::new(zero, zero, zero),
+        )
+        .expect("valid axis-aligned grid");
 
         let centre = Point3::new(T::from_f64(4.0), T::from_f64(4.0), zero);
         let mask = spherical_mask(grid, centre, T::from_f64(2.5));

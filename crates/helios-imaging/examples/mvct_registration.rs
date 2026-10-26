@@ -41,12 +41,9 @@
 
 // Programs allocate through Mnemosyne (ADR 0018).
 helios_allocator::install_global_allocator!();
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
 use helios_domain::{Volume, VoxelGrid};
 use helios_imaging::register_translation;
-use aequitas::systems::si::{
-    quantities::Length,
-    units::Millimeter,
-};
 use helios_math::Point3;
 
 fn main() {
@@ -58,8 +55,12 @@ fn main() {
     // centred in water background (μ = 0.02 cm⁻¹).
     let n = 32usize;
     let voxel_mm = 3.0_f64;
-    let grid = VoxelGrid::axis_aligned([n, n, n], [Length::from_unit::<Millimeter>(voxel_mm); 3], Point3::new(0.0, 0.0, 0.0))
-        .expect("valid planning grid");
+    let grid = VoxelGrid::axis_aligned(
+        [n, n, n],
+        [Length::from_unit::<Millimeter>(voxel_mm); 3],
+        Point3::new(0.0, 0.0, 0.0),
+    )
+    .expect("valid planning grid");
 
     let bone_half = 5usize;
     let cx = n / 2;

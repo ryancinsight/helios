@@ -253,16 +253,12 @@ pub fn load_volume_hdf5<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use aequitas::systems::si::{
-        quantities::Length,
-        units::Millimeter,
-    };
+    use aequitas::systems::si::{quantities::Length, units::Millimeter};
 
     fn test_volume() -> Volume<f64> {
         // Distinct value per voxel locks the (i, j, k) storage order; non-trivial
         // spacing/origin lock the geometry round-trip.
-        let grid =
-            VoxelGrid::axis_aligned(
+        let grid = VoxelGrid::axis_aligned(
             [4, 3, 2],
             [
                 Length::from_unit::<Millimeter>(1.25),
@@ -271,7 +267,7 @@ mod tests {
             ],
             Point3::new(-5.0, 7.5, 11.0),
         )
-                .expect("grid");
+        .expect("grid");
         Volume::from_shape_fn(grid, |idx| {
             100.0 * idx[0] as f64 + 10.0 * idx[1] as f64 + idx[2] as f64 + 0.125
         })
@@ -316,9 +312,12 @@ mod tests {
     fn f32_volume_round_trips_through_the_f64_archive() {
         let dir = tempfile::tempdir().expect("synthetic storage fixture round-trips");
         let path = dir.path().join("f32.h5");
-        let grid =
-            VoxelGrid::<f32>::axis_aligned([2, 2, 2], [Length::from_unit::<Millimeter>(1.0); 3], Point3::new(0.0, 0.0, 0.0))
-                .expect("synthetic storage fixture round-trips");
+        let grid = VoxelGrid::<f32>::axis_aligned(
+            [2, 2, 2],
+            [Length::from_unit::<Millimeter>(1.0); 3],
+            Point3::new(0.0, 0.0, 0.0),
+        )
+        .expect("synthetic storage fixture round-trips");
         let original = Volume::from_shape_fn(grid, |idx| (idx[0] + 2 * idx[1] + 4 * idx[2]) as f32);
         save_volume_hdf5(&original, &path).expect("save");
         let loaded: Volume<f32> = load_volume_hdf5(&path).expect("load");

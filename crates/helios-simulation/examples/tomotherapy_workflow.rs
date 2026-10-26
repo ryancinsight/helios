@@ -55,8 +55,12 @@ fn centre_mm() -> f64 {
 
 /// Air / water-cylinder / bone-insert CT phantom (HU).
 fn ct_phantom() -> Volume<f64> {
-    let grid =
-        VoxelGrid::axis_aligned([NX, NX, NZ], [Length::from_unit::<Millimeter>(SPACING); 3], Point3::new(0.0, 0.0, 0.0)).unwrap();
+    let grid = VoxelGrid::axis_aligned(
+        [NX, NX, NZ],
+        [Length::from_unit::<Millimeter>(SPACING); 3],
+        Point3::new(0.0, 0.0, 0.0),
+    )
+    .unwrap();
     let c = centre_mm();
     Volume::from_shape_fn(grid, move |idx| {
         let dx = idx[0] as f64 * SPACING - c;
@@ -143,8 +147,12 @@ fn main() {
         Length::from_unit::<Millimeter>(500.0),
         Length::from_unit::<Millimeter>(0.25),
     );
-    let recon_grid =
-        VoxelGrid::axis_aligned([NX, NX, 1], [Length::from_unit::<Millimeter>(SPACING); 3], Point3::new(0.0, 0.0, 0.0)).unwrap();
+    let recon_grid = VoxelGrid::axis_aligned(
+        [NX, NX, 1],
+        [Length::from_unit::<Millimeter>(SPACING); 3],
+        Point3::new(0.0, 0.0, 0.0),
+    )
+    .unwrap();
     let recon = filtered_back_projection(&sino, &recon_grid);
     let water = roi_statistics(&recon, [40, 28, 0], [45, 33, 1]);
 

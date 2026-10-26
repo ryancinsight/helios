@@ -57,8 +57,12 @@ const N_LEAVES: usize = 16;
 const LEAF_WIDTH_MM: f64 = 2.0;
 
 fn make_grid() -> VoxelGrid<f64> {
-    VoxelGrid::axis_aligned([N, N, 1], [Length::from_unit::<Millimeter>(SPACING_MM); 3], Point3::new(0.0, 0.0, 0.0))
-        .expect("valid grid")
+    VoxelGrid::axis_aligned(
+        [N, N, 1],
+        [Length::from_unit::<Millimeter>(SPACING_MM); 3],
+        Point3::new(0.0, 0.0, 0.0),
+    )
+    .expect("valid grid")
 }
 
 /// Build the synthetic CT phantom (HU): water background with a 10×10×1 bone insert.

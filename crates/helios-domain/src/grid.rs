@@ -1,9 +1,6 @@
 //! Voxel-grid geometry: the discrete-index ↔ world/patient coordinate map.
 
-use aequitas::systems::si::{
-    quantities::Length,
-    units::Millimeter,
-};
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
 use eunomia::UnitScalar;
 use helios_math::{Isometry3, NumericElement, Point3, Scalar, Translation3, UnitQuaternion};
 use helios_quantities::HeliosError;
@@ -220,38 +217,44 @@ mod tests {
     fn grid() -> VoxelGrid<f64> {
         VoxelGrid::axis_aligned(
             [4, 5, 6],
-            [Length::from_unit::<Millimeter>(2.0), Length::from_unit::<Millimeter>(3.0), Length::from_unit::<Millimeter>(4.0)],
+            [
+                Length::from_unit::<Millimeter>(2.0),
+                Length::from_unit::<Millimeter>(3.0),
+                Length::from_unit::<Millimeter>(4.0),
+            ],
             Point3::new(10.0, 20.0, 30.0),
         )
-            .expect("valid grid")
+        .expect("valid grid")
     }
 
     #[test]
     fn rejects_zero_dimension_and_bad_spacing() {
-        assert!(
-            VoxelGrid::axis_aligned(
+        assert!(VoxelGrid::axis_aligned(
             [0, 1, 1],
             [Length::from_unit::<Millimeter>(1.0); 3],
             Point3::new(0.0, 0.0, 0.0),
         )
-                .is_err()
-        );
-        assert!(
-            VoxelGrid::axis_aligned(
+        .is_err());
+        assert!(VoxelGrid::axis_aligned(
             [1, 1, 1],
-            [Length::from_unit::<Millimeter>(0.0), Length::from_unit::<Millimeter>(1.0), Length::from_unit::<Millimeter>(1.0)],
+            [
+                Length::from_unit::<Millimeter>(0.0),
+                Length::from_unit::<Millimeter>(1.0),
+                Length::from_unit::<Millimeter>(1.0)
+            ],
             Point3::new(0.0, 0.0, 0.0),
         )
-                .is_err()
-        );
-        assert!(
-            VoxelGrid::axis_aligned(
+        .is_err());
+        assert!(VoxelGrid::axis_aligned(
             [1, 1, 1],
-            [Length::from_unit::<Millimeter>(1.0), Length::from_unit::<Millimeter>(-1.0), Length::from_unit::<Millimeter>(1.0)],
+            [
+                Length::from_unit::<Millimeter>(1.0),
+                Length::from_unit::<Millimeter>(-1.0),
+                Length::from_unit::<Millimeter>(1.0)
+            ],
             Point3::new(0.0, 0.0, 0.0),
         )
-                .is_err()
-        );
+        .is_err());
         assert!(VoxelGrid::axis_aligned(
             [1, 1, 1],
             [

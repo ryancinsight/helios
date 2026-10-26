@@ -19,12 +19,9 @@
 
 // Programs allocate through Mnemosyne (ADR 0018).
 helios_allocator::install_global_allocator!();
-use helios_domain::{Volume, VoxelGrid};
-use aequitas::systems::si::{
-    quantities::Length,
-    units::Millimeter,
-};
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
 use eunomia::UnitScalar;
+use helios_domain::{Volume, VoxelGrid};
 use helios_math::{Point3, Scalar};
 
 /// Field affine in each axis: at voxel index `(i, j, k)` returns

@@ -36,7 +36,12 @@ fn gaussian_dose(
     shift_mm: [f64; 3],
 ) -> Volume<f64> {
     let origin = Point3::new(0.0, 0.0, 0.0);
-    let grid = VoxelGrid::axis_aligned(dims, [Length::from_unit::<Millimeter>(spacing_mm); 3], origin).expect("valid dose grid");
+    let grid = VoxelGrid::axis_aligned(
+        dims,
+        [Length::from_unit::<Millimeter>(spacing_mm); 3],
+        origin,
+    )
+    .expect("valid dose grid");
     let centre = [
         (dims[0] as f64 - 1.0) * spacing_mm / 2.0 + shift_mm[0],
         (dims[1] as f64 - 1.0) * spacing_mm / 2.0 + shift_mm[1],

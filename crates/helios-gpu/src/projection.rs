@@ -122,10 +122,7 @@ impl GpuProjector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use aequitas::systems::si::{
-        quantities::Length,
-        units::Millimeter,
-    };
+    use aequitas::systems::si::{quantities::Length, units::Millimeter};
     use helios_domain::VoxelGrid;
     use helios_math::{Point3, Ray, Vector3};
     use helios_solver::forward_project_ray;
@@ -135,7 +132,11 @@ mod tests {
         // 2 mm spacing, μ varying over all three axes.
         let grid = VoxelGrid::<f32>::axis_aligned(
             [17, 17, 17],
-            [Length::from_unit::<Millimeter>(2.0), Length::from_unit::<Millimeter>(2.0), Length::from_unit::<Millimeter>(2.0)],
+            [
+                Length::from_unit::<Millimeter>(2.0),
+                Length::from_unit::<Millimeter>(2.0),
+                Length::from_unit::<Millimeter>(2.0),
+            ],
             Point3::new(0.0, 0.0, 0.0),
         )
         .expect("grid");
@@ -155,7 +156,11 @@ mod tests {
         .expect("right-handed quarter-turn basis");
         let grid = VoxelGrid::oriented(
             [2, 2, 2],
-            [Length::from_unit::<Millimeter>(1.0), Length::from_unit::<Millimeter>(1.0), Length::from_unit::<Millimeter>(1.0)],
+            [
+                Length::from_unit::<Millimeter>(1.0),
+                Length::from_unit::<Millimeter>(1.0),
+                Length::from_unit::<Millimeter>(1.0),
+            ],
             Point3::new(0.0, 0.0, 0.0),
             rotation,
         )

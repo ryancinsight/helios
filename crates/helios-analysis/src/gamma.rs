@@ -233,8 +233,12 @@ mod tests {
     use helios_math::ShippedScalar;
 
     fn grid() -> VoxelGrid<f64> {
-        VoxelGrid::axis_aligned([5, 5, 5], [Length::from_unit::<Millimeter>(1.0); 3], Point3::new(0.0, 0.0, 0.0))
-            .expect("grid")
+        VoxelGrid::axis_aligned(
+            [5, 5, 5],
+            [Length::from_unit::<Millimeter>(1.0); 3],
+            Point3::new(0.0, 0.0, 0.0),
+        )
+        .expect("grid")
     }
 
     fn distance(value: f64) -> Length<f64> {
@@ -338,8 +342,12 @@ mod tests {
     #[test]
     fn mismatched_grids_and_bad_criteria_error() {
         let a = Volume::from_shape_fn(grid(), |_| 1.0);
-        let other = VoxelGrid::axis_aligned([4, 4, 4], [Length::from_unit::<Millimeter>(1.0); 3], Point3::new(0.0, 0.0, 0.0))
-            .unwrap();
+        let other = VoxelGrid::axis_aligned(
+            [4, 4, 4],
+            [Length::from_unit::<Millimeter>(1.0); 3],
+            Point3::new(0.0, 0.0, 0.0),
+        )
+        .unwrap();
         let b = Volume::from_shape_fn(other, |_| 1.0);
         assert!(gamma_index_3d(&a, &b, 0.03, distance(2.0), absorbed(5.0), distance(4.0)).is_err());
         assert!(gamma_index_3d(&a, &a, 0.0, distance(2.0), absorbed(5.0), distance(4.0)).is_err());
@@ -438,9 +446,12 @@ mod tests {
     fn gamma_of_a_distribution_against_itself_vanishes<T: ShippedScalar>() {
         let zero = T::from_f64(0.0);
         let unit = T::from_f64(1.0);
-        let grid =
-            VoxelGrid::<T>::axis_aligned([3, 3, 3], [Length::from_unit::<Millimeter>(unit); 3], Point3::new(zero, zero, zero))
-                .expect("valid axis-aligned grid");
+        let grid = VoxelGrid::<T>::axis_aligned(
+            [3, 3, 3],
+            [Length::from_unit::<Millimeter>(unit); 3],
+            Point3::new(zero, zero, zero),
+        )
+        .expect("valid axis-aligned grid");
 
         let dose = Volume::from_shape_fn(grid, |_| unit);
         let gamma = gamma_index_3d(
