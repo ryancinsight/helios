@@ -15,8 +15,8 @@
 //! implementation-defined).
 
 use aequitas::systems::si::{
-    quantities::{AreaPerMass, Length, MassDensity},
-    units::{GramPerCubicCentimeter, Millimeter, SquareCentimeterPerGram},
+    quantities::{AreaPerMass, MassDensity},
+    units::{GramPerCubicCentimeter, SquareCentimeterPerGram},
 };
 use eunomia::{Pod, Zeroable};
 use hephaestus_core::{
@@ -187,6 +187,10 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
+    use aequitas::systems::si::{
+        quantities::Length,
+        units::Millimeter,
+    };
 
     // NIST-representative water μ/ρ at ~1 MeV and unit water density; tests
     // verify the defining relation, not these specific magnitudes.
