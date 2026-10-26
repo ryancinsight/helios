@@ -253,12 +253,24 @@ pub fn load_volume_hdf5<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use aequitas::systems::si::{
+        quantities::Length,
+        units::Millimeter,
+    };
 
     fn test_volume() -> Volume<f64> {
         // Distinct value per voxel locks the (i, j, k) storage order; non-trivial
         // spacing/origin lock the geometry round-trip.
         let grid =
-            VoxelGrid::axis_aligned([4, 3, 2], [1.25, 2.0, 3.5], Point3::new(-5.0, 7.5, 11.0))
+            VoxelGrid::axis_aligned(
+            [4, 3, 2],
+            [
+                Length::from_unit::<Millimeter>(1.25),
+                Length::from_unit::<Millimeter>(2.0),
+                Length::from_unit::<Millimeter>(3.5),
+            ],
+            Point3::new(-5.0, 7.5, 11.0),
+        )
                 .expect("grid");
         Volume::from_shape_fn(grid, |idx| {
             100.0 * idx[0] as f64 + 10.0 * idx[1] as f64 + idx[2] as f64 + 0.125
@@ -305,7 +317,7 @@ mod tests {
         let dir = tempfile::tempdir().expect("synthetic storage fixture round-trips");
         let path = dir.path().join("f32.h5");
         let grid =
-            VoxelGrid::<f32>::axis_aligned([2, 2, 2], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
+            VoxelGrid::<f32>::axis_aligned([2, 2, 2], [Length::from_unit::<Millimeter>(1.0); 3], Point3::new(0.0, 0.0, 0.0))
                 .expect("synthetic storage fixture round-trips");
         let original = Volume::from_shape_fn(grid, |idx| (idx[0] + 2 * idx[1] + 4 * idx[2]) as f32);
         save_volume_hdf5(&original, &path).expect("save");
@@ -333,7 +345,11 @@ mod tests {
         .expect("right-handed quarter-turn basis");
         let grid = VoxelGrid::oriented(
             [4, 3, 2],
-            [1.25, 2.0, 3.5],
+            [
+                Length::from_unit::<Millimeter>(1.25),
+                Length::from_unit::<Millimeter>(2.0),
+                Length::from_unit::<Millimeter>(3.5),
+            ],
             Point3::new(-5.0, 7.5, 11.0),
             rotation,
         )

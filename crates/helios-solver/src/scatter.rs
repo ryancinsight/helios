@@ -300,6 +300,10 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
+    use aequitas::systems::si::{
+        quantities::Length,
+        units::Millimeter,
+    };
     use crate::test_support::{grid, length_cm};
     use eunomia::assert_relative_eq;
     use helios_math::Point3;
@@ -534,7 +538,7 @@ mod tests {
         let one = T::from_f64(1.0);
         let spacing = T::from_f64(2.0);
         let grid =
-            VoxelGrid::<T>::axis_aligned([7, 7, 7], [spacing; 3], Point3::new(zero, zero, zero))
+            VoxelGrid::<T>::axis_aligned([7, 7, 7], [Length::from_unit::<Millimeter>(spacing); 3], Point3::new(zero, zero, zero))
                 .expect("valid axis-aligned grid");
 
         let terma = Volume::from_shape_fn(grid, |idx| if idx == [3, 3, 3] { one } else { zero });
@@ -688,7 +692,7 @@ mod tests {
         let one = T::from_f64(1.0);
         let spacing = T::from_f64(2.0);
         let grid =
-            VoxelGrid::<T>::axis_aligned([5, 5, 5], [spacing; 3], Point3::new(zero, zero, zero))
+            VoxelGrid::<T>::axis_aligned([5, 5, 5], [Length::from_unit::<Millimeter>(spacing); 3], Point3::new(zero, zero, zero))
                 .expect("valid axis-aligned grid");
 
         let terma = Volume::from_shape_fn(grid, |idx| if idx == [2, 2, 2] { one } else { zero });

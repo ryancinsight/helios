@@ -158,13 +158,17 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
+    use aequitas::systems::si::{
+        quantities::Length,
+        units::Millimeter,
+    };
     use eunomia::assert_relative_eq;
     use helios_math::ShippedScalar;
     use helios_math::{Ray, Vector3};
 
     fn axis_grid() -> VoxelGrid<f64> {
         // Node box: x∈[0,20], y∈[0,4], z∈[0,4]; 2 mm spacing.
-        VoxelGrid::axis_aligned([11, 3, 3], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
+        VoxelGrid::axis_aligned([11, 3, 3], [Length::from_unit::<Millimeter>(2.0); 3], Point3::new(0.0, 0.0, 0.0))
             .expect("grid")
     }
 
@@ -183,7 +187,7 @@ mod tests {
         .expect("right-handed quarter-turn basis");
         VoxelGrid::oriented(
             [11, 3, 3],
-            [2.0, 2.0, 2.0],
+            [Length::from_unit::<Millimeter>(2.0), Length::from_unit::<Millimeter>(2.0), Length::from_unit::<Millimeter>(2.0)],
             Point3::new(10.0, 20.0, 30.0),
             rotation,
         )
@@ -255,7 +259,7 @@ mod tests {
         let zero = cast(0.0);
         let spacing = cast(2.0);
         let grid =
-            VoxelGrid::<T>::axis_aligned([11, 3, 3], [spacing; 3], Point3::new(zero, zero, zero))
+            VoxelGrid::<T>::axis_aligned([11, 3, 3], [Length::from_unit::<Millimeter>(spacing); 3], Point3::new(zero, zero, zero))
                 .expect("valid axis-aligned grid");
 
         let mu = cast(0.06);

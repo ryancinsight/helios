@@ -1,5 +1,10 @@
 //! Voxel-grid geometry: the discrete-index ↔ world/patient coordinate map.
 
+use aequitas::systems::si::{
+    quantities::Length,
+    units::Millimeter,
+};
+use eunomia::UnitScalar;
 use helios_math::{Isometry3, NumericElement, Point3, Scalar, Translation3, UnitQuaternion};
 use helios_quantities::HeliosError;
 
@@ -37,7 +42,12 @@ const DIM_FIELD: [&str; 3] = [
 
 impl<T: Scalar> VoxelGrid<T> {
     /// Construct an axis-aligned grid whose voxel `(0,0,0)` center sits at
-    /// `origin` (world/patient mm) with per-axis `spacing` (mm).
+    /// `origin` (world/patient mm) with per-axis `spacing`.
+    ///
+    /// `spacing` carries its unit explicitly: each entry is converted to
+    /// millimetres at this boundary, so a caller working in metres, microns,
+    /// or any other length unit cannot silently build a millimetre grid from
+    /// foreign-unit values.
     ///
     /// # Errors
     /// Returns [`HeliosError::InvalidDomainValue`] if any dimension is zero, the
@@ -45,15 +55,21 @@ impl<T: Scalar> VoxelGrid<T> {
     /// strictly positive.
     pub fn axis_aligned(
         dims: [usize; 3],
-        spacing: [T; 3],
+        spacing: [Length<T>; 3],
         origin: Point3<T>,
-    ) -> Result<Self, HeliosError> {
+    ) -> Result<Self, HeliosError>
+    where
+        T: UnitScalar,
+    {
         Self::oriented(dims, spacing, origin, UnitQuaternion::identity())
     }
 
     /// Construct an oriented grid whose voxel `(0,0,0)` center sits at
-    /// `origin` (world/patient mm), with local-axis `spacing` (mm) rotated by
+    /// `origin` (world/patient mm), with local-axis `spacing` rotated by
     /// `rotation` into world/patient space.
+    ///
+    /// Like [`Self::axis_aligned`], `spacing` is a typed length converted to
+    /// the grid's millimetre storage at this boundary.
     ///
     /// The rotation is a Leto [`UnitQuaternion`], so affine scales, reflections,
     /// and non-orthogonal bases cannot enter a grid pose. External direction
@@ -66,14 +82,18 @@ impl<T: Scalar> VoxelGrid<T> {
     /// strictly positive.
     pub fn oriented(
         dims: [usize; 3],
-        spacing: [T; 3],
+        spacing: [Length<T>; 3],
         origin: Point3<T>,
         rotation: UnitQuaternion<T>,
-    ) -> Result<Self, HeliosError> {
-        Self::validate_layout(dims, spacing)?;
+    ) -> Result<Self, HeliosError>
+    where
+        T: UnitScalar,
+    {
+        let spacing_mm = spacing.map(|s| s.in_unit::<Millimeter>());
+        Self::validate_layout(dims, spacing_mm)?;
         Ok(Self {
             dims,
-            spacing,
+            spacing: spacing_mm,
             pose: Isometry3::from_parts(Translation3::from_vector(origin.coords), rotation),
         })
     }
@@ -198,27 +218,47 @@ mod tests {
     use helios_math::Vector3;
 
     fn grid() -> VoxelGrid<f64> {
-        VoxelGrid::axis_aligned([4, 5, 6], [2.0, 3.0, 4.0], Point3::new(10.0, 20.0, 30.0))
+        VoxelGrid::axis_aligned(
+            [4, 5, 6],
+            [Length::from_unit::<Millimeter>(2.0), Length::from_unit::<Millimeter>(3.0), Length::from_unit::<Millimeter>(4.0)],
+            Point3::new(10.0, 20.0, 30.0),
+        )
             .expect("valid grid")
     }
 
     #[test]
     fn rejects_zero_dimension_and_bad_spacing() {
         assert!(
-            VoxelGrid::axis_aligned([0, 1, 1], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
+            VoxelGrid::axis_aligned(
+            [0, 1, 1],
+            [Length::from_unit::<Millimeter>(1.0); 3],
+            Point3::new(0.0, 0.0, 0.0),
+        )
                 .is_err()
         );
         assert!(
-            VoxelGrid::axis_aligned([1, 1, 1], [0.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
+            VoxelGrid::axis_aligned(
+            [1, 1, 1],
+            [Length::from_unit::<Millimeter>(0.0), Length::from_unit::<Millimeter>(1.0), Length::from_unit::<Millimeter>(1.0)],
+            Point3::new(0.0, 0.0, 0.0),
+        )
                 .is_err()
         );
         assert!(
-            VoxelGrid::axis_aligned([1, 1, 1], [1.0, -1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
+            VoxelGrid::axis_aligned(
+            [1, 1, 1],
+            [Length::from_unit::<Millimeter>(1.0), Length::from_unit::<Millimeter>(-1.0), Length::from_unit::<Millimeter>(1.0)],
+            Point3::new(0.0, 0.0, 0.0),
+        )
                 .is_err()
         );
         assert!(VoxelGrid::axis_aligned(
             [1, 1, 1],
-            [1.0, 1.0, f64::NAN],
+            [
+                Length::from_unit::<Millimeter>(1.0),
+                Length::from_unit::<Millimeter>(1.0),
+                Length::from_unit::<Millimeter>(f64::NAN),
+            ],
             Point3::new(0.0, 0.0, 0.0)
         )
         .is_err());
@@ -259,7 +299,11 @@ mod tests {
         .expect("a right-handed quarter-turn basis is a valid grid pose");
         let grid = VoxelGrid::oriented(
             [4, 5, 6],
-            [T::from_f64(2.0), T::from_f64(3.0), T::from_f64(4.0)],
+            [
+                Length::from_unit::<Millimeter>(T::from_f64(2.0)),
+                Length::from_unit::<Millimeter>(T::from_f64(3.0)),
+                Length::from_unit::<Millimeter>(T::from_f64(4.0)),
+            ],
             Point3::new(T::from_f64(10.0), T::from_f64(20.0), T::from_f64(30.0)),
             rotation,
         )

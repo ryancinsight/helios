@@ -47,6 +47,10 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
+    use aequitas::systems::si::{
+        quantities::Length,
+        units::Millimeter,
+    };
     use crate::Dvh;
     use eunomia::assert_relative_eq;
     use helios_domain::Volume;
@@ -54,7 +58,7 @@ mod tests {
 
     fn grid() -> VoxelGrid<f64> {
         // 5×5×1, 2 mm spacing → centre voxel (2,2,0) at world (4,4,0).
-        VoxelGrid::axis_aligned([5, 5, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0)).unwrap()
+        VoxelGrid::axis_aligned([5, 5, 1], [Length::from_unit::<Millimeter>(2.0); 3], Point3::new(0.0, 0.0, 0.0)).unwrap()
     }
 
     #[test]
@@ -105,7 +109,7 @@ mod tests {
         let zero = T::from_f64(0.0);
         let spacing = T::from_f64(2.0);
         let grid =
-            VoxelGrid::<T>::axis_aligned([5, 5, 1], [spacing; 3], Point3::new(zero, zero, zero))
+            VoxelGrid::<T>::axis_aligned([5, 5, 1], [Length::from_unit::<Millimeter>(spacing); 3], Point3::new(zero, zero, zero))
                 .expect("valid axis-aligned grid");
 
         let centre = Point3::new(T::from_f64(4.0), T::from_f64(4.0), zero);

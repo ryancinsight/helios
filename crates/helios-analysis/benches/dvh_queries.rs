@@ -8,7 +8,10 @@
 
 // Programs allocate through Mnemosyne (ADR 0018).
 helios_allocator::install_global_allocator!();
-use aequitas::systems::si::quantities::AbsorbedDose;
+use aequitas::systems::si::{
+    quantities::{AbsorbedDose, Length},
+    units::Millimeter,
+};
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use helios_analysis::Dvh;
 use helios_domain::{Volume, VoxelGrid};
@@ -29,7 +32,7 @@ fn scan_volume_fraction(sample: &[f64], dose: f64) -> f64 {
 fn workload() -> (Dvh<f64>, Box<[f64]>, Vec<f64>) {
     let grid = VoxelGrid::axis_aligned(
         [SAMPLE_EDGE; 3],
-        [1.0, 1.0, 1.0],
+        [Length::from_unit::<Millimeter>(1.0); 3],
         Point3::new(0.0, 0.0, 0.0),
     )
     .expect("benchmark grid is valid");

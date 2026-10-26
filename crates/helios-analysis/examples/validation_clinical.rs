@@ -43,7 +43,7 @@ use helios_math::Point3;
 /// spinal cord regions.
 fn hn_phantom(dims: [usize; 3], spacing_mm: f64) -> Volume<f64> {
     let origin = Point3::new(0.0, 0.0, 0.0);
-    let grid = VoxelGrid::axis_aligned(dims, [spacing_mm; 3], origin).expect("valid phantom grid");
+    let grid = VoxelGrid::axis_aligned(dims, [Length::from_unit::<Millimeter>(spacing_mm); 3], origin).expect("valid phantom grid");
     let cx = (dims[0] as f64 - 1.0) * spacing_mm / 2.0;
     let cy = (dims[1] as f64 - 1.0) * spacing_mm / 2.0;
     let ptv_radius = 15.0; // mm

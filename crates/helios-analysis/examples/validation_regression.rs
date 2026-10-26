@@ -41,7 +41,7 @@ use helios_imaging::{filtered_back_projection, parallel_beam_radon};
 use helios_math::Point3;
 
 fn make_grid(n: usize, spacing_mm: f64) -> VoxelGrid<f64> {
-    VoxelGrid::axis_aligned([n, n, 1], [spacing_mm; 3], Point3::new(0.0, 0.0, 0.0))
+    VoxelGrid::axis_aligned([n, n, 1], [Length::from_unit::<Millimeter>(spacing_mm); 3], Point3::new(0.0, 0.0, 0.0))
         .expect("valid grid")
 }
 

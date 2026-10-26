@@ -133,6 +133,7 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
+    use aequitas::systems::si::units::Millimeter;
     use crate::{
         anisotropic_scatter_superposition, forward_peaked_kernel, symmetric_deposition_kernel,
     };
@@ -141,7 +142,7 @@ mod tests {
     use helios_math::ShippedScalar;
 
     fn grid() -> VoxelGrid<f64> {
-        VoxelGrid::axis_aligned([9, 9, 9], [2.0, 2.0, 2.0], P3::new(0.0, 0.0, 0.0)).expect("grid")
+        VoxelGrid::axis_aligned([9, 9, 9], [Length::from_unit::<Millimeter>(2.0); 3], P3::new(0.0, 0.0, 0.0)).expect("grid")
     }
 
     fn point_terma() -> Volume<f64> {

@@ -108,6 +108,10 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
+    use aequitas::systems::si::{
+        quantities::Length,
+        units::Millimeter,
+    };
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
     use helios_math::ShippedScalar;
@@ -118,7 +122,7 @@ mod tests {
     // feature out of. Two independent quadratic terms → two independent linear
     // constraints → a unique two-axis minimum.
     fn bowl(cx: f64, cy: f64) -> Volume<f64> {
-        let grid = VoxelGrid::axis_aligned([9, 9, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
+        let grid = VoxelGrid::axis_aligned([9, 9, 1], [Length::from_unit::<Millimeter>(2.0); 3], Point3::new(0.0, 0.0, 0.0))
             .unwrap();
         Volume::from_shape_fn(grid, move |idx| {
             let (di, dj) = (idx[0] as f64 - cx, idx[1] as f64 - cy);
@@ -202,7 +206,7 @@ mod tests {
     // `spike` — the SSD-over-overlap case where a large shift can slide the feature
     // out of overlap and tie the true minimum (H-044 note).
     fn spike(sx: usize, sy: usize) -> Volume<f64> {
-        let grid = VoxelGrid::axis_aligned([9, 9, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
+        let grid = VoxelGrid::axis_aligned([9, 9, 1], [Length::from_unit::<Millimeter>(2.0); 3], Point3::new(0.0, 0.0, 0.0))
             .unwrap();
         Volume::from_shape_fn(grid, move |idx| {
             if idx[0] == sx && idx[1] == sy {
@@ -289,7 +293,7 @@ mod tests {
     #[test]
     fn a_volume_that_does_not_match_the_reference_grid_is_reported() {
         let fixed = bowl(4.0, 4.0);
-        let grid = VoxelGrid::axis_aligned([5, 5, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
+        let grid = VoxelGrid::axis_aligned([5, 5, 1], [Length::from_unit::<Millimeter>(2.0); 3], Point3::new(0.0, 0.0, 0.0))
             .unwrap();
         let moving = Volume::from_shape_fn(grid, |_| 1.0);
         assert_eq!(
@@ -305,7 +309,7 @@ mod tests {
 
     #[test]
     fn a_non_finite_voxel_is_reported_rather_than_scored() {
-        let grid = VoxelGrid::axis_aligned([9, 9, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
+        let grid = VoxelGrid::axis_aligned([9, 9, 1], [Length::from_unit::<Millimeter>(2.0); 3], Point3::new(0.0, 0.0, 0.0))
             .unwrap();
         // Flat index of voxel (3, 0, 0) in the (i·ny + j)·nz + k layout.
         let poisoned =
@@ -330,7 +334,7 @@ mod tests {
 
     #[test]
     fn ncc_over_a_constant_volume_has_no_defined_metric() {
-        let grid = VoxelGrid::axis_aligned([4, 4, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
+        let grid = VoxelGrid::axis_aligned([4, 4, 1], [Length::from_unit::<Millimeter>(2.0); 3], Point3::new(0.0, 0.0, 0.0))
             .unwrap();
         let flat = Volume::from_shape_fn(grid, |_| 1.0);
         assert_eq!(

@@ -83,7 +83,7 @@ mod tests {
         let spacing = 0.5;
         let grid = VoxelGrid::axis_aligned(
             [n, n, 1],
-            [spacing, spacing, spacing],
+            [Length::from_unit::<Millimeter>(spacing), Length::from_unit::<Millimeter>(spacing), Length::from_unit::<Millimeter>(spacing)],
             Point3::new(0.0, 0.0, 0.0),
         )
         .unwrap();
@@ -101,7 +101,7 @@ mod tests {
 
     // Recon grid: 2 mm slice, centre aligned with the phantom centre (40 mm).
     fn recon_grid() -> VoxelGrid<f64> {
-        VoxelGrid::axis_aligned([41, 41, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0)).unwrap()
+        VoxelGrid::axis_aligned([41, 41, 1], [Length::from_unit::<Millimeter>(2.0); 3], Point3::new(0.0, 0.0, 0.0)).unwrap()
     }
 
     fn uniform_angles(n: usize) -> Vec<Angle<f64>> {

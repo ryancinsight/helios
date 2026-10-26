@@ -149,7 +149,7 @@ mod tests {
 
     // Uniform-μ cube: 9³ voxels, 2 mm spacing → node extent 16 mm = 1.6 cm/axis.
     fn uniform_cube(mu_val: f64) -> Volume<f64> {
-        let grid = VoxelGrid::axis_aligned([9, 9, 9], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
+        let grid = VoxelGrid::axis_aligned([9, 9, 9], [Length::from_unit::<Millimeter>(2.0); 3], Point3::new(0.0, 0.0, 0.0))
             .expect("grid");
         Volume::from_shape_fn(grid, move |_| mu_val)
     }

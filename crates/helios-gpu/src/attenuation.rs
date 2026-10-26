@@ -15,8 +15,8 @@
 //! implementation-defined).
 
 use aequitas::systems::si::{
-    quantities::{AreaPerMass, MassDensity},
-    units::{GramPerCubicCentimeter, SquareCentimeterPerGram},
+    quantities::{AreaPerMass, Length, MassDensity},
+    units::{GramPerCubicCentimeter, Millimeter, SquareCentimeterPerGram},
 };
 use eunomia::{Pod, Zeroable};
 use hephaestus_core::{
@@ -254,7 +254,7 @@ mod tests {
         let device = crate::required_device();
         let grid = helios_domain::VoxelGrid::axis_aligned(
             [4, 3, 2],
-            [1.0_f32, 1.0, 1.0],
+            [Length::from_unit::<Millimeter>(1.0_f32), Length::from_unit::<Millimeter>(1.0), Length::from_unit::<Millimeter>(1.0)],
             Point3::new(0.0_f32, 0.0, 0.0),
         )
         .expect("valid grid");

@@ -220,6 +220,10 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
+    use aequitas::systems::si::{
+        quantities::Length,
+        units::Millimeter,
+    };
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
@@ -230,7 +234,7 @@ mod tests {
     }
 
     fn grid(dims: [usize; 3]) -> VoxelGrid<f64> {
-        VoxelGrid::axis_aligned(dims, [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0)).expect("grid")
+        VoxelGrid::axis_aligned(dims, [Length::from_unit::<Millimeter>(1.0); 3], Point3::new(0.0, 0.0, 0.0)).expect("grid")
     }
 
     #[test]
@@ -268,7 +272,7 @@ mod tests {
     #[test]
     fn linear_ramp_has_known_mean_and_quantiles() {
         // 100 voxels with dose = index 0..99.
-        let g = VoxelGrid::axis_aligned([100, 1, 1], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
+        let g = VoxelGrid::axis_aligned([100, 1, 1], [Length::from_unit::<Millimeter>(1.0); 3], Point3::new(0.0, 0.0, 0.0))
             .unwrap();
         let dose = Volume::from_shape_fn(g, |idx| idx[0] as f64);
         let dvh = Dvh::from_volume(&dose);
@@ -331,7 +335,7 @@ mod tests {
         assert_relative_eq!(uniform.homogeneity_index(), 0.0, epsilon = 1e-15);
 
         // Ramp 0..99 over 100 voxels: D2 = 98, D98 = 2, D50 = 50 → HI = 96/50 = 1.92.
-        let g = VoxelGrid::axis_aligned([100, 1, 1], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
+        let g = VoxelGrid::axis_aligned([100, 1, 1], [Length::from_unit::<Millimeter>(1.0); 3], Point3::new(0.0, 0.0, 0.0))
             .unwrap();
         let ramp = Dvh::from_volume(&Volume::from_shape_fn(g, |idx| idx[0] as f64));
         assert_relative_eq!(ramp.homogeneity_index(), 96.0 / 50.0, epsilon = 1e-12);
@@ -347,7 +351,7 @@ mod tests {
         let zero = T::from_f64(0.0);
         let unit = T::from_f64(1.0);
         let grid =
-            VoxelGrid::<T>::axis_aligned([2, 2, 2], [unit; 3], Point3::new(zero, zero, zero))
+            VoxelGrid::<T>::axis_aligned([2, 2, 2], [Length::from_unit::<Millimeter>(unit); 3], Point3::new(zero, zero, zero))
                 .expect("valid axis-aligned grid");
 
         let dose = Volume::from_shape_fn(grid, |_| unit);
@@ -398,7 +402,7 @@ mod tests {
 
     #[test]
     fn threshold_query_preserves_boundary_and_nan_semantics() {
-        let g = VoxelGrid::axis_aligned([4, 1, 1], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
+        let g = VoxelGrid::axis_aligned([4, 1, 1], [Length::from_unit::<Millimeter>(1.0); 3], Point3::new(0.0, 0.0, 0.0))
             .expect("grid");
         let finite = Volume::from_shape_fn(g, |[i, _, _]| i as f64);
         let finite_dvh = Dvh::from_volume(&finite);
@@ -424,7 +428,7 @@ mod tests {
         );
 
         let with_nan = Volume::from_shape_fn(
-            VoxelGrid::axis_aligned([3, 1, 1], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
+            VoxelGrid::axis_aligned([3, 1, 1], [Length::from_unit::<Millimeter>(1.0); 3], Point3::new(0.0, 0.0, 0.0))
                 .expect("grid"),
             |[i, _, _]| [1.0, f64::NAN, 3.0][i],
         );
