@@ -258,7 +258,7 @@ mod tests {
         let zero = cast(0.0);
         let one = cast(1.0);
         let spacing = cast(2.0);
-        let grid = VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], P3::new(zero, zero, zero))
+        let grid = VoxelGrid::<T>::axis_aligned([9, 9, 9], [Length::from_unit::<Millimeter>(spacing); 3], P3::new(zero, zero, zero))
             .expect("valid axis-aligned grid");
 
         let terma = Volume::from_shape_fn(grid, |idx| if idx == [4, 4, 4] { one } else { zero });

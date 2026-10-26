@@ -236,7 +236,7 @@ mod tests {
         let zero = T::from_f64(0.0);
         let unit = T::from_f64(1.0);
         let grid =
-            VoxelGrid::<T>::axis_aligned([2, 2, 2], [unit; 3], Point3::new(zero, zero, zero))
+            VoxelGrid::<T>::axis_aligned([2, 2, 2], [Length::from_unit::<Millimeter>(unit); 3], Point3::new(zero, zero, zero))
                 .expect("valid axis-aligned grid");
 
         let mass_coefficient = T::from_f64(0.06);
