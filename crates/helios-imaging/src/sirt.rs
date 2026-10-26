@@ -109,7 +109,12 @@ mod tests {
     use helios_math::{Point3, ShippedScalar};
 
     fn recon_grid() -> VoxelGrid<f64> {
-        VoxelGrid::axis_aligned([21, 21, 1], [Length::from_unit::<Millimeter>(2.0); 3], Point3::new(0.0, 0.0, 0.0)).unwrap()
+        VoxelGrid::axis_aligned(
+            [21, 21, 1],
+            [Length::from_unit::<Millimeter>(2.0); 3],
+            Point3::new(0.0, 0.0, 0.0),
+        )
+        .unwrap()
     }
 
     // Disk phantom on the reconstruction grid (μ₀ inside radius, 0 outside).
@@ -256,7 +261,7 @@ mod tests {
         let zero = cast(0.0);
         let grid = VoxelGrid::<T>::axis_aligned(
             [15, 15, 1],
-            [cast(2.0); 3],
+            [Length::from_unit::<Millimeter>(cast(2.0)); 3],
             Point3::new(zero, zero, zero),
         )
         .expect("valid axis-aligned grid");
