@@ -135,7 +135,7 @@ mod tests {
         // 2 mm spacing, μ varying over all three axes.
         let grid = VoxelGrid::<f32>::axis_aligned(
             [17, 17, 17],
-            [2.0, 2.0, 2.0],
+            [Length::from_unit::<Millimeter>(2.0), Length::from_unit::<Millimeter>(2.0), Length::from_unit::<Millimeter>(2.0)],
             Point3::new(0.0, 0.0, 0.0),
         )
         .expect("grid");
