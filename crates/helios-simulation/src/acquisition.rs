@@ -277,7 +277,11 @@ mod tests {
         let zero = cast(0.0);
         let spacing = cast(2.0);
         let grid =
-            VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], Point3::new(zero, zero, zero))
+            VoxelGrid::<T>::axis_aligned(
+                [9, 9, 9],
+                [Length::from_unit::<Millimeter>(spacing); 3],
+                Point3::new(zero, zero, zero),
+            )
                 .expect("valid axis-aligned grid");
 
         let mu = cast(0.05);
