@@ -164,7 +164,11 @@ mod tests {
         let spacing = 0.5;
         let grid = VoxelGrid::axis_aligned(
             [n, n, 1],
-            [spacing, spacing, spacing],
+            [
+                Length::from_unit::<Millimeter>(spacing),
+                Length::from_unit::<Millimeter>(spacing),
+                Length::from_unit::<Millimeter>(spacing),
+            ],
             Point3::new(0.0, 0.0, 0.0),
         )
         .unwrap();

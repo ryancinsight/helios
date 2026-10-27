@@ -54,8 +54,12 @@ const STEP_MM: f64 = 0.5;
 const MU_WATER_CM: f64 = 0.0636; // 6 MV linear attenuation for water (cm⁻¹)
 
 fn water_phantom() -> Volume<f64> {
-    let grid = VoxelGrid::axis_aligned([N, N, 1], [SPACING_MM; 3], Point3::new(0.0, 0.0, 0.0))
-        .expect("valid grid");
+    let grid = VoxelGrid::axis_aligned(
+        [N, N, 1],
+        [Length::from_unit::<Millimeter>(SPACING_MM); 3],
+        Point3::new(0.0, 0.0, 0.0),
+    )
+    .expect("valid grid");
     // Uniform water phantom: HU = 0.0
     Volume::from_shape_fn(grid, |_| 0.0_f64)
 }

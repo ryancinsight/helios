@@ -381,8 +381,12 @@ mod tests {
     // Uniform-μ cube: 9³ voxels, 2 mm spacing → node box [0,16] mm, centre 8 mm,
     // axial chord 16 mm = 1.6 cm.
     fn uniform_cube(mu_val: f64) -> Volume<f64> {
-        let grid = VoxelGrid::axis_aligned([9, 9, 9], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-            .expect("grid");
+        let grid = VoxelGrid::axis_aligned(
+            [9, 9, 9],
+            [Length::from_unit::<Millimeter>(2.0); 3],
+            Point3::new(0.0, 0.0, 0.0),
+        )
+        .expect("grid");
         Volume::from_shape_fn(grid, move |_| mu_val)
     }
 
@@ -582,9 +586,12 @@ mod tests {
         let cast = <T as helios_math::FloatElement>::from_f64;
         let zero = cast(0.0);
         let spacing = cast(2.0);
-        let grid =
-            VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], Point3::new(zero, zero, zero))
-                .expect("valid axis-aligned grid");
+        let grid = VoxelGrid::<T>::axis_aligned(
+            [9, 9, 9],
+            [Length::from_unit::<Millimeter>(spacing); 3],
+            Point3::new(zero, zero, zero),
+        )
+        .expect("valid axis-aligned grid");
 
         let mu = cast(0.05);
         let attenuation = Volume::from_shape_fn(grid, |_| mu);
@@ -668,9 +675,12 @@ mod tests {
         // sweeps several rows under a divergent point-source fan — the defining fan
         // property. Fine 1 mm grid so the divergence resolves past nearest-voxel
         // quantization.
-        let grid =
-            VoxelGrid::axis_aligned([31, 31, 1], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap();
+        let grid = VoxelGrid::axis_aligned(
+            [31, 31, 1],
+            [Length::from_unit::<Millimeter>(1.0); 3],
+            Point3::new(0.0, 0.0, 0.0),
+        )
+        .unwrap();
         let mu = Volume::from_shape_fn(grid, |_| 0.05);
         // Single lit leaf at +6 mm offset (leaf 2 of 3 at 6 mm pitch).
         let f = DeliveryFrame {

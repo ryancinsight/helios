@@ -175,6 +175,7 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
+    use aequitas::systems::si::units::Millimeter;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::ShippedScalar;
@@ -182,8 +183,12 @@ mod tests {
 
     // Uniform-μ cube: 9³ voxels, 2 mm spacing → node box [0,16] mm = 1.6 cm/axis.
     fn uniform_cube(mu_val: f64) -> Volume<f64> {
-        let grid = VoxelGrid::axis_aligned([9, 9, 9], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-            .expect("grid");
+        let grid = VoxelGrid::axis_aligned(
+            [9, 9, 9],
+            [Length::from_unit::<Millimeter>(2.0); 3],
+            Point3::new(0.0, 0.0, 0.0),
+        )
+        .expect("grid");
         Volume::from_shape_fn(grid, move |_| mu_val)
     }
 
@@ -203,7 +208,7 @@ mod tests {
         .expect("right-handed quarter-turn basis");
         let grid = VoxelGrid::oriented(
             [9, 9, 9],
-            [2.0, 2.0, 2.0],
+            [Length::from_unit::<Millimeter>(2.0); 3],
             Point3::new(10.0, 20.0, 30.0),
             rotation,
         )
@@ -355,9 +360,12 @@ mod tests {
         let cast = <T as helios_math::FloatElement>::from_f64;
         let zero = cast(0.0);
         let spacing = cast(2.0);
-        let grid =
-            VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], Point3::new(zero, zero, zero))
-                .expect("valid axis-aligned grid");
+        let grid = VoxelGrid::<T>::axis_aligned(
+            [9, 9, 9],
+            [Length::from_unit::<Millimeter>(spacing); 3],
+            Point3::new(zero, zero, zero),
+        )
+        .expect("valid axis-aligned grid");
 
         let mu = cast(0.05);
         let attenuation = Volume::from_shape_fn(grid, |_| mu);
@@ -441,9 +449,12 @@ mod tests {
         let cast = <T as helios_math::FloatElement>::from_f64;
         let zero = cast(0.0);
         let spacing = cast(2.0);
-        let grid =
-            VoxelGrid::<T>::axis_aligned([9, 9, 9], [spacing; 3], Point3::new(zero, zero, zero))
-                .expect("valid axis-aligned grid");
+        let grid = VoxelGrid::<T>::axis_aligned(
+            [9, 9, 9],
+            [Length::from_unit::<Millimeter>(spacing); 3],
+            Point3::new(zero, zero, zero),
+        )
+        .expect("valid axis-aligned grid");
         let mu = Volume::from_shape_fn(grid, |_| cast(0.05));
         let ray = Ray::try_new(
             Point3::new(cast(-50.0), cast(8.0), cast(8.0)),
@@ -546,9 +557,12 @@ mod tests {
         // 16 cm of water along x, 2 cm voxels; the beam runs down the y = z = 20 mm axis.
         let pitch_mm = 20.0;
         let spacing = cast(pitch_mm);
-        let grid =
-            VoxelGrid::<T>::axis_aligned([9, 3, 3], [spacing; 3], Point3::new(zero, zero, zero))
-                .expect("valid axis-aligned grid");
+        let grid = VoxelGrid::<T>::axis_aligned(
+            [9, 3, 3],
+            [Length::from_unit::<Millimeter>(spacing); 3],
+            Point3::new(zero, zero, zero),
+        )
+        .expect("valid axis-aligned grid");
         let mu = Volume::from_shape_fn(grid, |_| cast(WATER_MU_PER_CM));
 
         let focal = Point3::new(cast(-PDD_SSD_MM), cast(20.0), cast(20.0));

@@ -22,7 +22,9 @@
 
 use crate::grid::VoxelGrid;
 use crate::volume::Volume;
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
 use core::num::NonZeroUsize;
+use eunomia::UnitScalar;
 use helios_math::{Point3, Scalar, Vector3};
 use helios_quantities::HeliosError;
 
@@ -179,7 +181,7 @@ fn read_root_dataset(
 /// [`HeliosError::Storage`] if the file cannot be read/parsed or its datasets are
 /// missing/malformed; [`HeliosError::InvalidDomainValue`] if the stored geometry
 /// does not form a valid grid.
-pub fn load_volume_hdf5<T: Scalar>(
+pub fn load_volume_hdf5<T: Scalar + UnitScalar>(
     path: impl AsRef<std::path::Path>,
 ) -> Result<Volume<T>, HeliosError> {
     let bytes = std::fs::read(path.as_ref()).map_err(|e| storage_err("read file", e))?;
@@ -233,12 +235,13 @@ pub fn load_volume_hdf5<T: Scalar>(
     .map_err(|error| HeliosError::Storage {
         reason: format!("geometry rotation is not a rigid right-handed basis: {error}"),
     })?;
+    // Archived geometry is millimetres, matching the grid's storage units.
     let grid = VoxelGrid::oriented(
         [field_dims[0], field_dims[1], field_dims[2]],
         [
-            T::from_f64(geom[0]),
-            T::from_f64(geom[1]),
-            T::from_f64(geom[2]),
+            Length::from_unit::<Millimeter>(T::from_f64(geom[0])),
+            Length::from_unit::<Millimeter>(T::from_f64(geom[1])),
+            Length::from_unit::<Millimeter>(T::from_f64(geom[2])),
         ],
         Point3::new(
             T::from_f64(geom[3]),
@@ -253,13 +256,21 @@ pub fn load_volume_hdf5<T: Scalar>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use aequitas::systems::si::{quantities::Length, units::Millimeter};
 
     fn test_volume() -> Volume<f64> {
         // Distinct value per voxel locks the (i, j, k) storage order; non-trivial
         // spacing/origin lock the geometry round-trip.
-        let grid =
-            VoxelGrid::axis_aligned([4, 3, 2], [1.25, 2.0, 3.5], Point3::new(-5.0, 7.5, 11.0))
-                .expect("grid");
+        let grid = VoxelGrid::axis_aligned(
+            [4, 3, 2],
+            [
+                Length::from_unit::<Millimeter>(1.25),
+                Length::from_unit::<Millimeter>(2.0),
+                Length::from_unit::<Millimeter>(3.5),
+            ],
+            Point3::new(-5.0, 7.5, 11.0),
+        )
+        .expect("grid");
         Volume::from_shape_fn(grid, |idx| {
             100.0 * idx[0] as f64 + 10.0 * idx[1] as f64 + idx[2] as f64 + 0.125
         })
@@ -304,9 +315,12 @@ mod tests {
     fn f32_volume_round_trips_through_the_f64_archive() {
         let dir = tempfile::tempdir().expect("synthetic storage fixture round-trips");
         let path = dir.path().join("f32.h5");
-        let grid =
-            VoxelGrid::<f32>::axis_aligned([2, 2, 2], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
-                .expect("synthetic storage fixture round-trips");
+        let grid = VoxelGrid::<f32>::axis_aligned(
+            [2, 2, 2],
+            [Length::from_unit::<Millimeter>(1.0); 3],
+            Point3::new(0.0, 0.0, 0.0),
+        )
+        .expect("synthetic storage fixture round-trips");
         let original = Volume::from_shape_fn(grid, |idx| (idx[0] + 2 * idx[1] + 4 * idx[2]) as f32);
         save_volume_hdf5(&original, &path).expect("save");
         let loaded: Volume<f32> = load_volume_hdf5(&path).expect("load");
@@ -333,7 +347,11 @@ mod tests {
         .expect("right-handed quarter-turn basis");
         let grid = VoxelGrid::oriented(
             [4, 3, 2],
-            [1.25, 2.0, 3.5],
+            [
+                Length::from_unit::<Millimeter>(1.25),
+                Length::from_unit::<Millimeter>(2.0),
+                Length::from_unit::<Millimeter>(3.5),
+            ],
             Point3::new(-5.0, 7.5, 11.0),
             rotation,
         )

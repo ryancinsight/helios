@@ -18,7 +18,10 @@
 
 // Programs allocate through Mnemosyne (ADR 0018).
 helios_allocator::install_global_allocator!();
-use aequitas::systems::si::{quantities::AbsorbedDose, units::Gray};
+use aequitas::systems::si::{
+    quantities::{AbsorbedDose, Length},
+    units::{Gray, Millimeter},
+};
 use helios_analysis::Dvh;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Point3;
@@ -34,7 +37,12 @@ fn gaussian_dose_phantom(
     sigma_mm: f64,
 ) -> Volume<f64> {
     let origin = Point3::new(0.0, 0.0, 0.0);
-    let grid = VoxelGrid::axis_aligned(dims, [spacing_mm; 3], origin).expect("valid phantom grid");
+    let grid = VoxelGrid::axis_aligned(
+        dims,
+        [Length::from_unit::<Millimeter>(spacing_mm); 3],
+        origin,
+    )
+    .expect("valid phantom grid");
     let centre = [
         (dims[0] as f64 - 1.0) * spacing_mm / 2.0,
         (dims[1] as f64 - 1.0) * spacing_mm / 2.0,

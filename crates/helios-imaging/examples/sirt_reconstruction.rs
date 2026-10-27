@@ -67,8 +67,12 @@ fn main() {
     let nz = 1usize;
     let voxel_mm = 2.0_f64;
 
-    let grid = VoxelGrid::axis_aligned([nx, ny, nz], [voxel_mm; 3], Point3::new(0.0, 0.0, 0.0))
-        .expect("valid phantom grid");
+    let grid = VoxelGrid::axis_aligned(
+        [nx, ny, nz],
+        [Length::from_unit::<Millimeter>(voxel_mm); 3],
+        Point3::new(0.0, 0.0, 0.0),
+    )
+    .expect("valid phantom grid");
 
     // Water: μ ≈ 0.02 cm⁻¹ (6 MV Compton regime, density ≈ 1.0 g/cm³)
     // Bone insert (20×20 centre block): μ ≈ 0.04 cm⁻¹

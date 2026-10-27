@@ -97,15 +97,22 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
-    use aequitas::systems::si::{quantities::AreaPerMass, units::SquareCentimeterPerGram};
+    use aequitas::systems::si::{
+        quantities::{AreaPerMass, Length},
+        units::{Millimeter, SquareCentimeterPerGram},
+    };
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
     use helios_math::ShippedScalar;
 
     fn grid() -> VoxelGrid<f64> {
-        VoxelGrid::axis_aligned([3, 4, 5], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
-            .expect("valid grid")
+        VoxelGrid::axis_aligned(
+            [3, 4, 5],
+            [Length::from_unit::<Millimeter>(1.0); 3],
+            Point3::new(0.0, 0.0, 0.0),
+        )
+        .expect("valid grid")
     }
 
     fn water_mass_attenuation() -> MassAttenuation<f64> {
@@ -138,8 +145,12 @@ mod tests {
     fn air_maps_to_zero_and_bone_scales_with_density() {
         // Air (−1000 HU) → ρ=0 → μ=0; HU=1000 → ρ=2 → μ=0.12.
         let ct = Volume::from_shape_vec(
-            VoxelGrid::axis_aligned([2, 1, 1], [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0))
-                .unwrap(),
+            VoxelGrid::axis_aligned(
+                [2, 1, 1],
+                [Length::from_unit::<Millimeter>(1.0); 3],
+                Point3::new(0.0, 0.0, 0.0),
+            )
+            .unwrap(),
             vec![-1000.0, 1000.0],
         )
         .unwrap();
@@ -232,9 +243,12 @@ mod tests {
     fn attenuation_map_scales_mass_coefficient_by_density<T: ShippedScalar>() {
         let zero = T::from_f64(0.0);
         let unit = T::from_f64(1.0);
-        let grid =
-            VoxelGrid::<T>::axis_aligned([2, 2, 2], [unit; 3], Point3::new(zero, zero, zero))
-                .expect("valid axis-aligned grid");
+        let grid = VoxelGrid::<T>::axis_aligned(
+            [2, 2, 2],
+            [Length::from_unit::<Millimeter>(unit); 3],
+            Point3::new(zero, zero, zero),
+        )
+        .expect("valid axis-aligned grid");
 
         let mass_coefficient = T::from_f64(0.06);
         let ct = Volume::from_shape_fn(grid, |_| zero);

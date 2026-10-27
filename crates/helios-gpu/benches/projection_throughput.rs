@@ -10,6 +10,7 @@
 
 // Programs allocate through Mnemosyne (ADR 0018).
 helios_allocator::install_global_allocator!();
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use helios_domain::{Volume, VoxelGrid};
 use helios_gpu::GpuProjector;
@@ -20,8 +21,12 @@ const N: usize = 128; // 128³ voxels, 1 mm spacing
 const STEP_MM: f32 = 1.0;
 
 fn mu_volume() -> Volume<f32> {
-    let grid = VoxelGrid::<f32>::axis_aligned([N, N, N], [1.0; 3], Point3::new(0.0, 0.0, 0.0))
-        .expect("grid");
+    let grid = VoxelGrid::<f32>::axis_aligned(
+        [N, N, N],
+        [Length::from_unit::<Millimeter>(1.0); 3],
+        Point3::new(0.0, 0.0, 0.0),
+    )
+    .expect("grid");
     Volume::from_shape_fn(grid, |idx| {
         0.0002 * idx[0] as f32 + 0.00015 * idx[1] as f32 + 0.0001 * idx[2] as f32 + 0.02
     })

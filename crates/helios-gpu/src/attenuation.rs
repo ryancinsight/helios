@@ -187,6 +187,7 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
+    use aequitas::systems::si::{quantities::Length, units::Millimeter};
 
     // NIST-representative water μ/ρ at ~1 MeV and unit water density; tests
     // verify the defining relation, not these specific magnitudes.
@@ -254,7 +255,11 @@ mod tests {
         let device = crate::required_device();
         let grid = helios_domain::VoxelGrid::axis_aligned(
             [4, 3, 2],
-            [1.0_f32, 1.0, 1.0],
+            [
+                Length::from_unit::<Millimeter>(1.0_f32),
+                Length::from_unit::<Millimeter>(1.0),
+                Length::from_unit::<Millimeter>(1.0),
+            ],
             Point3::new(0.0_f32, 0.0, 0.0),
         )
         .expect("valid grid");

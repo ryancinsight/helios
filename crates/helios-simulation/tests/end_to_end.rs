@@ -70,8 +70,8 @@ fn relative_weight(value: f64) -> Dimensionless<f64> {
 // CT phantom (HU): air outside a 24 mm water cylinder, with an 8 mm bone insert
 // (HU 800) at the centre. Uniform along z (cylinder axis).
 fn ct_phantom() -> Volume<f64> {
-    let grid =
-        VoxelGrid::axis_aligned([NX, NX, NZ], [SPACING; 3], Point3::new(0.0, 0.0, 0.0)).unwrap();
+    let spacing = [Length::from_unit::<Millimeter>(SPACING); 3];
+    let grid = VoxelGrid::axis_aligned([NX, NX, NZ], spacing, Point3::new(0.0, 0.0, 0.0)).unwrap();
     Volume::from_shape_fn(grid, |idx| {
         let dx = idx[0] as f64 * SPACING - CENTRE_MM;
         let dy = idx[1] as f64 * SPACING - CENTRE_MM;
@@ -117,8 +117,9 @@ fn shared_mu_drives_imaging_and_delivery_end_to_end() {
         Length::from_unit::<Millimeter>(400.0),
         Length::from_unit::<Millimeter>(0.5),
     );
+    let spacing = [Length::from_unit::<Millimeter>(SPACING); 3];
     let recon_grid =
-        VoxelGrid::axis_aligned([NX, NX, 1], [SPACING; 3], Point3::new(0.0, 0.0, 0.0)).unwrap();
+        VoxelGrid::axis_aligned([NX, NX, 1], spacing, Point3::new(0.0, 0.0, 0.0)).unwrap();
     let recon = filtered_back_projection(&sino, &recon_grid);
     // Water ROI (well inside the cylinder, outside the insert; r ≈ 10–16 mm).
     let water = roi_statistics(&recon, [20, 14, 0], [23, 17, 1]);

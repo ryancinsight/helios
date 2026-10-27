@@ -8,7 +8,10 @@
 
 // Programs allocate through Mnemosyne (ADR 0018).
 helios_allocator::install_global_allocator!();
-use aequitas::systems::si::{quantities::Length, units::Centimeter};
+use aequitas::systems::si::{
+    quantities::Length,
+    units::{Centimeter, Millimeter},
+};
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Point3;
@@ -17,8 +20,12 @@ use helios_solver::{scatter_superposition, symmetric_deposition_kernel};
 fn bench_scatter(c: &mut Criterion) {
     let mut group = c.benchmark_group("scatter_superposition");
     for &n in &[32usize, 64] {
-        let grid = VoxelGrid::axis_aligned([n, n, n], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-            .expect("grid");
+        let grid = VoxelGrid::axis_aligned(
+            [n, n, n],
+            [Length::from_unit::<Millimeter>(2.0); 3],
+            Point3::new(0.0, 0.0, 0.0),
+        )
+        .expect("grid");
         // Non-uniform terma so no arithmetic short-circuits.
         let terma =
             Volume::from_shape_fn(grid, |idx| (idx[0] * 7 + idx[1] * 3 + idx[2]) as f64 * 1e-4);

@@ -203,14 +203,22 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
-    use aequitas::systems::si::units::Gray;
+    use aequitas::systems::si::{
+        quantities::Length,
+        units::{Gray, Millimeter},
+    };
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::Point3;
     use helios_math::ShippedScalar;
 
     fn grid(dims: [usize; 3]) -> VoxelGrid<f64> {
-        VoxelGrid::axis_aligned(dims, [1.0, 1.0, 1.0], Point3::new(0.0, 0.0, 0.0)).expect("grid")
+        VoxelGrid::axis_aligned(
+            dims,
+            [Length::from_unit::<Millimeter>(1.0); 3],
+            Point3::new(0.0, 0.0, 0.0),
+        )
+        .expect("grid")
     }
 
     #[test]
@@ -316,9 +324,12 @@ mod tests {
     fn roi_metrics_match_closed_form<T: ShippedScalar>() {
         let zero = T::from_f64(0.0);
         let unit = T::from_f64(1.0);
-        let grid =
-            VoxelGrid::<T>::axis_aligned([1, 1, 2], [unit; 3], Point3::new(zero, zero, zero))
-                .expect("valid axis-aligned grid");
+        let grid = VoxelGrid::<T>::axis_aligned(
+            [1, 1, 2],
+            [Length::from_unit::<Millimeter>(unit); 3],
+            Point3::new(zero, zero, zero),
+        )
+        .expect("valid axis-aligned grid");
         let volume = Volume::from_shape_vec(grid, vec![T::from_f64(2.0), T::from_f64(4.0)])
             .expect("two values for a two-voxel grid");
         let tolerance = T::EPSILON * T::from_f64(METRIC_ULPS);

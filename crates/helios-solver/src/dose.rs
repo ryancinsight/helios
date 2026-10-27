@@ -146,6 +146,7 @@ mod tests {
     )]
     use super::*;
     use crate::test_support::{grid, length_cm};
+    use aequitas::systems::si::units::Millimeter;
     use eunomia::assert_relative_eq;
     use helios_math::Point3;
     use helios_math::ShippedScalar;
@@ -225,8 +226,12 @@ mod tests {
         // Exponential TERMA through a spread kernel exhibits photon build-up:
         // the surface voxel receives less than a downstream maximum, then dose
         // falls off. This is the clinical-realism depth-dose signature.
-        let g = VoxelGrid::axis_aligned([40, 1, 1], [2.0, 2.0, 2.0], Point3::new(0.0, 0.0, 0.0))
-            .unwrap();
+        let g = VoxelGrid::axis_aligned(
+            [40, 1, 1],
+            [Length::from_unit::<Millimeter>(2.0); 3],
+            Point3::new(0.0, 0.0, 0.0),
+        )
+        .unwrap();
         let mu = Volume::from_shape_fn(g, |_| 0.3);
         let terma = primary_fluence_parallel_x(&mu, 1.0).expect("valid attenuation volume");
         let kernel = exponential_deposition_kernel(length_cm(1.0), length_cm(0.2), 20);
@@ -278,9 +283,12 @@ mod tests {
     fn primary_fluence_matches_beer_lambert<T: ShippedScalar>() {
         let zero = T::from_f64(0.0);
         let spacing_mm = T::from_f64(2.0);
-        let grid =
-            VoxelGrid::<T>::axis_aligned([4, 1, 1], [spacing_mm; 3], Point3::new(zero, zero, zero))
-                .expect("valid axis-aligned grid");
+        let grid = VoxelGrid::<T>::axis_aligned(
+            [4, 1, 1],
+            [Length::from_unit::<Millimeter>(spacing_mm); 3],
+            Point3::new(zero, zero, zero),
+        )
+        .expect("valid axis-aligned grid");
 
         let mu = T::from_f64(0.3);
         let incident = T::from_f64(5.0);

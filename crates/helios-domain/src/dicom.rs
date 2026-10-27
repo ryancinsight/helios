@@ -19,6 +19,8 @@
 
 use crate::grid::VoxelGrid;
 use crate::volume::Volume;
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
+use eunomia::UnitScalar;
 use helios_math::{Point3, Scalar, UnitQuaternion, Vector3};
 use helios_quantities::HeliosError;
 use ritk_dicom::{
@@ -261,7 +263,7 @@ fn allclose3(a: [f64; 3], b: [f64; 3], tol: f64) -> bool {
     (0..3).all(|axis| (a[axis] - b[axis]).abs() <= tol)
 }
 
-fn oriented_grid_from_dicom<T: Scalar>(
+fn oriented_grid_from_dicom<T: Scalar + UnitScalar>(
     dims: [usize; 3],
     spacing_mm: [f64; 3],
     origin: [f64; 3],
@@ -269,14 +271,13 @@ fn oriented_grid_from_dicom<T: Scalar>(
     col_dir: [f64; 3],
     normal_dir: [f64; 3],
 ) -> Result<VoxelGrid<T>, HeliosError> {
+    // DICOM Pixel Spacing / Slice Thickness are millimetres by standard
+    // (PS3.3 C.8); the typed boundary records that contract here.
+    let spacing = spacing_mm.map(|s| Length::from_unit::<Millimeter>(T::from_f64(s)));
     let rotation = rotation_from_axes::<T>(row_dir, col_dir, normal_dir)?;
     VoxelGrid::oriented(
         dims,
-        [
-            T::from_f64(spacing_mm[0]),
-            T::from_f64(spacing_mm[1]),
-            T::from_f64(spacing_mm[2]),
-        ],
+        spacing,
         Point3::new(
             T::from_f64(origin[0]),
             T::from_f64(origin[1]),
@@ -311,7 +312,7 @@ fn scatter_slice<T: Scalar>(dst: &mut [T], slice: &SliceRaw, k: usize, nz: usize
 /// [`HeliosError::Dicom`] if the file cannot be parsed/decoded or a required
 /// geometry attribute is missing or malformed; [`HeliosError::InvalidDomainValue`]
 /// if the resulting grid dimensions/spacing are invalid.
-pub fn load_ct_slice<T: Scalar>(
+pub fn load_ct_slice<T: Scalar + UnitScalar>(
     path: impl AsRef<std::path::Path>,
 ) -> Result<Volume<T>, HeliosError> {
     let slice = read_slice(path.as_ref())?;
@@ -352,7 +353,7 @@ const GEOMETRY_TOL_MM: f64 = 1.0e-3;
 /// disagree in in-plane geometry, or the z spacing is non-uniform (beyond
 /// `GEOMETRY_TOL_MM`); [`HeliosError::InvalidDomainValue`] if the derived grid is
 /// invalid (e.g. duplicate slice positions → zero spacing).
-pub fn load_ct_series<T: Scalar, P: AsRef<std::path::Path>>(
+pub fn load_ct_series<T: Scalar + UnitScalar, P: AsRef<std::path::Path>>(
     paths: &[P],
 ) -> Result<Volume<T>, HeliosError> {
     if paths.is_empty() {

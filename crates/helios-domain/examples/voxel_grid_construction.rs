@@ -19,6 +19,8 @@
 
 // Programs allocate through Mnemosyne (ADR 0018).
 helios_allocator::install_global_allocator!();
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
+use eunomia::UnitScalar;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{Point3, Scalar};
 
@@ -30,10 +32,14 @@ fn affine_value<T: Scalar>(idx: [usize; 3]) -> T {
     T::from_f64((2 * idx[0] + 3 * idx[1] + 5 * idx[2] + 7) as f64)
 }
 
-fn affine_volume<T: Scalar>() -> (VoxelGrid<T>, Volume<T>) {
+fn affine_volume<T: Scalar + UnitScalar>() -> (VoxelGrid<T>, Volume<T>) {
     let grid = VoxelGrid::axis_aligned(
         [4, 5, 6],
-        [T::from_f64(2.0), T::from_f64(3.0), T::from_f64(4.0)], // mm per axis
+        [
+            Length::from_unit::<Millimeter>(T::from_f64(2.0)),
+            Length::from_unit::<Millimeter>(T::from_f64(3.0)),
+            Length::from_unit::<Millimeter>(T::from_f64(4.0)),
+        ], // mm per axis
         Point3::new(T::from_f64(10.0), T::from_f64(20.0), T::from_f64(30.0)),
     )
     .expect("valid axis-aligned grid");
@@ -44,7 +50,7 @@ fn affine_volume<T: Scalar>() -> (VoxelGrid<T>, Volume<T>) {
 /// Build an `f32` and an `f64` volume on identical topology and verify
 /// trilinear sampling reproduces the affine field exactly under the analytic
 /// oracle `2·ix + 3·iy + 5·iz + 7` (the same oracle the foundation tests use).
-fn assert_trilinear_is_exact_affine<T: Scalar>() {
+fn assert_trilinear_is_exact_affine<T: Scalar + UnitScalar>() {
     let t = std::any::type_name::<T>();
     let (grid, vol) = affine_volume::<T>();
     assert_eq!(grid.dims(), [4, 5, 6]);

@@ -181,12 +181,21 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
+    use aequitas::systems::si::{quantities::Length, units::Millimeter};
     use eunomia::assert_relative_eq;
     use helios_math::ShippedScalar;
 
     fn affine_grid() -> VoxelGrid<f64> {
-        VoxelGrid::axis_aligned([4, 5, 6], [2.0, 3.0, 4.0], Point3::new(10.0, 20.0, 30.0))
-            .expect("valid grid")
+        VoxelGrid::axis_aligned(
+            [4, 5, 6],
+            [
+                Length::from_unit::<Millimeter>(2.0),
+                Length::from_unit::<Millimeter>(3.0),
+                Length::from_unit::<Millimeter>(4.0),
+            ],
+            Point3::new(10.0, 20.0, 30.0),
+        )
+        .expect("valid grid")
     }
 
     // Affine field in index space: value = 2i + 3j + 5k + 7.
@@ -264,9 +273,12 @@ mod tests {
         let cast = <T as helios_math::FloatElement>::from_f64;
         let zero = cast(0.0);
         let unit = cast(1.0);
-        let grid =
-            VoxelGrid::<T>::axis_aligned([2, 2, 2], [unit; 3], Point3::new(zero, zero, zero))
-                .expect("valid axis-aligned grid");
+        let grid = VoxelGrid::<T>::axis_aligned(
+            [2, 2, 2],
+            [Length::from_unit::<Millimeter>(unit); 3],
+            Point3::new(zero, zero, zero),
+        )
+        .expect("valid axis-aligned grid");
 
         // f(i,j,k) = i + j + k is affine, so trilinear interpolation is exact.
         let volume = Volume::from_shape_fn(grid, |idx| {
