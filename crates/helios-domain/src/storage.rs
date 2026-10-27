@@ -22,7 +22,9 @@
 
 use crate::grid::VoxelGrid;
 use crate::volume::Volume;
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
 use core::num::NonZeroUsize;
+use eunomia::UnitScalar;
 use helios_math::{Point3, Scalar, Vector3};
 use helios_quantities::HeliosError;
 
@@ -179,7 +181,7 @@ fn read_root_dataset(
 /// [`HeliosError::Storage`] if the file cannot be read/parsed or its datasets are
 /// missing/malformed; [`HeliosError::InvalidDomainValue`] if the stored geometry
 /// does not form a valid grid.
-pub fn load_volume_hdf5<T: Scalar>(
+pub fn load_volume_hdf5<T: Scalar + UnitScalar>(
     path: impl AsRef<std::path::Path>,
 ) -> Result<Volume<T>, HeliosError> {
     let bytes = std::fs::read(path.as_ref()).map_err(|e| storage_err("read file", e))?;
@@ -233,12 +235,13 @@ pub fn load_volume_hdf5<T: Scalar>(
     .map_err(|error| HeliosError::Storage {
         reason: format!("geometry rotation is not a rigid right-handed basis: {error}"),
     })?;
+    // Archived geometry is millimetres, matching the grid's storage units.
     let grid = VoxelGrid::oriented(
         [field_dims[0], field_dims[1], field_dims[2]],
         [
-            T::from_f64(geom[0]),
-            T::from_f64(geom[1]),
-            T::from_f64(geom[2]),
+            Length::from_unit::<Millimeter>(T::from_f64(geom[0])),
+            Length::from_unit::<Millimeter>(T::from_f64(geom[1])),
+            Length::from_unit::<Millimeter>(T::from_f64(geom[2])),
         ],
         Point3::new(
             T::from_f64(geom[3]),
