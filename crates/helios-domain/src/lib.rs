@@ -30,4 +30,4 @@ pub use helical::HelicalDelivery;
 pub use mlc::{LeafOpenTimeSinogram, MlcModel};
 #[cfg(feature = "storage")]
 pub use storage::{load_volume_hdf5, save_volume_hdf5};
-pub use volume::Volume;
+pub use volume::{CtVolume, MvctVolume, Volume};

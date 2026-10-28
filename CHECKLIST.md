@@ -124,9 +124,10 @@ Moirai/Mnemosyne provider diagnostics recorded in `gap_audit.md`.
   runs 104/104 domain/solver/GPU tests, including live-GPU differentials.
   Workspace example compilation and `cargo fmt --all --check` pass. Semver
   checks pass 196/196 each for `helios-domain`, `helios-math`,
-  `helios-solver`, and `helios-gpu`. H-004d is in progress: Helios now uses
-  RITK's provider-owned `ImageOrientationPatient` constant; RITK PR #149 is
-  the remaining exact-head merge gate.
+  `helios-solver`, and `helios-gpu`. H-004d is done: Helios uses RITK's
+  provider-owned `ImageOrientationPatient` constant (local duplicate
+  deleted), `CtVolume`/`MvctVolume` modality newtypes are delivered with
+  round-trip tests, and RITK PR #149 (merged Aug 2026) is no longer a gate.
 
 ## Codex — H-065 Moirai 0.3 provider-graph refresh [patch] — done 2026-07-15
 

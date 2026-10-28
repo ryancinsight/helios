@@ -4,6 +4,28 @@ Physics, numerics, accuracy, architecture, and integration gaps. Closed by
 evidence, not silence. Each gap: ID, description, class, current evidence tier,
 target closure.
 
+## Finding 2026-10-26: primary-fluence deposition labels areal energy as dose [phys]
+
+Risk: `helios-solver::deposit_ray_terma` conserves `w·(1 − e^{−τ})`, and `w` is
+a `DeliveryFrame` per-leaf `EnergyPerArea` [J/m²]. That product is the **areal
+energy** removed from the beam, not `AbsorbedDose` [J/kg]; the two differ by the
+segment's mass thickness `ρ Δl` or, equivalently, by the mass energy-absorption
+coefficient `μ_en/ρ` [m²/kg]. The kernel returned `AbsorbedDose` and
+`accumulate_delivered_dose` feeds the scalar field to DVH/gamma as Gy, so the
+absolute dose was a convention with no stated physical calibration.
+
+Evidence: the two deposition functions and their shared ray-march now return
+`EnergyPerArea<T>`; the kernel and `dose_accumulation` docs state the missing
+factor and that the scalar field inherits the areal unit. Numerical output is
+unchanged, so this is an honest label on an open calibration, not a behavior
+change. The conservation oracle `w·(1 − e^{−τ})` is unchanged and still exact.
+
+Check that would close it: a homogeneous-slab differential against
+`(μ_en/ρ)·Ψ` using tabulated `μ_en/ρ` at a fixed energy (1 MeV water is the
+existing NIST anchor), plus the delivery → dose → DVH chain at a known absolute
+dose. Owner: helios-solver / helios-simulation. Re-open: a consumer applies the
+mass-thickness or `μ_en/ρ` factor.
+
 ## Finding 2026-08-20: helios scope-vs-delivery audit
 
 Static, read-only audit at detached HEAD `f31f261` (the working tree carried one
@@ -319,12 +341,12 @@ changes, which are outside this item.
   (including oriented Beer–Lambert and HDF5 pose round trips, live GPU checks);
   warning-denied Clippy, doctest/rustdoc, workspace example build, workspace
   format check, and four 196/196-package SemVer checks are clean.
-- H-004d is in the consumer cutover phase: Helios now uses
+- H-004d is closed: Helios uses
   `ritk_dicom::tags::IMAGE_ORIENTATION_PATIENT` and no longer owns a duplicate
-  `(0020,0037)` constant. RITK PR #149 carries the provider SSOT and its 37/37
-  focused nextest evidence; the exact-head cross-repository gate remains open
-  until that PR merges. The typed-slope lockfile and RITK peer lane remain
-  outside this slice.
+  `(0020,0037)` constant; `CtVolume`/`MvctVolume` modality newtypes are
+  delivered with round-trip tests. RITK PR #149 (merged Aug 2026) carried the
+  provider SSOT; the exact-head cross-repository gate is satisfied by the
+  merged provider tag plus the helios-domain dicom round-trip suite.
 
 ## Open gaps
 

@@ -29,7 +29,6 @@ use ritk_dicom::{
 };
 
 type Object = <DicomRsBackend as ritk_dicom::DicomParseBackend>::Object;
-const IMAGE_ORIENTATION_PATIENT: DicomTag = DicomTag::new(0x0020, 0x0037);
 const ORIENTATION_TOL: f64 = 1.0e-6;
 
 fn dicom_err(step: &str, e: impl core::fmt::Display) -> HeliosError {
@@ -145,7 +144,7 @@ fn read_slice(path: &std::path::Path) -> Result<SliceRaw, HeliosError> {
         required_f64_array::<3>(&obj, tags::IMAGE_POSITION_PATIENT, "ImagePositionPatient")?;
     let orientation = required_f64_array::<6>(
         &obj,
-        IMAGE_ORIENTATION_PATIENT,
+        tags::IMAGE_ORIENTATION_PATIENT,
         "ImageOrientationPatient (0020,0037)",
     )?;
     let row_dir = normalize3(
@@ -654,7 +653,7 @@ mod tests {
         if omitted_geometry != OmittedGeometry::ImageOrientation {
             append_element(
                 &mut bytes,
-                IMAGE_ORIENTATION_PATIENT,
+                tags::IMAGE_ORIENTATION_PATIENT,
                 *b"DS",
                 &text_value(*b"DS", image_orientation_patient),
             );
