@@ -23,15 +23,15 @@ Demonstrates a 4-field box LINAC step-and-shoot delivery on a uniform water phan
 
 ```text
 use aequitas::systems::si::{
-    quantities::{EnergyPerArea, Length},
-    units::Millimeter,
+    quantities::{Angle, EnergyPerArea, Length},
+    units::{Millimeter, Radian},
 };
 use helios_simulation::{accumulate_delivered_dose, BeamGeometry, DeliveryFrame};
 
 let frames = vec![
     DeliveryFrame {
         projection: 0,
-        gantry_angle_rad: 0.0,
+        gantry_angle_rad: Angle::from_unit::<Radian>(0.0),
         couch: Length::from_unit::<Millimeter>(0.0),
         leaf_fluence: vec![EnergyPerArea::from_base(1.0); 16],
     },
@@ -45,7 +45,7 @@ let dose = accumulate_delivered_dose(
     },
     Length::from_unit::<Millimeter>(2.0),
     Length::from_unit::<Millimeter>(0.5),
-);
+)?;
 ```
 
 ## Delivery Model

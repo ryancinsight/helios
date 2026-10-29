@@ -22,12 +22,20 @@ Two-stage GPU pipeline over the Atlas `hephaestus` compute substrate:
 ## Key Code Snippet
 
 ```text
+use aequitas::systems::si::{
+    quantities::{AreaPerMass, MassDensity},
+    units::{GramPerCubicCentimeter, SquareCentimeterPerGram},
+};
 use helios_gpu::{default_device, GpuAttenuationMapper};
 
 let device = default_device()?;
 
 // Prepare the kernel once (pipeline compiled and cached on-device)
-let mapper = GpuAttenuationMapper::new(device, 0.0636_f32, 1.0_f32)?;
+let mapper = GpuAttenuationMapper::new(
+    device,
+    AreaPerMass::from_unit::<SquareCentimeterPerGram>(0.0636_f32),
+    MassDensity::from_unit::<GramPerCubicCentimeter>(1.0_f32),
+)?;
 
 // Dispatch: one GPU compute pass for all voxels
 mapper.map_into(&hu_f32, &mut mu_out)?;

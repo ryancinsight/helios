@@ -47,16 +47,16 @@ or offline replanning cycle.
 
 ```text
 use helios_imaging::register_translation;
-use helios_simulation::{accumulate_delivered_dose, BeamGeometry, DeliveryFrame};
+use helios_simulation::accumulate_delivered_dose;
 use aequitas::systems::si::{quantities::{AbsorbedDose, Length}, units::Millimeter};
-use helios_analysis::{gamma_index_3d, gamma_pass_rate, roi_statistics, Dvh};
+use helios_analysis::{gamma_index_3d, gamma_pass_rate};
 
 // Register daily to planning
 let shift = register_translation(&plan_ct, &daily_ct, [4, 4, 0])?;
 
 // Recompute dose on corrected anatomy
 let corrected = shift_phantom(&daily_ct, -shift[0], -shift[1]);
-let corrected_dose = accumulate_delivered_dose(&frames, &mu, geometry, lw, step);
+let corrected_dose = accumulate_delivered_dose(&frames, &mu, geometry, lw, step)?;
 
 // Adaptive gate
 let normalization_dose = AbsorbedDose::from_base(1.0);

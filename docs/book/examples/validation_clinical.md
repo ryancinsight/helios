@@ -43,7 +43,6 @@ Part VII — Clinical Protocol Compliance
 
 ```text
 use helios_analysis::{Dvh, gamma_index_3d, gamma_pass_rate};
-use helios_solver::dose_engine;
 ```
 
 See [Regression and Analytical Validation](validation_regression.md) for the

@@ -9,16 +9,21 @@ Helios includes synthetic test phantoms for validation and regression testing.
 
 ## Water Cylinder Phantom
 
-The standard phantom for attenuation and dose validation:
+The standard phantom for attenuation and dose validation. Phantom
+builders live with their examples (`water_phantom()` in the linac
+example, `disk_phantom()` in the imaging examples) and follow this shape:
 
 ```text
-fn water_cylinder_phantom(nx: usize, spacing: f64) -> Volume<f64> {
-    let c = (nx as f64 - 1.0) * spacing / 2.0;
-    Volume::from_shape_fn(grid, move |idx| {
-        let r = distance_from_axis(idx, c, spacing);
-        if r <= 25.0 { 0.0 } else { -1000.0 }  // water cylinder in air
-    })
-}
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
+use helios_domain::{Volume, VoxelGrid};
+use helios_math::Point3;
+
+let grid = VoxelGrid::axis_aligned(
+    [nx, nx, 1],
+    [Length::from_unit::<Millimeter>(spacing_mm); 3],
+    Point3::new(0.0, 0.0, 0.0),
+)?;
+let phantom = Volume::from_shape_fn(grid, |_| 0.0_f64); // HU = 0 (water)
 ```
 
 ## Bone Insert

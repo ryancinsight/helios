@@ -37,10 +37,10 @@ a coefficient input, not a dosimetric calibration.
 ## TomoTherapy Workflow
 
 The tomotherapy workflow example achieves:
-- Water ROI μ reconstruction error: < 0.2% of μ_water
+- Water ROI μ reconstruction error: +0.1% of μ_water (bound: < 0.2%)
 - DVH mean dose consistent with prescribed fluence
-- 3%/2 mm gamma against a 2%-low comparison field: **100%** pass, with the
-  6%-low negative control failing as required (see
+- 3%/2 mm gamma against a 2%-low comparison field: **100.0%** pass, with the
+  6%-low negative control discriminated at 97.7% (not fully passing) (see
   [Gamma Index and Plan Verification](planning_gamma.md))
 
 A gamma of the dose against itself is not reported here: it is 100% by

@@ -23,8 +23,17 @@ MVCT reconstruction uses the same FBP pipeline as kVCT, with a different
 beam-hardening correction appropriate for MV photons:
 
 ```text
-let mvct_sinogram = parallel_beam_radon(&mvct_projection, n_angles);
-let mvct_recon = filtered_back_projection(&mvct_sinogram, n_angles, nx);
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
+use helios_imaging::{fbp::filtered_back_projection, radon::parallel_beam_radon};
+
+let mvct_sinogram = parallel_beam_radon(
+    &mvct_projection,
+    &angles,
+    &offsets,
+    Length::from_unit::<Millimeter>(400.0),
+    Length::from_unit::<Millimeter>(0.25),
+);
+let mvct_recon = filtered_back_projection(&mvct_sinogram, &recon_grid);
 ```
 
 ## Further Reading

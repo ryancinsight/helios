@@ -17,22 +17,27 @@ sinogram, comparing SIRT convergence against the FBP analytic baseline.
 | Stage | API | Physics |
 |---|---|---|
 | Phantom | `Volume::from_shape_fn` | Water μ = 0.02 cm⁻¹, Bone μ = 0.04 cm⁻¹ |
-| Sinogram | `parallel_beam_radon(&phantom, &angles, &offsets, sad_mm, step_mm)` | 32-angle parallel beam |
-| FBP (baseline) | `filtered_back_projection(&sinogram, &grid, sad_mm, step_mm)` | Ramp-filtered back-projection |
-| SIRT | `sirt_reconstruction(&sinogram, &grid, sad_mm, step_mm, iters, λ)` | 10 iterations, λ = 1.0 |
+| Sinogram | `parallel_beam_radon(&phantom, &angles, &offsets, source, step)` | 32-angle parallel beam |
+| FBP (baseline) | `filtered_back_projection(&sinogram, &grid)` | Ramp-filtered back-projection |
+| SIRT | `sirt_reconstruction(&sinogram, &grid, source, step, iters, λ)` | 10 iterations, λ = 1.0 |
 
 ## Key Code Snippet
 
 ```text
-use helios_imaging::{parallel_beam_radon, filtered_back_projection, sirt_reconstruction};
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
+use helios_imaging::{
+    radon::parallel_beam_radon, fbp::filtered_back_projection, sirt_reconstruction,
+};
 
-let sinogram = parallel_beam_radon(&phantom, &angles, &offsets, 500.0, 1.0);
+let source = Length::from_unit::<Millimeter>(500.0);
+let step = Length::from_unit::<Millimeter>(1.0);
+let sinogram = parallel_beam_radon(&phantom, &angles, &offsets, source, step);
 
 // Analytic (one-pass) baseline
-let fbp = filtered_back_projection(&sinogram, &grid, 500.0, 1.0);
+let fbp = filtered_back_projection(&sinogram, &grid);
 
 // Iterative — robust to undersampling
-let sirt = sirt_reconstruction(&sinogram, &grid, 500.0, 1.0, 10, 1.0);
+let sirt = sirt_reconstruction(&sinogram, &grid, source, step, 10, 1.0);
 ```
 
 ## Physics Background
