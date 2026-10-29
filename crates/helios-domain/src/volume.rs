@@ -174,6 +174,87 @@ impl<T: Scalar> Volume<T> {
     }
 }
 
+/// Kilovoltage-CT Hounsfield-unit volume.
+///
+/// `Volume<T>` is modality-agnostic storage shared with dose grids, densities,
+/// and projection stacks. Wrapping a CT reconstruction in this type records
+/// the modality claim at the call site that knows it: kV calibrated HU
+/// (water 0, air −1000) whose HU-to-density curve differs from MVCT response,
+/// so a CT volume must never flow into an MVCT-calibrated consumer, and vice
+/// versa for [`MvctVolume`]. Element validity stays at the load/processing
+/// boundary that built the inner volume; this type carries the modality, not
+/// a second validation pass.
+///
+/// The DICOM loaders stay modality-agnostic on purpose: `TomoTherapy` MVCT is
+/// stored with Modality `CT`, so sniffing the tag would mislabel energy. The
+/// modality-aware caller annotates by constructing this type.
+#[derive(Debug, Clone)]
+pub struct CtVolume<T: Scalar> {
+    inner: Volume<T>,
+}
+
+/// Megavoltage-CT Hounsfield-unit volume.
+///
+/// Same storage contract as [`CtVolume`], but the values are MV-energy
+/// response HU. Only a caller that knows the acquisition energy constructs
+/// this type; see [`CtVolume`] for why the loaders do not choose for you.
+#[derive(Debug, Clone)]
+pub struct MvctVolume<T: Scalar> {
+    inner: Volume<T>,
+}
+
+impl<T: Scalar> CtVolume<T> {
+    /// Annotate a CT Hounsfield-unit volume with its modality.
+    #[must_use]
+    pub fn from_volume(volume: Volume<T>) -> Self {
+        Self { inner: volume }
+    }
+
+    /// Borrow the underlying modality-agnostic volume.
+    #[must_use]
+    pub fn as_volume(&self) -> &Volume<T> {
+        &self.inner
+    }
+
+    /// Release the modality claim, returning the underlying volume.
+    #[must_use]
+    pub fn into_inner(self) -> Volume<T> {
+        self.inner
+    }
+
+    /// The grid this volume is sampled on.
+    #[must_use]
+    pub fn grid(&self) -> &VoxelGrid<T> {
+        self.inner.grid()
+    }
+}
+
+impl<T: Scalar> MvctVolume<T> {
+    /// Annotate an MVCT Hounsfield-unit volume with its modality.
+    #[must_use]
+    pub fn from_volume(volume: Volume<T>) -> Self {
+        Self { inner: volume }
+    }
+
+    /// Borrow the underlying modality-agnostic volume.
+    #[must_use]
+    pub fn as_volume(&self) -> &Volume<T> {
+        &self.inner
+    }
+
+    /// Release the modality claim, returning the underlying volume.
+    #[must_use]
+    pub fn into_inner(self) -> Volume<T> {
+        self.inner
+    }
+
+    /// The grid this volume is sampled on.
+    #[must_use]
+    pub fn grid(&self) -> &VoxelGrid<T> {
+        self.inner.grid()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #![expect(
@@ -320,5 +401,41 @@ mod tests {
     fn from_shape_vec_rejects_wrong_length() {
         let g = affine_grid();
         assert!(Volume::from_shape_vec(g, vec![0.0; 10]).is_err());
+    }
+
+    #[test]
+    fn modality_volumes_round_trip_values_and_grid() {
+        // The modality claim must preserve the inner volume bit-for-bit and
+        // delegate grid/sampling behaviour unchanged.
+        let vol = Volume::from_shape_fn(affine_grid(), affine_value);
+        let ct = CtVolume::from_volume(vol);
+        assert_eq!(ct.grid().dims(), [4, 5, 6]);
+        assert_relative_eq!(
+            ct.as_volume().get(1, 2, 3).unwrap(),
+            affine_value([1, 2, 3]),
+            epsilon = 1e-15
+        );
+        assert_relative_eq!(
+            ct.as_volume()
+                .sample_trilinear(Point3::new(1.5, 2.25, 3.75))
+                .unwrap(),
+            2.0 * 1.5 + 3.0 * 2.25 + 5.0 * 3.75 + 7.0,
+            epsilon = 1e-12
+        );
+        let mv = MvctVolume::from_volume(ct.into_inner());
+        assert_eq!(mv.grid().dims(), [4, 5, 6]);
+        assert_relative_eq!(mv.into_inner().sum(), vol_sum(), epsilon = 1e-9);
+    }
+
+    fn vol_sum() -> f64 {
+        let mut total = 0.0;
+        for i in 0..4 {
+            for j in 0..5 {
+                for k in 0..6 {
+                    total += affine_value([i, j, k]);
+                }
+            }
+        }
+        total
     }
 }
