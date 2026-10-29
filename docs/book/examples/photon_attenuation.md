@@ -50,7 +50,9 @@ let depth = PathLength::new(Length::from_unit::<Centimeter>(10.0)).expect("finit
 let t = mu
     .optical_depth(depth)
     .expect("finite optical depth")
-    .transmission(); // exp(-μ·x)
+    .transmission()
+    .into_quantity()
+    .into_base(); // exp(-μ·x)
 
 // CT-number calibration
 let rho_rel = relative_electron_density_from_hu(0.0_f64); // water → 1.0
