@@ -10,18 +10,23 @@ beam apertures (step-and-shoot) or dynamically moving MLC leaves (sliding window
 
 ## Step-and-Shoot IMRT
 
-Each segment has:
-- A gantry angle
-- An MLC aperture shape
-- A monitor unit count
+Each step-and-shoot field is a `DeliveryFrame` with:
+- A gantry angle (`gantry_angle_rad`)
+- A couch position (`couch`)
+- Per-leaf fluence (`leaf_fluence`, 16 leaves × 2 mm in the worked example)
 
 ```text
-use helios_domain::StaticSegment;
+use aequitas::systems::si::{
+    quantities::{Angle, EnergyPerArea, Length},
+    units::{Millimeter, Radian},
+};
+use helios_simulation::DeliveryFrame;
 
-let segment = StaticSegment {
-    gantry_angle_deg: 90.0,
-    mlc_positions: aperture,
-    monitor_units: 45,
+let frame = DeliveryFrame {
+    projection: 0,
+    gantry_angle_rad: Angle::from_unit::<Radian>(0.0),
+    couch: Length::from_unit::<Millimeter>(0.0),
+    leaf_fluence: vec![EnergyPerArea::from_base(1.0); 16],
 };
 ```
 
@@ -31,9 +36,18 @@ Same collapsed-cone engine as TomoTherapy, applied field-by-field
 and summed:
 
 ```text
-let total_dose = segments.iter()
-    .map(|seg| calculate_segment_dose(seg, &mu))
-    .fold(Volume::zeros(grid), |acc, d| acc + d);
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
+use helios_simulation::{accumulate_delivered_dose, BeamGeometry};
+
+let total_dose = accumulate_delivered_dose(
+    &frames,
+    &mu,
+    BeamGeometry::Parallel {
+        standoff: Length::from_unit::<Millimeter>(500.0),
+    },
+    Length::from_unit::<Millimeter>(2.0),
+    Length::from_unit::<Millimeter>(0.5),
+)?;
 ```
 
 ## Further Reading

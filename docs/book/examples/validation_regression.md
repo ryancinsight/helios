@@ -48,7 +48,11 @@ yields γ = 0 at every voxel → 100 % pass rate.
 ## Case 2 — Radon / FBP Round-Trip
 
 ```text
-let sinogram = parallel_beam_radon(&phantom, &angles, &offsets, source_mm, step_mm);
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
+
+let source = Length::from_unit::<Millimeter>(500.0);
+let step = Length::from_unit::<Millimeter>(1.0);
+let sinogram = parallel_beam_radon(&phantom, &angles, &offsets, source, step);
 let recon    = filtered_back_projection(&sinogram, &recon_grid);
 let rmse     = volume_rmse(&recon, &phantom)?;
 ```

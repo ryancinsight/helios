@@ -18,21 +18,39 @@ Exercises the core photon-interaction physics in `helios-physics`:
 | Linear attenuation coefficient | `LinearAttenuation::new(mu)` |
 | Beer–Lambert transmission | `mu.transmission(path_cm)` |
 | Half-value layer | `mu.half_value_layer()` |
-| Mass attenuation → linear | `MassAttenuation::to_linear(density)` |
+| Mass attenuation → linear | `mu_rho.to_linear(density)` |
 | CT number → electron density | `relative_electron_density_from_hu(hu)` |
 | CT number → mass density | `mass_density_from_hu(hu, water_rho)` |
 
 ## Key Code Snippet
 
 ```text
-use helios_physics::{LinearAttenuation, MassAttenuation, mass_density_from_hu};
+use aequitas::systems::si::{
+    quantities::{Length, ReciprocalLength},
+    units::{Centimeter, PerCentimeter},
+};
+use helios_physics::{mass_density_from_hu, relative_electron_density_from_hu};
+use hyperion::{
+    coefficient::{InteractionCoefficient, LinearAttenuation},
+    quantity::PathLength,
+};
 
 // Water at 100 keV: μ ≈ 0.171 cm⁻¹
-let mu = LinearAttenuation::new(0.171_f64).expect("valid μ");
-let hvl = mu.half_value_layer().unwrap(); // ≈ 4.05 cm
+let mu = InteractionCoefficient::<_, LinearAttenuation>::new(
+    ReciprocalLength::from_unit::<PerCentimeter>(0.171_f64),
+)
+.expect("valid μ");
+let hvl = mu
+    .half_value_layer()
+    .expect("finite coefficient")
+    .expect("non-zero μ"); // ≈ 4.05 cm
 
 // 10 cm path → transmitted fraction
-let t = mu.transmission(10.0); // exp(-μ·x)
+let depth = PathLength::new(Length::from_unit::<Centimeter>(10.0)).expect("finite depth");
+let t = mu
+    .optical_depth(depth)
+    .expect("finite optical depth")
+    .transmission(); // exp(-μ·x)
 
 // CT-number calibration
 let rho_rel = relative_electron_density_from_hu(0.0_f64); // water → 1.0

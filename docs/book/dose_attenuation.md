@@ -5,14 +5,21 @@
 *Figure 9.1 — Mass Attenuation and Photon Cross Sections*
 <!-- generated-figure-end -->
 
-The helios-physics crate provides MassAttenuation models that convert
-Hounsfield units to linear attenuation coefficients (μ, cm⁻¹):
+Hyperion provides the MassAttenuation coefficient models, and
+helios-solver maps Hounsfield-unit volumes to linear attenuation
+coefficients (μ, cm⁻¹):
 
 ```text
-use helios_physics::MassAttenuation;
+use aequitas::systems::si::{
+    quantities::{AreaPerMass, MassDensity as DensityQuantity},
+    units::{GramPerCubicCentimeter, SquareCentimeterPerGram},
+};
 use helios_solver::attenuation_map;
+use hyperion::coefficient::MassAttenuation;
 
-let mu = attenuation_map(&ct_volume, MassAttenuation::water());
+let mu_over_rho = MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(0.0636))?;
+let water = DensityQuantity::from_unit::<GramPerCubicCentimeter>(1.0);
+let mu = attenuation_map(&ct_volume, mu_over_rho, water)?;
 ```
 
 ## Water Calibration

@@ -16,11 +16,26 @@ R[θ, t] = ∫ μ(t·cos θ − s·sin θ, t·sin θ + s·cos θ) ds
 In Helios the Radon transform is provided by helios-imaging:
 
 ```text
-use helios_imaging::parallel_beam_radon;
+use aequitas::systems::si::{
+    quantities::{Angle, Length},
+    units::{Millimeter, Radian},
+};
+use helios_imaging::radon::parallel_beam_radon;
 
-let n_angles = 180;
-let sinogram = parallel_beam_radon(&mu_volume, n_angles);
-// sinogram.grid().dims() == [n_angles, nx]
+let angles: Vec<Angle<f64>> = (0..180)
+    .map(|a| Angle::from_unit::<Radian>(a as f64 * std::f64::consts::PI / 180.0))
+    .collect();
+let offsets: Vec<Length<f64>> = (0..181)
+    .map(|j| Length::from_unit::<Millimeter>(-45.0 + j as f64 * 0.5))
+    .collect();
+let sinogram = parallel_beam_radon(
+    &mu_volume,
+    &angles,
+    &offsets,
+    Length::from_unit::<Millimeter>(400.0),
+    Length::from_unit::<Millimeter>(0.25),
+);
+// sinogram covers 180 angles × 181 detector offsets
 ```
 
 ## Physical Interpretation
