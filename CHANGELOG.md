@@ -9,9 +9,10 @@ under a Breaking subsection.
 
 ### Fixed
 
-- ROI population standard deviation uses centered accumulation instead of
-  subtracting two large raw moments. Non-zero noise is preserved under a
-  constant intensity or dose offset in both shipped precisions. The public
+- ROI population standard deviation uses a compensated translated center
+  and scaled residual norm instead of subtracting two large raw moments.
+  Small non-zero noise is preserved in translated intensity and dose samples
+  in both shipped precisions. The public
   signatures, scalar precision, and empty/clipped ROI behavior are unchanged.
   This patch version applies only to `helios-analysis`.
 

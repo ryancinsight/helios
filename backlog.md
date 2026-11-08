@@ -1,5 +1,5 @@
 # Helios Backlog (strategic board)
-- [Strategic repair: HELIOS-ROI-VARIANCE-20261108 [patch]](backlog/helios-roi-variance-20261108.md)
+<a id="helios-roi-variance-20261108"></a>- [HELIOS-ROI-VARIANCE-20261108](backlog/helios-roi-variance-20261108.md) — Preserve translated ROI noise [patch] — blocked
 Single source of cross-session strategy. Each item carries a stable ID, a
 change-class tag, a status, an owner, and a claimed scope. Triage order: correctness
 gaps → architecture drift → missing tests → docs → PM cleanup.

@@ -44,29 +44,86 @@ fn roi_statistics_values<T: Scalar>(
 ) -> (T, T) {
     let zero = <T as NumericElement>::ZERO;
     let values = roi_values(volume, min, max);
-    let (sum, count) = values
-        .clone()
-        .fold((zero, 0usize), |(sum, n), value| (sum + value, n + 1));
+    let (sum, count, lower, upper) = values.clone().fold(
+        (zero, 0usize, T::infinity(), -T::infinity()),
+        |(sum, n, lower, upper), value| {
+            (
+                sum + value,
+                n + 1,
+                lower.min_scalar(value),
+                upper.max_scalar(value),
+            )
+        },
+    );
     if count == 0 {
         return (zero, zero);
     }
-    let inv_n = T::from_f64(count as f64).recip();
-    let mean = sum * inv_n;
-    // Corrected two-pass variance (Chan, Golub and LeVeque, 1983):
-    // for d_i = x_i - mean, Q = sum(d_i^2), S = sum(d_i),
-    // sum((x_i - true_mean)^2) = Q - S*(S/n) in exact arithmetic.
-    // Centering avoids cancellation between large raw moments. The S term
-    // corrects for rounding of `mean`, including adjacent input values whose
-    // exact midpoint is not representable. Divide S before multiplying to
-    // avoid overflowing S^2 when S*(S/n) is representable.
-    // All operations remain in the caller's native scalar precision.
-    let (sum_deviation, squared_deviation) = values.fold((zero, zero), |(s, q), value| {
-        let deviation = value - mean;
-        (s + deviation, q + deviation * deviation)
-    });
-    let variance =
-        ((squared_deviation - sum_deviation * (sum_deviation * inv_n)) * inv_n).max_scalar(zero);
-    (mean, variance.sqrt())
+    let count = T::from_f64(count as f64);
+    // Keep the existing public mean calculation. The variance needs a more
+    // accurate center: a drifting raw sum can place that mean many ULPs away
+    // from a narrow sample, making a corrected moment subtraction cancel too.
+    let mean = sum * count.recip();
+    let half = T::from_f64(0.5);
+    let span = upper - lower;
+    let wide = !span.is_finite();
+    // For finite bounds, the midpoint keeps every translated value bounded.
+    // If the span overflows, halve before subtraction; the scaled span then
+    // fits. Halving is exact in this wide-range regime for normal values.
+    let anchor = if wide {
+        lower * half + upper * half
+    } else {
+        lower + span * half
+    };
+    let translated = |value: T| {
+        if wide {
+            value * half - anchor * half
+        } else {
+            value - anchor
+        }
+    };
+    // Average shifted values with compensation. Divide before accumulating
+    // so an otherwise representable center is not lost to a sum overflow.
+    let offset = compensated_sum(values.clone().map(|value| translated(value) / count));
+    let scale = (translated(lower) - offset)
+        .abs()
+        .max_scalar((translated(upper) - offset).abs());
+    if scale == zero {
+        return (mean, zero);
+    }
+    // The residual norm is a sum of nonnegative terms, never a subtraction
+    // of nearly equal moments. Normalize by its maximum magnitude before
+    // squaring, so small noise does not underflow and large noise does not
+    // overflow merely because its square is outside the scalar's range.
+    // E[(x-c)^2] = variance + (c-true_mean)^2: center error enters
+    // quadratically instead of cancelling the variance. With a compensated
+    // center, the residual norm needs no subtractive correction.
+    // sigma = scale * sqrt(sum(((x - anchor - offset)/scale)^2) / n).
+    let squares = compensated_sum(values.map(|value| {
+        let residual = (translated(value) - offset) / scale;
+        residual * residual
+    }));
+    let standard_deviation = scale * (squares / count).sqrt();
+    (
+        mean,
+        if wide {
+            standard_deviation / half
+        } else {
+            standard_deviation
+        },
+    )
+}
+
+/// Kahan accumulation in the caller's precision, with no widened accumulator.
+fn compensated_sum<T: Scalar>(values: impl Iterator<Item = T>) -> T {
+    let zero = <T as NumericElement>::ZERO;
+    let (mut sum, mut correction) = (zero, zero);
+    for value in values {
+        let adjusted = value - correction;
+        let next = sum + adjusted;
+        correction = (next - sum) - adjusted;
+        sum = next;
+    }
+    sum
 }
 
 /// Borrow the included values in the established i/j/k traversal order.
@@ -76,7 +133,7 @@ fn roi_values<T: Scalar>(
     max: [usize; 3],
 ) -> impl Iterator<Item = T> + Clone + '_ {
     // Out-of-grid cells were skipped by `get`; clip the ranges so they are
-    // not traversed in either pass. Reversed/empty ranges remain empty.
+    // not traversed in any pass. Reversed/empty ranges remain empty.
     let dims = volume.grid().dims();
     let end = std::array::from_fn::<_, 3, _>(|axis| max[axis].min(dims[axis]));
     (min[0]..end[0]).flat_map(move |i| {

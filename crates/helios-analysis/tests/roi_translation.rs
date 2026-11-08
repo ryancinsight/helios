@@ -80,3 +80,107 @@ fn roi_bounds_keep_empty_singleton_and_clipped_contracts() {
     let pair = roi_statistics(&volume, [1, 1, 0], [3; 3]);
     assert_eq!((pair.mean, pair.std), (6.5, 0.5));
 }
+
+#[test]
+fn adjacent_decimal_values_keep_noise_across_a_volume() {
+    let grid = VoxelGrid::axis_aligned(
+        [16; 3],
+        [Length::from_unit::<Millimeter>(1.0_f32); 3],
+        Point3::new(0.0, 0.0, 0.0),
+    )
+    .expect("valid grid");
+    let step = f32::from_bits(0x3dcc_ccce) - f32::from_bits(0x3dcc_cccd);
+    for offset in [0.0, f32::from_bits(0x3dcc_cccd)] {
+        let volume = Volume::from_shape_fn(
+            grid,
+            |[_, _, k]| {
+                if k % 2 == 0 {
+                    offset
+                } else {
+                    offset + step
+                }
+            },
+        );
+        let expected = f32::from_bits(0x3180_0000);
+        let intensity = roi_statistics(&volume, [0; 3], [16; 3]);
+        assert_eq!(intensity.std, expected);
+        let dose = dose_roi_statistics(&volume, [0; 3], [16; 3]);
+        assert_eq!(dose.std.into_base(), expected);
+    }
+}
+
+fn symmetric_pair_keeps_finite_mean_and_noise<T: ShippedScalar>(magnitude: T) {
+    let zero = T::from_f64(0.0);
+    let grid = VoxelGrid::axis_aligned(
+        [2, 1, 1],
+        [Length::from_unit::<Millimeter>(T::from_f64(1.0)); 3],
+        Point3::new(zero, zero, zero),
+    )
+    .expect("valid grid");
+    let volume = Volume::from_shape_fn(
+        grid,
+        |[i, _, _]| {
+            if i == 0 {
+                -magnitude
+            } else {
+                magnitude
+            }
+        },
+    );
+    let stats = roi_statistics(&volume, [0; 3], [2, 1, 1]);
+    assert_eq!(stats.mean, zero);
+    assert_eq!(stats.std, magnitude);
+    let dose = dose_roi_statistics(&volume, [0; 3], [2, 1, 1]);
+    assert_eq!(dose.mean.into_base(), zero);
+    assert_eq!(dose.std.into_base(), magnitude);
+}
+
+#[test]
+fn symmetric_extremes_preserve_single_precision_range() {
+    for magnitude in [
+        f32::from_bits(0x7f00_0000),
+        f32::MAX,
+        f32::MIN_POSITIVE,
+        f32::from_bits(1),
+    ] {
+        symmetric_pair_keeps_finite_mean_and_noise(magnitude);
+    }
+}
+
+#[test]
+fn symmetric_extremes_preserve_double_precision_range() {
+    for magnitude in [
+        f64::from_bits(0x7fe0_0000_0000_0000),
+        f64::MAX,
+        f64::MIN_POSITIVE,
+        f64::from_bits(1),
+    ] {
+        symmetric_pair_keeps_finite_mean_and_noise(magnitude);
+    }
+}
+
+#[test]
+fn sparse_adjacent_outlier_keeps_bernoulli_noise() {
+    let grid = VoxelGrid::axis_aligned(
+        [16; 3],
+        [Length::from_unit::<Millimeter>(1.0_f32); 3],
+        Point3::new(0.0, 0.0, 0.0),
+    )
+    .expect("valid grid");
+    for bits in [0x3dcc_cccd, 0x3f80_0000, 0x4480_0000] {
+        let lower = f32::from_bits(bits);
+        let upper = f32::from_bits(bits + 1);
+        let volume =
+            Volume::from_shape_fn(grid, |index| if index == [15; 3] { upper } else { lower });
+        // One of N samples differs by d: variance = d^2 * (1/N) * (1-1/N).
+        // Compensation contributes at most about 2u per sum; normalization,
+        // centering and sqrt add fewer than 12 roundings for this binary input.
+        let probability = 1.0_f32 / 4096.0;
+        let expected = (upper - lower) * (probability * (1.0 - probability)).sqrt();
+        let actual = roi_statistics(&volume, [0; 3], [16; 3]).std;
+        assert!(
+            (actual - expected).abs() <= 16.0 * f32::EPSILON * expected,
+            "actual {actual}, expected {expected}"
+        );
+    }
+}

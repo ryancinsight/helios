@@ -1,14 +1,14 @@
-# HELIOS-ROI-VARIANCE-20261108 [patch]
-Target: helios-analysis 0.1.1. Owner: Atlas scheduled correctness review.
-Scope: shared intensity/dose ROI statistics; provider and owner work untouched.
-Base: 4f90e77b8bd6baa5ae079fff0ce7a1c53347877c.
-Defect: raw-moment cancellation reports zero noise for [1024, 1024.25] in single precision (expected 0.125) and [134217728, 134217730] in double precision (expected 1).
-Specification: a balanced sample of a and a+d has population standard deviation |d|/2.
-- [x] Corrected two-pass centered variance; original mean and native precision retained.
-- [x] Cover one-ULP, signed/reversed offsets, repeated 3-D samples, both public APIs and empty/singleton/clipped regions.
-- [x] Analysis/planning/simulation: 94 native tests pass, 0 skipped.
-- [x] Formatting, strict Clippy and Rustdoc pass; doctest collection has 0 tests.
-- [ ] Final independent review, normal hooks, hosted gates and required approvals.
+<a id="helios-roi-variance-20261108"></a>
+## HELIOS-ROI-VARIANCE-20261108 — Preserve translated ROI noise [patch] — blocked
+- priority: correctness
+- owner: Atlas scheduled correctness review; target: helios-analysis 0.1.1.
+- scope: shared intensity/dose ROI statistics; provider and owner work untouched.
+- Defect: raw moments erase nonzero variance. A drifting mean also defeats corrected two-pass variance for 4,096 adjacent decimal values.
+- Specification: a balanced sample of a and a+d has population standard deviation |d|/2.
+- Repair: compensated translated center and scaled nonnegative residual norm; preserve the original returned mean and native precision.
+- [x] Cover one-ULP, signed/reversed offsets, repeated 3-D samples, both APIs and empty/singleton/clipped regions.
+- [x] Analysis/planning/simulation: 98 native passes, 0 skips; formatting, strict Clippy and Rustdoc pass; 0 doctests.
+- [ ] Qualify the frozen revision independently and in hosted gates; PR creation stays stopped after HTTP 403.
 - [ ] Qualify provider migration and deployment settings before merge; PRs #183, #185 and #173 remain untouched.
-Residual scope: general finite-range overflow and correctly-rounded statistics are not proved.
-No package publication or full Helios qualification is claimed.
+- Residual scope: the returned mean retains its historical range/rounding limits; no universal correctly-rounded statistics claim.
+- No merge, publication or deployment is authorized by this checklist's review status.
