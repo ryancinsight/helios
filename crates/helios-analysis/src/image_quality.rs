@@ -58,7 +58,8 @@ fn roi_statistics_values<T: Scalar>(
     if count == 0 {
         return (zero, zero);
     }
-    let count = T::from_f64(count as f64);
+    // The count conversion rounds once in T through the numeric SSOT.
+    let count = T::from_count(count);
     // Keep the existing public mean calculation. The variance needs a more
     // accurate center: a drifting raw sum can place that mean many ULPs away
     // from a narrow sample, making a corrected moment subtraction cancel too.
