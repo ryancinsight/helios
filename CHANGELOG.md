@@ -9,7 +9,7 @@ under a Breaking subsection.
 
 ### Fixed
 
-- ROI population standard deviation uses a compensated translated center
+- ROI population standard deviation uses a normalized compensated center
   and scaled residual norm instead of subtracting two large raw moments.
   Small non-zero noise is preserved in translated intensity and dose samples
   in both shipped precisions. The public

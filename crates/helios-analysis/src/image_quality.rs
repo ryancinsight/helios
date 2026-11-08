@@ -82,25 +82,22 @@ fn roi_statistics_values<T: Scalar>(
             value - anchor
         }
     };
-    // Average shifted values with compensation. Divide before accumulating
-    // so an otherwise representable center is not lost to a sum overflow.
-    let offset = compensated_sum(values.clone().map(|value| translated(value) / count));
-    let scale = (translated(lower) - offset)
-        .abs()
-        .max_scalar((translated(upper) - offset).abs());
+    let scale = translated(lower).abs().max_scalar(translated(upper).abs());
     if scale == zero {
         return (mean, zero);
     }
-    // The residual norm is a sum of nonnegative terms, never a subtraction
-    // of nearly equal moments. Normalize by its maximum magnitude before
-    // squaring, so small noise does not underflow and large noise does not
-    // overflow merely because its square is outside the scalar's range.
+    // Normalize before averaging: dividing subnormal translated values by n
+    // first can erase every contribution, even when their standard deviation
+    // is representable. The endpoint scale bounds normalized values by one.
+    let normalized = |value: T| translated(value) / scale;
+    let offset = compensated_sum(values.clone().map(|value| normalized(value) / count));
     // E[(x-c)^2] = variance + (c-true_mean)^2: center error enters
     // quadratically instead of cancelling the variance. With a compensated
-    // center, the residual norm needs no subtractive correction.
-    // sigma = scale * sqrt(sum(((x - anchor - offset)/scale)^2) / n).
+    // center, the residual norm needs no subtractive correction. The exact
+    // normalized residuals are bounded by two, far from scalar overflow.
+    // sigma = scale * sqrt(sum((normalized(x) - offset)^2) / n).
     let squares = compensated_sum(values.map(|value| {
-        let residual = (translated(value) - offset) / scale;
+        let residual = normalized(value) - offset;
         residual * residual
     }));
     let standard_deviation = scale * (squares / count).sqrt();

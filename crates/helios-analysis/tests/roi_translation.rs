@@ -184,3 +184,46 @@ fn sparse_adjacent_outlier_keeps_bernoulli_noise() {
         );
     }
 }
+
+fn sparse_subnormal_outlier_keeps_noise<T: ShippedScalar>(magnitude: T, expected: T) {
+    let zero = T::from_f64(0.0);
+    let grid = VoxelGrid::axis_aligned(
+        [16; 3],
+        [Length::from_unit::<Millimeter>(T::from_f64(1.0)); 3],
+        Point3::new(zero, zero, zero),
+    )
+    .expect("valid grid");
+    for offset in [zero, magnitude * T::from_f64(2.0)] {
+        for step in [magnitude, -magnitude] {
+            for outlier in [[0; 3], [15; 3]] {
+                let volume = Volume::from_shape_fn(grid, |index| {
+                    if index == outlier {
+                        offset + step
+                    } else {
+                        offset
+                    }
+                });
+                // One of 4096 samples differs by 128 minimum subnormal units.
+                // sigma = 128 * sqrt((1/4096)*(4095/4096)) units, strictly
+                // between 1.5 and 2 units, hence rounds to exactly 2 units.
+                assert_eq!(roi_statistics(&volume, [0; 3], [16; 3]).std, expected);
+                assert_eq!(
+                    dose_roi_statistics(&volume, [0; 3], [16; 3])
+                        .std
+                        .into_base(),
+                    expected
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn sparse_subnormal_outlier_preserves_single_precision() {
+    sparse_subnormal_outlier_keeps_noise(f32::from_bits(0x80), f32::from_bits(0x02));
+}
+
+#[test]
+fn sparse_subnormal_outlier_preserves_double_precision() {
+    sparse_subnormal_outlier_keeps_noise(f64::from_bits(0x80), f64::from_bits(0x02));
+}
