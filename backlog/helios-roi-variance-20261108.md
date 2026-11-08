@@ -1,32 +1,14 @@
 # HELIOS-ROI-VARIANCE-20261108 [patch]
-
 Target: helios-analysis 0.1.1. Owner: Atlas scheduled correctness review.
-Scope: shared intensity/dose ROI statistics; no provider, GPU, owner-branch,
-registry, workflow, deployment or access changes.
-
-## Specification and reproduction
-
-For two samples [a, a+d], mean = a+d/2 and population standard deviation =
-|d|/2. Adding a constant cannot change variance in exact arithmetic.
-At base 4f90e77b8bd6baa5ae079fff0ce7a1c53347877c, native public-API tests
-return zero standard deviation for both binary-exact witnesses:
-- single precision [1024, 1024.25], expected 0.125;
-- double precision [134217728, 134217730], expected 1.
-The raw-moment subtraction E[x²] - E[x]² loses the small residual.
-
-## Repair and verification
-
-- [x] Replace raw moments with corrected two-pass centered variance; retain the original mean.
-- [x] Keep one generic implementation and the caller's native precision.
-- [x] Cover positive/negative/zero offsets, one-ULP separation, both wrappers, and
-      empty, reversed, singleton and partially out-of-bounds regions.
-- [x] Strict Clippy, formatting and Rustdoc pass; doctest collection has 0 tests.
-- [x] Native analysis/planning/simulation suites: 94 passed, 0 skipped.
-- [ ] Final independent review and normal delivery hooks.
-- [ ] Hosted gates, required approvals, provider qualification and deployment
-      settings must pass before merge. Existing provider-cohort PR #183,
-      hook PR #185 and protected rescue PR #173 remain untouched.
-
-Residual scope: this closes cancellation from subtracting raw moments;
-finite-range overflow and general correctly-rounded statistics are not proved.
-No package publication or full Helios validation is claimed.
+Scope: shared intensity/dose ROI statistics; provider and owner work untouched.
+Base: 4f90e77b8bd6baa5ae079fff0ce7a1c53347877c.
+Defect: raw-moment cancellation reports zero noise for [1024, 1024.25] in single precision (expected 0.125) and [134217728, 134217730] in double precision (expected 1).
+Specification: a balanced sample of a and a+d has population standard deviation |d|/2.
+- [x] Corrected two-pass centered variance; original mean and native precision retained.
+- [x] Cover one-ULP, signed/reversed offsets, repeated 3-D samples, both public APIs and empty/singleton/clipped regions.
+- [x] Analysis/planning/simulation: 94 native tests pass, 0 skipped.
+- [x] Formatting, strict Clippy and Rustdoc pass; doctest collection has 0 tests.
+- [ ] Final independent review, normal hooks, hosted gates and required approvals.
+- [ ] Qualify provider migration and deployment settings before merge; PRs #183, #185 and #173 remain untouched.
+Residual scope: general finite-range overflow and correctly-rounded statistics are not proved.
+No package publication or full Helios qualification is claimed.
