@@ -68,7 +68,9 @@ fn roi_bounds_keep_empty_singleton_and_clipped_contracts() {
         Point3::new(0.0, 0.0, 0.0),
     )
     .expect("valid grid");
-    let volume = Volume::from_shape_fn(grid, |[i, j, k]| (4 * i + 2 * j + k) as f64);
+    let volume = Volume::from_shape_fn(grid, |[i, j, k]| {
+        f64::from(u8::try_from(4 * i + 2 * j + k).expect("2x2x2 voxel index fits in u8"))
+    });
     let empty = roi_statistics(&volume, [1, 0, 0], [1, 2, 2]);
     assert_eq!((empty.mean, empty.std), (0.0, 0.0));
     let reversed = roi_statistics(&volume, [2, 2, 2], [1, 1, 1]);
