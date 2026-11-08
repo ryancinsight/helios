@@ -1,5 +1,5 @@
 # Helios Checklist (tactical)
-
+- [Target helios-analysis 0.1.1: HELIOS-ROI-VARIANCE-20261108 [patch]](backlog/helios-roi-variance-20261108.md)
 ## current session — H-118a typed Python surface [patch] — in-progress
 
 - [x] Add the five-function `helios.pyi` contract and `py.typed` marker.

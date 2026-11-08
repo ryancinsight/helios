@@ -2,7 +2,7 @@
 name = "helios-analysis"
 description = "Helios dosimetric analysis: dose-volume histograms and the gamma index (dose-difference / distance-to-agreement) for plan/measurement comparison."
 edition.workspace = true
-version.workspace = true
+version = "0.1.1"
 license.workspace = true
 authors.workspace = true
 repository.workspace = true

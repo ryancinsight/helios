@@ -5,6 +5,16 @@ All notable changes to Helios are documented here. Format follows
 [SemVer 2.0.0](https://semver.org/). Pre-1.0: minor bumps may break, documented
 under a Breaking subsection.
 
+## [0.1.1] — helios-analysis — 2026-11-08
+
+### Fixed
+
+- ROI population standard deviation uses centered accumulation instead of
+  subtracting two large raw moments. Non-zero noise is preserved under a
+  constant intensity or dose offset in both shipped precisions. The public
+  signatures, scalar precision, and empty/clipped ROI behavior are unchanged.
+  This patch version applies only to `helios-analysis`.
+
 ## [Unreleased]
 
 ### Added

@@ -1,5 +1,5 @@
 # Helios Gap Audit
-
+- [Reproduced variance cancellation: HELIOS-ROI-VARIANCE-20261108 [patch]](backlog/helios-roi-variance-20261108.md)
 Physics, numerics, accuracy, architecture, and integration gaps. Closed by
 evidence, not silence. Each gap: ID, description, class, current evidence tier,
 target closure.

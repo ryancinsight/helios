@@ -43,16 +43,23 @@ fn roi_statistics_values<T: Scalar>(
     max: [usize; 3],
 ) -> (T, T) {
     let zero = <T as NumericElement>::ZERO;
-    let mut sum = zero;
-    let mut sum_sq = zero;
+    // Welford's centered recurrence avoids subtracting E[x]^2 from E[x^2],
+    // which can erase low-amplitude noise carried on a non-zero baseline.
+    // After n observations, mean = sum(x)/n and m2 = sum((x - mean)^2)
+    // in exact arithmetic. The update follows by expanding the centered sum
+    // around the new mean: M2_n = M2_(n-1) + delta * (x_n - mean_n).
+    // All arithmetic stays in the caller's scalar precision.
+    let mut mean = zero;
+    let mut m2 = zero;
     let mut count = 0usize;
     for i in min[0]..max[0] {
         for j in min[1]..max[1] {
             for k in min[2]..max[2] {
                 if let Some(v) = volume.get(i, j, k) {
-                    sum += v;
-                    sum_sq += v * v;
                     count += 1;
+                    let delta = v - mean;
+                    mean += delta / T::from_f64(count as f64);
+                    m2 += delta * (v - mean);
                 }
             }
         }
@@ -60,11 +67,8 @@ fn roi_statistics_values<T: Scalar>(
     if count == 0 {
         return (zero, zero);
     }
-    let inv_n = T::from_f64(count as f64).recip();
-    let mean = sum * inv_n;
-    // Var = E[x²] − E[x]²; clamp a tiny negative from rounding before sqrt.
-    let var = (sum_sq * inv_n - mean * mean).max_scalar(zero);
-    (mean, var.sqrt())
+    let variance = m2 / T::from_f64(count as f64);
+    (mean, variance.sqrt())
 }
 
 /// Mean and population standard deviation over the half-open index box
