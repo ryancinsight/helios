@@ -16,12 +16,13 @@ The raw-moment subtraction E[x²] - E[x]² loses the small residual.
 
 ## Repair and verification
 
-- [x] Replace raw moments with Welford's one-pass centered recurrence.
+- [x] Replace raw moments with corrected two-pass centered variance; retain the original mean.
 - [x] Keep one generic implementation and the caller's native precision.
-- [x] Cover positive/negative/zero offsets, both public wrappers, and
+- [x] Cover positive/negative/zero offsets, one-ULP separation, both wrappers, and
       empty, reversed, singleton and partially out-of-bounds regions.
-- [x] Native analysis suite: 40 passed, 0 skipped before version-only changes.
-- [ ] Final revision checks, independent review and normal delivery hooks.
+- [x] Strict Clippy, formatting and Rustdoc pass; doctest collection has 0 tests.
+- [x] Native analysis/planning/simulation suites: 94 passed, 0 skipped.
+- [ ] Final independent review and normal delivery hooks.
 - [ ] Hosted gates, required approvals, provider qualification and deployment
       settings must pass before merge. Existing provider-cohort PR #183,
       hook PR #185 and protected rescue PR #173 remain untouched.

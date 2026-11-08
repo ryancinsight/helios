@@ -43,32 +43,46 @@ fn roi_statistics_values<T: Scalar>(
     max: [usize; 3],
 ) -> (T, T) {
     let zero = <T as NumericElement>::ZERO;
-    // Welford's centered recurrence avoids subtracting E[x]^2 from E[x^2],
-    // which can erase low-amplitude noise carried on a non-zero baseline.
-    // After n observations, mean = sum(x)/n and m2 = sum((x - mean)^2)
-    // in exact arithmetic. The update follows by expanding the centered sum
-    // around the new mean: M2_n = M2_(n-1) + delta * (x_n - mean_n).
-    // All arithmetic stays in the caller's scalar precision.
-    let mut mean = zero;
-    let mut m2 = zero;
-    let mut count = 0usize;
-    for i in min[0]..max[0] {
-        for j in min[1]..max[1] {
-            for k in min[2]..max[2] {
-                if let Some(v) = volume.get(i, j, k) {
-                    count += 1;
-                    let delta = v - mean;
-                    mean += delta / T::from_f64(count as f64);
-                    m2 += delta * (v - mean);
-                }
-            }
-        }
-    }
+    let values = roi_values(volume, min, max);
+    let (sum, count) = values
+        .clone()
+        .fold((zero, 0usize), |(sum, n), value| (sum + value, n + 1));
     if count == 0 {
         return (zero, zero);
     }
-    let variance = m2 / T::from_f64(count as f64);
+    let inv_n = T::from_f64(count as f64).recip();
+    let mean = sum * inv_n;
+    // Corrected two-pass variance (Chan, Golub and LeVeque, 1983):
+    // for d_i = x_i - mean, Q = sum(d_i^2), S = sum(d_i),
+    // sum((x_i - true_mean)^2) = Q - S*(S/n) in exact arithmetic.
+    // Centering avoids cancellation between large raw moments. The S term
+    // corrects for rounding of `mean`, including adjacent input values whose
+    // exact midpoint is not representable. Divide S before multiplying to
+    // avoid overflowing S^2 when S*(S/n) is representable.
+    // All operations remain in the caller's native scalar precision.
+    let (sum_deviation, squared_deviation) = values.fold((zero, zero), |(s, q), value| {
+        let deviation = value - mean;
+        (s + deviation, q + deviation * deviation)
+    });
+    let variance =
+        ((squared_deviation - sum_deviation * (sum_deviation * inv_n)) * inv_n).max_scalar(zero);
     (mean, variance.sqrt())
+}
+
+/// Borrow the included values in the established i/j/k traversal order.
+fn roi_values<T: Scalar>(
+    volume: &Volume<T>,
+    min: [usize; 3],
+    max: [usize; 3],
+) -> impl Iterator<Item = T> + Clone + '_ {
+    // Out-of-grid cells were skipped by `get`; clip the ranges so they are
+    // not traversed in either pass. Reversed/empty ranges remain empty.
+    let dims = volume.grid().dims();
+    let end = std::array::from_fn::<_, 3, _>(|axis| max[axis].min(dims[axis]));
+    (min[0]..end[0]).flat_map(move |i| {
+        (min[1]..end[1])
+            .flat_map(move |j| (min[2]..end[2]).filter_map(move |k| volume.get(i, j, k)))
+    })
 }
 
 /// Mean and population standard deviation over the half-open index box
