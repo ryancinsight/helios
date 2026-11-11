@@ -20,13 +20,14 @@ world[mm] = origin + (i·sx, j·sy, k·sz)
 Construction validates all invariants upfront:
 
 ```text
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
 use helios_domain::VoxelGrid;
 use helios_math::{Point3, Scalar};
 
 let grid = VoxelGrid::axis_aligned(
-    [256, 256, 64],             // nx × ny × nz voxels
-    [f64::from_f64(1.0); 3],    // 1 mm isotropic spacing
-    Point3::new(0.0, 0.0, 0.0), // origin at patient iso-centre
+    [256, 256, 64],                                // nx × ny × nz voxels
+    [Length::from_unit::<Millimeter>(1.0); 3],     // 1 mm isotropic spacing
+    Point3::new(0.0, 0.0, 0.0),                    // origin at patient iso-centre
 )?;
 
 assert_eq!(grid.num_voxels(), 256 * 256 * 64);

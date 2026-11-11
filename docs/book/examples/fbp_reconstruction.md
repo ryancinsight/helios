@@ -24,17 +24,39 @@ recovers the true attenuation `μ₀` to within 15% FBP discretization tolerance
 ## Key Code Snippet
 
 ```text
+use aequitas::systems::si::{
+    quantities::{Angle, Length},
+    units::{Millimeter, Radian},
+};
+use helios_domain::VoxelGrid;
 use helios_imaging::{fbp::filtered_back_projection, radon::parallel_beam_radon};
+use helios_math::Point3;
 
 // 180 angles, 181 detector offsets
-let sino = parallel_beam_radon(&phantom, &angles, &offsets, 400.0, 0.25);
+let angles: Vec<Angle<f64>> = (0..180)
+    .map(|a| Angle::from_unit::<Radian>(a as f64 * std::f64::consts::PI / 180.0))
+    .collect();
+let offsets: Vec<Length<f64>> = (0..181)
+    .map(|j| Length::from_unit::<Millimeter>(-45.0 + j as f64 * 0.5))
+    .collect();
+let sino = parallel_beam_radon(
+    &phantom,
+    &angles,
+    &offsets,
+    Length::from_unit::<Millimeter>(400.0),
+    Length::from_unit::<Millimeter>(0.25),
+);
 
 // 41×41×1 reconstruction at 2 mm
-let recon_grid = VoxelGrid::axis_aligned([41, 41, 1], [2.0; 3], origin)?;
+let recon_grid = VoxelGrid::axis_aligned(
+    [41, 41, 1],
+    [Length::from_unit::<Millimeter>(2.0); 3],
+    Point3::new(0.0, 0.0, 0.0),
+)?;
 let recon = filtered_back_projection(&sino, &recon_grid);
 
 // Centre pixel should recover μ₀ = 0.04 cm⁻¹
-let mu_centre = recon.get(20, 20, 0)?;
+let mu_centre = recon.get(20, 20, 0).expect("centre voxel in range");
 ```
 
 ## Physics Background

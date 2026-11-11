@@ -24,14 +24,25 @@ integral.
 ## Key Code Snippet
 
 ```text
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
 use helios_imaging::radon::parallel_beam_radon;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::Point3;
 
-let grid = VoxelGrid::axis_aligned([161, 161, 1], [0.5; 3], Point3::new(0., 0., 0.))?;
+let grid = VoxelGrid::axis_aligned(
+    [161, 161, 1],
+    [Length::from_unit::<Millimeter>(0.5); 3],
+    Point3::new(0., 0., 0.),
+)?;
 let phantom = Volume::from_shape_fn(grid, |[i, j, _]| /* disk μ */ 0.2_f64);
 
-let sino = parallel_beam_radon(&phantom, &angles, &offsets, 200.0, 0.5);
+let sino = parallel_beam_radon(
+    &phantom,
+    &angles,
+    &offsets,
+    Length::from_unit::<Millimeter>(200.0),
+    Length::from_unit::<Millimeter>(0.5),
+);
 // sino.get(angle_idx, offset_idx) → line integral (mm·cm⁻¹)
 ```
 

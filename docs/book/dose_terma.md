@@ -15,9 +15,24 @@ T(r) = Φ(r) · (μ_en/ρ)(r)
 where Φ is the fluence and μ_en/ρ is the energy-absorption coefficient.
 
 ```text
+use aequitas::systems::si::{
+    quantities::{Angle, Dimensionless, Length, Time},
+    units::{Millimeter, Radian, Second},
+};
+use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel};
 use helios_simulation::simulate_helical_delivery;
 
-let terma = simulate_helical_delivery(&delivery, &mu_volume, &spectrum);
+let delivery = HelicalDelivery::new(
+    51,
+    Length::from_unit::<Millimeter>(20.0),
+    Dimensionless::from_base(0.3),
+    Time::from_unit::<Second>(10.0),
+    Angle::from_unit::<Radian>(0.0),
+    Length::from_unit::<Millimeter>(0.0),
+)?;
+let lot = LeafOpenTimeSinogram::from_fractions(projections, leaves, fractions)?;
+let mlc = MlcModel::new(0.01, 0.05)?;
+let frames = simulate_helical_delivery(&delivery, &lot, &mlc);
 ```
 
 ## Helical Delivery Terma

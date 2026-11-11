@@ -24,13 +24,19 @@ It then verifies the trilinear sampling contract:
 ## Key Code Snippet
 
 ```text
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
+use eunomia::UnitScalar;
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{Point3, Scalar};
 
-fn affine_volume<T: Scalar>() -> (VoxelGrid<T>, Volume<T>) {
+fn affine_volume<T: Scalar + UnitScalar>() -> (VoxelGrid<T>, Volume<T>) {
     let grid = VoxelGrid::axis_aligned(
         [4, 5, 6],
-        [T::from_f64(2.0), T::from_f64(3.0), T::from_f64(4.0)],
+        [
+            Length::from_unit::<Millimeter>(T::from_f64(2.0)),
+            Length::from_unit::<Millimeter>(T::from_f64(3.0)),
+            Length::from_unit::<Millimeter>(T::from_f64(4.0)),
+        ],
         Point3::new(T::from_f64(10.0), T::from_f64(20.0), T::from_f64(30.0)),
     ).expect("valid axis-aligned grid");
     let volume = Volume::from_shape_fn(grid, |[i, j, k]| {

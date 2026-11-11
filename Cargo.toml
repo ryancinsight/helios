@@ -119,10 +119,10 @@ ritk-dicom = { version = "0.4.0", git = "https://github.com/ryancinsight/ritk" }
 # Geometry kernel (binary MLC, collimators, jaws, patient meshes).
 gaia = { package = "gaia-mesh", version = "0.6.10", git = "https://github.com/ryancinsight/gaia", default-features = false }
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.
-hephaestus-core = { version = "0.27.0", git = "https://github.com/ryancinsight/hephaestus" }
-hephaestus-wgpu = { version = "0.27.0", git = "https://github.com/ryancinsight/hephaestus" }
-moirai = { version = "0.10.0", git = "https://github.com/ryancinsight/Moirai.git", package = "moirai-runtime" }
-moirai-parallel = { version = "0.10.0", git = "https://github.com/ryancinsight/Moirai.git", default-features = false, features = ["parallel"] }
+hephaestus-core = { version = "0.28.0", git = "https://github.com/ryancinsight/hephaestus" }
+hephaestus-wgpu = { version = "0.28.0", git = "https://github.com/ryancinsight/hephaestus" }
+moirai = { version = "0.11.0", git = "https://github.com/ryancinsight/Moirai.git", package = "moirai-runtime" }
+moirai-parallel = { version = "0.11.0", git = "https://github.com/ryancinsight/Moirai.git", default-features = false, features = ["parallel"] }
 # Tensors, autodiff, optimizers, neural surrogates.
 coeus-core = { version = "0.12.0", git = "https://github.com/ryancinsight/Coeus.git" }
 coeus-tensor = { version = "0.12.0", git = "https://github.com/ryancinsight/Coeus.git" }
@@ -140,7 +140,7 @@ consus-compression = { version = "0.4.0", git = "https://github.com/ryancinsight
 aequitas = { version = "0.3.1", git = "https://github.com/ryancinsight/aequitas", default-features = false, features = ["std"] }
 proteus = { version = "0.1.1", package = "proteus-mat", git = "https://github.com/ryancinsight/proteus" }
 hyperion = { version = "0.1.1", git = "https://github.com/ryancinsight/hyperion" }
-eunomia = { version = "0.10.0", git = "https://github.com/ryancinsight/eunomia" }
+eunomia = { version = "0.11.0", git = "https://github.com/ryancinsight/eunomia" }
 tyche-core = { version = "0.4.0", git = "https://github.com/ryancinsight/tyche" }
 horae = { version = "0.2.2", git = "https://github.com/ryancinsight/horae", package = "horae-time" }
 # Array substrate + geometry primitives, and portable SIMD.

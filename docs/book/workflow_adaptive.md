@@ -30,10 +30,10 @@ Daily MVCT → Rigid/deformable registration to planning CT
 
 ## Atlas Integration
 
-Helios uses 
-itk-registration for deformable registration and
+Helios uses
+ritk-registration for deformable registration and
 
-itk-io for DICOM RT dose/structure set I/O.
+ritk-io for DICOM RT dose/structure set I/O.
 
 ## Further Reading
 

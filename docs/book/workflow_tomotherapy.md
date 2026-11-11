@@ -23,23 +23,57 @@ CT acquisition → Attenuation map → MVCT reconstruction
 ## CT and MVCT Imaging
 
 The imaging path converts CT Hounsfield Units (HU) to linear attenuation
-coefficients (μ) using mass-attenuation physics from `helios-physics`:
+coefficients (μ) using Hyperion mass-attenuation coefficients mapped by
+`helios-solver`:
 
 ```text
-let mu = attenuation_map(&ct_volume, MassAttenuation::water());
-let sinogram = parallel_beam_radon(&mu, n_angles);
-let recon = filtered_back_projection(&sinogram, n_angles, nx);
+use aequitas::systems::si::{
+    quantities::{AreaPerMass, Length, MassDensity as DensityQuantity},
+    units::{GramPerCubicCentimeter, Millimeter, SquareCentimeterPerGram},
+};
+use helios_solver::attenuation_map;
+use helios_imaging::{fbp::filtered_back_projection, radon::parallel_beam_radon};
+use hyperion::coefficient::MassAttenuation;
+
+let mu_over_rho = MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(0.0636))?;
+let water = DensityQuantity::from_unit::<GramPerCubicCentimeter>(1.0);
+let mu = attenuation_map(&ct_volume, mu_over_rho, water)?;
+let sinogram = parallel_beam_radon(
+    &mu,
+    &angles,
+    &offsets,
+    Length::from_unit::<Millimeter>(400.0),
+    Length::from_unit::<Millimeter>(0.25),
+);
+let recon = filtered_back_projection(&sinogram, &recon_grid);
 ```
 
 ## Helical Delivery Simulation
 
 A helical MLC delivery is defined by a `LeafOpenTimeSinogram` (LOTS) encoding the
-per-gantry-angle leaf opening times. `simulate_helical_delivery` produces the 3-D
-terma (total energy released per unit mass) distribution:
+per-gantry-angle leaf opening times. `simulate_helical_delivery` turns the
+delivery, leaf-open fractions, and MLC model into per-projection delivery
+frames (terma is accumulated from these frames downstream):
 
 ```text
-let delivery = HelicalDelivery { sinogram: lots, beam_geometry: BeamGeometry::default() };
-let terma = simulate_helical_delivery(&delivery, &mu_volume, &spectrum);
+use aequitas::systems::si::{
+    quantities::{Angle, Dimensionless, Length, Time},
+    units::{Millimeter, Radian, Second},
+};
+use helios_domain::{HelicalDelivery, LeafOpenTimeSinogram, MlcModel};
+use helios_simulation::simulate_helical_delivery;
+
+let delivery = HelicalDelivery::new(
+    51,
+    Length::from_unit::<Millimeter>(20.0),
+    Dimensionless::from_base(0.3),
+    Time::from_unit::<Second>(10.0),
+    Angle::from_unit::<Radian>(0.0),
+    Length::from_unit::<Millimeter>(0.0),
+)?;
+let lot = LeafOpenTimeSinogram::from_fractions(projections, leaves, fractions)?;
+let mlc = MlcModel::new(0.01, 0.05)?;
+let frames = simulate_helical_delivery(&delivery, &lot, &mlc);
 ```
 
 ## Collapsed-Cone Dose
@@ -48,7 +82,17 @@ The `CollapsedCone` solver converts terma to dose using a poly-energetic
 beam-hardening correction driven by the spectral components:
 
 ```text
-let dose = accumulate_delivered_dose_anisotropic(&terma, &mu, &CollapsedCone::default());
+use aequitas::systems::si::{quantities::Length, units::Millimeter};
+use helios_simulation::accumulate_delivered_dose_anisotropic;
+
+let dose = accumulate_delivered_dose_anisotropic(
+    &frames,
+    &mu,
+    geometry,
+    Length::from_unit::<Millimeter>(3.0),
+    Length::from_unit::<Millimeter>(0.25),
+    &cone,
+)?;
 ```
 
 ## Plan Quality Assurance

@@ -11,23 +11,42 @@ preferentially absorbed (beam hardening), shifting the mean energy upward.
 
 ## Spectral Components
 
-Helios models a beam as a sum of SpectralComponent bins:
+Helios models a beam as a sum of SpectralComponent range bins, each
+carrying upstream/downstream transport ranges and an energy-fluence
+weight (harder components reach farther downstream):
 
 ```text
+use aequitas::systems::si::{
+    quantities::{Dimensionless, Length},
+    units::Centimeter,
+};
 use helios_simulation::SpectralComponent;
 
 let spectrum = vec![
-    SpectralComponent { energy_mev: 1.0, weight: 0.35 },
-    SpectralComponent { energy_mev: 3.0, weight: 0.45 },
-    SpectralComponent { energy_mev: 6.0, weight: 0.20 },
+    SpectralComponent {
+        range_up: Length::from_unit::<Centimeter>(0.10),
+        range_down: Length::from_unit::<Centimeter>(0.35),
+        weight: Dimensionless::from_base(0.35),
+    }, // soft component
+    SpectralComponent {
+        range_up: Length::from_unit::<Centimeter>(0.07),
+        range_down: Length::from_unit::<Centimeter>(0.60),
+        weight: Dimensionless::from_base(0.45),
+    }, // mid component
+    SpectralComponent {
+        range_up: Length::from_unit::<Centimeter>(0.05),
+        range_down: Length::from_unit::<Centimeter>(0.90),
+        weight: Dimensionless::from_base(0.20),
+    }, // hard component (reaches farther downstream)
 ];
 ```
 
 ## Beam-Hardened Transport
 
-For each spectral component, the collapsed-cone kernel uses the component's
-own attenuation coefficient μ(E), producing energy-dependent depth–dose
-curves. The total dose is the energy-weighted sum:
+For each spectral component, the collapsed-cone kernel contributes its
+monoenergetic deposition shape over the component's own transport
+ranges, producing energy-dependent depth–dose curves. The total dose is
+the energy-fluence-weighted sum:
 
 ```text
 D(r) = Σ_k  w_k · D_k(r; μ_k)

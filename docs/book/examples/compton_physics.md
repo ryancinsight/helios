@@ -22,17 +22,22 @@ Demonstrates the Klein–Nishina cross-section model that underpins MV photon tr
 ## Key APIs
 
 ```text
+use aequitas::systems::si::{quantities::Energy, units::MegaElectronVolt};
 use helios_physics::{
     thomson_cross_section, klein_nishina_cross_section,
     compton_mean_energy_transfer_fraction, compton_mass_attenuation,
     compton_energy_transfer_cross_section, electrons_per_gram,
 };
 
-let sigma_t: f64 = thomson_cross_section();             // 6.65e-29 m²/e⁻
-let sigma_kn = klein_nishina_cross_section(6.0_f64);    // 6 MeV
-let f_tr = compton_mean_energy_transfer_fraction(6.0);  // ≈ 0.64
-let e_per_g = electrons_per_gram(0.5551_f64);           // water Z/A
-let mu_rho = compton_mass_attenuation(0.1_f64, e_per_g); // cm²/g at 100 keV
+fn photon_energy(mev: f64) -> Energy<f64> {
+    Energy::from_unit::<MegaElectronVolt>(mev)
+}
+
+let sigma_t: f64 = thomson_cross_section();                            // 6.65e-29 m²/e⁻
+let sigma_kn = klein_nishina_cross_section(photon_energy(6.0));        // 6 MeV
+let f_tr = compton_mean_energy_transfer_fraction(photon_energy(6.0));  // ≈ 0.64
+let e_per_g = electrons_per_gram(0.5551_f64);                          // water Z/A
+let mu_rho = compton_mass_attenuation(photon_energy(0.1), e_per_g);     // cm²/g at 100 keV
 ```
 
 ## Physics Background

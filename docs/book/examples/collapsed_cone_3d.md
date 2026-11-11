@@ -24,25 +24,36 @@ Two-stage deterministic photon dose calculation on a 10×10×10 synthetic water 
 ## Key Code Snippet
 
 ```text
+use aequitas::systems::si::{
+    quantities::{AreaPerMass, Length, MassDensity as DensityQuantity},
+    units::{Centimeter, GramPerCubicCentimeter, SquareCentimeterPerGram},
+};
 use helios_solver::{
     attenuation_map, dose_convolution_x, exponential_deposition_kernel,
     primary_fluence_parallel_x, scatter_superposition, symmetric_deposition_kernel,
 };
+use hyperion::coefficient::MassAttenuation;
 
 // Stage 1: CT → μ
-let mu = attenuation_map(&ct_hu, MassAttenuation::new(0.0636)?, 1.0);
+let mu_over_rho = MassAttenuation::new(AreaPerMass::from_unit::<SquareCentimeterPerGram>(0.0636))?;
+let water = DensityQuantity::from_unit::<GramPerCubicCentimeter>(1.0);
+let mu = attenuation_map(&ct_hu, mu_over_rho, water)?;
 
 // Stage 2: primary fluence (Beer–Lambert)
-let primary = primary_fluence_parallel_x(&mu, 1.0);
+let primary = primary_fluence_parallel_x(&mu, 1.0)?;
 
 // Stage 4: 1-D dose (collapsed cone along beam +x)
-let kernel = exponential_deposition_kernel(0.5_f64, voxel_cm, 8);
+let kernel = exponential_deposition_kernel(
+    Length::from_unit::<Centimeter>(0.5),
+    voxel_spacing,
+    8,
+);
 let dose_1d = dose_convolution_x(&terma, &kernel);
 
 // Stage 5: 3-D scatter superposition
-let kx = symmetric_deposition_kernel(0.5, voxel_cm, 3);
-let ky = symmetric_deposition_kernel(0.3, voxel_cm, 2);
-let kz = symmetric_deposition_kernel(0.3, voxel_cm, 2);
+let kx = symmetric_deposition_kernel(Length::from_unit::<Centimeter>(0.5), voxel_spacing, 3);
+let ky = symmetric_deposition_kernel(Length::from_unit::<Centimeter>(0.3), voxel_spacing, 2);
+let kz = symmetric_deposition_kernel(Length::from_unit::<Centimeter>(0.3), voxel_spacing, 2);
 let dose_3d = scatter_superposition(&terma, &kx, &ky, &kz);
 ```
 

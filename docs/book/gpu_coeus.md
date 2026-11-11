@@ -5,22 +5,29 @@
 *Figure 22.1 — Coeus Tensor Operations for Dose Grids*
 <!-- generated-figure-end -->
 
-coeus-core provides the tensor substrate for GPU-resident dose grids.
-All operations are expressed through the ComputeBackend trait, making
-them portable across CPU (MoiraiBackend) and GPU backends.
+Differentiable planning objectives run on coeus tapes behind the
+`autodiff` feature: `Var<T, Backend>` values built with
+`Tensor::from_slice_on`, composed with `coeus_autograd` operators.
+GPU-resident attenuation, projection, and transmission kernels live in
+helios-gpu on the Themis placement contract instead.
 
 ## Tensor-Based Dose Operations
 
 ```text
-use coeus_core::ComputeBackend;
+use coeus_autograd::{matmul, Var};
+use coeus_core::MoiraiBackend;
 use coeus_tensor::Tensor;
 
-fn scale_dose<B: ComputeBackend>(
-    dose: &Tensor<f32, B>,
-    prescription_gy: f32,
-) -> Tensor<f32, B> {
-    dose.clone() * prescription_gy
-}
+let backend = MoiraiBackend::new();
+let a = Var::new(
+    Tensor::from_slice_on(vec![voxels, beamlets], influence.rows(), &backend)?,
+    false,
+)?;
+let x = Var::new(
+    Tensor::from_slice_on(vec![beamlets, 1], &weights, &backend)?,
+    true,
+)?;
+let dose = matmul(&a, &x)?;
 ```
 
 ## autodiff Integration

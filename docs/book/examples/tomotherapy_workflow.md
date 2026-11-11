@@ -25,11 +25,11 @@ verifiable stages:
 
 ## Quantitative Verification
 
-The example is self-validating — it prints and asserts:
+The example is self-checking — it prints:
 
-- **Reconstruction RMSE** < 200 HU (FBP is approximate, not exact)
-- **Dose mean** > 0 Gy (sanity: dose was actually delivered)
-- **Gamma pass rate** (3%/2 mm, 5 Gy threshold) > 90%
+- **Recon water-ROI μ** vs the 0.0600 cm⁻¹ target (FBP is approximate, not exact)
+- **Dose total / peak / DVH mean** (sanity: dose was actually delivered)
+- **Gamma 3%/2 mm** vs a 2%-low field (must pass) plus a 6%-low negative control (must not)
 
 These are not fixed-result assertions but physics-plausibility bounds: the dose
 distribution should be spatially consistent with the delivery geometry.
@@ -44,7 +44,7 @@ VoxelGrid → Volume<f64> (HU)
      ├─ parallel_beam_radon ── sinogram      │
      │    └─ filtered_back_projection        │
      │                                       │
-     ├─ simulate_helical_delivery ── terma   │
+     ├─ simulate_helical_delivery ── frames │
      │    └─ CollapsedCone (poly-energetic)  │
      │         └─ accumulate dose ──── Dose Volume<f64>
      │                                       │
