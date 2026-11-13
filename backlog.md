@@ -85,7 +85,8 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-011d3 | `helios-physics`: KN differential cross-section + energy-transfer σ_tr (quadrature, self-validated vs closed-form total); `compton_mass_energy_transfer` kerma coefficient (validated vs NIST water μ_tr/ρ at 1 MeV) | [minor] | done | claude-helios | `crates/helios-physics/**` |
 | H-055 | Decouple numeric/physics from geometry: `helios-math` `geometry` feature (default on); `helios-physics` builds without it. Keeps physics buildable during geometry-stack churn (G-14). | [arch] | done | claude-helios | `crates/helios-math/**`, `crates/helios-physics/**` |
 | H-011c | `helios-solver::forward_project_ray`: ray-march optical depth ∫μ dl of a gaia `Ray` through a μ `Volume` (clip to grid `Aabb`, midpoint trilinear sampling). MVCT forward-projection / dose ray-trace core. | [minor] | done | claude-helios | `crates/helios-solver/**` |
-| H-011d | `helios-solver`: exact Siddon voxel-DDA + oriented-grid (rotated pose) projection; full parallel/fan sinogram over a detector | [minor] | todo | — | `crates/helios-solver/**` |
+| H-011d | `helios-solver::{cell_path, radiological_path}`: exact cell-constant radiological path (ADR 0019) beside the trilinear march. Split: oriented-grid march landed in `966e21b` (H-003d); parallel sinogram in `e7f6ab2` (H-030a); fan sinogram is H-021c. See [block](#H-011d). | [minor] | todo | — | `crates/helios-solver/**` |
+| H-011e | `forward_project_ray` and TERMA deposition integrate from a negative `t_enter` when the ray origin is inside the grid; the Hephaestus kernel integrates `[max(t_enter, 0), t_exit]`. Align the CPU march with the half-line. See [block](#H-011e). | [patch] | todo | — | `crates/helios-solver/src/{projector,deposition}.rs` |
 | H-012b | `helios-solver`: HU→μ attenuation-map engine (CPU reference; differential oracle for the GPU kernel) | [minor] | done | claude-helios | `crates/helios-solver/**` |
 | H-013a | `helios-solver::primary_fluence_parallel_x`: primary-transport stage — Beer–Lambert attenuated fluence Ψ=Ψ₀·exp(−∫μ dl), +x parallel beam. Also fixed projector optical-depth units (mm→cm). | [minor] | done | claude-helios | `crates/helios-solver/**` |
 | H-013b | `helios-solver`: dose = TERMA ⊛ kernel (collapsed-cone). `dose_convolution_x` + `exponential_deposition_kernel` — exact oracles (delta identity, normalized-kernel interior conservation, physical build-up). **Verified** (G-14 resolved). | [minor] | done | claude-helios | `crates/helios-solver/**` |
@@ -114,6 +115,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-020k | Collimator field aperture over gaia `Aabb`: `helios-domain::FieldAperture` (jaw-shaped open field + geometric edge penumbra via box SDF; `contains` delegates to `Aabb::contains_point`) + `helios-simulation::collimate_frames` (scales per-leaf fluence by aperture transmission at the leaf collimator coordinate). Verified: transmission oracles (centre/edge/penumbra/monotone/f32/typed errors) + field-shaping consumer (narrow aperture blocks edge leaves, 50% on the edge, machine state preserved, never increases fluence). Consumes gaia geometry. | [minor] | done | claude-helios | `crates/helios-domain/**`, `crates/helios-simulation/**` |
 | H-021 | `helios-simulation::simulate_helical_sinogram`: time-dependent helical MVCT acquisition — gantry rotation + couch translation drive the forward projector per projection (helix). CPU reference; moirai orchestration = H-021b. | [minor] | done | claude-helios | `crates/helios-simulation/**` |
 | H-021b | `helios-simulation::simulate_helical_sinogram`: moirai-parallel per-projection dispatch via `map_collect_index_with::<Adaptive>` — the mandated moirai orchestration seam. Index-ordered collect → identical to sequential (verified deterministic at 256 projections). Peer `mnemosyne-arena` breakage that blocked it last cycle is resolved; full workspace green. Fan/cone detector rows + motion remain. | [minor] | done | claude-helios | `crates/helios-simulation/**` |
+| H-021c | Fan-beam detector-row sinogram: one point source per projection angle, many detector rays (the H-021b remainder; split from H-011d). See [block](#H-021c). | [minor] | todo | — | `crates/helios-imaging/**` |
 | H-047 | `helios-analysis::{spherical_mask, box_mask}`: geometric ROI mask predicates (sphere/box over a `VoxelGrid`) feeding `Dvh::from_volume_masked` — per-structure DVH on analytic ROIs. Verified: radius/box selection, masked-DVH mean, f32. | [minor] | done | claude-helios | `crates/helios-analysis/**` |
 | H-048 | Performance/consolidation pass: `Volume::as_slice` zero-copy accessor (layout contract documented); `scatter::convolve_axis` rewritten to strided slice iteration — **8.3×/7.4× speedup at 32³/64³, bitwise-identical** (criterion baseline in `validation_reports/2026-07-02-…`); `save_volume_hdf5` field serialization via the slice view; `MM_PER_CM` consolidated from 5 duplicate consts to one SSOT in `helios-quantities::constants`. | [patch] | done | claude-helios | `crates/helios-{core,domain,solver,imaging}/**` |
 | H-046 | `helios-domain::{save_volume_hdf5, load_volume_hdf5}` (feature `storage`): consus HDF5 archive of a `Volume` (data + grid geometry) — **mandated consus component consumed** (consus-core/hdf5/io, pure Rust, `[patch]`ed to local checkout). Verified: bitwise f64 round-trip, standard-HDF5 signature, f32 exactness through the f64 archive, missing/garbage error paths. Adds `HeliosError::Storage`. | [minor] | done | claude-helios | `crates/helios-domain/**`, `crates/helios-quantities/**`, `Cargo.toml` |
@@ -393,3 +395,51 @@ H-117).
   wheel contains `py.typed`.
 - **Dependencies:** none.
 - **Risk:** docs and packaging metadata only.
+
+## Projection specification slice — 2026-11-13
+
+<a id="H-011d"></a>
+### H-011d — exact cell-constant radiological path [minor]
+
+- Status: todo; priority: feature; needs: none
+- **Outcome:** voxel-exact `radiological_path` and per-cell `cell_path`
+  lengths with values constant per cell, beside the unchanged trilinear
+  `forward_project_ray` ([ADR 0019](docs/adr/0019-cell-constant-radiological-path.md)).
+- **Scope:** a new `helios-solver` module. **Non-goals:** changing the march,
+  `RayMarchPlan` or the GPU projector; Radon/SIRT/acquisition wiring.
+- **Acceptance oracle:** ADR 0019 cases 1-8 in f32 and f64, under its derived
+  bound: closed-form uniform, single-voxel and heterogeneous lengths; edge
+  cases; pose invariance; trapezoid identity; nearest-cell march convergence.
+- **Split:** oriented-grid march `966e21b` (H-003d); parallel sinogram
+  `e7f6ab2` (H-030a); fan sinogram H-021c.
+- **Next step:** claim; write oracle cases 1-3 before the traversal.
+
+<a id="H-011e"></a>
+### H-011e — CPU march integrates behind the ray origin [patch]
+
+- Status: todo; priority: correctness; needs: none
+- **Outcome:** `forward_project_ray` and TERMA deposition integrate the
+  half-line `[max(t_enter, 0), t_exit]`, as Hephaestus `72ffa05` and gaia `Ray`
+  state.
+- **Evidence (read, not run):** `ray_grid_interval` returns gaia's signed
+  `t_enter`, and both `forward_project_ray` and `deposit_terma_impl` march from
+  it (`crates/helios-solver/src/{projector,deposition}.rs`, `49d52b1`).
+- **Acceptance oracle:** a centre origin on a uniform field gives
+  `mu t_exit / 10`; deposition puts no dose behind the origin; outside-origin
+  results are bitwise unchanged.
+- **Scope:** `crates/helios-solver/src/{projector,deposition}.rs`. **Next
+  step:** write the failing inside-origin test.
+
+<a id="H-021c"></a>
+### H-021c — fan-beam detector-row sinogram [minor]
+
+- Status: todo; priority: feature; needs: none
+- **Outcome:** a fan-beam sinogram `p(beta, gamma)` from a point source per
+  gantry angle `beta`, one ray per detector angle `gamma` (H-021b remainder).
+- **Scope:** `helios-imaging` beside `parallel_beam_radon`, with typed geometry
+  (ADR 0016). **Non-goals:** cone-beam rows, couch motion, detector response.
+- **Acceptance oracle:** each fan ray equals the `parallel_beam_radon` ray on
+  the same line within the projector's roundoff bound (fan-to-parallel mapping
+  derived in the item); a uniform box gives `mu * chord / 10`, with the chord
+  computed by slab clipping.
+- **Next step:** claim; derive the line mapping from `radon.rs`.
