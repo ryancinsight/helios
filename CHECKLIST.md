@@ -565,7 +565,6 @@ or H-004b ritk DICOM (real inputs → clinical validation) or H-020b binary-MLC.
 - **H-004d** RITK `ImageOrientationPatient` tag and oriented DICOM grid (consumer
   cutover complete locally; pending RITK PR #149 exact-head merge).
 - **H-011d** exact Siddon voxel-DDA and oriented-grid projection.
-- **H-012** GPU MVCT forward projector over the CPU reference.
 
 ### H-020b — binary-MLC leaf-open-time sinogram — resolved
 
@@ -574,9 +573,9 @@ or H-004b ritk DICOM (real inputs → clinical validation) or H-020b binary-MLC.
 covered by the domain and end-to-end tests; the authoritative completion state is
 recorded in `backlog.md` and G-23 in `gap_audit.md`.
 
-*Resolved:* H-010 GPU transmission, H-011c CPU forward projection, H-020b binary
-MLC, and H-020h anisotropic scatter. *Blocked or queued:* H-004d, H-011d, and
-H-012.
+*Resolved:* H-010 GPU transmission, H-011c CPU forward projection, H-012 GPU
+forward projection (`helios-gpu::GpuProjector`, delivered under H-043b), H-020b
+binary MLC, and H-020h anisotropic scatter. *Blocked or queued:* H-004d and H-011d.
 
 ### Completed
 

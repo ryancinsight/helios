@@ -15,9 +15,9 @@ geometry-independent physics lands first:
 
 - **Unblocked now:** attenuation relations (H-011, done), NIST μ/ρ data (H-011b),
   CT calibration — pure material physics, no geometry.
-- **Blocked on gaia geometry (G-11):** ray-marched line integral ∫μ dl (H-011c) and
-  the GPU MVCT forward projector (H-012), which need `gaia::Ray` + voxel DDA once
-  gaia's leto geometry reaches its default branch.
+- **Blocked on gaia geometry (G-11), since landed:** ray-marched line integral ∫μ dl
+  (H-011c) and the GPU MVCT forward projector (H-012, delivered as
+  `helios-gpu::GpuProjector` under H-043b). Exact voxel DDA remains H-011d.
 - **Landed:** `ritk-dicom` DICOM CT/MVCT ingest (H-004b/H-004c) and the H-064
   provider-boundary correction. `ritk-io` remains a separate higher-level I/O
   surface and is not a Helios dependency for this path.

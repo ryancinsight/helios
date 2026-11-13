@@ -624,8 +624,10 @@ changes, which are outside this item.
   now converts mm→cm for a dimensionless `τ`. Units contract documented (μ volumes
   in cm⁻¹, grid in mm). *Evidence tier: analytical (τ = μ·L_cm verified).*
 - **G-4 (numerics):** Reduction-order sensitivity for future GPU vs CPU differential
-  tests not yet characterized; epsilon bounds must be derived per reduction depth
-  when the projector/dose kernels land. → H-012.
+  tests not yet characterized; epsilon bounds must be derived per reduction depth.
+  The delivered projector differential (`GpuProjector`, H-043b) asserts a 1e-3
+  relative bound whose derivation is not recorded; no owning item. Re-open on any
+  change to the projector kernel or that bound.
 
 ### Architecture / integration
 
