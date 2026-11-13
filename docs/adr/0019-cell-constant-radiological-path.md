@@ -106,10 +106,11 @@ box extent `n_a s_a` (mm), `R0 = |o|_inf + |pose translation|_inf + |t0|`, and
 `d_min` as the smallest nonzero `|d_a|`. On an identity pose each `r` carries
 seven roundings proportional to `R0 + E`: three in the clip's `t0` (subtract,
 reciprocal, multiply), one in the origin translation, two in `p`, and one in the
-plane coordinate (`k - 1/2` is exact below `2^24`). The numerator subtraction adds `u (E + R0)`, and the division adds `u L`. With
-both clip endpoints treated as crossings, every boundary therefore satisfies
-`|dr| <= eta = γ_7 (R0 + E) / d_min + u L`. An oriented pose adds rotation
-rounding to `o` and `d`, which gives `eta_rot = γ_9 (R0 + E + L) / d_min`.
+plane coordinate (`k - 1/2` is exact for `k` below `2^23` in `f32` and `2^52` in
+`f64`). The numerator subtraction adds `u (E + R0)`, and the division adds
+`u L`. With both clip endpoints treated as crossings, every boundary therefore
+satisfies `|dr| <= eta = γ_7 (R0 + E) / d_min + u L`. An oriented pose adds
+rotation rounding to `o` and `d`, which gives `eta_rot = γ_9 (R0 + E + L) / d_min`.
 
 Each segment length then errs by at most `2 eta + u l`. The products, the sum of
 `N` terms, and the mm→cm scaling (one rounding for `1/10`, one for the product)
