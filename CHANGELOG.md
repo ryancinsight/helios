@@ -243,6 +243,14 @@ under a Breaking subsection.
   through `FloatElement::from_count` and signed integers through
   `FloatElement::from_integer`.
 
+### Fixed
+
+- `helios-solver::forward_project_ray` and the TERMA deposition kernels now
+  integrate the half-line `[max(t_enter, 0), t_exit]` of a ray whose origin
+  lies inside the grid, instead of also marching the segment behind the
+  origin. Rays that start outside the grid are unchanged. This aligns the CPU
+  march with the Hephaestus kernels and the gaia `Ray` half-line.
+
 ## [0.1.0] — 2026-07-22
 
 ### Breaking

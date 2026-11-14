@@ -60,7 +60,9 @@ fn nearest<T: GeometryScalar>(coord: T, n: usize) -> usize {
 /// # Units
 /// `dose` and `mu` must share the same grid. `mu` is in cm⁻¹ and the grid / `ray`
 /// in mm, so segment lengths are converted mm→cm (matching the projector). A ray
-/// that misses the grid deposits nothing and returns zero. The returned total is
+/// that misses the grid deposits nothing and returns zero. Deposition covers the
+/// half-line `t ≥ 0`: an origin inside the grid deposits only ahead of itself,
+/// and the voxels behind the origin are untouched. The returned total is
 /// an Aequitas [`AbsorbedDose`] quantity; the voxel field remains the established
 /// scalar `Volume` storage boundary.
 ///
@@ -395,6 +397,94 @@ mod tests {
             total,
             max_relative = T::EPSILON * cast(ENERGY_BALANCE_ULPS)
         );
+    }
+
+    /// Asserts TERMA deposition from an origin inside the grid in one scalar
+    /// width: only the forward half-line deposits, the total follows
+    /// Beer-Lambert over the forward chord, and the voxels behind the origin
+    /// stay exactly zero.
+    ///
+    /// `mu = 0.5 cm^-1` over the 0.8 cm forward chord gives `tau = 0.4` in 32
+    /// segments of 0.25 mm. The 64-ulp budget of `ABSORBED_FRACTION_ULPS` is
+    /// checked against a first-order worst case in `u = EPSILON / 2`, with
+    /// every rounding at its maximum and all signs aligned. The kernel total
+    /// telescopes to `1 - exp(-tau_32)`, because each difference of
+    /// neighbouring transmissions is exact (Sterbenz: the ratio lies in
+    /// `[1/2, 2]`), so the terms are:
+    ///
+    /// - `exp`: a relative error `e` in `T = exp(-tau)` becomes `e * T / (1 - T)`
+    ///   = `2.03 e` in `1 - T` at `tau = 0.4`. Taking `e = 4u` ("a few ulps",
+    ///   since IEEE 754 does not require `exp` correctly rounded) gives 8.1u in
+    ///   the kernel and 8.1u in the reference value.
+    /// - `tau` accumulation: 31 additions (the first adds to zero exactly), the
+    ///   per-segment product, and up to two roundings of the millimetre to
+    ///   centimetre step give a relative error up to 34u in `tau`. It enters
+    ///   `1 - T` with sensitivity `tau * T / (1 - T)` = 0.81, so 27.5u. The
+    ///   reference value's `0.8` literal and `mu * 0.8` product add 2
+    ///   roundings, 1.6u.
+    /// - The 32-term sum of positive absorbed fractions: 31u.
+    ///
+    /// The total is about 76u, or 38 `EPSILON` ulps, below the 64 of
+    /// `ABSORBED_FRACTION_ULPS`. The trilinear interpolation of the constant
+    /// field adds a few roundings per sample, which the margin absorbs. The
+    /// energy-balance comparison uses `ENERGY_BALANCE_ULPS`.
+    fn inside_origin_deposits_only_the_forward_half_line<
+        T: ShippedScalar + helios_math::GeometryScalar,
+    >() {
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
+        let grid = VoxelGrid::<T>::axis_aligned(
+            [9, 9, 9],
+            [Length::from_unit::<Millimeter>(cast(2.0)); 3],
+            Point3::new(zero, zero, zero),
+        )
+        .expect("valid axis-aligned grid");
+        let mu = cast(0.5);
+        let attenuation = Volume::from_shape_fn(grid, |_| mu);
+        let mut dose = Volume::zeros(*attenuation.grid());
+        let centre = cast(8.0);
+        let ray = Ray::try_new(
+            Point3::new(centre, centre, centre),
+            Vector3::new(cast(1.0), zero, zero),
+        )
+        .expect("non-degenerate ray direction");
+
+        let total = deposit_ray_terma(&mut dose, &attenuation, &ray, cast(1.0), cast(0.25))
+            .expect("valid attenuation volume")
+            .into_base();
+
+        let expected = cast(1.0) - (-(mu * cast(0.8))).exp();
+        assert_relative_eq!(
+            total,
+            expected,
+            max_relative = T::EPSILON * cast(ABSORBED_FRACTION_ULPS)
+        );
+        assert_relative_eq!(
+            dose.sum(),
+            total,
+            max_relative = T::EPSILON * cast(ENERGY_BALANCE_ULPS)
+        );
+        for ix in 0..4 {
+            for iy in 0..9 {
+                for iz in 0..9 {
+                    assert_eq!(
+                        dose.get(ix, iy, iz).expect("voxel in range"),
+                        zero,
+                        "voxel ({ix}, {iy}, {iz}) lies behind the ray origin"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn inside_origin_deposits_only_the_forward_half_line_in_single_precision() {
+        inside_origin_deposits_only_the_forward_half_line::<f32>();
+    }
+
+    #[test]
+    fn inside_origin_deposits_only_the_forward_half_line_in_double_precision() {
+        inside_origin_deposits_only_the_forward_half_line::<f64>();
     }
 
     #[test]

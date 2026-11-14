@@ -86,7 +86,6 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-055 | Decouple numeric/physics from geometry: `helios-math` `geometry` feature (default on); `helios-physics` builds without it. Keeps physics buildable during geometry-stack churn (G-14). | [arch] | done | claude-helios | `crates/helios-math/**`, `crates/helios-physics/**` |
 | H-011c | `helios-solver::forward_project_ray`: ray-march optical depth ∫μ dl of a gaia `Ray` through a μ `Volume` (clip to grid `Aabb`, midpoint trilinear sampling). MVCT forward-projection / dose ray-trace core. | [minor] | done | claude-helios | `crates/helios-solver/**` |
 | H-011d | `helios-solver::{cell_path, radiological_path}`: exact cell-constant radiological path (ADR 0019) beside the trilinear march. Split: oriented-grid march landed in `966e21b` (H-003d); parallel sinogram in `e7f6ab2` (H-030a); fan sinogram is H-021c. See [block](#H-011d). | [minor] | todo | — | `crates/helios-solver/**` |
-| H-011e | `forward_project_ray` and TERMA deposition integrate from a negative `t_enter` when the ray origin is inside the grid; the Hephaestus kernel integrates `[max(t_enter, 0), t_exit]`. Align the CPU march with the half-line. See [block](#H-011e). | [patch] | todo | — | `crates/helios-solver/src/{projector,deposition}.rs` |
 | H-012b | `helios-solver`: HU→μ attenuation-map engine (CPU reference; differential oracle for the GPU kernel) | [minor] | done | claude-helios | `crates/helios-solver/**` |
 | H-013a | `helios-solver::primary_fluence_parallel_x`: primary-transport stage — Beer–Lambert attenuated fluence Ψ=Ψ₀·exp(−∫μ dl), +x parallel beam. Also fixed projector optical-depth units (mm→cm). | [minor] | done | claude-helios | `crates/helios-solver/**` |
 | H-013b | `helios-solver`: dose = TERMA ⊛ kernel (collapsed-cone). `dose_convolution_x` + `exponential_deposition_kernel` — exact oracles (delta identity, normalized-kernel interior conservation, physical build-up). **Verified** (G-14 resolved). | [minor] | done | claude-helios | `crates/helios-solver/**` |
@@ -413,22 +412,6 @@ H-117).
 - **Split:** oriented-grid march `966e21b` (H-003d); parallel sinogram
   `e7f6ab2` (H-030a); fan sinogram H-021c.
 - **Next step:** claim; write oracle cases 1-3 before the traversal.
-
-<a id="H-011e"></a>
-### H-011e — CPU march integrates behind the ray origin [patch]
-
-- Status: todo; priority: correctness; needs: none
-- **Outcome:** `forward_project_ray` and TERMA deposition integrate the
-  half-line `[max(t_enter, 0), t_exit]`, as Hephaestus `72ffa05` and gaia `Ray`
-  state.
-- **Evidence (read, not run):** `ray_grid_interval` returns gaia's signed
-  `t_enter`, and both `forward_project_ray` and `deposit_terma_impl` march from
-  it (`crates/helios-solver/src/{projector,deposition}.rs`, `49d52b1`).
-- **Acceptance oracle:** a centre origin on a uniform field gives
-  `mu t_exit / 10`; deposition puts no dose behind the origin; outside-origin
-  results are bitwise unchanged.
-- **Scope:** `crates/helios-solver/src/{projector,deposition}.rs`. **Next
-  step:** write the failing inside-origin test.
 
 <a id="H-021c"></a>
 ### H-021c — fan-beam detector-row sinogram [minor]
