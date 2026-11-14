@@ -306,9 +306,12 @@ mod tests {
     /// Rows of the half-line oracle on the 20 mm grid: ray origin abscissa,
     /// direction sign, and the forward in-grid length `[max(t_enter, 0), t_exit]`
     /// in millimetres.
-    const HALF_LINE_CASES: [(f64, f64, f64); 6] = [
+    const HALF_LINE_CASES: [(f64, f64, f64); 7] = [
         // Centre origin: the forward half spans the half-extent.
         (10.0, 1.0, 10.0),
+        // Origin 0.25 mm inside the entry face: the slab entry is -0.25 mm and
+        // must still clamp to the origin, so the path is 19.75 mm, not 20 mm.
+        (0.25, 1.0, 19.75),
         // Off-centre origin integrates only toward the direction of travel.
         (4.0, 1.0, 16.0),
         (4.0, -1.0, 4.0),
@@ -377,7 +380,12 @@ mod tests {
         let ray = Ray::try_new(Point3::new(9.0, 30.0, 32.0), Vector3::new(0.0, 1.0, 0.0))
             .expect("unit +y ray");
         let tau = forward_project_ray(&mu, &ray, 0.5).expect("hit");
-        assert_relative_eq!(tau, 0.06, epsilon = 1e-12);
+        // The forward half has 20 midpoint terms at the 0.5 mm step, half the
+        // 40 that `PROJECTION_ULPS` budgets, so the sum bound `n * EPSILON` is
+        // 20 EPSILON. The remaining margin absorbs the quarter-turn quaternion
+        // rotation of the origin and direction (a fixed number of roundings
+        // per component) and the interpolation of the constant field.
+        assert_relative_eq!(tau, 0.06, max_relative = f64::EPSILON * PROJECTION_ULPS);
     }
 
     #[test]
@@ -396,6 +404,9 @@ mod tests {
         // Inside origin: entry is the origin itself.
         assert_eq!(interval(4.0, 1.0), Some((0.0, 16.0)));
         assert_eq!(interval(4.0, -1.0), Some((0.0, 4.0)));
+        // Origin 0.25 mm inside the entry face: the entry is -0.25 mm and is
+        // clamped, so a clamp that only fired below -1 mm would return it.
+        assert_eq!(interval(0.25, 1.0), Some((0.0, 19.75)));
         // The grid lies wholly behind the origin.
         assert_eq!(interval(30.0, 1.0), None);
     }

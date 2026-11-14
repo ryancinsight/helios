@@ -404,9 +404,30 @@ mod tests {
     /// Beer-Lambert over the forward chord, and the voxels behind the origin
     /// stay exactly zero.
     ///
-    /// `mu = 0.5 cm^-1` over the 0.8 cm forward chord gives `tau = 0.4`, so the
-    /// cancellation in `1 - exp(-tau)` amplifies the `exp` rounding by about 2
-    /// and the 64-ulp budget of `ABSORBED_FRACTION_ULPS` holds with margin.
+    /// `mu = 0.5 cm^-1` over the 0.8 cm forward chord gives `tau = 0.4` in 32
+    /// segments of 0.25 mm. The 64-ulp budget of `ABSORBED_FRACTION_ULPS` is
+    /// checked against a first-order worst case in `u = EPSILON / 2`, with
+    /// every rounding at its maximum and all signs aligned. The kernel total
+    /// telescopes to `1 - exp(-tau_32)`, because each difference of
+    /// neighbouring transmissions is exact (Sterbenz: the ratio lies in
+    /// `[1/2, 2]`), so the terms are:
+    ///
+    /// - `exp`: a relative error `e` in `T = exp(-tau)` becomes `e * T / (1 - T)`
+    ///   = `2.03 e` in `1 - T` at `tau = 0.4`. Taking `e = 4u` ("a few ulps",
+    ///   since IEEE 754 does not require `exp` correctly rounded) gives 8.1u in
+    ///   the kernel and 8.1u in the reference value.
+    /// - `tau` accumulation: 31 additions (the first adds to zero exactly), the
+    ///   per-segment product, and up to two roundings of the millimetre to
+    ///   centimetre step give a relative error up to 34u in `tau`. It enters
+    ///   `1 - T` with sensitivity `tau * T / (1 - T)` = 0.81, so 27.5u. The
+    ///   reference value's `0.8` literal and `mu * 0.8` product add 2
+    ///   roundings, 1.6u.
+    /// - The 32-term sum of positive absorbed fractions: 31u.
+    ///
+    /// The total is about 76u, or 38 `EPSILON` ulps, below the 64 of
+    /// `ABSORBED_FRACTION_ULPS`. The trilinear interpolation of the constant
+    /// field adds a few roundings per sample, which the margin absorbs. The
+    /// energy-balance comparison uses `ENERGY_BALANCE_ULPS`.
     fn inside_origin_deposits_only_the_forward_half_line<
         T: ShippedScalar + helios_math::GeometryScalar,
     >() {
