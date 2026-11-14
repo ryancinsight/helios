@@ -45,8 +45,8 @@ Interval: the half-line part `[t0, t1] = [max(t_enter, 0), t_exit]` of the ray
 clipped to the cell box. This matches the Hephaestus contract at `72ffa05`
 (host `volume.rs:53`, wgpu `volume.rs:99`) and the gaia `Ray` half-line. A miss
 returns `None`, and a zero-length contact returns `Some(0)`, as the march does.
-The CPU march integrates from a negative `t_enter` when the origin is inside the
-grid; H-011e tracks that divergence.
+The CPU march and TERMA deposition integrate the same half-line: the shared
+grid interval clamps the signed slab entry to the origin.
 
 ### 2. Traversal
 

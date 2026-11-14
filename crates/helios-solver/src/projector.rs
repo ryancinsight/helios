@@ -6,6 +6,10 @@
 //! via `helios-math`): the ray is clipped to the grid's world bounding box, then
 //! marched with midpoint sampling of the trilinearly-interpolated `μ` field.
 //!
+//! A [`Ray`] is the half-line `t ≥ 0`: the march covers `[max(t_enter, 0), t_exit]`,
+//! so an origin inside the grid integrates only the segment ahead of it,
+//! matching the Hephaestus kernels.
+//!
 //! Midpoint integration is exact for `μ` fields affine along the ray (the
 //! analytical oracle in the tests); for a homogeneous slab it reproduces
 //! `τ = μ·L` exactly.
@@ -75,6 +79,12 @@ impl<T: GeometryScalar> RayMarchPlan<T> {
 /// is axis-aligned. `local_speed` converts the normalized local-ray parameter
 /// back to the original world-space millimetre parameter, so midpoint samples
 /// preserve the physical path-length convention of [`forward_project_ray`].
+///
+/// Gaia reports the signed slab entry, which is negative when the origin lies
+/// inside the box. The returned entry is clamped to the ray origin, giving the
+/// half-line interval `[max(t_enter, 0), t_exit]`; an origin on the exit face
+/// yields the zero-length interval `(0, 0)`, and a box wholly behind the origin
+/// yields `None`.
 pub(crate) fn ray_grid_interval<T: GeometryScalar>(
     grid: &VoxelGrid<T>,
     ray: &Ray<T>,
@@ -102,7 +112,10 @@ pub(crate) fn ray_grid_interval<T: GeometryScalar>(
         ),
     );
     let (enter, exit) = local_ray.intersect_aabb(&local_aabb)?;
-    Some((enter * local_speed.recip(), exit * local_speed.recip()))
+    let speed_recip = local_speed.recip();
+    let enter = enter * speed_recip;
+    let enter = if enter < T::ZERO { T::ZERO } else { enter };
+    Some((enter, exit * speed_recip))
 }
 
 /// Midpoint-sample `vol` at a ray-march step, returning the world-space sample
@@ -129,7 +142,9 @@ pub(crate) fn sample_volume_along_ray<T: GeometryScalar>(
 ///
 /// `step_mm` is the nominal sampling step (the actual step is `L / ceil(L/step)`
 /// so it divides the traversed length exactly). Returns `None` if the ray misses
-/// the grid.
+/// the grid, including a grid wholly behind the origin. The integral covers the
+/// half-line `t ≥ 0` only: an origin inside the grid contributes the segment
+/// from the origin to the exit face, and an origin on the exit face gives zero.
 #[must_use]
 pub fn forward_project_ray<T: GeometryScalar>(
     mu: &Volume<T>,
@@ -286,6 +301,103 @@ mod tests {
             mu * cast(2.0),
             max_relative = T::EPSILON * cast(PROJECTION_ULPS)
         );
+    }
+
+    /// Rows of the half-line oracle on the 20 mm grid: ray origin abscissa,
+    /// direction sign, and the forward in-grid length `[max(t_enter, 0), t_exit]`
+    /// in millimetres.
+    const HALF_LINE_CASES: [(f64, f64, f64); 6] = [
+        // Centre origin: the forward half spans the half-extent.
+        (10.0, 1.0, 10.0),
+        // Off-centre origin integrates only toward the direction of travel.
+        (4.0, 1.0, 16.0),
+        (4.0, -1.0, 4.0),
+        // Origin on the entry face: the whole extent.
+        (0.0, 1.0, 20.0),
+        (20.0, -1.0, 20.0),
+        // Origin on the exit face: a zero-length forward interval.
+        (20.0, 1.0, 0.0),
+    ];
+
+    /// Asserts the half-line contract of the projector in one scalar width.
+    ///
+    /// A `Ray` is the half-line `t >= 0`, so an origin inside the grid
+    /// integrates `[0, t_exit]` and never the segment behind it. Uniform `mu`
+    /// gives `tau = mu * length_mm / 10`. The bound is `PROJECTION_ULPS`: the
+    /// sum has at most 40 midpoint terms at the 0.5 mm step and the interval
+    /// endpoints carry a few ulps of slab arithmetic.
+    fn inside_origin_integrates_only_the_forward_half_line<
+        T: ShippedScalar + helios_math::GeometryScalar,
+    >() {
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
+        let spacing = cast(2.0);
+        let grid = VoxelGrid::<T>::axis_aligned(
+            [11, 3, 3],
+            [Length::from_unit::<Millimeter>(spacing); 3],
+            Point3::new(zero, zero, zero),
+        )
+        .expect("valid axis-aligned grid");
+        let mu = cast(0.06);
+        let volume = Volume::from_shape_fn(grid, |_| mu);
+        for (origin_x, direction_x, length_mm) in HALF_LINE_CASES {
+            let ray = Ray::try_new(
+                Point3::new(cast(origin_x), spacing, spacing),
+                Vector3::new(cast(direction_x), zero, zero),
+            )
+            .expect("non-degenerate ray direction");
+            let tau = forward_project_ray(&volume, &ray, cast(0.5)).expect("ray touches the grid");
+            if length_mm == 0.0 {
+                assert_eq!(tau, zero, "origin {origin_x}, direction {direction_x}");
+            } else {
+                assert_relative_eq!(
+                    tau,
+                    mu * cast(length_mm) * cast(0.1),
+                    max_relative = T::EPSILON * cast(PROJECTION_ULPS)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn inside_origin_integrates_only_the_forward_half_line_in_single_precision() {
+        inside_origin_integrates_only_the_forward_half_line::<f32>();
+    }
+
+    #[test]
+    fn inside_origin_integrates_only_the_forward_half_line_in_double_precision() {
+        inside_origin_integrates_only_the_forward_half_line::<f64>();
+    }
+
+    #[test]
+    fn oriented_inside_origin_integrates_only_the_forward_half_line() {
+        // Local +x maps to world +y over [20, 40] mm; world y = 30 is the
+        // local midpoint, so the forward half is 10 mm and tau = 0.06.
+        let mu = Volume::from_shape_fn(oriented_grid(), |_| 0.06);
+        let ray = Ray::try_new(Point3::new(9.0, 30.0, 32.0), Vector3::new(0.0, 1.0, 0.0))
+            .expect("unit +y ray");
+        let tau = forward_project_ray(&mu, &ray, 0.5).expect("hit");
+        assert_relative_eq!(tau, 0.06, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn grid_interval_clamps_entry_to_the_ray_origin() {
+        let grid = axis_grid();
+        let interval = |origin_x: f64, direction_x: f64| {
+            let ray = Ray::try_new(
+                Point3::new(origin_x, 2.0, 2.0),
+                Vector3::new(direction_x, 0.0, 0.0),
+            )
+            .expect("unit x ray");
+            ray_grid_interval(&grid, &ray)
+        };
+        // Outside origin: the slab entry is positive and passes through unchanged.
+        assert_eq!(interval(-5.0, 1.0), Some((5.0, 25.0)));
+        // Inside origin: entry is the origin itself.
+        assert_eq!(interval(4.0, 1.0), Some((0.0, 16.0)));
+        assert_eq!(interval(4.0, -1.0), Some((0.0, 4.0)));
+        // The grid lies wholly behind the origin.
+        assert_eq!(interval(30.0, 1.0), None);
     }
 
     #[test]
