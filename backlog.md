@@ -426,3 +426,20 @@ H-117).
   derived in the item); a uniform box gives `mu * chord / 10`, with the chord
   computed by slab clipping.
 - **Next step:** claim; derive the line mapping from `radon.rs`.
+
+<a id="H-122"></a>
+### H-122 — derive the solver test tolerances [patch]
+
+- Status: todo; priority: verification; needs: none; basis: `319de5022bf8`
+- **Outcome:** no `helios-solver` test assertion carries an underived
+  float-literal tolerance; each bound is a named constant whose doc states its
+  error analysis (unit roundoff of `T`, term count, conditioning).
+- **Scope:** 14 `epsilon = 1e-10|1e-12|1e-15` assertions at the basis:
+  `crates/helios-solver/src/projector.rs` lines 222, 233, 250, 261;
+  `crates/helios-solver/src/deposition.rs` lines 231, 246, 247, 258, 272, 297,
+  299, 308, 323, 325. Also underived there: `max_relative = 1e-6` (514) and the
+  `1.0e-12` basis tolerance (208). Pattern: `PROJECTION_ULPS` in `projector.rs`.
+- **Acceptance oracle:** no float-literal tolerance remains in either file's
+  test assertions; each replacement bound is derived at its assertion site and
+  holds in `f32` and `f64` where the test is generic.
+- **Next step:** claim; derive the term count per fixture (judge N3, helios#196).
