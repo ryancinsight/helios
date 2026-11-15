@@ -173,6 +173,7 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
+    use crate::test_support::quarter_turn_rotation;
     use aequitas::systems::si::{quantities::Length, units::Millimeter};
     use eunomia::assert_relative_eq;
     use helios_math::ShippedScalar;
@@ -194,13 +195,6 @@ mod tests {
     }
 
     fn oriented_grid() -> VoxelGrid<f64> {
-        let rotation = helios_math::UnitQuaternion::try_from_rotation_columns(
-            Vector3::new(0.0, 1.0, 0.0),
-            Vector3::new(-1.0, 0.0, 0.0),
-            Vector3::new(0.0, 0.0, 1.0),
-            1.0e-12,
-        )
-        .expect("right-handed quarter-turn basis");
         VoxelGrid::oriented(
             [11, 3, 3],
             [
@@ -209,7 +203,7 @@ mod tests {
                 Length::from_unit::<Millimeter>(2.0),
             ],
             Point3::new(10.0, 20.0, 30.0),
-            rotation,
+            quarter_turn_rotation(),
         )
         .expect("grid")
     }
@@ -219,7 +213,11 @@ mod tests {
         // Uniform μ=0.06 cm⁻¹ over a 20 mm = 2 cm crossing → τ = 0.06·2 = 0.12.
         let mu = Volume::from_shape_fn(axis_grid(), |_| 0.06);
         let tau = forward_project_ray(&mu, &ray_along_x(-5.0), 0.5).expect("hit");
-        assert_relative_eq!(tau, 0.06 * 2.0, epsilon = 1e-12);
+        assert_relative_eq!(
+            tau,
+            0.06 * 2.0,
+            max_relative = f64::EPSILON * PROJECTION_ULPS
+        );
     }
 
     #[test]
@@ -230,7 +228,7 @@ mod tests {
         // an affine field.
         let mu = Volume::from_shape_fn(axis_grid(), |idx| 0.01 * idx[0] as f64 + 0.02);
         let tau = forward_project_ray(&mu, &ray_along_x(-5.0), 1.0).expect("hit");
-        assert_relative_eq!(tau, 0.14, epsilon = 1e-10);
+        assert_relative_eq!(tau, 0.14, max_relative = f64::EPSILON * PROJECTION_ULPS);
     }
 
     #[test]
@@ -247,7 +245,11 @@ mod tests {
         let mu = Volume::from_shape_fn(axis_grid(), |_| 0.06);
         let coarse = forward_project_ray(&mu, &ray_along_x(-5.0), 5.0).expect("hit");
         let fine = forward_project_ray(&mu, &ray_along_x(-5.0), 0.1).expect("hit");
-        assert_relative_eq!(coarse, fine, epsilon = 1e-12);
+        assert_relative_eq!(
+            coarse,
+            fine,
+            max_relative = f64::EPSILON * STEP_INVARIANCE_ULPS
+        );
     }
 
     #[test]
@@ -258,16 +260,48 @@ mod tests {
         let ray = Ray::try_new(Point3::new(10.0, 15.0, 30.0), Vector3::new(0.0, 1.0, 0.0))
             .expect("unit +y ray");
         let tau = forward_project_ray(&mu, &ray, 0.5).expect("hit");
-        assert_relative_eq!(tau, 0.12, epsilon = 1e-12);
+        assert_relative_eq!(tau, 0.12, max_relative = f64::EPSILON * PROJECTION_ULPS);
     }
 
-    /// The projected optical depth is a running sum of per-step contributions
-    /// along the ray. A sum of `n` terms grows relative error as `n * T::EPSILON`
-    /// in the worst case; this fixture marches a 2 cm extent at a 0.5 mm step, so
-    /// `n` is on the order of 40. Sixty-four ulps bounds that with margin while
-    /// staying well below the 1e-5 absolute bound it replaces, which was ~8e-5
-    /// relative at this magnitude.
+    /// Relative bound, in ulps of `T::EPSILON`, on a ray-marched optical depth.
+    ///
+    /// With `u = EPSILON / 2` the unit roundoff, the first-order worst case
+    /// (every rounding at its maximum, all signs aligned) for the relative
+    /// error of `tau` over `n` midpoint terms of one positive sign is, in `u`:
+    ///
+    /// - recursive accumulation of `n` positive terms: `n - 1`;
+    /// - the per-term product `mu * step_cm`: 1;
+    /// - `step_cm = step_mm * recip(10)`: 2, and `step_mm = length * recip(n)`: 2;
+    /// - `length = t_exit - t_enter`: 1 for the subtraction, plus 5 per endpoint
+    ///   (difference from the origin, two products, the speed norm and its
+    ///   reciprocal) amplified by the conditioning `c = (|t_enter| + |t_exit|)
+    ///   / length`, so `5c`.
+    ///
+    /// The total is `n + 5 + 5c`. Every fixture here has `n <= 40` and
+    /// `c <= 1.5` (`c = 1.5` for entry 5 mm and exit 25 mm of a 20 mm chord,
+    /// the same pair shifted by the pose; `c = 1` for an origin inside the
+    /// grid, where `t_enter = 0`), giving at most 52.5u, or 26.3 ulps of
+    /// `EPSILON`.
+    /// Two further terms are bounded by inspection of the call chain, not
+    /// measured. A constant field is interpolated exactly, but the affine field
+    /// adds the sample position (`midpoint_t` 3, `point_at` 2, `world_to_index`
+    /// 2 roundings of coordinates up to 25 mm, at a slope of 0.005 cm^-1/mm,
+    /// 12.5u of `tau`) and three lerp levels (9u). The quarter-turn pose adds
+    /// two quaternion transforms of at most 10 roundings each (20u). The
+    /// largest total, 52.5u + 21.5u or 52.5u + 20u, stays below the 128u that
+    /// 64 ulps of `EPSILON` allow.
     const PROJECTION_ULPS: f64 = 64.0;
+
+    /// Relative bound, in ulps of `EPSILON`, on the difference of two marches of
+    /// one homogeneous chord at different steps.
+    ///
+    /// Each march obeys the `PROJECTION_ULPS` model with `n + 5 + 5c` u, and the
+    /// difference of two values is bounded by the sum of their relative errors.
+    /// The coarse 5 mm step gives `n = 4` and the fine 0.1 mm step `n = 200`
+    /// (`ceil(20 * recip(0.1))`, which is 200 because `recip(0.1)` rounds to
+    /// exactly 10), both at `c = 1.5`: `(4 + 5 + 7.5) + (200 + 5 + 7.5) = 229u`,
+    /// or 114.5 ulps of `EPSILON`; 115 bounds it.
+    const STEP_INVARIANCE_ULPS: f64 = 115.0;
 
     /// Asserts ray-marched optical depth in one scalar width.
     fn forward_projection_accumulates_uniform_optical_depth<
