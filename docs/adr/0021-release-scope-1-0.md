@@ -70,3 +70,8 @@ item carries exactly one `milestone:` tag.
 
 A consumer failure traceable to a frozen API, or a dose-validation
 mismatch against the chosen reference, reopens the affected rung.
+
+## Revision
+
+2026-11-15: the ladder block `M-1.0` is `M-release`; an uppercase-leading ID
+matches the board lint item pattern and counted the block as an item.
