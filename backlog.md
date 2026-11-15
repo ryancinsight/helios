@@ -10,7 +10,7 @@
 - exit: zero unresolved chapter-body paths, `mdbook test` executes a non-zero test count, the figure tree matches the SUMMARY.
 ## M-board: hygiene and locks are green — needs: none
 - exit: no stale statuses or duplicate IDs, the benchmark runner is partitioned within the file target, the locked workspace compiles against one coherent provider graph.
-## M-1.0: stable transport-and-dose release (authority-gated) — needs: M-dose-engine, M-imaging, M-interop, M-book, M-board
+## Milestone M-1.0: stable transport-and-dose release (authority-gated) — needs: M-dose-engine, M-imaging, M-interop, M-book, M-board
 - exit: `cargo semver-checks`, publish dry-run, `cargo doc`, full nextest/doctest green, zero open correctness items. Veto: release authority sets the API-freeze contents; never forces `publish = true` without it.
 ## M-ecosystem: consumer-owned coupling (harmonia, asclepius) — needs: M-1.0
 - exit: consumer receipts on their own boards; does not gate 1.0.
