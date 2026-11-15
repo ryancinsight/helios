@@ -42,7 +42,7 @@ item carries exactly one `milestone:` tag.
   stale statuses or duplicate IDs, the benchmark runner is partitioned
   within the file target, and the locked workspace compiles against one
   coherent provider graph.
-- **M-1.0**: stable transport-and-dose release (**authority-gated**). Exit:
+- **M-release**: stable transport-and-dose release (**authority-gated**). Exit:
   `cargo semver-checks`, publish dry-run, `cargo doc`, the full
   nextest/doctest suite green, and zero open correctness items.
   **Veto point:** release authority sets the API-freeze contents; this
