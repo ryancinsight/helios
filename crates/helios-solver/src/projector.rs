@@ -416,11 +416,11 @@ mod tests {
         let ray = Ray::try_new(Point3::new(9.0, 30.0, 32.0), Vector3::new(0.0, 1.0, 0.0))
             .expect("unit +y ray");
         let tau = forward_project_ray(&mu, &ray, 0.5).expect("hit");
-        // The forward half has 20 midpoint terms at the 0.5 mm step, half the
-        // 40 that `PROJECTION_ULPS` budgets, so the sum bound `n * EPSILON` is
-        // 20 EPSILON. The remaining margin absorbs the quarter-turn rotation of
-        // the direction (the origin's rotation error cancels in the chord) and
-        // the interpolation of the constant field.
+        // 20 midpoint terms at the 0.5 mm step. In u: 19 (sum), 5 (step), 3
+        // (exit endpoint; the clamped entry is exact 0), 16 (direction), 10
+        // (pose): 53. The origin error does not cancel; it enters `t_exit`
+        // alone as `|delta o| / 5` index, at most 31u (307u mm over spacing 2,
+        // by inspection of the pose transform): 84u, below 128u of 64 ulps.
         assert_relative_eq!(tau, 0.06, max_relative = f64::EPSILON * PROJECTION_ULPS);
     }
 
