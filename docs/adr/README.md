@@ -27,3 +27,4 @@
 | [0017](0017-planning-dose-quantities.md) | Type inverse-planning dose objectives | Accepted |
 | [0018](0018-program-owned-global-allocator.md) | Programs own the global allocator; libraries depend only on what they use | Accepted |
 | [0019](0019-cell-constant-radiological-path.md) | Cell-constant radiological path beside the trilinear march | Proposed |
+| [0020](0020-eunomia-moirai-provider-contract.md) | Advance the Eunomia and Moirai provider contracts | Accepted |

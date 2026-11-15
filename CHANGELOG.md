@@ -47,10 +47,27 @@ under a Breaking subsection.
 
 - **build(deps)**: Advance the first-party providers to their current cohort.
   Aequitas to 0.3.1, Apollo FFT to 0.29.3, Asclepius to 0.3.0, CoeUs to
-  0.12.0, the Consus edges to 0.4.0, Eunomia to 0.10.0, Gaia's mesh to
-  0.6.10, Hephaestus to 0.27.0, Hermes to 0.9.2, Horae to 0.2.2, Leto to
-  0.46.4, Mnemosyne to 0.10.1/0.7.1, Moirai to 0.10.0, the RITK edges to
-  0.11.0/0.5.0/0.56.0/0.4.0, Themis to 0.11.1 and Tyche to 0.4.0.
+  0.12.0, the Consus edges to 0.4.0, Eunomia to 0.12.0, Gaia's mesh to
+  0.6.10, Hephaestus to 0.28.0, Hermes to 0.9.2, Horae to 0.2.2, Leto to
+  0.48.0, Mnemosyne to 0.10.1/0.7.1, Moirai to 0.12.0, the RITK edges to
+  0.11.0/0.5.0/0.56.0/0.4.0, Themis to 0.11.1 and Tyche to 0.4.0. The
+  lock is regenerated outside the Atlas dependency overlay and names one
+  revision per provider repository, with every provider row at its
+  repository's current default head.
+
+  **This is a breaking public-contract change:** `helios-math` re-exports
+  Eunomia's `RealField` as `Scalar` and its `FloatElement` and
+  `NumericElement` traits, and Rust treats the trait of Eunomia 0.11 and the
+  same-named trait of Eunomia 0.12 as distinct nominal contracts. Code
+  generic over the Eunomia 0.11 `RealField` trait no longer satisfies
+  Helios's public bounds; update the bound and the imports to 0.12 and select
+  the same provider cohort before using Helios's public generic types.
+  Consumers already using concrete scalar types keep the same Helios API.
+  Moirai 0.12.0 removes the required `StateWord::get_mut` method, which
+  Helios neither implements nor calls, so no Helios source changes with the
+  move. See
+  [ADR 0020](docs/adr/0020-eunomia-moirai-provider-contract.md).
+
 
   The CoeUs 0.12 tensor and autodiff surfaces are fallible, so the planning
   objective now carries that failure: `Tensor::from_slice_on`, `Var::new`,
