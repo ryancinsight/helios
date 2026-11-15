@@ -73,5 +73,6 @@ mismatch against the chosen reference, reopens the affected rung.
 
 ## Revision
 
-2026-11-15: the ladder block `M-1.0` is `M-release`; an uppercase-leading ID
-matches the board lint item pattern and counted the block as an item.
+2026-11-15: the ladder block `M-1.0` is `M-release`. The board lint item
+pattern accepts a hyphen segment of `[A-Z0-9]+`, so it read `M-1` as an item
+ID because the segment `1` is a digit; `M-release` has no such segment.

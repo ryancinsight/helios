@@ -177,7 +177,10 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
-    use crate::test_support::quarter_turn_rotation;
+    use crate::test_support::{
+        quarter_turn_rotation, ORIENTED_FRAME_ROUNDINGS, RAY_DIRECTION_ROUNDINGS,
+        SLAB_ENDPOINT_ROUNDINGS,
+    };
     use aequitas::systems::si::units::Millimeter;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
@@ -234,16 +237,6 @@ mod tests {
     /// recip(n)` (2) and the subtraction forming `length` (1).
     const SEGMENT_DEPTH_ROUNDINGS: f64 = 8.0;
 
-    /// Roundings per slab endpoint of the ray parameter: the difference from
-    /// the origin, two products, and the speed norm with its reciprocal.
-    const SLAB_ENDPOINT_ROUNDINGS: f64 = 5.0;
-
-    /// Roundings the quarter-turn pose adds to the ray parameters: the origin
-    /// and the direction are each rotated into the index frame, at most 10
-    /// roundings per transform (bounded by inspection of the quaternion
-    /// transform, not measured).
-    const ORIENTED_FRAME_ROUNDINGS: f64 = 20.0;
-
     /// Conditioning `(|t_enter| + |t_exit|) / length` of the chord length
     /// against errors in the two slab parameters.
     fn slab_conditioning(t_enter: f64, t_exit: f64) -> f64 {
@@ -268,18 +261,22 @@ mod tests {
     /// `ORIENTED_FRAME_ROUNDINGS` for an oriented grid and zero otherwise.
     ///
     /// The terms, in `u`: the relative error of `tau` is `segments - 1`
-    /// (accumulation) plus `SEGMENT_DEPTH_ROUNDINGS`, plus the slab and pose
-    /// terms scaled by `conditioning`. It reaches the absorbed fraction `1 - T`
-    /// through `tau * T / (1 - T)`, as does the `exp` error of `T` through
-    /// `T / (1 - T)`. Each difference of neighbouring transmissions is exact
-    /// (Sterbenz: the ratio lies in `[1/2, 2]`), so the total telescopes to
-    /// `weight * (1 - T)` up to its `segments`-term positive sum and the
-    /// per-term weight product: `segments`.
+    /// (accumulation), `SEGMENT_DEPTH_ROUNDINGS`, the two slab endpoints
+    /// `SLAB_ENDPOINT_ROUNDINGS * conditioning`, and the direction terms
+    /// `RAY_DIRECTION_ROUNDINGS` and `pose_roundings`, which scale both
+    /// endpoints alike and are not amplified (see their docs). It reaches the
+    /// absorbed fraction `1 - T` through `tau * T / (1 - T)`, as does the
+    /// `exp` error of `T` through `T / (1 - T)`. Each difference of
+    /// neighbouring transmissions is exact (Sterbenz: the ratio lies in
+    /// `[1/2, 2]`), so the total telescopes to `weight * (1 - T)` up to its
+    /// `segments`-term positive sum and the per-term weight product:
+    /// `segments`.
     fn kernel_total_error(segments: u32, tau: f64, conditioning: f64, pose_roundings: f64) -> f64 {
         let n = f64::from(segments);
         let depth = n - 1.0
             + SEGMENT_DEPTH_ROUNDINGS
             + SLAB_ENDPOINT_ROUNDINGS * conditioning
+            + RAY_DIRECTION_ROUNDINGS
             + pose_roundings;
         UNIT_ROUNDOFF * ((EXP_ROUNDINGS + depth * tau) * cancellation(tau) + n)
     }
@@ -343,7 +340,8 @@ mod tests {
 
     #[test]
     fn deposited_voxels_conserve_the_returned_total() {
-        // Sum of scattered voxel dose must equal the returned total exactly.
+        // The voxel sum and the returned total add the same 54 positive terms
+        // in different orders, so they agree to the reordering error.
         let mu = uniform_cube(0.08);
         let mut dose = Volume::zeros(*mu.grid());
         let total = deposit_ray_terma(&mut dose, &mu, &central_x_ray(), 3.0, 0.3)

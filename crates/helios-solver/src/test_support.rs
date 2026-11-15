@@ -44,3 +44,42 @@ pub(crate) fn quarter_turn_rotation() -> UnitQuaternion<f64> {
     )
     .expect("right-handed quarter-turn basis")
 }
+
+/// Roundings per slab endpoint of a ray-grid chord that are independent of
+/// the other endpoint, in units of the unit roundoff `u = EPSILON / 2`.
+///
+/// `ray_grid_interval` forms `length = (t_exit - t_enter) * speed_recip` with
+/// `t = (bound - o) * recip(d)`. The first-order worst case (every rounding at
+/// its maximum, all signs aligned) holds when the entry and the exit lie on
+/// one slab axis, as in every fixture; two axes would add the origin error
+/// without cancellation. Each endpoint rounds `bound - o`, the product with
+/// `recip(d)` and the product with `speed_recip`: 3. Each is a relative error
+/// of one `t`, so it reaches the length amplified by the conditioning
+/// `c = (|t_enter| + |t_exit|) / length`.
+pub(crate) const SLAB_ENDPOINT_ROUNDINGS: f64 = 3.0;
+
+/// Roundings of the ray-grid chord length that scale both endpoints by one
+/// factor, so conditioning does not amplify them, in units of `u`.
+///
+/// - `d * recip(spacing)` for the on-axis component: 2.
+/// - The speed `|d|` and its reciprocal: the norm divides by the largest
+///   component, accumulates three fused multiply-adds, takes the root and
+///   rescales, `(2 + 3) / 2 + 1 + 1 = 4.5`, plus 1.
+/// - `Ray::try_new` rescales by the largest component (1) and
+///   `new_normalize` takes the norm (4.5), its reciprocal (1) and one
+///   product (1).
+/// - `recip(d)` of the unit component in `intersect_aabb`: 1.
+///
+/// The total is 16.
+pub(crate) const RAY_DIRECTION_ROUNDINGS: f64 = 16.0;
+
+/// Relative error the quarter-turn pose adds to the rotated direction, in
+/// units of `u`: one `transform_vector` of at most 10 roundings per
+/// component, bounded by inspection of its Rodrigues form, not measured.
+///
+/// The rotated origin enters both slab distances through the same value `o`,
+/// so its error shifts `t_enter` and `t_exit` equally and cancels in their
+/// difference; only the roundings of `bound - o` remain, counted in
+/// [`SLAB_ENDPOINT_ROUNDINGS`]. The rotated direction scales both distances
+/// by one factor, so its error is added to the length without conditioning.
+pub(crate) const ORIENTED_FRAME_ROUNDINGS: f64 = 10.0;

@@ -272,36 +272,38 @@ mod tests {
     /// - recursive accumulation of `n` positive terms: `n - 1`;
     /// - the per-term product `mu * step_cm`: 1;
     /// - `step_cm = step_mm * recip(10)`: 2, and `step_mm = length * recip(n)`: 2;
-    /// - `length = t_exit - t_enter`: 1 for the subtraction, plus 5 per endpoint
-    ///   (difference from the origin, two products, the speed norm and its
-    ///   reciprocal) amplified by the conditioning `c = (|t_enter| + |t_exit|)
-    ///   / length`, so `5c`.
+    /// - `length = t_exit - t_enter`: 1 for the subtraction, plus
+    ///   `SLAB_ENDPOINT_ROUNDINGS * c` for the two slab endpoints and
+    ///   `RAY_DIRECTION_ROUNDINGS` for the direction, both defined with the
+    ///   chord model in `test_support`, where `c = (|t_enter| + |t_exit|) /
+    ///   length` is the conditioning.
     ///
-    /// The total is `n + 5 + 5c`. Every fixture here has `n <= 40` and
+    /// The total is `n + 5 + 3c + 16`. Every fixture here has `n <= 40` and
     /// `c <= 1.5` (`c = 1.5` for entry 5 mm and exit 25 mm of a 20 mm chord,
     /// the same pair shifted by the pose; `c = 1` for an origin inside the
-    /// grid, where `t_enter = 0`), giving at most 52.5u, or 26.3 ulps of
-    /// `EPSILON`.
+    /// grid, where `t_enter = 0`), giving at most 65.5u.
     /// Two further terms are bounded by inspection of the call chain, not
     /// measured. A constant field is interpolated exactly, but the affine field
     /// adds the sample position (`midpoint_t` 3, `point_at` 2, `world_to_index`
     /// 2 roundings of coordinates up to 25 mm, at a slope of 0.005 cm^-1/mm,
     /// 12.5u of `tau`) and three lerp levels (9u). The quarter-turn pose adds
-    /// two quaternion transforms of at most 10 roundings each (20u). The
-    /// largest total, 52.5u + 21.5u or 52.5u + 20u, stays below the 128u that
-    /// 64 ulps of `EPSILON` allow.
+    /// `ORIENTED_FRAME_ROUNDINGS`, 10u. The largest total, 65.5u + 21.5u,
+    /// stays below the 128u that 64 ulps of `EPSILON` allow; the 41u left is
+    /// margin, not derived.
     const PROJECTION_ULPS: f64 = 64.0;
 
     /// Relative bound, in ulps of `EPSILON`, on the difference of two marches of
     /// one homogeneous chord at different steps.
     ///
-    /// Each march obeys the `PROJECTION_ULPS` model with `n + 5 + 5c` u, and the
-    /// difference of two values is bounded by the sum of their relative errors.
-    /// The coarse 5 mm step gives `n = 4` and the fine 0.1 mm step `n = 200`
+    /// Both marches follow one ray over one grid, so they share the computed
+    /// `length` and its slab and direction roundings; only the march
+    /// roundings differ, `n + 4` u each (`PROJECTION_ULPS`: accumulation
+    /// `n - 1`, product 1, `step_cm` 2, `step_mm` 2). The difference of two
+    /// values is bounded by the sum of their relative errors. The coarse 5 mm
+    /// step gives `n = 4` and the fine 0.1 mm step `n = 200`
     /// (`ceil(20 * recip(0.1))`, which is 200 because `recip(0.1)` rounds to
-    /// exactly 10), both at `c = 1.5`: `(4 + 5 + 7.5) + (200 + 5 + 7.5) = 229u`,
-    /// or 114.5 ulps of `EPSILON`; 115 bounds it.
-    const STEP_INVARIANCE_ULPS: f64 = 115.0;
+    /// exactly 10): `(4 + 4) + (200 + 4) = 212u`, or 106 ulps of `EPSILON`.
+    const STEP_INVARIANCE_ULPS: f64 = 106.0;
 
     /// Asserts ray-marched optical depth in one scalar width.
     fn forward_projection_accumulates_uniform_optical_depth<
@@ -416,9 +418,9 @@ mod tests {
         let tau = forward_project_ray(&mu, &ray, 0.5).expect("hit");
         // The forward half has 20 midpoint terms at the 0.5 mm step, half the
         // 40 that `PROJECTION_ULPS` budgets, so the sum bound `n * EPSILON` is
-        // 20 EPSILON. The remaining margin absorbs the quarter-turn quaternion
-        // rotation of the origin and direction (a fixed number of roundings
-        // per component) and the interpolation of the constant field.
+        // 20 EPSILON. The remaining margin absorbs the quarter-turn rotation of
+        // the direction (the origin's rotation error cancels in the chord) and
+        // the interpolation of the constant field.
         assert_relative_eq!(tau, 0.06, max_relative = f64::EPSILON * PROJECTION_ULPS);
     }
 

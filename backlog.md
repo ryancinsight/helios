@@ -442,3 +442,31 @@ H-117).
   derived in the item); a uniform box gives `mu * chord / 10`, with the chord
   computed by slab clipping.
 - **Next step:** claim; derive the line mapping from `radon.rs`.
+
+<a id="H-123"></a>
+### H-123 — derive the absorbed-fraction test bounds [patch]
+
+- Status: todo; priority: verification; needs: none; basis: `31a990d4132c`
+- **Outcome:** `ABSORBED_FRACTION_ULPS` and `ENERGY_BALANCE_ULPS` in
+  `crates/helios-solver/src/deposition.rs` are computed from
+  `kernel_total_error`, `closed_form_error` and `reordered_sum_error`, generic
+  in `T`.
+- **Scope:** `ray_deposition_conserves_absorbed_energy::<f64>` (n = 64,
+  tau = 0.08, c = 7.25) models 266u, above the 128u that 64 ulps allow;
+  `ENERGY_BALANCE_ULPS` is "twice the single-value budget", not the 126u of
+  `reordered_sum_error(64)`. Both predate H-122 (judge F2, helios#202).
+- **Acceptance oracle:** both constants derive from the model functions and
+  the test holds in `f32` and `f64`.
+
+<a id="H-124"></a>
+### H-124 — cite the libm accuracy behind `EXP_ROUNDINGS` [patch]
+
+- Status: todo; priority: verification; needs: none; basis: `31a990d4132c`
+- **Outcome:** `EXP_ROUNDINGS = 4` in `deposition.rs` is the published
+  maximum-ulp error of the target libm, or a measured table, not an assumed
+  "a few ulps".
+- **Scope:** `exp` enters every deposition bound amplified by
+  `1 / expm1(tau)`, 48u per `exp` at tau = 0.08. The same assumption sits in
+  `deposition.rs` tests at the base revision (judge F3, helios#202).
+- **Acceptance oracle:** the constant's doc cites the accuracy source for the
+  libm that `f64::exp` calls on each CI host, and the bounds hold at it.
