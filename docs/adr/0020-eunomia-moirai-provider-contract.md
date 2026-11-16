@@ -5,6 +5,10 @@ Date: 2026-11-15  \
 Change class: [arch] [major]  \
 Board item: [ATLAS-VERSION-COHERENCE-SWEEP-2026-09-30](../../backlog.md)
 
+Revision 2026-11-16: the Leto upper bound moves from `<0.49.0` to
+`<0.51.0` for the Leto 0.50.0 cohort. The lock holds Leto 0.50.0, which
+CoeUs, RITK, Gaia's mesh crate, Hephaestus and Apollo now admit.
+
 ## Context
 
 `helios-math` re-exports Eunomia's element vocabulary
@@ -44,7 +48,7 @@ Two alternatives were considered:
 
 Move the Eunomia requirement to 0.12.0, the Moirai runtime and
 Moirai-parallel requirements to 0.12.0, and widen the Leto requirement
-to `>=0.46.4, <0.49.0` so the 0.48 line resolves. Regenerate the lock
+to `>=0.46.4, <0.51.0` so the 0.48, 0.49 and 0.50 lines resolve. Regenerate the lock
 outside the Atlas dependency overlay, so every provider row names one
 revision per provider repository and the `source = "git+..."` rows
 survive.

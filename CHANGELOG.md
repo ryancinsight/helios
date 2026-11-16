@@ -45,6 +45,11 @@ under a Breaking subsection.
 
 ### Changed
 
+- **build(deps)**: Widen the Leto requirement to `>=0.46.4, <0.51.0` and lock
+  Leto and Leto Ops at 0.50.0. The lock advances the providers whose
+  requirements now admit it: CoeUs, RITK, Gaia's mesh crate, Hephaestus and
+  Apollo to their default-branch tips. No source changes.
+
 - **build(deps)**: Advance the first-party providers to their current cohort.
   Aequitas to 0.3.1, Apollo FFT to 0.29.3, Asclepius to 0.3.0, CoeUs to
   0.12.0, the Consus edges to 0.4.0, Eunomia to 0.12.0, Gaia's mesh to
