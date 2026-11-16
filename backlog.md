@@ -443,22 +443,6 @@ H-117).
   computed by slab clipping.
 - **Next step:** claim; derive the line mapping from `radon.rs`.
 
-<a id="H-123"></a>
-### H-123 — derive the absorbed-fraction test bounds [patch]
-
-- Status: todo; priority: verification; needs: none; basis: `31a990d4132c`; milestone: M-dose-engine
-- **Outcome:** `ABSORBED_FRACTION_ULPS` and `ENERGY_BALANCE_ULPS` in
-  `crates/helios-solver/src/deposition.rs` are computed from
-  `kernel_total_error`, `closed_form_error` and `reordered_sum_error`, generic
-  in `T`.
-- **Scope:** `ray_deposition_conserves_absorbed_energy::<f64>` (n = 64,
-  tau = 0.08, c = 7.25) models 267.4u, above the 128u that 64 ulps allow;
-  `ENERGY_BALANCE_ULPS` is "twice the single-value budget", not the 126u of
-  `reordered_sum_error(64)`. Both predate H-122 (judge F2, helios#202).
-- **Acceptance oracle:** both constants derive from the model functions and
-  the test holds in `f32` and `f64`.
-- **Next step:** claim; derive both constants from `kernel_total_error`.
-
 <a id="H-124"></a>
 ### H-124 — cite the libm accuracy behind `EXP_ROUNDINGS` [patch]
 
@@ -472,3 +456,19 @@ H-117).
 - **Acceptance oracle:** the constant's doc cites the accuracy source for the
   libm that `f64::exp` calls on each CI host, and the bounds hold at it.
 - **Next step:** claim; find the libm maximum-ulp table for `f64::exp`.
+
+<a id="H-125"></a>
+### H-125 — remove the default absolute floor from the H-122 assertions [patch]
+
+- Status: todo; priority: verification; needs: none; basis: `f73c2c0b077d`; milestone: M-dose-engine
+- **Outcome:** each model-bound `assert_relative_eq!` in `deposition.rs` and
+  `projector.rs` passes `epsilon = zero` beside a derived `max_relative`, or a
+  documented derived absolute floor.
+- **Scope:** without `epsilon` an assertion also passes at `diff <= EPSILON`
+  (eunomia `relative_eq.rs`), about 26u relative near 0.077, which masks a
+  bound shrunk below it (helios#207: bound / 32 passed). 15 sites (8 + 7):
+  `rg -U --pcre2 '(?s)assert_relative_eq!\(((?!epsilon|\);).)*\);' crates/helios-solver/src/{deposition,projector}.rs`.
+- **Acceptance oracle:** the command lists no site; a bound / 32 mutant fails
+  each assertion whose observed error is nonzero (eunomia returns equal on
+  `self == other` first, so a zero-error assertion cannot fail).
+- **Next step:** claim; add `epsilon = zero`, derive any bound that then fails.
