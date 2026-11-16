@@ -6,9 +6,8 @@ Change class: [arch] [major]  \
 Board item: [ATLAS-VERSION-COHERENCE-SWEEP-2026-09-30](../../backlog.md)
 
 Revision 2026-11-16: the Leto upper bound moves from `<0.49.0` to
-`<0.51.0` for the Leto 0.50.0 cohort. Hephaestus and Apollo already admit
-it; the lock stays on Leto 0.48.0 because CoeUs, RITK and Gaia's mesh crate
-do not.
+`<0.51.0` for the Leto 0.50.0 cohort. The lock holds Leto 0.50.0, which
+CoeUs, RITK, Gaia's mesh crate, Hephaestus and Apollo now admit.
 
 ## Context
 
