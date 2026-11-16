@@ -10,9 +10,9 @@
 - exit: zero unresolved chapter-body paths, `mdbook test` executes a non-zero test count, the figure tree matches the SUMMARY.
 ## M-board: hygiene and locks are green — needs: none
 - exit: no stale statuses or duplicate IDs, the benchmark runner is partitioned within the file target, the locked workspace compiles against one coherent provider graph.
-## M-1.0: stable transport-and-dose release (authority-gated) — needs: M-dose-engine, M-imaging, M-interop, M-book, M-board
+## M-release: stable transport-and-dose release (authority-gated) — needs: M-dose-engine, M-imaging, M-interop, M-book, M-board
 - exit: `cargo semver-checks`, publish dry-run, `cargo doc`, full nextest/doctest green, zero open correctness items. Veto: release authority sets the API-freeze contents; never forces `publish = true` without it.
-## M-ecosystem: consumer-owned coupling (harmonia, asclepius) — needs: M-1.0
+## M-ecosystem: consumer-owned coupling (harmonia, asclepius) — needs: M-release
 - exit: consumer receipts on their own boards; does not gate 1.0.
 - ladder: [ADR 0021](docs/adr/0021-release-scope-1-0.md); every open item below carries exactly one `milestone:`.
 
@@ -443,19 +443,32 @@ H-117).
   computed by slab clipping.
 - **Next step:** claim; derive the line mapping from `radon.rs`.
 
-<a id="H-122"></a>
-### H-122 — derive the solver test tolerances [patch]
+<a id="H-123"></a>
+### H-123 — derive the absorbed-fraction test bounds [patch]
 
-- Status: todo; priority: verification; needs: none; basis: `319de5022bf8`
-- **Outcome:** no `helios-solver` test assertion carries an underived
-  float-literal tolerance; each bound is a named constant whose doc states its
-  error analysis (unit roundoff of `T`, term count, conditioning).
-- **Scope:** 14 `epsilon = 1e-10|1e-12|1e-15` assertions at the basis:
-  `crates/helios-solver/src/projector.rs` lines 222, 233, 250, 261;
-  `crates/helios-solver/src/deposition.rs` lines 231, 246, 247, 258, 272, 297,
-  299, 308, 323, 325. Also underived there: `max_relative = 1e-6` (514) and the
-  `1.0e-12` basis tolerance (208). Pattern: `PROJECTION_ULPS` in `projector.rs`.
-- **Acceptance oracle:** no float-literal tolerance remains in either file's
-  test assertions; each replacement bound is derived at its assertion site and
-  holds in `f32` and `f64` where the test is generic.
-- **Next step:** claim; derive the term count per fixture (judge N3, helios#196).
+- Status: todo; priority: verification; needs: none; basis: `31a990d4132c`; milestone: M-dose-engine
+- **Outcome:** `ABSORBED_FRACTION_ULPS` and `ENERGY_BALANCE_ULPS` in
+  `crates/helios-solver/src/deposition.rs` are computed from
+  `kernel_total_error`, `closed_form_error` and `reordered_sum_error`, generic
+  in `T`.
+- **Scope:** `ray_deposition_conserves_absorbed_energy::<f64>` (n = 64,
+  tau = 0.08, c = 7.25) models 267.4u, above the 128u that 64 ulps allow;
+  `ENERGY_BALANCE_ULPS` is "twice the single-value budget", not the 126u of
+  `reordered_sum_error(64)`. Both predate H-122 (judge F2, helios#202).
+- **Acceptance oracle:** both constants derive from the model functions and
+  the test holds in `f32` and `f64`.
+- **Next step:** claim; derive both constants from `kernel_total_error`.
+
+<a id="H-124"></a>
+### H-124 — cite the libm accuracy behind `EXP_ROUNDINGS` [patch]
+
+- Status: todo; priority: verification; needs: none; basis: `31a990d4132c`; milestone: M-dose-engine
+- **Outcome:** `EXP_ROUNDINGS = 4` in `deposition.rs` is the published
+  maximum-ulp error of the target libm, or a measured table, not an assumed
+  "a few ulps".
+- **Scope:** `exp` enters every deposition bound amplified by
+  `1 / expm1(tau)`, 48u per `exp` at tau = 0.08. The same assumption sits in
+  `deposition.rs` tests at the base revision (judge F3, helios#202).
+- **Acceptance oracle:** the constant's doc cites the accuracy source for the
+  libm that `f64::exp` calls on each CI host, and the bounds hold at it.
+- **Next step:** claim; find the libm maximum-ulp table for `f64::exp`.

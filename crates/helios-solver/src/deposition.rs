@@ -177,11 +177,21 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
+    use crate::test_support::{
+        quarter_turn_rotation, ORIENTED_FRAME_ROUNDINGS, RAY_DIRECTION_ROUNDINGS,
+        SLAB_ENDPOINT_ROUNDINGS,
+    };
     use aequitas::systems::si::units::Millimeter;
     use eunomia::assert_relative_eq;
     use helios_domain::VoxelGrid;
     use helios_math::ShippedScalar;
     use helios_math::{Point3, Vector3};
+
+    /// Node-box extent of the 9-voxel, 2 mm cube along each axis.
+    const CUBE_EXTENT_MM: f64 = 16.0;
+
+    /// Distance from the central beam's origin to the cube's entry face.
+    const BEAM_STANDOFF_MM: f64 = 50.0;
 
     // Uniform-μ cube: 9³ voxels, 2 mm spacing → node box [0,16] mm = 1.6 cm/axis.
     fn uniform_cube(mu_val: f64) -> Volume<f64> {
@@ -196,26 +206,92 @@ mod tests {
 
     // +x ray through the cube centre (y = z = 8 mm), starting outside the box.
     fn central_x_ray() -> Ray<f64> {
-        Ray::try_new(Point3::new(-50.0, 8.0, 8.0), Vector3::new(1.0, 0.0, 0.0))
-            .expect("unit +x ray")
+        Ray::try_new(
+            Point3::new(-BEAM_STANDOFF_MM, 8.0, 8.0),
+            Vector3::new(1.0, 0.0, 0.0),
+        )
+        .expect("unit +x ray")
     }
 
     fn oriented_cube(mu_val: f64) -> Volume<f64> {
-        let rotation = helios_math::UnitQuaternion::try_from_rotation_columns(
-            Vector3::new(0.0, 1.0, 0.0),
-            Vector3::new(-1.0, 0.0, 0.0),
-            Vector3::new(0.0, 0.0, 1.0),
-            1.0e-12,
-        )
-        .expect("right-handed quarter-turn basis");
         let grid = VoxelGrid::oriented(
             [9, 9, 9],
             [Length::from_unit::<Millimeter>(2.0); 3],
             Point3::new(10.0, 20.0, 30.0),
-            rotation,
+            quarter_turn_rotation(),
         )
         .expect("grid");
         Volume::from_shape_fn(grid, move |_| mu_val)
+    }
+
+    /// Unit roundoff `u = EPSILON / 2` of `f64`.
+    const UNIT_ROUNDOFF: f64 = f64::EPSILON / 2.0;
+
+    /// Assumed relative error of `exp`, in `u`: "a few ulps", since IEEE 754
+    /// does not require it correctly rounded.
+    const EXP_ROUNDINGS: f64 = 4.0;
+
+    /// Roundings of one segment's optical depth that do not scale with the
+    /// segment count: `mu` and the step converted to base units (2), their
+    /// product (1), `step_cm = step_mm * recip(10)` (2), `step_mm = length *
+    /// recip(n)` (2) and the subtraction forming `length` (1).
+    const SEGMENT_DEPTH_ROUNDINGS: f64 = 8.0;
+
+    /// Conditioning `(|t_enter| + |t_exit|) / length` of the chord length
+    /// against errors in the two slab parameters.
+    fn slab_conditioning(t_enter: f64, t_exit: f64) -> f64 {
+        (t_enter.abs() + t_exit.abs()) / (t_exit - t_enter)
+    }
+
+    /// Conditioning of the central beam: entry at the standoff, exit one cube
+    /// extent beyond it.
+    fn central_beam_conditioning() -> f64 {
+        slab_conditioning(BEAM_STANDOFF_MM, BEAM_STANDOFF_MM + CUBE_EXTENT_MM)
+    }
+
+    /// Cancellation factor `T / (1 - T) = 1 / expm1(tau)` that carries a
+    /// relative error of `T = exp(-tau)` into the absorbed fraction `1 - T`.
+    fn cancellation(tau: f64) -> f64 {
+        tau.exp_m1().recip()
+    }
+
+    /// First-order worst-case relative error of a kernel total over `segments`
+    /// uniform segments of total optical depth `tau`, with every rounding at its
+    /// maximum and all signs aligned. `pose_roundings` is
+    /// `ORIENTED_FRAME_ROUNDINGS` for an oriented grid and zero otherwise.
+    ///
+    /// The terms, in `u`: the relative error of `tau` is `segments - 1`
+    /// (accumulation), `SEGMENT_DEPTH_ROUNDINGS`, the two slab endpoints
+    /// `SLAB_ENDPOINT_ROUNDINGS * conditioning`, and the direction terms
+    /// `RAY_DIRECTION_ROUNDINGS` and `pose_roundings`, which scale both
+    /// endpoints alike and are not amplified (see their docs). It reaches the
+    /// absorbed fraction `1 - T` through `tau * T / (1 - T)`, as does the
+    /// `exp` error of `T` through `T / (1 - T)`. Each difference of
+    /// neighbouring transmissions is exact (Sterbenz: the ratio lies in
+    /// `[1/2, 2]`), so the total telescopes to `weight * (1 - T)` up to its
+    /// `segments`-term positive sum and the per-term weight product:
+    /// `segments`.
+    fn kernel_total_error(segments: u32, tau: f64, conditioning: f64, pose_roundings: f64) -> f64 {
+        let n = f64::from(segments);
+        let depth = n - 1.0
+            + SEGMENT_DEPTH_ROUNDINGS
+            + SLAB_ENDPOINT_ROUNDINGS * conditioning
+            + RAY_DIRECTION_ROUNDINGS
+            + pose_roundings;
+        UNIT_ROUNDOFF * ((EXP_ROUNDINGS + depth * tau) * cancellation(tau) + n)
+    }
+
+    /// First-order worst-case relative error of the closed-form reference
+    /// `1 - exp(-mu * path)`: the rounded `path` literal and the product (2
+    /// in `tau`), the `exp` error, and the final subtraction.
+    fn closed_form_error(tau: f64) -> f64 {
+        UNIT_ROUNDOFF * ((EXP_ROUNDINGS + 2.0 * tau) * cancellation(tau) + 1.0)
+    }
+
+    /// Worst-case relative disagreement of two summations of the same `terms`
+    /// positive values in different orders: each is within `(terms - 1) u`.
+    fn reordered_sum_error(terms: u32) -> f64 {
+        2.0 * f64::from(terms - 1) * UNIT_ROUNDOFF
     }
 
     #[test]
@@ -228,7 +304,10 @@ mod tests {
             .expect("valid attenuation volume")
             .into_base();
         let expected = 1.0 - (-0.05 * 1.6_f64).exp();
-        assert_relative_eq!(total, expected, epsilon = 1e-12);
+        // 32 segments at the 0.5 mm step over the 16 mm chord.
+        let bound = kernel_total_error(32, 0.08, central_beam_conditioning(), 0.0)
+            + closed_form_error(0.08);
+        assert_relative_eq!(total, expected, max_relative = bound);
     }
 
     #[test]
@@ -243,19 +322,33 @@ mod tests {
             .expect("valid attenuation volume")
             .into_base();
         let expected = 1.0 - (-0.05 * 1.6_f64).exp();
-        assert_relative_eq!(total, expected, epsilon = 1e-12);
-        assert_relative_eq!(dose.sum(), expected, epsilon = 1e-12);
+        // 32 segments; the ray enters at 40 mm and exits at 56 mm along +y.
+        let total_bound = kernel_total_error(
+            32,
+            0.08,
+            slab_conditioning(40.0, 56.0),
+            ORIENTED_FRAME_ROUNDINGS,
+        ) + closed_form_error(0.08);
+        assert_relative_eq!(total, expected, max_relative = total_bound);
+        // The voxel sum adds one reordering of the 32 positive segment terms.
+        assert_relative_eq!(
+            dose.sum(),
+            expected,
+            max_relative = total_bound + reordered_sum_error(32)
+        );
     }
 
     #[test]
     fn deposited_voxels_conserve_the_returned_total() {
-        // Sum of scattered voxel dose must equal the returned total exactly.
+        // The voxel sum and the returned total add the same 54 positive terms
+        // in different orders, so they agree to the reordering error.
         let mu = uniform_cube(0.08);
         let mut dose = Volume::zeros(*mu.grid());
         let total = deposit_ray_terma(&mut dose, &mu, &central_x_ray(), 3.0, 0.3)
             .expect("valid attenuation volume")
             .into_base();
-        assert_relative_eq!(dose.sum(), total, epsilon = 1e-12);
+        // 16 mm / 0.3 mm rounds up to 54 segments.
+        assert_relative_eq!(dose.sum(), total, max_relative = reordered_sum_error(54));
     }
 
     #[test]
@@ -269,7 +362,12 @@ mod tests {
         let fine = deposit_ray_terma(&mut d_fine, &mu, &central_x_ray(), 1.0, 0.05)
             .expect("valid attenuation volume")
             .into_base();
-        assert_relative_eq!(coarse, fine, epsilon = 1e-12);
+        // 16 mm / 4 mm = 4 segments and 16 mm / 0.05 mm = 320 segments; two
+        // independent totals differ by at most the sum of their errors.
+        let conditioning = central_beam_conditioning();
+        let bound = kernel_total_error(4, 0.08, conditioning, 0.0)
+            + kernel_total_error(320, 0.08, conditioning, 0.0);
+        assert_relative_eq!(coarse, fine, max_relative = bound);
     }
 
     #[test]
@@ -289,23 +387,23 @@ mod tests {
     fn zero_attenuation_and_zero_weight_deposit_nothing() {
         let empty = uniform_cube(0.0);
         let mut d0 = Volume::zeros(*empty.grid());
-        assert_relative_eq!(
+        // tau = 0 exactly, so T = exp(0) = 1 and every difference is zero.
+        assert_eq!(
             deposit_ray_terma(&mut d0, &empty, &central_x_ray(), 1.0, 0.5)
                 .expect("valid attenuation volume")
                 .into_base(),
-            0.0,
-            epsilon = 1e-15
+            0.0
         );
-        assert_relative_eq!(d0.sum(), 0.0, epsilon = 1e-15);
+        assert_eq!(d0.sum(), 0.0);
 
         let mu = uniform_cube(0.05);
         let mut dw = Volume::zeros(*mu.grid());
-        assert_relative_eq!(
+        // Zero weight scales every finite loss to exactly zero.
+        assert_eq!(
             deposit_ray_terma(&mut dw, &mu, &central_x_ray(), 0.0, 0.5)
                 .expect("valid attenuation volume")
                 .into_base(),
-            0.0,
-            epsilon = 1e-15
+            0.0
         );
     }
 
@@ -315,14 +413,14 @@ mod tests {
         let mut dose = Volume::zeros(*mu.grid());
         let miss =
             Ray::try_new(Point3::new(-50.0, 500.0, 8.0), Vector3::new(1.0, 0.0, 0.0)).unwrap();
-        assert_relative_eq!(
+        // A miss returns before any arithmetic and leaves the zeroed dose as is.
+        assert_eq!(
             deposit_ray_terma(&mut dose, &mu, &miss, 1.0, 0.5)
                 .expect("valid attenuation volume")
                 .into_base(),
-            0.0,
-            epsilon = 1e-15
+            0.0
         );
-        assert_relative_eq!(dose.sum(), 0.0, epsilon = 1e-15);
+        assert_eq!(dose.sum(), 0.0);
     }
 
     #[test]
@@ -506,12 +604,44 @@ mod tests {
         let plain = deposit_ray_terma(&mut plain_d, &mu, &central_x_ray(), 1.0, 0.25)
             .expect("valid attenuation volume")
             .into_base();
-        let focal = Point3::new(-1.0e9, 8.0, 8.0);
-        let div =
-            deposit_ray_terma_diverging(&mut div_d, &mu, &central_x_ray(), 1.0, 0.25, focal, 1.0e9)
-                .expect("valid attenuation volume")
-                .into_base();
-        assert_relative_eq!(div, plain, max_relative = 1e-6);
+        let focal = Point3::new(-LARGE_SAD_MM, 8.0, 8.0);
+        let div = deposit_ray_terma_diverging(
+            &mut div_d,
+            &mu,
+            &central_x_ray(),
+            1.0,
+            0.25,
+            focal,
+            LARGE_SAD_MM,
+        )
+        .expect("valid attenuation volume")
+        .into_base();
+        assert_relative_eq!(div, plain, max_relative = large_sad_bound());
+    }
+
+    /// Source-to-axis distance, and focal-point offset, that stand in for
+    /// "infinite" in the large-SAD limit.
+    const LARGE_SAD_MM: f64 = 1.0e9;
+
+    /// Roundings of the falloff factor `fl(sad^2) * fl(1 / fl(dx^2))` applied to
+    /// a segment loss, in `u`: the focal offset `dx` (1, doubled to 2 in `dx^2`),
+    /// the square (1), the reciprocal (1), the product by `sad^2` (1) and the
+    /// product into the loss (1). `dy` and `dz` are exactly zero on the axis, so
+    /// the sum of squares adds none, and `sad^2 = 1e18` is exact in `f64`.
+    const FALLOFF_ROUNDINGS: f64 = 6.0;
+
+    /// Bound on the relative difference of the diverging and plain totals at
+    /// `LARGE_SAD_MM`.
+    ///
+    /// Segment midpoints lie at `x` in `[0, CUBE_EXTENT_MM]` ahead of a focus at
+    /// `-R`, so the exact falloff is `R^2 / (R + x)^2` in `[1 - 2x / R, 1]`.
+    /// Both totals sum the same 64 positive segment losses (16 mm at the 0.25 mm
+    /// step) and the falloff weights them by factors inside that interval, so
+    /// the totals differ by at most `2 * CUBE_EXTENT_MM / R`: a truncation of
+    /// the limit, not a rounding. Rounding adds the falloff roundings above and
+    /// the two 64-term sums, `2 * 63` in `u`.
+    fn large_sad_bound() -> f64 {
+        2.0 * CUBE_EXTENT_MM / LARGE_SAD_MM + UNIT_ROUNDOFF * (FALLOFF_ROUNDINGS + 2.0 * 63.0)
     }
 
     /// Relative tolerance, in ulps of `T`, for the inverse-square ratio.

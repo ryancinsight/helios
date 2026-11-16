@@ -42,7 +42,7 @@ item carries exactly one `milestone:` tag.
   stale statuses or duplicate IDs, the benchmark runner is partitioned
   within the file target, and the locked workspace compiles against one
   coherent provider graph.
-- **M-1.0**: stable transport-and-dose release (**authority-gated**). Exit:
+- **M-release**: stable transport-and-dose release (**authority-gated**). Exit:
   `cargo semver-checks`, publish dry-run, `cargo doc`, the full
   nextest/doctest suite green, and zero open correctness items.
   **Veto point:** release authority sets the API-freeze contents; this
@@ -70,3 +70,9 @@ item carries exactly one `milestone:` tag.
 
 A consumer failure traceable to a frozen API, or a dose-validation
 mismatch against the chosen reference, reopens the affected rung.
+
+## Revision
+
+2026-11-15: the ladder block `M-1.0` is `M-release`. The board lint item
+pattern accepts a hyphen segment of `[A-Z0-9]+`, so it read `M-1` as an item
+ID because the segment `1` is a digit; `M-release` has no such segment.
