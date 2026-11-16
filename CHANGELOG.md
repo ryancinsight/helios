@@ -45,6 +45,11 @@ under a Breaking subsection.
 
 ### Changed
 
+- **build(deps)**: Widen the Leto requirement to `>=0.46.4, <0.51.0` so
+  the 0.49 and 0.50 lines resolve. The lock stays at Leto 0.48.0: CoeUs,
+  RITK and Gaia's mesh crate, which Helios locks, do not yet admit a Leto
+  newer than 0.48 or 0.49. No source changes.
+
 - **build(deps)**: Advance the first-party providers to their current cohort.
   Aequitas to 0.3.1, Apollo FFT to 0.29.3, Asclepius to 0.3.0, CoeUs to
   0.12.0, the Consus edges to 0.4.0, Eunomia to 0.12.0, Gaia's mesh to
