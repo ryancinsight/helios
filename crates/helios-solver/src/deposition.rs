@@ -224,8 +224,10 @@ mod tests {
         Volume::from_shape_fn(grid, move |_| mu_val)
     }
 
-    /// Unit roundoff `u = EPSILON / 2` of `f64`.
-    const UNIT_ROUNDOFF: f64 = f64::EPSILON / 2.0;
+    /// Unit roundoff `u = EPSILON / 2` of `T`.
+    fn unit_roundoff<T: ShippedScalar>() -> T {
+        T::EPSILON / T::from_f64(2.0)
+    }
 
     /// Assumed relative error of `exp`, in `u`: "a few ulps", since IEEE 754
     /// does not require it correctly rounded.
@@ -239,19 +241,22 @@ mod tests {
 
     /// Conditioning `(|t_enter| + |t_exit|) / length` of the chord length
     /// against errors in the two slab parameters.
-    fn slab_conditioning(t_enter: f64, t_exit: f64) -> f64 {
+    fn slab_conditioning<T: ShippedScalar>(t_enter: T, t_exit: T) -> T {
         (t_enter.abs() + t_exit.abs()) / (t_exit - t_enter)
     }
 
     /// Conditioning of the central beam: entry at the standoff, exit one cube
     /// extent beyond it.
-    fn central_beam_conditioning() -> f64 {
-        slab_conditioning(BEAM_STANDOFF_MM, BEAM_STANDOFF_MM + CUBE_EXTENT_MM)
+    fn central_beam_conditioning<T: ShippedScalar>() -> T {
+        slab_conditioning(
+            T::from_f64(BEAM_STANDOFF_MM),
+            T::from_f64(BEAM_STANDOFF_MM + CUBE_EXTENT_MM),
+        )
     }
 
     /// Cancellation factor `T / (1 - T) = 1 / expm1(tau)` that carries a
     /// relative error of `T = exp(-tau)` into the absorbed fraction `1 - T`.
-    fn cancellation(tau: f64) -> f64 {
+    fn cancellation<T: ShippedScalar>(tau: T) -> T {
         tau.exp_m1().recip()
     }
 
@@ -271,27 +276,50 @@ mod tests {
     /// `[1/2, 2]`), so the total telescopes to `weight * (1 - T)` up to its
     /// `segments`-term positive sum and the per-term weight product:
     /// `segments`.
-    fn kernel_total_error(segments: u32, tau: f64, conditioning: f64, pose_roundings: f64) -> f64 {
-        let n = f64::from(segments);
-        let depth = n - 1.0
-            + SEGMENT_DEPTH_ROUNDINGS
-            + SLAB_ENDPOINT_ROUNDINGS * conditioning
-            + RAY_DIRECTION_ROUNDINGS
+    ///
+    /// Valid for `tau > 0` with `tau / segments <= ln 2` (the Sterbenz
+    /// condition) and `k * u << 1` for the `k` roundings counted, so that the
+    /// neglected second-order terms `O((k u)^2)` stay below the first-order
+    /// margin.
+    fn kernel_total_error<T: ShippedScalar>(
+        segments: u32,
+        tau: T,
+        conditioning: T,
+        pose_roundings: T,
+    ) -> T {
+        let n = T::from_f64(f64::from(segments));
+        let depth = n - T::from_f64(1.0)
+            + T::from_f64(SEGMENT_DEPTH_ROUNDINGS)
+            + T::from_f64(SLAB_ENDPOINT_ROUNDINGS) * conditioning
+            + T::from_f64(RAY_DIRECTION_ROUNDINGS)
             + pose_roundings;
-        UNIT_ROUNDOFF * ((EXP_ROUNDINGS + depth * tau) * cancellation(tau) + n)
+        unit_roundoff::<T>() * ((T::from_f64(EXP_ROUNDINGS) + depth * tau) * cancellation(tau) + n)
     }
 
     /// First-order worst-case relative error of the closed-form reference
     /// `1 - exp(-mu * path)`: the rounded `path` literal and the product (2
-    /// in `tau`), the `exp` error, and the final subtraction.
-    fn closed_form_error(tau: f64) -> f64 {
-        UNIT_ROUNDOFF * ((EXP_ROUNDINGS + 2.0 * tau) * cancellation(tau) + 1.0)
+    /// in `tau`), the `exp` error, and the final subtraction. Valid for
+    /// `tau > 0` and `k * u << 1`, as [`kernel_total_error`].
+    fn closed_form_error<T: ShippedScalar>(tau: T) -> T {
+        unit_roundoff::<T>()
+            * ((T::from_f64(EXP_ROUNDINGS) + T::from_f64(2.0) * tau) * cancellation(tau)
+                + T::from_f64(1.0))
     }
 
     /// Worst-case relative disagreement of two summations of the same `terms`
     /// positive values in different orders: each is within `(terms - 1) u`.
-    fn reordered_sum_error(terms: u32) -> f64 {
-        2.0 * f64::from(terms - 1) * UNIT_ROUNDOFF
+    /// Valid for `terms >= 1` and `terms * u << 1`.
+    fn reordered_sum_error<T: ShippedScalar>(terms: u32) -> T {
+        T::from_f64(2.0 * f64::from(terms - 1)) * unit_roundoff::<T>()
+    }
+
+    /// Worst-case relative disagreement of a kernel total with the closed-form
+    /// absorbed fraction `1 - exp(-tau)`: the kernel error and the reference
+    /// error add, since each carries its own roundings. The bound for the
+    /// uniform-field fixtures of a grid-aligned ray, which has no pose.
+    fn absorbed_fraction_bound<T: ShippedScalar>(segments: u32, tau: T, conditioning: T) -> T {
+        kernel_total_error(segments, tau, conditioning, <T as NumericElement>::ZERO)
+            + closed_form_error(tau)
     }
 
     #[test]
@@ -305,8 +333,7 @@ mod tests {
             .into_base();
         let expected = 1.0 - (-0.05 * 1.6_f64).exp();
         // 32 segments at the 0.5 mm step over the 16 mm chord.
-        let bound = kernel_total_error(32, 0.08, central_beam_conditioning(), 0.0)
-            + closed_form_error(0.08);
+        let bound = absorbed_fraction_bound(32, 0.08, central_beam_conditioning());
         assert_relative_eq!(total, expected, max_relative = bound);
     }
 
@@ -334,7 +361,7 @@ mod tests {
         assert_relative_eq!(
             dose.sum(),
             expected,
-            max_relative = total_bound + reordered_sum_error(32)
+            max_relative = total_bound + reordered_sum_error::<f64>(32)
         );
     }
 
@@ -440,20 +467,15 @@ mod tests {
         assert_eq!(dose.as_slice(), before);
     }
 
-    /// Absorbed fraction `1 - exp(-mu*L)` is a subtractive cancellation: at
-    /// `mu*L = 0.08` the result is ~0.0769, so the relative error of `exp` is
-    /// amplified by `1/0.0769`, roughly 13x. Budgeting `exp` at a few ulps
-    /// (IEEE 754 does not require it correctly rounded) and applying that
-    /// amplification gives a few tens of ulps; 64 bounds it.
-    const ABSORBED_FRACTION_ULPS: f64 = 64.0;
-
-    /// The energy-conservation check compares the returned total against a sum
-    /// over the 9x9x9 dose grid, so it carries both the cancellation above and
-    /// the accumulation over the deposited voxels. Twice the single-value budget
-    /// covers the independent second computation.
-    const ENERGY_BALANCE_ULPS: f64 = 128.0;
-
     /// Asserts ray TERMA deposition and its energy balance in one scalar width.
+    ///
+    /// The central beam crosses the 16 mm chord in 64 segments of 0.25 mm at
+    /// `tau = 0.08`, so `1 - exp(-tau)` is about 0.077 and the cancellation
+    /// factor `1 / expm1(tau)` amplifies each relative error by about 12. The
+    /// total agrees with the closed form within `absorbed_fraction_bound` of
+    /// those 64 segments at the beam's conditioning. The voxel sum and the
+    /// total add the same 64 positive terms in different orders, so they agree
+    /// within `reordered_sum_error(64)`.
     fn ray_deposition_conserves_absorbed_energy<T: ShippedScalar + helios_math::GeometryScalar>() {
         // Both FloatElement and GeometryScalar define `from_f64`; name the one
         // that performs the literal conversion so the call is unambiguous.
@@ -482,18 +504,24 @@ mod tests {
 
         // Absorbed fraction over the 1.6 cm traversed path.
         let path_cm = cast(1.6);
-        let expected = cast(1.0) - (-(mu * path_cm)).exp();
+        let tau = mu * path_cm;
+        let expected = cast(1.0) - (-tau).exp();
+        // `epsilon = zero` removes the macro's default absolute floor of
+        // `EPSILON`, which would otherwise exceed the derived bound for values
+        // near 0.077, so the derived bound is the only tolerance.
         assert_relative_eq!(
             total,
             expected,
-            max_relative = T::EPSILON * cast(ABSORBED_FRACTION_ULPS)
+            epsilon = zero,
+            max_relative = absorbed_fraction_bound(64, tau, central_beam_conditioning())
         );
 
         // Energy conservation: what the kernel reports equals what it deposited.
         assert_relative_eq!(
             dose.sum(),
             total,
-            max_relative = T::EPSILON * cast(ENERGY_BALANCE_ULPS)
+            epsilon = zero,
+            max_relative = reordered_sum_error(64)
         );
     }
 
@@ -503,29 +531,11 @@ mod tests {
     /// stay exactly zero.
     ///
     /// `mu = 0.5 cm^-1` over the 0.8 cm forward chord gives `tau = 0.4` in 32
-    /// segments of 0.25 mm. The 64-ulp budget of `ABSORBED_FRACTION_ULPS` is
-    /// checked against a first-order worst case in `u = EPSILON / 2`, with
-    /// every rounding at its maximum and all signs aligned. The kernel total
-    /// telescopes to `1 - exp(-tau_32)`, because each difference of
-    /// neighbouring transmissions is exact (Sterbenz: the ratio lies in
-    /// `[1/2, 2]`), so the terms are:
-    ///
-    /// - `exp`: a relative error `e` in `T = exp(-tau)` becomes `e * T / (1 - T)`
-    ///   = `2.03 e` in `1 - T` at `tau = 0.4`. Taking `e = 4u` ("a few ulps",
-    ///   since IEEE 754 does not require `exp` correctly rounded) gives 8.1u in
-    ///   the kernel and 8.1u in the reference value.
-    /// - `tau` accumulation: 31 additions (the first adds to zero exactly), the
-    ///   per-segment product, and up to two roundings of the millimetre to
-    ///   centimetre step give a relative error up to 34u in `tau`. It enters
-    ///   `1 - T` with sensitivity `tau * T / (1 - T)` = 0.81, so 27.5u. The
-    ///   reference value's `0.8` literal and `mu * 0.8` product add 2
-    ///   roundings, 1.6u.
-    /// - The 32-term sum of positive absorbed fractions: 31u.
-    ///
-    /// The total is about 76u, or 38 `EPSILON` ulps, below the 64 of
-    /// `ABSORBED_FRACTION_ULPS`. The trilinear interpolation of the constant
-    /// field adds a few roundings per sample, which the margin absorbs. The
-    /// energy-balance comparison uses `ENERGY_BALANCE_ULPS`.
+    /// segments of 0.25 mm. The entry is clamped to the origin, an exact
+    /// `t = 0`, so only the exit endpoint at `t = 8 mm` carries slab roundings
+    /// and the conditioning is `slab_conditioning(0, 8) = 1`. The total agrees
+    /// with the closed form within `absorbed_fraction_bound`, and the voxel
+    /// sum within `reordered_sum_error(32)` of the total.
     fn inside_origin_deposits_only_the_forward_half_line<
         T: ShippedScalar + helios_math::GeometryScalar,
     >() {
@@ -551,16 +561,19 @@ mod tests {
             .expect("valid attenuation volume")
             .into_base();
 
-        let expected = cast(1.0) - (-(mu * cast(0.8))).exp();
+        let tau = mu * cast(0.8);
+        let expected = cast(1.0) - (-tau).exp();
         assert_relative_eq!(
             total,
             expected,
-            max_relative = T::EPSILON * cast(ABSORBED_FRACTION_ULPS)
+            epsilon = zero,
+            max_relative = absorbed_fraction_bound(32, tau, slab_conditioning(zero, centre))
         );
         assert_relative_eq!(
             dose.sum(),
             total,
-            max_relative = T::EPSILON * cast(ENERGY_BALANCE_ULPS)
+            epsilon = zero,
+            max_relative = reordered_sum_error(32)
         );
         for ix in 0..4 {
             for iy in 0..9 {
@@ -641,7 +654,8 @@ mod tests {
     /// the limit, not a rounding. Rounding adds the falloff roundings above and
     /// the two 64-term sums, `2 * 63` in `u`.
     fn large_sad_bound() -> f64 {
-        2.0 * CUBE_EXTENT_MM / LARGE_SAD_MM + UNIT_ROUNDOFF * (FALLOFF_ROUNDINGS + 2.0 * 63.0)
+        2.0 * CUBE_EXTENT_MM / LARGE_SAD_MM
+            + unit_roundoff::<f64>() * (FALLOFF_ROUNDINGS + 2.0 * 63.0)
     }
 
     /// Relative tolerance, in ulps of `T`, for the inverse-square ratio.
