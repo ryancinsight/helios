@@ -472,3 +472,13 @@ H-117).
 - **Acceptance oracle:** the constant's doc cites the accuracy source for the
   libm that `f64::exp` calls on each CI host, and the bounds hold at it.
 - **Next step:** claim; find the libm maximum-ulp table for `f64::exp`.
+
+<a id="H-125"></a>
+### H-125 — dispose the local-only Leto 0.49 requirement commit [patch]
+
+- Status: todo; priority: tightening; needs: none; basis: `1cd816811e82`; milestone: M-board
+- **Outcome:** no local ref holds the tip commit of `build/helios-leto-049` (`build(deps): Allow Leto 0.49.0`, no trailers, no PR, no remote ref), and the main tree is no longer checked out on that branch.
+- **Evidence (read at the basis):** the commit widens the `leto` requirement in `Cargo.toml` to `<0.50.0`; its parent is the merge of #199. It is not an ancestor of `refs/pull/203/head`, the open draft that widens the same line to `<0.51.0`, and `origin/main` still reads `<0.49.0` (`Cargo.toml:151`), so no durable ref reaches the commit and the landed-work proof does not hold until #203 merges.
+- **Scope:** the local branch and the main tree's checkout; no manifest change.
+- **Acceptance:** `git for-each-ref refs/heads/build/helios-leto-049` prints nothing and the main tree is on the default branch or detached at its gitlink. Before the deletion, either #203 has merged (its `<0.51.0` range contains the commit's `<0.50.0`; the closing PR records that as a supersession judged by range, not by identical bytes) or the commit is pushed to a `rescue/` ref with a draft PR.
+- **Next step:** after #203 merges, move the tree off the branch, record the supersession and delete the branch; if exact proof is required instead, take the `rescue/` route.
