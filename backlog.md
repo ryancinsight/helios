@@ -466,8 +466,9 @@ H-117).
   documented derived absolute floor.
 - **Scope:** without `epsilon` an assertion also passes at `diff <= EPSILON`
   (eunomia `relative_eq.rs`), about 26u relative near 0.077, which masks a
-  bound shrunk below it (helios#207: bound / 32 passed). 15 sites, listed by
-  `rg -U --pcre2 '(?s)assert_relative_eq!\(((?!epsilon|\);).)*\);'`.
-- **Acceptance oracle:** the command lists no site and a bound / 32 mutant of
-  each derived bound fails its assertion.
+  bound shrunk below it (helios#207: bound / 32 passed). 15 sites (8 + 7):
+  `rg -U --pcre2 '(?s)assert_relative_eq!\(((?!epsilon|\);).)*\);' crates/helios-solver/src/{deposition,projector}.rs`.
+- **Acceptance oracle:** the command lists no site; a bound / 32 mutant fails
+  each assertion whose observed error is nonzero (eunomia returns equal on
+  `self == other` first, so a zero-error assertion cannot fail).
 - **Next step:** claim; add `epsilon = zero`, derive any bound that then fails.
