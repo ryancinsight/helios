@@ -409,18 +409,12 @@ changes, which are outside this item.
   Nextest attempt could not start because active peer CFDrs/Leto builds held
   the shared Atlas lock; no local package-gate result is claimed.
 
-### G-29 — DICOM charset dependency (externally blocked)
+### G-29 — DICOM charset dependency [patch] — closed
 
-- `dicom-encoding` 0.10.0 declares `encoding` 0.2.33 unconditionally and uses
-  it for the DICOM Specific Character Set codecs. The current release exposes
-  no feature that can remove the dependency. A 2026-07-20 registry and resolved
-  manifest audit confirms 0.10.0 remains the latest release and still carries
-  the unconditional edge.
-- RUSTSEC-2021-0153 reports maintenance status, not a known vulnerability.
-  CI quarantines only that advisory ID while continuing to deny every other
-  warning and vulnerability. Reopen H-073 when `dicom-rs` publishes a release
-  backed by a maintained charset implementation; a consumer fork or reduced
-  character-set implementation would duplicate provider ownership.
+RITK’s native dataset switches character repertoire handling to the
+provider’s decoder. The locked Helios graph contains neither `encoding`
+nor `chrono`, covering workspace features and target platforms. H-073
+and H-129 close together.
 
 ### Recently closed
 

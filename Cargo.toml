@@ -110,12 +110,12 @@ criterion = "0.5"
 #    opt in as the corresponding Helios layer is built out.
 #    Layer map is authoritative in ARCHITECTURE.md. ──
 # Imaging foundation (DICOM/MVCT I/O, registration, VTK).
-ritk-core = { version = "0.11.0", git = "https://github.com/ryancinsight/ritk" }
-ritk-io = { version = "0.5.0", git = "https://github.com/ryancinsight/ritk" }
-ritk-registration = { version = "0.56.0", git = "https://github.com/ryancinsight/ritk" }
+ritk-core = { version = "0.11.0", git = "https://github.com/ryancinsight/ritk", rev = "0602cfe8b5cd94c14a0220cea2cd66daa389933f" }
+ritk-io = { version = "0.6.0", git = "https://github.com/ryancinsight/ritk", rev = "0602cfe8b5cd94c14a0220cea2cd66daa389933f" }
+ritk-registration = { version = "0.56.0", git = "https://github.com/ryancinsight/ritk", rev = "0602cfe8b5cd94c14a0220cea2cd66daa389933f" }
 # Native DICOM parse/decode (CT/MVCT real-input path). ritk-dicom owns parsing,
 # typed attribute access, transfer-syntax dispatch, and pixel decoding.
-ritk-dicom = { version = "0.4.0", git = "https://github.com/ryancinsight/ritk" }
+ritk-dicom = { version = "0.5.0", git = "https://github.com/ryancinsight/ritk", rev = "0602cfe8b5cd94c14a0220cea2cd66daa389933f" }
 # Geometry kernel (binary MLC, collimators, jaws, patient meshes).
 gaia = { package = "gaia-mesh", version = "0.6.10", git = "https://github.com/ryancinsight/gaia", default-features = false }
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.

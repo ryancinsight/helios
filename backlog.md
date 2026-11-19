@@ -5,7 +5,7 @@
 ## M-imaging: the projector is exact and provider-delegated — needs: none
 - exit: ADR 0019 cases 1-8 pass in f32/f64, fan rays match the parallel projector within the roundoff bound, no declared provider stays locally substituted.
 ## M-interop: clinical and scripting boundaries are typed — needs: none
-- exit: DICOM-RT I/O round-trips structure sets, the Python surface is typed with PEP 561 metadata, H-073 stays a recorded external hold.
+- exit: DICOM-RT I/O round-trips structure sets, the Python surface is typed with PEP 561 metadata, the native DICOM graph stays free of the retired charset and Chrono dependencies.
 ## M-book: the book's claims resolve against the tree — needs: none
 - exit: zero unresolved chapter-body paths, `mdbook test` executes a non-zero test count, the figure tree matches the SUMMARY.
 ## M-board: hygiene and locks are green — needs: none
@@ -44,7 +44,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-068 | Back validated energy and voxel-spacing newtypes with Aequitas quantities while preserving Helios-specific validation and public display units; keep Hounsfield units local as a calibrated non-SI scale. | [arch] | done | Codex `/root` | `Cargo.toml`, `Cargo.lock`, `crates/helios-quantities/**`, `docs/adr/**`, PM artifacts |
 | H-071 | Replace the tautological same-run benchmark check with Atlas's phase-replicated Criterion gate pinned to merge `9bfb722`; run native tests through the committed Nextest budget and delete the copied Python classifier. | [arch] [patch] | done | Codex `/root` | `.github/workflows/ci.yml`, `.github/scripts/check_regressions.py`, `README.md`, PM artifacts |
 | H-072 | Upgrade the thin Python boundary to PyO3 0.29.0, close RUSTSEC-2025-0020 plus RUSTSEC-2026-0177 without moving domain logic into the binding crate, and enforce value-semantic tests against the built extension. | [patch] | done | Codex `/root` | `Cargo.toml`, `Cargo.lock`, `crates/helios-python/**`, `.github/workflows/ci.yml`, PM artifacts |
-| H-073 | Replace the unmaintained `encoding` charset implementation when `dicom-encoding` publishes a maintained dependency; current 0.10.0 requires it unconditionally for DICOM Specific Character Set coverage. | [patch] | blocked | — | external `dicom-rs` provider; reopen on a release that removes RUSTSEC-2021-0153; milestone: M-interop. |
+| H-073 | Use the native RITK Specific Character Set decoder and remove the RUSTSEC-2021-0153 hold. | [patch] | done | Codex | `Cargo.lock`, `deny.toml`, `.github/workflows/ci.yml` |
 | H-074 | Align the direct Aequitas and Proteus revisions with the merged temperature-response provider graph so Helios and Hephaestus resolve one Aequitas source identity. | [patch] | done | Codex | `Cargo.toml`, `Cargo.lock`, PM artifacts |
 | H-076 | Replace Helios-owned gEUD/TCP/NTCP equations and the duplicate Coeus gEUD tape with Asclepius-owned laws; store the DVH response sample as Aequitas doses, preserve zero-copy evaluation, migrate callers to typed failures, and verify the planning gradient plus delivered-dose workflow. | [arch] [major] | done | Codex `/root` | `Cargo.toml`, `crates/helios-analysis/**`, `crates/helios-planning/**`, `crates/helios-simulation/tests/**`, architecture and PM artifacts |
 | H-078 | Adopt Tyche's versioned normal-sampling stream, remove local patch masking, and pin the quantum-noise replay vector to an explicit algorithm. | [arch] [major] | done | Codex `/root` | `Cargo.toml`, `Cargo.lock`, `crates/helios-imaging/src/noise.rs`, ADR and PM artifacts |
@@ -83,7 +83,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-003 | `helios-math`: `Scalar` seam (= `eunomia::RealField`) + leto linear-algebra substrate re-export | [minor] | done | claude-helios | `crates/helios-math/**` |
 | H-003b | Consume gaia `Aabb`/`Ray` in `helios-math` (re-export as Helios geometry). Blocked on gaia's leto-geometry migration landing on its default branch (G-11). | [minor] | blocked | — | `crates/helios-math/**` |
 | H-004 | `helios-domain`: `VoxelGrid` (index↔world via leto `Isometry3`) + `Volume<T>` trilinear sampling over leto `Array3` | [minor] | done | claude-helios | `crates/helios-domain/**` |
-| H-004b | `helios-domain::load_ct_slice` (feature `dicom`): single-slice DICOM CT/MVCT → HU `Volume` via `ritk-dicom` (parse + rescale-calibrated decode) + geometry (Rows/Columns/PixelSpacing/ImagePositionPatient). Validated by a synthetic-DICOM round-trip through the real dicom-rs parser. **Mandatory ritk integration now consumed.** | [minor] | done | claude-helios | `crates/helios-domain/**`, `crates/helios-quantities/**` |
+| H-004b | `helios-domain::load_ct_slice` (feature `dicom`): single-slice DICOM CT/MVCT → HU `Volume` via `ritk-dicom` (parse + rescale-calibrated decode) + geometry (Rows/Columns/PixelSpacing/ImagePositionPatient). Validated by synthetic DICOM through the provider’s public parser. **Mandatory ritk integration now consumed.** | [minor] | done | claude-helios | `crates/helios-domain/**`, `crates/helios-quantities/**` |
 | H-004c | `helios-domain::load_ct_series`: multi-slice DICOM **series** stacking → 3-D HU `Volume` (parse+decode each slice, validate identical in-plane geometry, sort by `ImagePositionPatient` z, derive uniform Δz). Shared `read_slice`/`scatter_slice` with `load_ct_slice`. Verified by a shuffled 3-slice synthetic round-trip + empty/non-uniform error paths. | [minor] | done | claude-helios | `crates/helios-domain/**` |
 | H-004d | `helios-domain`: `CtVolume`/`MvctVolume` HU-semantic newtypes + `ImageOrientationPatient` → oriented grid pose (pairs with H-003d oriented `VoxelGrid`). The Helios consumer uses RITK’s provider-owned named tag; RITK PR #149 merged 2026-08-14 as ab46f9f12f25, an ancestor of the locked ritk rev 91ca0fd6dd0d. | [minor] | done | Codex | `crates/helios-domain/**`, `backlog.md`, `gap_audit.md`, `checklist.md` |
 | H-005 | Superseded by H-020b's binary-MLC `LeafOpenTimeSinogram`/`MlcModel` and H-020k's gaia-backed `FieldAperture`/delivery collimation; roadmap reconciled and the formatter gate restored. | [patch] | done | Codex | `README.md`, `backlog.md`, `gap_audit.md`, `CHANGELOG.md`, `crates/helios-{math,solver}/src/**` |
@@ -520,19 +520,10 @@ H-117).
 - **Next step:** claim; rewrite the note against that test's parameters.
 
 <a id="H-129"></a>
-### H-129 — chrono advisory hold on the dicom-core path [patch]
+### H-129 — Remove the Chrono advisory hold [patch] — done
 
-- Status: todo; priority: correctness; needs: none; basis: `f8ac289f`; milestone: M-interop
-- **Outcome:** the RustSec audit job passes while the only `chrono` edge in
-  Helios's audited graph is `dicom-core`'s DICOM date values, reached through
-  `ritk-dicom`.
-- **Scope:** the audit command's advisory ignore list. **Non-goals:** dropping
-  the DICOM provider, replacing `dicom-core`, or weakening the audit beyond the
-  one advisory ID.
-- **Acceptance oracle:** `cargo audit --deny warnings` reports no `chrono`
-  advisory with the ignore present, and the ignore is deleted when the audited
-  `dicom-core` release no longer depends on `chrono`, which a `cargo tree -e
-  normal` of the audited graph witnesses.
-- **Next step:** watch the `dicom-core` release line for a `chrono`-free
-  release, drop the ignore and re-run the audit. The same advisory across the
-  stack is tracked by `ATLAS-SEC-CHRONO-ADVISORY` in the Atlas meta repository.
+- Helios consumes RITK’s native dataset and codec backend at `0602cfe8`.
+  The type, file read, and codec dispatch belong to the provider.
+- Locked Cargo tree inspection covers all workspace features, targets, and
+  normal, build, and development edges. Chrono and the external DICOM crates
+  are absent. CI's RustSec audit denies all warnings without either hold.

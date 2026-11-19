@@ -45,6 +45,9 @@ under a Breaking subsection.
 
 ### Changed
 
+- Helios CT and MVCT ingest uses RITK’s native dataset and pixel codecs.
+  Frame interpretation, geometry, and stack assembly reside in separate modules.
+
 - **build(deps)**: Widen the Leto requirement to `>=0.46.4, <0.51.0` and lock
   Leto and Leto Ops at 0.50.0. The lock advances the providers whose
   requirements now admit it: CoeUs, RITK, Gaia's mesh crate, Hephaestus and
@@ -259,6 +262,9 @@ under a Breaking subsection.
   remaining legacy dependency declarations and source tokens.
 
 ### Removed
+
+- Remove the Chrono and older DICOM charset advisory holds after the native
+  provider clears both packages from the full locked dependency graph.
 
 - `helios-math` no longer re-exports `eunomia::CastFrom` and `eunomia::CastTo`;
   no Helios crate used them, and Eunomia retires both traits. Counts convert

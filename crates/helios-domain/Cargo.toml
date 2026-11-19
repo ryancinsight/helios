@@ -34,6 +34,8 @@ dicom = ["dep:ritk-dicom"]
 storage = ["dep:consus-core", "dep:consus-hdf5", "dep:consus-io"]
 
 [dev-dependencies]
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
 # Examples and benches install the program allocator (ADR 0018).
 helios-allocator = { workspace = true }
 eunomia = { workspace = true }

@@ -1,5 +1,14 @@
 # Helios Checklist (tactical)
 
+## H-073 and H-129 — Native RITK DICOM provider [patch]
+
+- [x] Resolve the locked RITK 0.5 dataset and decoder.
+- [x] Verify the all-feature, all-target dependency graph excludes Chrono
+      and the retired DICOM charset backend. Remove both audit holds.
+- [x] Pass 54 locked `helios-domain` tests with all features at RITK
+      `0602cfe8`. The native deflate round trip preserves the grid pose and
+      the analytical HU values. Warning-denied Clippy and advisories pass.
+
 ## current session — H-118a typed Python surface [patch] — in-progress
 
 - [x] Add the five-function `helios.pyi` contract and `py.typed` marker.
