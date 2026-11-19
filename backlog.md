@@ -518,3 +518,21 @@ H-117).
 - **Acceptance oracle:** the note's `k` and both figures reproduce from the model
   at the named parameters (217.4u, 1.30e-5, 2.4e-14) and the label names a test.
 - **Next step:** claim; rewrite the note against that test's parameters.
+
+<a id="H-129"></a>
+### H-129 — chrono advisory hold on the dicom-core path [patch]
+
+- Status: todo; priority: correctness; needs: none; basis: `f8ac289f`; milestone: M-interop
+- **Outcome:** the RustSec audit job passes while the only `chrono` edge in
+  Helios's audited graph is `dicom-core`'s DICOM date values, reached through
+  `ritk-dicom`.
+- **Scope:** the audit command's advisory ignore list. **Non-goals:** dropping
+  the DICOM provider, replacing `dicom-core`, or weakening the audit beyond the
+  one advisory ID.
+- **Acceptance oracle:** `cargo audit --deny warnings` reports no `chrono`
+  advisory with the ignore present, and the ignore is deleted when the audited
+  `dicom-core` release no longer depends on `chrono`, which a `cargo tree -e
+  normal` of the audited graph witnesses.
+- **Next step:** watch the `dicom-core` release line for a `chrono`-free
+  release, drop the ignore and re-run the audit. The same advisory across the
+  stack is tracked by `ATLAS-SEC-CHRONO-ADVISORY` in the Atlas meta repository.
