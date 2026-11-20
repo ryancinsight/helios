@@ -3,8 +3,10 @@
 <a id="H-AEQUITAS-050"></a>
 ## H-AEQUITAS-050 — Publish the shared physics providers [major]
 
-- milestone: M-release.
-- target: 0.2.0. The 11 affected crates share the Aequitas, Leto, and RITK
+- Status: todo
+- Priority: correctness
+- Milestone: M-release
+- Target: 0.2.0. The 11 affected crates share the Aequitas, Leto, and RITK
   provider versions of the integrated Atlas stack.
 - acceptance: [ADR 0022](docs/adr/0022-published-physics-provider-boundary.md),
   exact hosted checks, 11 archive receipts, and a fresh typed consumer.
@@ -529,14 +531,4 @@ H-117).
 - **Next step:** claim; rewrite the note against that test's parameters.
 
 <a id="H-129"></a>
-### H-129 — Remove the Chrono advisory hold [patch] — done
-
-- Helios consumes RITK’s native dataset and codec backend at `0602cfe8`.
-  The type, file read, and codec dispatch belong to the provider.
-- Locked Cargo tree inspection covers all workspace features, targets, and
-  normal, build, and development edges. Chrono and the external DICOM crates
-  are absent. CI's RustSec audit denies all warnings without either hold.
-- The Rust release uses the Aequitas 0.4 registry cohort and RITK DICOM 0.5.
-  The analysis-to-imaging test edge stays workspace-local. Crates.io serves
-  all 12 Helios 0.1.0 packages from [the merged cutover](https://github.com/ryancinsight/helios/pull/217).
-  The [release checklist](CHECKLIST.md) records the closed registry and CT checks.
+[H-129 release evidence](gap_audit.md#aequitas-04-and-native-ct-release).

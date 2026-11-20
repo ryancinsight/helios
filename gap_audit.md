@@ -14,7 +14,9 @@ The registry manifests use RITK DICOM 0.5 and the reviewed Aequitas 0.4
 provider packages. The lock guard checks that every source-less package
 belongs to the workspace. Starting without a lockfile, the merged
 workspace resolves 403 distinct package versions and the published Rust
-library consumer resolves 330. Both graphs have zero Chrono packages.
+library consumer resolves 330. Both graphs have zero Chrono packages. H-129 removes the Chrono and
+retired DICOM charset advisory holds after inspecting the locked
+all-feature and all-target normal, build, and development graph.
 
 All 12 crates.io archives and tags match merge commit
 `2b5325d8796ed50c5e14ed81ce4955e683aa6766`. The merged local run passes
