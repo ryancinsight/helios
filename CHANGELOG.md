@@ -5,6 +5,14 @@ All notable changes to Helios are documented here. Format follows
 [SemVer 2.0.0](https://semver.org/). Pre-1.0: minor bumps may break, documented
 under a Breaking subsection.
 
+## [Unreleased]
+
+### Changed
+
+- Use crates.io Aequitas 0.5.0 and Eunomia 0.12.1 throughout the Helios
+  workspace. Resolve native DICOM and registration from the merged RITK
+  source until compatible RITK releases are available on crates.io.
+
 ## [0.1.0]
 
 First Rust registry release. See the July 2026 development baseline below.

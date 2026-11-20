@@ -1,5 +1,13 @@
 # Helios Gap Audit
 
+## Aequitas 0.5 workspace migration
+
+The locked workspace pairs crates.io Aequitas 0.5.0 and Eunomia 0.12.1
+with the merged RITK native DICOM and registration sources. The current
+RITK registry releases still select Aequitas 0.4 transitively. The next
+Helios release needs compatible RITK registry packages and a fresh
+registry-only consumer check.
+
 ## Aequitas 0.4 and native CT release
 
 The registry manifests use RITK DICOM 0.5 and the reviewed Aequitas 0.4

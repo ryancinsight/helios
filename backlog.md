@@ -531,3 +531,6 @@ H-117).
   The analysis-to-imaging test edge stays workspace-local. Crates.io serves
   all 12 Helios 0.1.0 packages from [the merged cutover](https://github.com/ryancinsight/helios/pull/217).
   The [release checklist](CHECKLIST.md) records the closed registry and CT checks.
+  The Aequitas 0.5 workspace migration uses the merged RITK source.
+  The [release checklist](CHECKLIST.md) tracks the compatible RITK
+  packages needed by the next registry release.

@@ -5,6 +5,13 @@
 - [x] [patch] Verify the native DICOM cutover and Aequitas 0.4 package graph.
 - [x] [patch] Verify the exact merged workspace, publish, and test a fresh consumer.
 
+## Aequitas 0.5 workspace migration
+
+- [ ] [patch] Verify native DICOM and registration with a single crates.io
+      Aequitas 0.5.0 and Eunomia 0.12.1 in the locked workspace.
+- [ ] [patch] Adopt the compatible RITK registry packages and verify
+      a fresh registry-only consumer before the next Helios release.
+
 ## H-073 and H-129 — Native RITK DICOM provider [patch]
 
 - [x] Resolve the locked RITK 0.5 dataset and decoder.

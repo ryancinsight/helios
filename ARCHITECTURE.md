@@ -3,9 +3,9 @@
 Helios (Helios-rs) is an **integrator** repository in the Atlas multi-repo stack:
 a Cargo workspace that composes the Atlas foundation/infrastructure/domain crates
 into a unified platform for radiation-therapy simulation/planning and radiation
-imaging. It mirrors the kwavers/cfdrs model exactly — Atlas crates are consumed as
-**remote git dependencies** (each carries its own `[workspace]`), and Helios's own
-crates form a strictly **unidirectional, layered** dependency graph.
+imaging. Its crates form a **unidirectional, layered** dependency graph.
+Most Atlas providers come from crates.io. The workspace pins the RITK family
+to one merged revision whose source uses the Aequitas 0.5 provider graph.
 
 ## Layering (unidirectional; dependencies point inward/upward only)
 
@@ -54,8 +54,8 @@ Atlas set as the integration SSOT.
 
 ## Atlas dependency map
 
-Package names below are verified against each Atlas repo's manifests. Git URLs are
-the SSOT in the root `Cargo.toml` `[workspace.dependencies]`.
+The root `Cargo.toml` `[workspace.dependencies]` defines each provider source
+and version requirement. `Cargo.lock` records the resolved crate identities.
 
 | Atlas component | Crates (packages) | Consumed by | Purpose in Helios |
 |-----------------|-------------------|-------------|-------------------|
