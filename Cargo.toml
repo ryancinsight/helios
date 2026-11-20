@@ -124,13 +124,13 @@ hephaestus-wgpu = { version = "0.29.0", git = "https://github.com/ryancinsight/h
 moirai = { version = "0.12.0", git = "https://github.com/ryancinsight/Moirai.git", package = "moirai-runtime" }
 moirai-parallel = { version = "0.12.0", git = "https://github.com/ryancinsight/Moirai.git", default-features = false, features = ["parallel"] }
 # Tensors, autodiff, optimizers, neural surrogates.
-coeus-core = { version = "0.13.0", git = "https://github.com/ryancinsight/Coeus.git" }
-coeus-tensor = { version = "0.13.0", git = "https://github.com/ryancinsight/Coeus.git" }
-coeus-autograd = { version = "0.13.0", git = "https://github.com/ryancinsight/Coeus.git" }
-coeus-optim = { version = "0.13.0", git = "https://github.com/ryancinsight/Coeus.git" }
+coeus-core = "0.13.0"
+coeus-tensor = "0.13.0"
+coeus-autograd = "0.13.0"
+coeus-optim = "0.13.0"
 # Biological-response laws and their Coeus tape construction.
-asclepius = { version = "0.4.0", git = "https://github.com/ryancinsight/asclepius" }
-asclepius-coeus = { version = "0.4.0", git = "https://github.com/ryancinsight/asclepius" }
+asclepius = "0.4.0"
+asclepius-coeus = "0.4.0"
 # Volumetric storage (HDF5/Zarr, compression).
 consus-core = { version = "0.5.0", git = "https://github.com/ryancinsight/consus", features = ["std"] }
 consus-hdf5 = { version = "0.5.0", git = "https://github.com/ryancinsight/consus", features = ["std"] }
