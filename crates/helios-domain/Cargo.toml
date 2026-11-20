@@ -15,7 +15,7 @@ workspace = true
 aequitas = { workspace = true }
 eunomia = { workspace = true }
 helios-quantities = { workspace = true }
-helios-math = { workspace = true }
+helios-math = { workspace = true, features = ["geometry"] }
 horae = { workspace = true }
 leto = { workspace = true }
 # DICOM CT/MVCT load path — feature-gated so the provider stays out of the core
@@ -34,6 +34,8 @@ dicom = ["dep:ritk-dicom"]
 storage = ["dep:consus-core", "dep:consus-hdf5", "dep:consus-io"]
 
 [dev-dependencies]
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
 # Examples and benches install the program allocator (ADR 0018).
 helios-allocator = { workspace = true }
 eunomia = { workspace = true }

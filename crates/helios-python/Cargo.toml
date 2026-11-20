@@ -33,6 +33,9 @@ workspace = true
 aequitas = { workspace = true }
 # Geometry-free wrappers only: physics/planning consumed without the geometry
 # feature so the binding layer stays thin and infra-light.
-helios-physics = { path = "../helios-physics", default-features = false }
-helios-planning = { path = "../helios-planning", default-features = false }
+helios-physics = { workspace = true }
+helios-planning = { workspace = true }
 pyo3 = { workspace = true }
+
+[build-dependencies]
+pyo3-build-config = "0.29"

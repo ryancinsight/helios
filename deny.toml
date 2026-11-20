@@ -1,6 +1,3 @@
-[advisories]
-ignore = ["RUSTSEC-2021-0153"]
-
 [licenses]
 confidence-threshold = 0.8
 # BSD-3-Clause: subtle via rustls trust stack, pulled in by moirai-quic via
