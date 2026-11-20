@@ -4,8 +4,8 @@ Helios (Helios-rs) is an **integrator** repository in the Atlas multi-repo stack
 a Cargo workspace that composes the Atlas foundation/infrastructure/domain crates
 into a unified platform for radiation-therapy simulation/planning and radiation
 imaging. Its crates form a **unidirectional, layered** dependency graph.
-Most Atlas providers come from crates.io. The workspace pins the RITK family
-to one merged revision whose source uses the Aequitas 0.5 provider graph.
+Atlas providers come from crates.io. RITK DICOM and Registration share
+the Aequitas 0.5 and Leto 0.52 provider graph.
 
 ## Layering (unidirectional; dependencies point inward/upward only)
 
@@ -59,7 +59,7 @@ and version requirement. `Cargo.lock` records the resolved crate identities.
 
 | Atlas component | Crates (packages) | Consumed by | Purpose in Helios |
 |-----------------|-------------------|-------------|-------------------|
-| **ritk** | `ritk-dicom` (**consumed**, feature `dicom`), `ritk-registration` (**consumed**), `ritk-core` | domain, analysis, imaging | The native DICOM provider owns CT/MVCT dataset parsing, typed attributes, transfer-syntax dispatch, and rescale-calibrated pixel decode. IGRT integer-voxel translation registration (`classical::translation`, SSD + NCC metric policies) is consumed by `helios-imaging`, which re-exports the kernel's typed error. `ritk-core` is declared but consumed by no member. RT struct/plan/dose, sub-voxel/deformable registration, and VTK pending. |
+| **ritk** | `ritk-dicom` (**consumed**, feature `dicom`), `ritk-registration` (**consumed**) | domain, analysis, imaging | The native DICOM provider owns CT/MVCT dataset parsing, typed attributes, transfer-syntax dispatch, and rescale-calibrated pixel decode. IGRT integer-voxel translation registration (`classical::translation`, SSD + NCC metric policies) is consumed by `helios-imaging`, which re-exports the kernel's typed error. RT struct/plan/dose, sub-voxel/deformable registration, and VTK pending. |
 | **gaia** | `gaia` (`Aabb`/`Ray` **consumed**) | math, domain | Geometry kernel: `Ray`/`Aabb` for projection + the `FieldAperture` collimator; binary MLC, patient surface/mesh pending. |
 | **hephaestus** | `hephaestus-core`, `hephaestus-wgpu` (`-cuda`, `-metal` optional) | gpu, solver | GPU compute dispatch, WGSL pipelines, kernel caching. |
 | **moirai** | `moirai`, `moirai-parallel` (`-async`, `-gpu`, `-iter`) | simulation, solver | Orchestration of time-dependent helical delivery + imaging; execution policies. |

@@ -1,12 +1,12 @@
 # Helios Gap Audit
 
-## Aequitas 0.5 workspace migration
+## Aequitas 0.5 and Leto 0.52
 
-The locked workspace pairs crates.io Aequitas 0.5.0 and Eunomia 0.12.1
-with the merged RITK native DICOM and registration sources. The current
-RITK registry releases still select Aequitas 0.4 transitively. The next
-Helios release needs compatible RITK registry packages and a fresh
-registry-only consumer check.
+Helios 0.2.0 shares one published Aequitas 0.5, Eunomia 0.12.1, Leto
+0.52, and Coeus 0.14 provider set. RITK DICOM 0.6 and Registration 0.57
+resolve from crates.io. The all-feature workspace builds, and the 115
+focused domain, imaging, and planning tests pass. The release checklist
+tracks publication and the fresh-consumer tests.
 
 ## Aequitas 0.4 and native CT release
 
@@ -14,7 +14,9 @@ The registry manifests use RITK DICOM 0.5 and the reviewed Aequitas 0.4
 provider packages. The lock guard checks that every source-less package
 belongs to the workspace. Starting without a lockfile, the merged
 workspace resolves 403 distinct package versions and the published Rust
-library consumer resolves 330. Both graphs have zero Chrono packages.
+library consumer resolves 330. Both graphs have zero Chrono packages. H-129 removes the Chrono and
+retired DICOM charset advisory holds after inspecting the locked
+all-feature and all-target normal, build, and development graph.
 
 All 12 crates.io archives and tags match merge commit
 `2b5325d8796ed50c5e14ed81ce4955e683aa6766`. The merged local run passes

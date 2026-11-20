@@ -1,7 +1,7 @@
 # Helios (Helios-rs) — unified radiation therapy simulation/planning and imaging.
 #
 # Integrator workspace built on the Atlas stack, mirroring the kwavers/cfdrs model:
-# Atlas provider crates come from crates.io except for the RITK workspace pinned below.
+# Atlas foundation, infrastructure, and domain crates come from crates.io.
 # Members inherit package requirements with `{ workspace = true }`.
 [workspace]
 members = [
@@ -23,11 +23,11 @@ resolver = "2"
 
 [workspace.package]
 edition = "2021"
-version = "0.1.0"
+version = "0.2.0"
 license = "MIT OR Apache-2.0"
 authors = ["Ryan Clanton <ryanclanton@outlook.com>"]
 repository = "https://github.com/ryancinsight/helios"
-rust-version = "1.95"
+rust-version = "1.97"
 
 [workspace.lints.rust]
 missing_docs = "warn"
@@ -78,20 +78,19 @@ print_stderr = "deny"
 [workspace.dependencies]
 # ── Internal Helios crates (added as they are created, per architecture_scoping
 #    growth triggers — no speculative empty-crate scaffolding). ──
-helios-quantities = { path = "crates/helios-quantities", version = "0.1.0" }
+helios-quantities = { path = "crates/helios-quantities", version = "0.2.0" }
 helios-allocator = { path = "crates/helios-allocator", version = "0.1.0" }
-helios-math = { path = "crates/helios-math", version = "0.1.0", default-features = false }
-helios-domain = { path = "crates/helios-domain", version = "0.1.0" }
-helios-physics = { path = "crates/helios-physics", version = "0.1.0", default-features = false }
-helios-solver = { path = "crates/helios-solver", version = "0.1.0" }
-helios-analysis = { path = "crates/helios-analysis", version = "0.1.0" }
-helios-gpu = { path = "crates/helios-gpu", version = "0.1.0" }
-helios-simulation = { path = "crates/helios-simulation", version = "0.1.0" }
-helios-imaging = { path = "crates/helios-imaging", version = "0.1.0" }
-helios-planning = { path = "crates/helios-planning", version = "0.1.0", default-features = false }
+helios-math = { path = "crates/helios-math", version = "0.2.0", default-features = false }
+helios-domain = { path = "crates/helios-domain", version = "0.2.0" }
+helios-physics = { path = "crates/helios-physics", version = "0.2.0", default-features = false }
+helios-solver = { path = "crates/helios-solver", version = "0.2.0" }
+helios-analysis = { path = "crates/helios-analysis", version = "0.2.0" }
+helios-gpu = { path = "crates/helios-gpu", version = "0.2.0" }
+helios-simulation = { path = "crates/helios-simulation", version = "0.2.0" }
+helios-imaging = { path = "crates/helios-imaging", version = "0.2.0" }
+helios-planning = { path = "crates/helios-planning", version = "0.2.0", default-features = false }
 
-# ── External foundation crates (versions verified against the installed 1.95
-#    toolchain / current registry; mirror kwavers' locked set). ──
+# External foundation crates use the workspace toolchain and crates.io.
 thiserror = "2.0"
 anyhow = "1.0"
 tracing = "0.1"
@@ -106,11 +105,10 @@ criterion = "0.5"
 # Atlas provider declarations shared by Helios workspace members.
 # ARCHITECTURE.md defines the layer map.
 # Imaging foundation (DICOM/MVCT I/O, registration, VTK).
-ritk-core = { version = "0.11.0", git = "https://github.com/ryancinsight/ritk", rev = "07b37e7d45a252d32dbded895c55c62c7b42ca86" }
-ritk-registration = { version = "0.56.0", git = "https://github.com/ryancinsight/ritk", rev = "07b37e7d45a252d32dbded895c55c62c7b42ca86" }
+ritk-registration = "0.57.0"
 # Native DICOM parse/decode (CT/MVCT real-input path). ritk-dicom owns parsing,
 # typed attribute access, transfer-syntax dispatch, and pixel decoding.
-ritk-dicom = { version = "0.5.0", git = "https://github.com/ryancinsight/ritk", rev = "07b37e7d45a252d32dbded895c55c62c7b42ca86" }
+ritk-dicom = "0.6.0"
 # Geometry kernel (binary MLC, collimators, jaws, patient meshes).
 gaia = { package = "gaia-mesh", version = "0.8.0", default-features = false }
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.

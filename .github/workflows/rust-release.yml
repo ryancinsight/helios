@@ -72,3 +72,17 @@ jobs:
       id-token: write # OIDC trusted publishing; no stored registry token.
     with:
       rust-toolchain: "1.97.0"
+      cohort-json: >-
+        {
+          "helios-analysis": "0.2.0",
+          "helios-domain": "0.2.0",
+          "helios-gpu": "0.2.0",
+          "helios-imaging": "0.2.0",
+          "helios-math": "0.2.0",
+          "helios-physics": "0.2.0",
+          "helios-planning": "0.2.0",
+          "helios-python": "0.2.0",
+          "helios-quantities": "0.2.0",
+          "helios-simulation": "0.2.0",
+          "helios-solver": "0.2.0"
+        }
