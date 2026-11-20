@@ -16,7 +16,7 @@ aequitas = { workspace = true }
 apollo = { workspace = true }
 eunomia = { workspace = true }
 helios-quantities = { workspace = true }
-helios-math = { workspace = true }
+helios-math = { workspace = true, features = ["geometry"] }
 helios-domain = { workspace = true }
 helios-solver = { workspace = true }
 hyperion = { workspace = true }

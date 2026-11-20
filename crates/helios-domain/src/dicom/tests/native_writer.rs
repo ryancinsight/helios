@@ -1,6 +1,6 @@
 use crate::volume::Volume;
-use ritk_dicom::TransferSyntaxKind;
 use ritk_dicom::dataset::DicomFile;
+use ritk_dicom::TransferSyntaxKind;
 use tracing_subscriber::fmt::format::FmtSpan;
 
 use super::{load_ct_slice, write_slice_at};

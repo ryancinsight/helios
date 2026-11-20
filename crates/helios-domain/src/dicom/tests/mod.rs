@@ -6,8 +6,8 @@ mod fixtures;
 mod native_writer;
 
 use fixtures::{
-    BitsStoredFixture, OmittedGeometry, write_slice_at, write_slice_at_with_geometry,
-    write_slice_at_with_orientation,
+    write_slice_at, write_slice_at_with_geometry, write_slice_at_with_orientation,
+    BitsStoredFixture, OmittedGeometry,
 };
 
 #[test]

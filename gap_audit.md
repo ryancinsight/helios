@@ -1,5 +1,12 @@
 # Helios Gap Audit
 
+## Aequitas 0.4 and native CT release
+
+The registry manifests use RITK DICOM 0.5 and the reviewed Aequitas 0.4
+provider packages. The lock guard checks that every source-less package
+belongs to the workspace. The release checklist tracks independent
+resolution and CT/MVCT fixture verification.
+
 Physics, numerics, accuracy, architecture, and integration gaps. Closed by
 evidence, not silence. Each gap: ID, description, class, current evidence tier,
 target closure.
@@ -414,7 +421,9 @@ changes, which are outside this item.
 RITK’s native dataset switches character repertoire handling to the
 provider’s decoder. The locked Helios graph contains neither `encoding`
 nor `chrono`, covering workspace features and target platforms. H-073
-and H-129 close together.
+and H-129 close together. The registry adoption gate follows
+[H-129](backlog.md#H-129). A lockfile-free resolver reaches Asclepius 0.3.0,
+which still requires Git Aequitas 0.3.
 
 ### Recently closed
 

@@ -5,7 +5,9 @@ All notable changes to Helios are documented here. Format follows
 [SemVer 2.0.0](https://semver.org/). Pre-1.0: minor bumps may break, documented
 under a Breaking subsection.
 
-## [Unreleased]
+## [0.1.0]
+
+First Rust registry release. See the July 2026 development baseline below.
 
 ### Added
 
@@ -45,6 +47,8 @@ under a Breaking subsection.
 
 ### Changed
 
+- Helios uses the Aequitas 0.4 registry cohort for material properties,
+  photon transport, time stepping, and sampling.
 - Helios CT and MVCT ingest uses RITK’s native dataset and pixel codecs.
   Frame interpretation, geometry, and stack assembly reside in separate modules.
 
@@ -279,7 +283,7 @@ under a Breaking subsection.
   origin. Rays that start outside the grid are unchanged. This aligns the CPU
   march with the Hephaestus kernels and the gaia `Ray` half-line.
 
-## [0.1.0] — 2026-07-22
+## 0.1.0 development baseline (2026-07-22)
 
 ### Breaking
 

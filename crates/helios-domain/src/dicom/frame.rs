@@ -3,8 +3,8 @@
 use helios_quantities::HeliosError;
 use ritk_dicom::dataset::DicomFile;
 use ritk_dicom::{
-    DecodeFrameRequest, DicomAttributeRead, DicomTag, NativeBackend, PixelLayout, PixelSignedness,
-    TransferSyntaxKind, decode_frame_with, tags,
+    decode_frame_with, tags, DecodeFrameRequest, DicomAttributeRead, DicomTag, NativeBackend,
+    PixelLayout, PixelSignedness, TransferSyntaxKind,
 };
 
 use super::geometry::{cross3, dot3, normalize3};

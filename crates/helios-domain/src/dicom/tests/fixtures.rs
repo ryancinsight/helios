@@ -1,4 +1,4 @@
-use ritk_dicom::{DicomTag, tags};
+use ritk_dicom::{tags, DicomTag};
 
 fn append_element(output: &mut Vec<u8>, tag: DicomTag, vr: [u8; 2], value: &[u8]) {
     output.extend_from_slice(&tag.group.to_le_bytes());

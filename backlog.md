@@ -527,3 +527,6 @@ H-117).
 - Locked Cargo tree inspection covers all workspace features, targets, and
   normal, build, and development edges. Chrono and the external DICOM crates
   are absent. CI's RustSec audit denies all warnings without either hold.
+- The Rust release uses the Aequitas 0.4 registry cohort and RITK DICOM 0.5.
+  The analysis-to-imaging test edge stays workspace-local. The [release
+  checklist](CHECKLIST.md) tracks clean resolution, tests, and distribution.

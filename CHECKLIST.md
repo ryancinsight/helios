@@ -1,5 +1,10 @@
 # Helios Checklist (tactical)
 
+## Release target 0.1.0 on crates.io
+
+- [ ] [patch] Verify the native DICOM cutover and Aequitas 0.4 package graph.
+- [ ] [patch] Verify the exact merged workspace, publish, and test a fresh consumer.
+
 ## H-073 and H-129 — Native RITK DICOM provider [patch]
 
 - [x] Resolve the locked RITK 0.5 dataset and decoder.
@@ -8,6 +13,8 @@
 - [x] Pass 54 locked `helios-domain` tests with all features at RITK
       `0602cfe8`. The native deflate round trip preserves the grid pose and
       the analytical HU values. Warning-denied Clippy and advisories pass.
+- [ ] [patch] Resolve and test the Aequitas 0.4 release graph without a
+      pre-existing lockfile. See [H-129](backlog.md#H-129).
 
 ## current session — H-118a typed Python surface [patch] — in-progress
 

@@ -7,8 +7,8 @@ use eunomia::UnitScalar;
 use helios_math::{Point3, Scalar};
 use helios_quantities::HeliosError;
 
-use super::frame::{SliceRaw, read_slice};
-use super::geometry::{ORIENTATION_TOL, allclose3, dot3, rotation_from_axes};
+use super::frame::{read_slice, SliceRaw};
+use super::geometry::{allclose3, dot3, rotation_from_axes, ORIENTATION_TOL};
 
 fn oriented_grid_from_dicom<T: Scalar + UnitScalar>(
     dims: [usize; 3],
