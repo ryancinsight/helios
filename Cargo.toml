@@ -1,7 +1,7 @@
 # Helios (Helios-rs) — unified radiation therapy simulation/planning and imaging.
 #
 # Integrator workspace built on the Atlas stack, mirroring the kwavers/cfdrs model:
-# Atlas foundation, infrastructure, and domain crates come from crates.io.
+# Atlas provider crates come from crates.io except for the RITK workspace pinned below.
 # Members inherit package requirements with `{ workspace = true }`.
 [workspace]
 members = [
@@ -106,40 +106,40 @@ criterion = "0.5"
 # Atlas provider declarations shared by Helios workspace members.
 # ARCHITECTURE.md defines the layer map.
 # Imaging foundation (DICOM/MVCT I/O, registration, VTK).
-ritk-core = "0.11.0"
-ritk-registration = "0.56.0"
+ritk-core = { version = "0.11.0", git = "https://github.com/ryancinsight/ritk", rev = "07b37e7d45a252d32dbded895c55c62c7b42ca86" }
+ritk-registration = { version = "0.56.0", git = "https://github.com/ryancinsight/ritk", rev = "07b37e7d45a252d32dbded895c55c62c7b42ca86" }
 # Native DICOM parse/decode (CT/MVCT real-input path). ritk-dicom owns parsing,
 # typed attribute access, transfer-syntax dispatch, and pixel decoding.
-ritk-dicom = "0.5.0"
+ritk-dicom = { version = "0.5.0", git = "https://github.com/ryancinsight/ritk", rev = "07b37e7d45a252d32dbded895c55c62c7b42ca86" }
 # Geometry kernel (binary MLC, collimators, jaws, patient meshes).
-gaia = { package = "gaia-mesh", version = "0.7.0", default-features = false }
+gaia = { package = "gaia-mesh", version = "0.8.0", default-features = false }
 # GPU compute (wgpu/WGSL pipelines, kernel caching) + orchestration.
-hephaestus-core = "0.29.0"
-hephaestus-wgpu = "0.29.0"
+hephaestus-core = "0.30.0"
+hephaestus-wgpu = "0.30.0"
 moirai = { version = "0.12.0", package = "moirai-runtime" }
 moirai-parallel = { version = "0.12.0", default-features = false, features = ["parallel"] }
 # Tensors, autodiff, optimizers, neural surrogates.
-coeus-core = "0.13.0"
-coeus-tensor = "0.13.0"
-coeus-autograd = "0.13.0"
-coeus-optim = "0.13.0"
+coeus-core = "0.14.0"
+coeus-tensor = "0.14.0"
+coeus-autograd = "0.14.0"
+coeus-optim = "0.14.0"
 # Biological-response laws and their Coeus tape construction.
-asclepius = "0.4.0"
-asclepius-coeus = "0.4.0"
+asclepius = "0.5.0"
+asclepius-coeus = "0.5.0"
 # Volumetric storage (HDF5/Zarr, compression).
 consus-core = { version = "0.5.0", features = ["std"] }
 consus-hdf5 = { version = "0.5.0", features = ["std"] }
 consus-io = { version = "0.5.0", features = ["std"] }
 # Numeric datatype SSOT (Scalar seam: RealField/FloatElement/NumericElement).
-aequitas = { version = "0.4.0", default-features = false, features = ["std"] }
-proteus = { package = "proteus-mat", version = "0.2.0" }
-hyperion = { package = "hyperion-transport", version = "0.2.0" }
+aequitas = { version = "0.5.0", default-features = false, features = ["std"] }
+proteus = { package = "proteus-mat", version = "0.3.0" }
+hyperion = { package = "hyperion-transport", version = "0.3.0" }
 eunomia = { version = "0.12.1" }
 tyche-core = "0.5.0"
-horae = { package = "horae-time", version = "0.3.0" }
+horae = { package = "horae-time", version = "0.4.0" }
 # Array substrate + geometry primitives, and portable SIMD.
 # Helios installs its global allocator through helios-allocator.
-leto = { version = "0.51.0", default-features = false, features = ["std"] }
+leto = { version = "0.52.0", default-features = false, features = ["std"] }
 hermes-simd = "0.10.0"
 # Memory management / placement.
 #
@@ -156,7 +156,7 @@ mnemosyne-core = { version = "0.3.0", package = "mnemosyne-memory-core" }
 mnemosyne-arena = { version = "0.7.2" }
 themis = { version = "0.11.5", package = "themis-topology" }
 # Spectral / transform methods.
-apollo = { version = "0.30.0", package = "apollo-fft" }
+apollo = { version = "0.31.0", package = "apollo-fft" }
 
 [profile.dev]
 opt-level = 1

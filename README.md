@@ -31,9 +31,9 @@ helios-math                                             numerics (Scalar seam)
 helios-quantities                                       foundation
 ```
 
-Strictly unidirectional layering; Atlas crates (ritk, gaia, hephaestus, moirai,
-coeus, asclepius, proteus, hyperion, consus, leto, hermes, mnemosyne, themis,
-apollo) are consumed as remote git dependencies. Hyperion owns photon/optical
+Helios uses one crates.io Aequitas 0.5.0 and Eunomia 0.12.1. Its other Atlas
+providers come from crates.io except for RITK. The locked workspace uses the
+merged RITK revision with the compatible provider graph. Hyperion owns photon/optical
 coefficient validation and transport laws; Proteus owns material density;
 Helios owns CT calibration, spatial projection, dose, imaging, and delivery.
 Helios does not mirror or re-export either provider vocabulary. Full crate
