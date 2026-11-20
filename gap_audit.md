@@ -4,8 +4,16 @@
 
 The registry manifests use RITK DICOM 0.5 and the reviewed Aequitas 0.4
 provider packages. The lock guard checks that every source-less package
-belongs to the workspace. The release checklist tracks independent
-resolution and CT/MVCT fixture verification.
+belongs to the workspace. Starting without a lockfile, the merged
+workspace resolves 403 distinct package versions and the published Rust
+library consumer resolves 330. Both graphs have zero Chrono packages.
+
+All 12 crates.io archives and tags match merge commit
+`2b5325d8796ed50c5e14ed81ce4955e683aa6766`. The merged local run passes
+133 focused tests. The registry CT round trip preserves the 2 × 2 × 1
+grid pose and calibrated values −10, 10, 190, and 2036 HU. The
+Python package also builds and imports on macOS through Cargo.
+See [merged CI](https://github.com/ryancinsight/helios/actions/runs/44787999949).
 
 Physics, numerics, accuracy, architecture, and integration gaps. Closed by
 evidence, not silence. Each gap: ID, description, class, current evidence tier,

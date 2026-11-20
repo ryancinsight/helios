@@ -528,5 +528,6 @@ H-117).
   normal, build, and development edges. Chrono and the external DICOM crates
   are absent. CI's RustSec audit denies all warnings without either hold.
 - The Rust release uses the Aequitas 0.4 registry cohort and RITK DICOM 0.5.
-  The analysis-to-imaging test edge stays workspace-local. The [release
-  checklist](CHECKLIST.md) tracks clean resolution, tests, and distribution.
+  The analysis-to-imaging test edge stays workspace-local. Crates.io serves
+  all 12 Helios 0.1.0 packages from [the merged cutover](https://github.com/ryancinsight/helios/pull/217).
+  The [release checklist](CHECKLIST.md) records the closed registry and CT checks.
