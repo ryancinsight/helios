@@ -9,6 +9,8 @@ under a Breaking subsection.
 
 First Rust registry release. See the July 2026 development baseline below.
 
+The Python extension links when built directly by Cargo on macOS.
+
 ### Added
 
 - `helios-imaging` exposes the FBP ramp-filter stage on its own:

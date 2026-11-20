@@ -1345,6 +1345,7 @@ dependencies = [
  "helios-physics",
  "helios-planning",
  "pyo3",
+ "pyo3-build-config",
 ]
 
 [[package]]

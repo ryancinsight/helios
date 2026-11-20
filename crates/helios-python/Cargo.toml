@@ -36,3 +36,6 @@ aequitas = { workspace = true }
 helios-physics = { workspace = true }
 helios-planning = { workspace = true }
 pyo3 = { workspace = true }
+
+[build-dependencies]
+pyo3-build-config = "0.29"
