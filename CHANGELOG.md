@@ -5,13 +5,15 @@ All notable changes to Helios are documented here. Format follows
 [SemVer 2.0.0](https://semver.org/). Pre-1.0: minor bumps may break, documented
 under a Breaking subsection.
 
-## [Unreleased]
+## [0.2.0] - 2026-11-20
 
-### Changed
+### Breaking
 
-- Use crates.io Aequitas 0.5.0 and Eunomia 0.12.1 throughout the Helios
-  workspace. Resolve native DICOM and registration from the merged RITK
-  source until compatible RITK releases are available on crates.io.
+- [major] Use Aequitas 0.5 quantities and Leto 0.52 views, points, and grids.
+  Upgrade consumers and any typed Atlas dependencies together. DICOM and
+  translation registration use the compatible RITK 0.6 and 0.57 crates.
+  The workspace requires Rust 1.97. The independent allocator stays at 0.1.0.
+  See [ADR 0022](docs/adr/0022-published-physics-provider-boundary.md).
 
 ## [0.1.0]
 

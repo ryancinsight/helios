@@ -1224,7 +1224,7 @@ dependencies = [
 
 [[package]]
 name = "helios-analysis"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aequitas",
  "asclepius",
@@ -1239,7 +1239,7 @@ dependencies = [
 
 [[package]]
 name = "helios-domain"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aequitas",
  "consus-core",
@@ -1259,7 +1259,7 @@ dependencies = [
 
 [[package]]
 name = "helios-gpu"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aequitas",
  "criterion",
@@ -1278,7 +1278,7 @@ dependencies = [
 
 [[package]]
 name = "helios-imaging"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aequitas",
  "apollo-fft",
@@ -1297,7 +1297,7 @@ dependencies = [
 
 [[package]]
 name = "helios-math"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "eunomia",
  "gaia-mesh",
@@ -1307,7 +1307,7 @@ dependencies = [
 
 [[package]]
 name = "helios-physics"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aequitas",
  "eunomia",
@@ -1321,7 +1321,7 @@ dependencies = [
 
 [[package]]
 name = "helios-planning"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aequitas",
  "asclepius",
@@ -1339,7 +1339,7 @@ dependencies = [
 
 [[package]]
 name = "helios-python"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aequitas",
  "helios-physics",
@@ -1350,7 +1350,7 @@ dependencies = [
 
 [[package]]
 name = "helios-quantities"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aequitas",
  "eunomia",
@@ -1362,7 +1362,7 @@ dependencies = [
 
 [[package]]
 name = "helios-simulation"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aequitas",
  "eunomia",
@@ -1383,7 +1383,7 @@ dependencies = [
 
 [[package]]
 name = "helios-solver"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aequitas",
  "criterion",
@@ -2970,8 +2970,9 @@ dependencies = [
 
 [[package]]
 name = "ritk-annotation"
-version = "0.4.0"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "170064169209316070189e30d29e11f6a73d19065d36948cd0c2528ea38b4373"
 dependencies = [
  "ritk-spatial",
  "serde",
@@ -2982,7 +2983,8 @@ dependencies = [
 [[package]]
 name = "ritk-codecs"
 version = "0.8.0"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b5abdb7c00f6c4de7bad204f3602c5b9012c77c30db990877a582672c5a27fda"
 dependencies = [
  "anyhow",
  "consus-core",
@@ -2993,8 +2995,9 @@ dependencies = [
 
 [[package]]
 name = "ritk-core"
-version = "0.11.0"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ee5754431759d2e89c67519a059ad5bff1492e0c29da56ae0b2e85a906dac39"
 dependencies = [
  "coeus-core",
  "coeus-tensor",
@@ -3009,8 +3012,9 @@ dependencies = [
 
 [[package]]
 name = "ritk-dicom"
-version = "0.5.0"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a75f9fc3d00cb7e31c184e1717127c25a6aa011996e5602f786f8c622beb08e3"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -3029,8 +3033,9 @@ dependencies = [
 
 [[package]]
 name = "ritk-diffusion-scheme"
-version = "0.4.0"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd91541434781529dd8dc94d37d99732160b1206dd8945ca5c0b401d06062279"
 dependencies = [
  "aequitas",
  "ritk-spatial",
@@ -3039,8 +3044,9 @@ dependencies = [
 
 [[package]]
 name = "ritk-filter"
-version = "0.5.0"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0bfb527990b54f289a6ce696edaab00e849d2805f9bec0521124f29f5c3eb26d"
 dependencies = [
  "anyhow",
  "apollo-fft",
@@ -3070,8 +3076,9 @@ dependencies = [
 
 [[package]]
 name = "ritk-image"
-version = "0.5.0"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb103c5b10e584c288a7add739cd1a074994d2d49d397fb5fcb982868be5fee1"
 dependencies = [
  "anyhow",
  "coeus-autograd",
@@ -3088,8 +3095,9 @@ dependencies = [
 
 [[package]]
 name = "ritk-interpolation"
-version = "0.6.0"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d2b2900c61fb938182c5015ba0797bfb40f042b6a3e6f9bb652f9b63f7217da"
 dependencies = [
  "anyhow",
  "coeus-core",
@@ -3107,12 +3115,14 @@ dependencies = [
 [[package]]
 name = "ritk-morphology"
 version = "0.2.1"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f04253e01b992f3c45c6956b96f83dd243e3544727daf2b51860e67b4fbc19d9"
 
 [[package]]
 name = "ritk-parcellation"
-version = "0.2.0"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "658dc2934ee1872cddd9f1d944d2472c106fdf79a6caccbecc128654e259aa4e"
 dependencies = [
  "consus-core",
  "ritk-annotation",
@@ -3123,8 +3133,9 @@ dependencies = [
 
 [[package]]
 name = "ritk-registration"
-version = "0.56.0"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+version = "0.57.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0c13b7edeb8a1b3e4945563b7ec463ca239ad5354973f68b79b4dbe4746ef11"
 dependencies = [
  "anyhow",
  "coeus-autograd",
@@ -3153,8 +3164,9 @@ dependencies = [
 
 [[package]]
 name = "ritk-segmentation"
-version = "0.5.0"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4bd5a83c2d02dd26bd9f503e8d2433c5b2a3093968af304a575f1ba7bb1e0367"
 dependencies = [
  "anyhow",
  "coeus-core",
@@ -3172,8 +3184,9 @@ dependencies = [
 
 [[package]]
 name = "ritk-spatial"
-version = "0.5.0"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f81a8b8d4916715826e3b87aa22ec00399a925f66d8bfcf48d81ca1817ec2622"
 dependencies = [
  "leto",
  "serde",
@@ -3182,8 +3195,9 @@ dependencies = [
 
 [[package]]
 name = "ritk-statistics"
-version = "0.6.0"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6bc72919c67aa7f1650f5b4b73968abda3a2cb6543a67d57655c8b230230654"
 dependencies = [
  "anyhow",
  "coeus-core",
@@ -3197,8 +3211,9 @@ dependencies = [
 
 [[package]]
 name = "ritk-tensor-ops"
-version = "0.3.0"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe0e4f01b1609b7ee8355b651c4a5c2629ba10acf88961f96ed810aa78236262"
 dependencies = [
  "anyhow",
  "coeus-core",
@@ -3212,8 +3227,9 @@ dependencies = [
 
 [[package]]
 name = "ritk-transform"
-version = "0.3.0"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4fdb018ee9c7076d7843bfe5a7eb0cb038efd5e5092fc23e42c5fbe7fa948b33"
 dependencies = [
  "coeus-autograd",
  "coeus-core",
@@ -3234,7 +3250,8 @@ dependencies = [
 [[package]]
 name = "ritk-wgpu-compat"
 version = "0.2.1"
-source = "git+https://github.com/ryancinsight/ritk?rev=07b37e7d45a252d32dbded895c55c62c7b42ca86#07b37e7d45a252d32dbded895c55c62c7b42ca86"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0094322c94f7b5bea5ec1b88a04415bcf075978c0f3a9d08c6212088b2787c82"
 
 [[package]]
 name = "rkyv"

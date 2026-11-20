@@ -1,16 +1,16 @@
 # Helios Checklist (tactical)
 
+## Release target 0.2.0
+
+- [x] [major] Align the provider requirements for the 11 affected crates.
+- [ ] [major] Verify the exact registry lock and required hosted checks.
+- [ ] [major] Verify all archives, the standalone Chrono-free registry graph,
+  and the native DICOM and registration value tests.
+
 ## Release target 0.1.0 on crates.io
 
 - [x] [patch] Verify the native DICOM cutover and Aequitas 0.4 package graph.
 - [x] [patch] Verify the exact merged workspace, publish, and test a fresh consumer.
-
-## Aequitas 0.5 workspace migration
-
-- [ ] [patch] Verify native DICOM and registration with a single crates.io
-      Aequitas 0.5.0 and Eunomia 0.12.1 in the locked workspace.
-- [ ] [patch] Adopt the compatible RITK registry packages and verify
-      a fresh registry-only consumer before the next Helios release.
 
 ## H-073 and H-129 — Native RITK DICOM provider [patch]
 

@@ -31,9 +31,9 @@ helios-math                                             numerics (Scalar seam)
 helios-quantities                                       foundation
 ```
 
-Helios uses one crates.io Aequitas 0.5.0 and Eunomia 0.12.1. Its other Atlas
-providers come from crates.io except for RITK. The locked workspace uses the
-merged RITK revision with the compatible provider graph. Hyperion owns photon/optical
+Helios uses published Atlas providers. The lock resolves one Aequitas 0.5.0,
+Eunomia 0.12.1, and Leto 0.52.0 with RITK DICOM 0.6.0 and Registration
+0.57.0. Hyperion owns photon/optical
 coefficient validation and transport laws; Proteus owns material density;
 Helios owns CT calibration, spatial projection, dose, imaging, and delivery.
 Helios does not mirror or re-export either provider vocabulary. Full crate
@@ -43,7 +43,7 @@ responsibilities and the Atlas dependency map are in
 ## Building
 
 ```sh
-# Rust stable (edition 2021); toolchain pinned via rust-toolchain.toml.
+# Rust 1.97, pinned in rust-toolchain.toml.
 cargo build
 cargo clippy --all-targets --all-features -- -D warnings
 cargo nextest run          # test-time budget: 30 s slow / 60 s terminate

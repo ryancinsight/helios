@@ -1,5 +1,14 @@
 # Helios Backlog (strategic board)
 
+<a id="H-AEQUITAS-050"></a>
+## H-AEQUITAS-050 — Publish the shared physics providers [major]
+
+- milestone: M-release.
+- target: 0.2.0. The 11 affected crates share the Aequitas, Leto, and RITK
+  provider versions of the integrated Atlas stack.
+- acceptance: [ADR 0022](docs/adr/0022-published-physics-provider-boundary.md),
+  exact hosted checks, 11 archive receipts, and a fresh typed consumer.
+
 ## M-dose-engine: delivered dose carries independent evidence — needs: none
 - exit: the H-112 reference comparison is green within derived tolerances, or the absence is a recorded bounded decision; the H-114 `DoseInfluence` producer wires planning to simulation.
 ## M-imaging: the projector is exact and provider-delegated — needs: none
@@ -531,6 +540,3 @@ H-117).
   The analysis-to-imaging test edge stays workspace-local. Crates.io serves
   all 12 Helios 0.1.0 packages from [the merged cutover](https://github.com/ryancinsight/helios/pull/217).
   The [release checklist](CHECKLIST.md) records the closed registry and CT checks.
-  The Aequitas 0.5 workspace migration uses the merged RITK source.
-  The [release checklist](CHECKLIST.md) tracks the compatible RITK
-  packages needed by the next registry release.
