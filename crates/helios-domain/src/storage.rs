@@ -27,11 +27,13 @@ use core::num::NonZeroUsize;
 use eunomia::UnitScalar;
 use helios_math::{Point3, Scalar, Vector3};
 use helios_quantities::HeliosError;
+use std::fs::File;
 
-use consus_core::{ByteOrder, Datatype, Shape};
+use consus_core::{ByteOrder, Datatype, LinkType, Shape};
+use consus_hdf5::dataset::{Hdf5Dataset, StorageLayout};
+use consus_hdf5::datatype::IeeeFloatEncoding;
 use consus_hdf5::file::writer::{DatasetCreationProps, FileCreationProps, Hdf5FileBuilder};
 use consus_hdf5::file::Hdf5File;
-use consus_io::MemCursor;
 
 /// Root dataset name for the scalar field.
 const VOLUME_DATASET: &str = "volume";
@@ -63,17 +65,13 @@ fn to_le_bytes(values: impl Iterator<Item = f64>) -> Vec<u8> {
     bytes
 }
 
-/// Parse little-endian f64 bytes; errors if the length is not a multiple of 8.
-fn from_le_bytes(bytes: &[u8]) -> Result<Vec<f64>, HeliosError> {
-    if !bytes.len().is_multiple_of(8) {
-        return Err(HeliosError::Storage {
-            reason: format!("dataset byte length {} is not a multiple of 8", bytes.len()),
-        });
-    }
-    Ok(bytes
-        .chunks_exact(8)
-        .map(|c| f64::from_le_bytes(c.try_into().expect("chunks_exact(8) yields 8 bytes")))
-        .collect())
+/// Convert already admitted binary64 archive bytes directly to the destination scalar.
+fn decode_archive<T: Scalar>(bytes: &[u8]) -> impl ExactSizeIterator<Item = T> + '_ {
+    let (words, remainder) = bytes.as_chunks::<{ size_of::<f64>() }>();
+    debug_assert!(remainder.is_empty(), "validated archive byte count");
+    words
+        .iter()
+        .map(|word| T::from_f64(f64::from_le_bytes(*word)))
 }
 
 /// Archive `volume` (data + rigid grid geometry) as an HDF5 file at `path`.
@@ -142,94 +140,110 @@ pub fn save_volume_hdf5<T: Scalar>(
     std::fs::write(path.as_ref(), bytes).map_err(|e| storage_err("write file", e))
 }
 
-/// Read the full contiguous payload of the named root dataset.
-fn read_root_dataset(
-    file: &Hdf5File<MemCursor>,
+/// Admit an archive dataset using its original HDF5 datatype message.
+fn admit_root_dataset(
+    file: &Hdf5File<File>,
+    children: &[(String, u64, LinkType)],
     name: &str,
-) -> Result<(Vec<u8>, Vec<usize>), HeliosError> {
-    let children = file
-        .list_root_group()
-        .map_err(|e| storage_err("list root group", e))?;
+) -> Result<Hdf5Dataset, HeliosError> {
     let (_, header_addr, _) = children
-        .into_iter()
-        .find(|(n, _, _)| n == name)
-        .ok_or_else(|| HeliosError::Storage {
-            reason: format!("dataset '{name}' not found in file"),
+        .iter()
+        .find(|(entry, _, link)| entry == name && *link == LinkType::Hard)
+        .ok_or_else(|| storage_err(name, "expected a named root dataset with a hard link"))?;
+    let dataset = file
+        .dataset_at_with_ieee_float_encoding(*header_addr, IeeeFloatEncoding::Binary64LittleEndian)
+        .map_err(|error| {
+            storage_err(&format!("dataset '{name}' IEEE datatype admission"), error)
         })?;
-    let ds = file
-        .dataset_at(header_addr)
-        .map_err(|e| storage_err("read dataset metadata", e))?;
-    if ds.shape.has_unlimited() {
-        return Err(HeliosError::Storage {
-            reason: format!("dataset '{name}' has a non-fixed shape"),
-        });
+    if dataset.shape.has_unlimited()
+        || dataset.layout != StorageLayout::Contiguous
+        || !dataset.filters.is_empty()
+    {
+        return Err(storage_err(
+            name,
+            "expected fixed, unfiltered contiguous storage",
+        ));
     }
-    let dims: Vec<usize> = ds.shape.current_dims().to_vec();
-    let n_elems: usize = dims.iter().product();
-    let data_addr = ds.data_address.ok_or_else(|| HeliosError::Storage {
-        reason: format!("dataset '{name}' has no contiguous data address"),
-    })?;
-    let mut buf = vec![0u8; n_elems * 8];
-    file.read_contiguous_dataset_bytes(data_addr, 0, &mut buf)
-        .map_err(|e| storage_err("read dataset bytes", e))?;
-    Ok((buf, dims))
+    Ok(dataset)
+}
+
+/// Bound the contiguous transfer by both the shape and the underlying file length.
+fn contiguous_region(
+    dataset: &Hdf5Dataset,
+    name: &str,
+    file_len: u64,
+) -> Result<(u64, usize), HeliosError> {
+    let byte_count = dataset
+        .shape
+        .current_dims()
+        .iter()
+        .try_fold(size_of::<f64>(), |count, &dim| count.checked_mul(dim))
+        .ok_or_else(|| storage_err(name, "dataset byte count overflows usize"))?;
+    let address = dataset
+        .data_address
+        .ok_or_else(|| storage_err(name, "missing contiguous data address"))?;
+    let end = u64::try_from(byte_count)
+        .ok()
+        .and_then(|count| address.checked_add(count));
+    if end.is_none_or(|end| end > file_len) {
+        return Err(storage_err(
+            name,
+            "contiguous data exceeds the archive length",
+        ));
+    }
+    Ok((address, byte_count))
 }
 
 /// Load a [`Volume`] previously archived by [`save_volume_hdf5`] from `path`.
 ///
+/// The source file must remain stable during the synchronous read.
+///
 /// # Errors
-/// [`HeliosError::Storage`] if the file cannot be read/parsed or its datasets are
-/// missing/malformed; [`HeliosError::InvalidDomainValue`] if the stored geometry
-/// does not form a valid grid.
+/// [`HeliosError::Storage`] if the archive cannot be read or its datasets are
+/// missing, malformed, or incompatible with the binary64 little-endian schema.
+/// [`HeliosError::InvalidDomainValue`] if the geometry does not form a valid grid.
 pub fn load_volume_hdf5<T: Scalar + UnitScalar>(
     path: impl AsRef<std::path::Path>,
 ) -> Result<Volume<T>, HeliosError> {
-    let bytes = std::fs::read(path.as_ref()).map_err(|e| storage_err("read file", e))?;
-    let file =
-        Hdf5File::open(MemCursor::from_bytes(bytes)).map_err(|e| storage_err("open HDF5", e))?;
+    let input = File::open(path.as_ref()).map_err(|error| storage_err("open file", error))?;
+    let file_len =
+        consus_io::Length::len(&input).map_err(|error| storage_err("file length", error))?;
+    let file = Hdf5File::open(input).map_err(|error| storage_err("open HDF5", error))?;
+    let children = file
+        .list_root_group()
+        .map_err(|error| storage_err("list root group", error))?;
 
-    let (geom_bytes, geom_dims) = read_root_dataset(&file, GEOMETRY_DATASET)?;
-    if geom_dims != [GEOMETRY_VALUE_COUNT] {
-        return Err(HeliosError::Storage {
-            reason: format!(
-                "geometry dataset has shape {geom_dims:?}, expected [{GEOMETRY_VALUE_COUNT}]"
-            ),
-        });
+    // Both datatypes must be admitted before either payload is read.
+    let geometry = admit_root_dataset(&file, &children, GEOMETRY_DATASET)?;
+    let volume = admit_root_dataset(&file, &children, VOLUME_DATASET)?;
+    let geometry_dims = geometry.shape.current_dims();
+    if geometry_dims.as_slice() != [GEOMETRY_VALUE_COUNT] {
+        return Err(storage_err(
+            GEOMETRY_DATASET,
+            format_args!("expected shape [{GEOMETRY_VALUE_COUNT}], got {geometry_dims:?}"),
+        ));
     }
-    let geom = from_le_bytes(&geom_bytes)?;
-    if geom.len() != GEOMETRY_VALUE_COUNT {
-        return Err(HeliosError::Storage {
-            reason: format!(
-                "geometry dataset has {} values, expected {GEOMETRY_VALUE_COUNT}",
-                geom.len()
-            ),
-        });
-    }
+    let volume_dims = volume.shape.current_dims();
+    let dims = <[usize; 3]>::try_from(volume_dims.as_slice()).map_err(|_| {
+        storage_err(
+            VOLUME_DATASET,
+            format_args!("expected rank 3, got {}", volume_dims.len()),
+        )
+    })?;
+    let (geometry_addr, _) = contiguous_region(&geometry, GEOMETRY_DATASET, file_len)?;
+    let (volume_addr, volume_bytes) = contiguous_region(&volume, VOLUME_DATASET, file_len)?;
 
-    let (field_bytes, field_dims) = read_root_dataset(&file, VOLUME_DATASET)?;
-    if field_dims.len() != 3 {
-        return Err(HeliosError::Storage {
-            reason: format!("volume dataset has rank {}, expected 3", field_dims.len()),
-        });
-    }
-    let field = from_le_bytes(&field_bytes)?;
+    let mut geometry_bytes = [0; GEOMETRY_VALUE_COUNT * size_of::<f64>()];
+    file.read_contiguous_dataset_bytes(geometry_addr, 0, &mut geometry_bytes)
+        .map_err(|error| storage_err("read geometry dataset bytes", error))?;
+    let mut geometry_values = decode_archive::<T>(&geometry_bytes);
+    let geom: [T; GEOMETRY_VALUE_COUNT] =
+        core::array::from_fn(|_| geometry_values.next().expect("one word per geometry value"));
 
     let rotation = helios_math::UnitQuaternion::try_from_rotation_columns(
-        Vector3::new(
-            T::from_f64(geom[6]),
-            T::from_f64(geom[7]),
-            T::from_f64(geom[8]),
-        ),
-        Vector3::new(
-            T::from_f64(geom[9]),
-            T::from_f64(geom[10]),
-            T::from_f64(geom[11]),
-        ),
-        Vector3::new(
-            T::from_f64(geom[12]),
-            T::from_f64(geom[13]),
-            T::from_f64(geom[14]),
-        ),
+        Vector3::new(geom[6], geom[7], geom[8]),
+        Vector3::new(geom[9], geom[10], geom[11]),
+        Vector3::new(geom[12], geom[13], geom[14]),
         T::EPSILON.sqrt(),
     )
     .map_err(|error| HeliosError::Storage {
@@ -237,20 +251,31 @@ pub fn load_volume_hdf5<T: Scalar + UnitScalar>(
     })?;
     // Archived geometry is millimetres, matching the grid's storage units.
     let grid = VoxelGrid::oriented(
-        [field_dims[0], field_dims[1], field_dims[2]],
+        dims,
         [
-            Length::from_unit::<Millimeter>(T::from_f64(geom[0])),
-            Length::from_unit::<Millimeter>(T::from_f64(geom[1])),
-            Length::from_unit::<Millimeter>(T::from_f64(geom[2])),
+            Length::from_unit::<Millimeter>(geom[0]),
+            Length::from_unit::<Millimeter>(geom[1]),
+            Length::from_unit::<Millimeter>(geom[2]),
         ],
-        Point3::new(
-            T::from_f64(geom[3]),
-            T::from_f64(geom[4]),
-            T::from_f64(geom[5]),
-        ),
+        Point3::new(geom[3], geom[4], geom[5]),
         rotation,
     )?;
-    Volume::from_shape_vec(grid, field.into_iter().map(T::from_f64).collect())
+    // Read the admitted contiguous region through the caller-buffer API. The
+    // provider's allocating raw reader limits a single allocation to 64 MiB.
+    let mut bytes = Vec::new();
+    bytes
+        .try_reserve_exact(volume_bytes)
+        .map_err(|error| storage_err("allocate volume dataset bytes", error))?;
+    bytes.resize(volume_bytes, 0);
+    file.read_contiguous_dataset_bytes(volume_addr, 0, &mut bytes)
+        .map_err(|error| storage_err("read volume dataset bytes", error))?;
+    let values = decode_archive::<T>(&bytes);
+    let mut field = Vec::new();
+    field
+        .try_reserve_exact(values.len())
+        .map_err(|error| storage_err("allocate volume values", error))?;
+    field.extend(values);
+    Volume::from_shape_vec(grid, field)
 }
 
 #[cfg(test)]

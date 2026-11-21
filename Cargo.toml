@@ -126,7 +126,7 @@ asclepius = "0.5.0"
 asclepius-coeus = "0.5.0"
 # Volumetric storage (HDF5/Zarr, compression).
 consus-core = { version = "0.5.0", features = ["std"] }
-consus-hdf5 = { version = "0.5.0", features = ["std"] }
+consus-hdf5 = { version = "0.6.0", features = ["std"] }
 consus-io = { version = "0.5.0", features = ["std"] }
 # Numeric datatype SSOT (Scalar seam: RealField/FloatElement/NumericElement).
 aequitas = { version = "0.5.0", default-features = false, features = ["std"] }

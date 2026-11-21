@@ -1,5 +1,15 @@
 # Helios Gap Audit
 
+## Exact HDF5 archive representation
+
+The released reader interprets custom exponent-bias storage as IEEE binary64.
+A crates.io-only Helios 0.2.0 baseline accepts four custom-bias fixtures across
+the two dataset names. It passes the canonical, full-width padding, geometry
+error, and 64.25 MiB controls. The local candidate uses the verified
+`consus-hdf5` 0.6.0 archive, passes 65 domain tests with all features,
+and matches the baseline writer bytes. Hosted Helios verification is pending.
+See [H-HDF5-IEEE](backlog.md#H-HDF5-IEEE).
+
 ## Aequitas 0.5 and Leto 0.52
 
 Helios 0.2.0 shares one published Aequitas 0.5, Eunomia 0.12.1, Leto

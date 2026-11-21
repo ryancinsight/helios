@@ -1,5 +1,18 @@
 # Helios Backlog (strategic board)
 
+<a id="H-HDF5-IEEE"></a>
+## H-HDF5-IEEE — Verify exact HDF5 archive representation [patch]
+
+- Status: todo
+- Priority: correctness
+- Milestone: M-release
+- Scope: `helios-domain` storage reader and tests.
+- Acceptance: verified Consus registry provider, representation rejection on
+  both datasets, exact canonical archive bytes and values, and a contiguous
+  read above 64 MiB. Track the gates in [CHECKLIST.md](CHECKLIST.md#h-hdf5-ieee).
+- Evidence: the local candidate passes all 65 domain tests with the published
+  provider. Hosted Helios verification remains pending.
+
 <a id="H-AEQUITAS-050"></a>
 ## H-AEQUITAS-050 — Publish the shared physics providers [major]
 
