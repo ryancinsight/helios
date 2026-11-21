@@ -5,6 +5,15 @@ All notable changes to Helios are documented here. Format follows
 [SemVer 2.0.0](https://semver.org/). Pre-1.0: minor bumps may break, documented
 under a Breaking subsection.
 
+## [Unreleased]
+
+### Fixed
+
+- Validate the exact IEEE binary64 little-endian representation of both HDF5
+  archive datasets before payload I/O. Files with a custom exponent bias or
+  foreign byte order now return a dataset-qualified storage error. Helios
+  archives retain their byte format and millimetre grid geometry.
+
 ## [0.2.0] - 2026-11-20
 
 ### Breaking

@@ -693,9 +693,9 @@ dependencies = [
 
 [[package]]
 name = "consus-hdf5"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2b36153f8f29eb741ec0da4a5ab97c9705a7517a9f396738aaf62ba6a5d60c7"
+checksum = "a4cabf28d8812bd86b135cdbc304827dcccf8cda094f5e0a2b61757e24a40108"
 dependencies = [
  "byteorder",
  "consus-compression",

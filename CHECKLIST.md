@@ -1,5 +1,15 @@
 # Helios Checklist (tactical)
 
+<a id="h-hdf5-ieee"></a>
+## H-HDF5-IEEE — Exact HDF5 archive admission [patch]
+
+- [x] Verify the `consus-hdf5` 0.6.0 registry archive and exact Cargo lock entry.
+- [x] Verify both dataset representations before reading the payloads.
+- [x] Pass the archive contract tests, including the published baseline's red
+      controls, identical canonical writer bytes, and the 64.25 MiB payload.
+- [x] Measure allocations and load times against published Helios 0.2.0.
+- [ ] Run hosted Helios checks when the adoption is submitted for review.
+
 ## Release target 0.2.0
 
 - [x] [major] Align the provider requirements for the 11 affected crates.
