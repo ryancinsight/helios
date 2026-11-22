@@ -75,7 +75,7 @@ jobs:
       cohort-json: >-
         {
           "helios-analysis": "0.2.0",
-          "helios-domain": "0.2.0",
+          "helios-domain": "0.2.1",
           "helios-gpu": "0.2.0",
           "helios-imaging": "0.2.0",
           "helios-math": "0.2.0",

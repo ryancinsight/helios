@@ -7,6 +7,8 @@ under a Breaking subsection.
 
 ## [Unreleased]
 
+## [helios-domain 0.2.1]
+
 ### Fixed
 
 - Validate the exact IEEE binary64 little-endian representation of both HDF5

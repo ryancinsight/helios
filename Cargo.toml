@@ -81,7 +81,7 @@ print_stderr = "deny"
 helios-quantities = { path = "crates/helios-quantities", version = "0.2.0" }
 helios-allocator = { path = "crates/helios-allocator", version = "0.1.0" }
 helios-math = { path = "crates/helios-math", version = "0.2.0", default-features = false }
-helios-domain = { path = "crates/helios-domain", version = "0.2.0" }
+helios-domain = { path = "crates/helios-domain", version = "0.2.1" }
 helios-physics = { path = "crates/helios-physics", version = "0.2.0", default-features = false }
 helios-solver = { path = "crates/helios-solver", version = "0.2.0" }
 helios-analysis = { path = "crates/helios-analysis", version = "0.2.0" }
