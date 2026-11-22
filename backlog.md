@@ -1,5 +1,11 @@
 # Helios Backlog (strategic board)
 
+<a id="helios-stable-qualification"></a>
+## HELIOS-STABLE-QUALIFICATION — helios stable-release qualification [patch] — todo
+- priority: verification; milestone: M-interop; basis: `b96d802f01b4`.
+- Outcome: Verify archive admission through the released Consus reader. Follow the [release scope](docs/adr/0021-release-scope-1-0.md) and `M-interop`.
+- Acceptance and sequence: [stable-release checklist](CHECKLIST.md#stable-release-checklist).
+
 <a id="H-HDF5-IEEE"></a>
 ## H-HDF5-IEEE — Verify exact HDF5 archive representation [patch]
 
