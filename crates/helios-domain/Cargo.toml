@@ -2,7 +2,7 @@
 name = "helios-domain"
 description = "Helios domain layer: patient/imaging voxel-grid geometry and dense scalar volumes (CT/MVCT) with trilinear sampling."
 edition.workspace = true
-version.workspace = true
+version = "0.2.1"
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
