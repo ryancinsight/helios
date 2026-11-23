@@ -2,12 +2,14 @@
 
 ## Stable release checklist
 
-Basis `b96d802f01b4`, representative manifest `helios-domain 0.2.0`. Target 1.0.0. [Backlog item](backlog.md#helios-stable-qualification).
+Reviewed basis `e28a0fe335c4`, representative manifest `helios-domain 0.2.1`. Target 1.0.0. [Backlog item](backlog.md#helios-stable-qualification).
 
 - [ ] [patch] Run H-HDF5-IEEE against the published 0.6.0 reader. Verify exact canonical bytes and values, datatype rejection for both datasets, and the contiguous read above 64 MiB.
 - [ ] [patch] Complete the delivered-dose comparison and projector value tests in M-dose-engine and M-imaging. Compare the actual dose and image results with their independent reference datasets.
 - [ ] [major] Exercise clinical and scripting boundaries plus the book and lock gates on the reviewed cohort. Obtain receipts for the declared public packages and replay a complete simulation from a clean consumer.
-- [ ] [patch] Run the [release scope](docs/adr/0021-release-scope-1-0.md) exits and attach reviewed, exact-revision evidence for this member’s [Atlas qualification criteria](https://github.com/ryancinsight/atlas/blob/17b0124a7548ad81e817284afc5cb115c1d1bc78/docs/parity/repositories.json).
+- [ ] [patch] **0.2.2.** Use Domain 0.2.1 as the HDF5 baseline. Reopen the writer’s output with Consus, compare dataset values and representation, and repeat with an incompatible descriptor and a contiguous payload above 64 MiB. [Source and baseline](gap_audit.md#incremental-release-baseline).
+- [ ] [minor] **0.3.0 proposed for additive capability.** Follow the release scope’s independent-reference or documented bounded-decision path for delivered dose and check a projector on a known geometry. Assign any changed engine or imaging package its own version, then repeat the end-to-end simulation.
+- [ ] [major] **1.0.0-beta.1 → 1.0.0-rc.1 → 1.0.0.** Freeze the supported surface at beta. The packaged application reads the same study, computes the expected outputs and records reference versions and uncertainty bounds. Repeat the applicable exits on the exact RC before stable promotion. Run the [release scope](docs/adr/0021-release-scope-1-0.md) exits and attach reviewed, exact-revision evidence for this member’s [Atlas qualification criteria](https://github.com/ryancinsight/atlas/blob/17b0124a7548ad81e817284afc5cb115c1d1bc78/docs/parity/repositories.json).
 
 <a id="h-hdf5-ieee"></a>
 ## H-HDF5-IEEE — Exact HDF5 archive admission [patch]

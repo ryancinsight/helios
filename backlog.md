@@ -2,8 +2,8 @@
 
 <a id="helios-stable-qualification"></a>
 ## HELIOS-STABLE-QUALIFICATION — helios stable-release qualification [patch] — todo
-- priority: verification; milestone: M-interop; basis: `b96d802f01b4`.
-- Outcome: Verify archive admission through the released Consus reader. Follow the [release scope](docs/adr/0021-release-scope-1-0.md) and `M-interop`.
+- priority: verification; milestone: M-interop; basis: `e28a0fe335c4`.
+- Outcome: Verify archive admission through the released Consus reader. Follow the [release scope](docs/adr/0021-release-scope-1-0.md) and `M-interop`. Planning targets for `helios-domain` are 0.2.2, then 0.3.0 proposed for additive capability, then 1.0.0. Verification alone can advance the current version.
 - Acceptance and sequence: [stable-release checklist](CHECKLIST.md#stable-release-checklist).
 
 <a id="H-HDF5-IEEE"></a>
