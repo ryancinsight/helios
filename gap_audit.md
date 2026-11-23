@@ -1,5 +1,11 @@
 # Helios Gap Audit
 
+## Incremental release baseline
+
+Reviewed [helios-domain 0.2.1](crates/helios-domain/Cargo.toml) at [e28a0fe335c4](https://github.com/ryancinsight/helios/tree/e28a0fe335c43c24bdd0267b05b96ce57c8dd439). The exact version appears in the [registry](https://crates.io/crates/helios-domain/0.2.1).
+
+The next [patch] checkpoint uses [storage contract](crates/helios-domain/tests/storage_contract.rs). [Target version and acceptance criteria](CHECKLIST.md#stable-release-checklist).
+
 ## Exact HDF5 archive representation
 
 The released reader interprets custom exponent-bias storage as IEEE binary64.
