@@ -11,16 +11,17 @@ the range this record gave was stale. [ADR 0022] records the Leto 0.52
 decision and owns the requirement. The Decision also names the Eunomia
 0.12 line (`Cargo.toml` requires 0.12.1) and the registry lock source
 that [ADR 0022] records, in place of the `git+` rows. Context dates its
-provider-head claims. Consequences now name the Leto types Helios
-re-exports. PR #227 carries this revision.
+provider-head claims and names `helios-simulation` as the crate that
+uses Moirai. Consequences now name the Leto types Helios re-exports.
+PR #227 carries this revision.
 
 ## Context
 
 `helios-math` re-exports Eunomia's element vocabulary
-(`RealField` as `Scalar`, `FloatElement`, `NumericElement`) and resolves
-its parallel dispatch through Moirai's runtime and parallel executor.
-At the decision date the stack's provider cohort had moved past both
-lines:
+(`RealField` as `Scalar`, `FloatElement`, `NumericElement`).
+`helios-simulation` resolves its parallel dispatch through Moirai's
+runtime and parallel executor. At the decision date the stack's provider
+cohort had moved past both lines:
 
 - Eunomia 0.12.0 was the current provider head. Rust treats the
   `FloatElement` trait of Eunomia 0.11 and the same-named trait of
