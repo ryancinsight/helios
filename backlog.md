@@ -504,35 +504,20 @@ H-117).
 - **Next step:** claim; add `epsilon = zero`, derive any bound that then fails.
 
 <a id="H-126"></a>
-### H-126 — decide the Leto lines Helios admits and re-exports [arch]
+### H-126 — repair ADR 0020's Leto record [patch]
 
-- Status: todo; priority: verification; needs: none; basis: `59d80a1c9d8f`; milestone: M-dose-engine
-- **Outcome:** the `leto` requirement admits only lines Helios builds against,
-  or ADR 0020 records why it admits more; its Consequences name the Leto contract.
-- **Scope:** `Cargo.toml:151` admits `>=0.46.4, <0.51.0`, five pre-1.0 lines; the
-  lock holds 0.50.0 and nothing in `.github`, `scripts`, `xtask` resolves another.
-  `helios-math/src/lib.rs:66-69` and `helios-domain/src/grid.rs:162` expose leto
-  types, distinct nominal types per line. ADR 0020 option 2 rejects the same wide
-  range for Eunomia, yet its Decision (l.49-51) widens Leto and names no contract.
-- **Acceptance oracle:** either the requirement narrows to the lock's line and the
-  Decision is revised in place with a dated note, or a committed check builds each
-  admitted line and the ADR states why; Consequences list the re-exported types.
-- **Next step:** decide narrow or gate (a judgment call), then claim.
-
-<a id="H-127"></a>
-### H-127 — repair ADR 0020 and the Leto CHANGELOG records [patch]
-
-- Status: todo; priority: verification; needs: H-126; basis: `59d80a1c9d8f`; milestone: M-dose-engine
-- **Outcome:** ADR 0020 and the `[Unreleased]` CHANGELOG state the Leto line once.
-- **Scope:** ADR revision note (l.8-10) cites no PR (#203); Decision l.51 is 84
-  columns against the 72 wrap and names 0.48-0.50 beside a 0.46.4 floor; the
-  `Board item` link resolves here, where the item is absent (it is on the Atlas
-  board). The Leto 0.50 entry (`CHANGELOG.md:48-51`) cites no ADR (the Eunomia
-  entry, l.73-74, does); `:53-61` still says Leto 0.48.0; the lock holds 0.50.0.
-- **Acceptance oracle:** no ADR line over 72 columns; the note cites #203; the
-  Leto 0.50 entry cites ADR 0020; no `[Unreleased]` entry gives a locked Leto
-  version other than the lock's (older sections stay); the `Board item` target exists.
-- **Next step:** claim after H-126 (it edits the same ADR lines and entries).
+- Status: todo; priority: verification; needs: none; basis: `b7bda4cd62296a3b11869f03405cab7e6d62dffa`; milestone: M-dose-engine
+- **Outcome:** ADR 0020 states the Leto requirement `Cargo.toml` holds and the Leto types Helios exposes.
+- **Scope:** `Cargo.toml:140` holds `0.52.0` (#219; lock: leto, leto-ops 0.52.0). ADR 0020 Decision (l.49-51)
+  still widens to `>=0.46.4, <0.51.0` (l.51: 84 columns). Consequences name no Leto type, yet
+  `helios-math/src/lib.rs:66-69` re-exports eight and `grid.rs:162` returns `Isometry3<T>`. The revision
+  note (l.8-10) cites no PR; `Board item` (l.6) names an ID on no board.
+- **Acceptance oracle** (repo root, `A=docs/adr/0020-eunomia-moirai-provider-contract.md`; each prints as stated):
+  (1) `v=$(grep -m1 '^leto = ' Cargo.toml | cut -d'"' -f2); D=$(sed -n '/^## Decision/,/^## Cons/p' $A | paste -sd' '); echo "$D" | grep -cE "Leto requirement.*$v"; echo "$D" | grep -cF 0.51.0` prints 1 then 0.
+  (2) `for t in Isometry3 Point2 Point3 RotationBasisError Translation3 UnitQuaternion UnitVector3 Vector3 VoxelGrid::pose; do sed -n '/^## Consequences/,$p' $A | grep -qw "$t" || echo $t; done` prints nothing.
+  (3) `grep -c '^Revision 20[0-9-]*:' $A` prints 1; `awk '/^Revision /,/^$/' $A | grep -cF '#219'` prints 1; `grep -c '^Board item' $A` prints 0; `grep -cx 'Delivered by: PR #199' $A` prints 1.
+  (4) `LC_ALL=C awk 'length > 72' $A` prints nothing (72 is the file's own wrap; no committed ADR width check exists).
+- **Next step:** claim; rewrite the Decision, Consequences, header and revision note in place.
 
 <a id="H-128"></a>
 ### H-128 — correct the `k` note on `kernel_total_error` [patch]
@@ -548,6 +533,3 @@ H-117).
 - **Acceptance oracle:** the note's `k` and both figures reproduce from the model
   at the named parameters (217.4u, 1.30e-5, 2.4e-14) and the label names a test.
 - **Next step:** claim; rewrite the note against that test's parameters.
-
-<a id="H-129"></a>
-[H-129 release evidence](gap_audit.md#aequitas-04-and-native-ct-release).
