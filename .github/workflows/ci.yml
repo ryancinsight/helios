@@ -79,7 +79,7 @@ jobs:
         run: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
 
       - name: RustSec audit
-        run: cargo audit --deny warnings --ignore RUSTSEC-2021-0153
+        run: cargo audit --deny warnings
 
       - name: Dependency policy
         run: cargo deny check

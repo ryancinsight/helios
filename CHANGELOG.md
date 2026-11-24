@@ -7,6 +7,31 @@ under a Breaking subsection.
 
 ## [Unreleased]
 
+## [helios-domain 0.2.1]
+
+### Fixed
+
+- Validate the exact IEEE binary64 little-endian representation of both HDF5
+  archive datasets before payload I/O. Files with a custom exponent bias or
+  foreign byte order now return a dataset-qualified storage error. Helios
+  archives retain their byte format and millimetre grid geometry.
+
+## [0.2.0] - 2026-11-20
+
+### Breaking
+
+- [major] Use Aequitas 0.5 quantities and Leto 0.52 views, points, and grids.
+  Upgrade consumers and any typed Atlas dependencies together. DICOM and
+  translation registration use the compatible RITK 0.6 and 0.57 crates.
+  The workspace requires Rust 1.97. The independent allocator stays at 0.1.0.
+  See [ADR 0022](docs/adr/0022-published-physics-provider-boundary.md).
+
+## [0.1.0]
+
+First Rust registry release. See the July 2026 development baseline below.
+
+The Python extension links when built directly by Cargo on macOS.
+
 ### Added
 
 - `helios-imaging` exposes the FBP ramp-filter stage on its own:
@@ -44,6 +69,16 @@ under a Breaking subsection.
   `1/r` divergence law satisfies.
 
 ### Changed
+
+- Helios uses the Aequitas 0.4 registry cohort for material properties,
+  photon transport, time stepping, and sampling.
+- Helios CT and MVCT ingest uses RITK’s native dataset and pixel codecs.
+  Frame interpretation, geometry, and stack assembly reside in separate modules.
+
+- **build(deps)**: Widen the Leto requirement to `>=0.46.4, <0.51.0` and lock
+  Leto and Leto Ops at 0.50.0. The lock advances the providers whose
+  requirements now admit it: CoeUs, RITK, Gaia's mesh crate, Hephaestus and
+  Apollo to their default-branch tips. No source changes.
 
 - **build(deps)**: Advance the first-party providers to their current cohort.
   Aequitas to 0.3.1, Apollo FFT to 0.29.3, Asclepius to 0.3.0, CoeUs to
@@ -255,6 +290,9 @@ under a Breaking subsection.
 
 ### Removed
 
+- Remove the Chrono and older DICOM charset advisory holds after the native
+  provider clears both packages from the full locked dependency graph.
+
 - `helios-math` no longer re-exports `eunomia::CastFrom` and `eunomia::CastTo`;
   no Helios crate used them, and Eunomia retires both traits. Counts convert
   through `FloatElement::from_count` and signed integers through
@@ -268,7 +306,7 @@ under a Breaking subsection.
   origin. Rays that start outside the grid are unchanged. This aligns the CPU
   march with the Hephaestus kernels and the gaia `Ray` half-line.
 
-## [0.1.0] — 2026-07-22
+## 0.1.0 development baseline (2026-07-22)
 
 ### Breaking
 
