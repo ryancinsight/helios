@@ -503,37 +503,6 @@ H-117).
   rest are reported with their ratio, not as killed.
 - **Next step:** claim; add `epsilon = zero`, derive any bound that then fails.
 
-<a id="H-126"></a>
-### H-126 — decide the Leto lines Helios admits and re-exports [arch]
-
-- Status: todo; priority: verification; needs: none; basis: `59d80a1c9d8f`; milestone: M-dose-engine
-- **Outcome:** the `leto` requirement admits only lines Helios builds against,
-  or ADR 0020 records why it admits more; its Consequences name the Leto contract.
-- **Scope:** `Cargo.toml:151` admits `>=0.46.4, <0.51.0`, five pre-1.0 lines; the
-  lock holds 0.50.0 and nothing in `.github`, `scripts`, `xtask` resolves another.
-  `helios-math/src/lib.rs:66-69` and `helios-domain/src/grid.rs:162` expose leto
-  types, distinct nominal types per line. ADR 0020 option 2 rejects the same wide
-  range for Eunomia, yet its Decision (l.49-51) widens Leto and names no contract.
-- **Acceptance oracle:** either the requirement narrows to the lock's line and the
-  Decision is revised in place with a dated note, or a committed check builds each
-  admitted line and the ADR states why; Consequences list the re-exported types.
-- **Next step:** decide narrow or gate (a judgment call), then claim.
-
-<a id="H-127"></a>
-### H-127 — repair ADR 0020 and the Leto CHANGELOG records [patch]
-
-- Status: todo; priority: verification; needs: H-126; basis: `59d80a1c9d8f`; milestone: M-dose-engine
-- **Outcome:** ADR 0020 and the `[Unreleased]` CHANGELOG state the Leto line once.
-- **Scope:** ADR revision note (l.8-10) cites no PR (#203); Decision l.51 is 84
-  columns against the 72 wrap and names 0.48-0.50 beside a 0.46.4 floor; the
-  `Board item` link resolves here, where the item is absent (it is on the Atlas
-  board). The Leto 0.50 entry (`CHANGELOG.md:48-51`) cites no ADR (the Eunomia
-  entry, l.73-74, does); `:53-61` still says Leto 0.48.0; the lock holds 0.50.0.
-- **Acceptance oracle:** no ADR line over 72 columns; the note cites #203; the
-  Leto 0.50 entry cites ADR 0020; no `[Unreleased]` entry gives a locked Leto
-  version other than the lock's (older sections stay); the `Board item` target exists.
-- **Next step:** claim after H-126 (it edits the same ADR lines and entries).
-
 <a id="H-128"></a>
 ### H-128 — correct the `k` note on `kernel_total_error` [patch]
 
@@ -548,6 +517,3 @@ H-117).
 - **Acceptance oracle:** the note's `k` and both figures reproduce from the model
   at the named parameters (217.4u, 1.30e-5, 2.4e-14) and the label names a test.
 - **Next step:** claim; rewrite the note against that test's parameters.
-
-<a id="H-129"></a>
-[H-129 release evidence](gap_audit.md#aequitas-04-and-native-ct-release).

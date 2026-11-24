@@ -456,7 +456,7 @@ RITK’s native dataset switches character repertoire handling to the
 provider’s decoder. The locked Helios graph contains neither `encoding`
 nor `chrono`, covering workspace features and target platforms. H-073
 and H-129 close together. The registry adoption gate follows
-[H-129](backlog.md#H-129). A lockfile-free resolver reaches Asclepius 0.3.0,
+[the release evidence](#aequitas-04-and-native-ct-release). A lockfile-free resolver reaches Asclepius 0.3.0,
 which still requires Git Aequitas 0.3.
 
 ### Recently closed
