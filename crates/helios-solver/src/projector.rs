@@ -44,7 +44,7 @@ impl<T: GeometryScalar> RayMarchPlan<T> {
             return None;
         }
         let steps = ((length * step_mm.recip()).ceil().to_f64() as usize).max(1);
-        let step_mm = length * <T as GeometryScalar>::from_f64(steps as f64).recip();
+        let step_mm = length * T::from_count(steps).recip();
         Some(Self {
             t_enter,
             steps,
@@ -69,7 +69,7 @@ impl<T: GeometryScalar> RayMarchPlan<T> {
     pub(crate) fn midpoint_t(self, sample: usize) -> T {
         debug_assert!(sample < self.steps, "midpoint index out of range");
         let half = <T as GeometryScalar>::from_f64(0.5);
-        self.t_enter + (<T as GeometryScalar>::from_f64(sample as f64) + half) * self.step_mm
+        self.t_enter + (T::from_count(sample) + half) * self.step_mm
     }
 }
 
@@ -106,9 +106,9 @@ pub(crate) fn ray_grid_interval<T: GeometryScalar>(
     let local_aabb = Aabb::new(
         Point3::new(T::ZERO, T::ZERO, T::ZERO),
         Point3::new(
-            <T as GeometryScalar>::from_f64((nx - 1) as f64),
-            <T as GeometryScalar>::from_f64((ny - 1) as f64),
-            <T as GeometryScalar>::from_f64((nz - 1) as f64),
+            T::from_count(nx - 1),
+            T::from_count(ny - 1),
+            T::from_count(nz - 1),
         ),
     );
     let (enter, exit) = local_ray.intersect_aabb(&local_aabb)?;
