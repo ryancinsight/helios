@@ -42,7 +42,8 @@ Reviewed basis `e28a0fe335c4`, representative manifest `helios-domain 0.2.1`. Ta
       `0602cfe8`. The native deflate round trip preserves the grid pose and
       the analytical HU values. Warning-denied Clippy and advisories pass.
 - [x] [patch] Resolve and test the Aequitas 0.4 release graph without a
-      pre-existing lockfile. See [H-129](backlog.md#H-129).
+      pre-existing lockfile. See
+      [the release evidence](gap_audit.md#aequitas-04-and-native-ct-release).
 
 ## current session — H-118a typed Python surface [patch] — in-progress
 

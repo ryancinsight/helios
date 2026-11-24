@@ -3,11 +3,13 @@
 Status: Accepted  \
 Date: 2026-11-15  \
 Change class: [arch] [major]  \
-Board item: [ATLAS-VERSION-COHERENCE-SWEEP-2026-09-30](../../backlog.md)
+Delivered by: PR #199
 
-Revision 2026-11-16: the Leto upper bound moves from `<0.49.0` to
-`<0.51.0` for the Leto 0.50.0 cohort. The lock holds Leto 0.50.0, which
-CoeUs, RITK, Gaia's mesh crate, Hephaestus and Apollo now admit.
+Revision 2026-11-23: the Decision no longer states a Leto requirement.
+PR #214 narrowed it to `0.51.0` and PR #219 moved it to `0.52.0`, so
+the range this record gave was stale. [ADR 0022] records the Leto 0.52
+decision and owns the requirement. Consequences now name the Leto types
+Helios re-exports. PR #227 carries this revision.
 
 ## Context
 
@@ -46,12 +48,11 @@ Two alternatives were considered:
 
 ## Decision
 
-Move the Eunomia requirement to 0.12.0, the Moirai runtime and
-Moirai-parallel requirements to 0.12.0, and widen the Leto requirement
-to `>=0.46.4, <0.51.0` so the 0.48, 0.49 and 0.50 lines resolve. Regenerate the lock
-outside the Atlas dependency overlay, so every provider row names one
-revision per provider repository and the `source = "git+..."` rows
-survive.
+Move the Eunomia requirement to 0.12.0 and the Moirai runtime and
+Moirai-parallel requirements to 0.12.0. [ADR 0022] owns the Leto
+requirement. Regenerate the lock outside the Atlas dependency overlay,
+so every provider row names one revision per provider repository and the
+`source = "git+..."` rows survive.
 
 No Helios source changes with the move. The removed provider method is
 unused in this repository.
@@ -64,8 +65,20 @@ unused in this repository.
   uses Helios's public generic types. Consumers already using concrete
   scalar types keep the same Helios API after their dependency graph
   selects the new cohort.
+- Helios re-exports Leto's geometry vocabulary and returns it from a
+  public method, so the Leto line is part of the public contract beside
+  the Eunomia line. `crates/helios-math/src/lib.rs:66-69` re-exports
+  `Isometry3`, `Point2`, `Point3`, `RotationBasisError`, `Translation3`,
+  `UnitQuaternion`, `UnitVector3` and `Vector3` from `leto::geometry`
+  under the `geometry` feature, and
+  `crates/helios-domain/src/grid.rs:162` returns `Isometry3<T>` from
+  `VoxelGrid::pose`. Each Leto line gives these types distinct Rust
+  identities, so a consumer selects the Leto line that [ADR 0022]
+  records.
 - The public contract change is a [major] change class; the release
   tooling assigns the version at release.
 - No compatibility trait, forwarding wrapper, or duplicate element
   vocabulary is added: two Eunomia identities under one name would keep
   the split the provider owns.
+
+[ADR 0022]: 0022-published-physics-provider-boundary.md

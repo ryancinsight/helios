@@ -503,22 +503,6 @@ H-117).
   rest are reported with their ratio, not as killed.
 - **Next step:** claim; add `epsilon = zero`, derive any bound that then fails.
 
-<a id="H-126"></a>
-### H-126 — repair ADR 0020's Leto record [patch]
-
-- Status: todo; priority: verification; needs: none; basis: `b7bda4cd62296a3b11869f03405cab7e6d62dffa`; milestone: M-dose-engine
-- **Outcome:** ADR 0020 states the Leto requirement `Cargo.toml` holds and the Leto types Helios exposes.
-- **Scope:** `Cargo.toml:140` holds `0.52.0` (#219; lock: leto, leto-ops 0.52.0). ADR 0020 Decision (l.49-51)
-  still widens to `>=0.46.4, <0.51.0` (l.51: 84 columns). Consequences name no Leto type, yet
-  `helios-math/src/lib.rs:66-69` re-exports eight and `grid.rs:162` returns `Isometry3<T>`. The revision
-  note (l.8-10) cites no PR; `Board item` (l.6) names an ID on no board.
-- **Acceptance oracle** (repo root, `A=docs/adr/0020-eunomia-moirai-provider-contract.md`; each prints as stated):
-  (1) `v=$(grep -m1 '^leto = ' Cargo.toml | cut -d'"' -f2); D=$(sed -n '/^## Decision/,/^## Cons/p' $A | paste -sd' '); echo "$D" | grep -cE "Leto requirement.*$v"; echo "$D" | grep -cF 0.51.0` prints 1 then 0.
-  (2) `for t in Isometry3 Point2 Point3 RotationBasisError Translation3 UnitQuaternion UnitVector3 Vector3 VoxelGrid::pose; do sed -n '/^## Consequences/,$p' $A | grep -qw "$t" || echo $t; done` prints nothing.
-  (3) `grep -c '^Revision 20[0-9-]*:' $A` prints 1; `awk '/^Revision /,/^$/' $A | grep -cF '#219'` prints 1; `grep -c '^Board item' $A` prints 0; `grep -cx 'Delivered by: PR #199' $A` prints 1.
-  (4) `LC_ALL=C awk 'length > 72' $A` prints nothing (72 is the file's own wrap; no committed ADR width check exists).
-- **Next step:** claim; rewrite the Decision, Consequences, header and revision note in place.
-
 <a id="H-128"></a>
 ### H-128 — correct the `k` note on `kernel_total_error` [patch]
 
