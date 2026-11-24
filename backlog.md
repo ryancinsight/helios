@@ -517,3 +517,21 @@ H-117).
 - **Acceptance oracle:** the note's `k` and both figures reproduce from the model
   at the named parameters (217.4u, 1.30e-5, 2.4e-14) and the label names a test.
 - **Next step:** claim; rewrite the note against that test's parameters.
+
+<a id="H-130"></a>
+### H-130 — remove the remaining bare conversions from the march plan [tightening]
+
+- Status: todo; priority: tightening; needs: none; basis: `b226d6eaa445eba5322b2db487bfeda85a4469ca`; milestone: M-imaging
+- **Outcome:** `RayMarchPlan` converts counts and literals only through typed provider conversions: no `as`, no round trip through `f64`, no literal converted on every call. The substep count states the range over which `T::from_count` is exact (n <= 2^24 for f32, 2^53 for f64), since `step_mm` has no validated lower limit.
+- **Scope:** `crates/helios-solver/src/projector.rs`: :46 `.to_f64() as usize` (a float-to-count saturating cast through `f64`), :64 `from_f64(MM_PER_CM)`, :71 `from_f64(0.5)`, and the test cast at :229 `idx[0] as f64`.
+- **Acceptance oracle:** `git grep -n -E ' as (usize|f64)([^a-z0-9_]|$)' -- crates/helios-solver/src/projector.rs` prints nothing (:46 and :229 at the basis); `awk '/#\[cfg\(test\)\]/{exit} /from_f64\(/{print FNR": "$0}' crates/helios-solver/src/projector.rs` prints nothing (:64 and :71 at the basis); `cargo nextest run -p helios-solver -E 'test(projector)'` passes in f32 and f64 unchanged.
+- **Next step:** claim; check the locked eunomia for a checked float-to-count conversion and, if it has none, add it there (conversions live with the foundation crate), then replace :46; take the two constants from a `Scalar` constant or a field converted once at plan construction.
+
+<a id="H-131"></a>
+### H-131 — convert the grid index extent once, not per ray [tightening]
+
+- Status: todo; priority: tightening; needs: none; basis: `b226d6eaa445eba5322b2db487bfeda85a4469ca`; milestone: M-imaging
+- **Outcome:** the grid-invariant extents `nx - 1`, `ny - 1`, `nz - 1` reach `ray_grid_interval` as `T` converted once at `VoxelGrid` construction, not once per ray across a sinogram.
+- **Scope:** `crates/helios-solver/src/projector.rs:109-111`, `crates/helios-domain/src/grid.rs`. The placement predates helios#226 and its cost was not measured; it is expected to be small beside the per-sample march.
+- **Acceptance oracle:** `git grep -n -E 'from_count\((nx|ny|nz) - 1\)' -- crates/helios-solver/src/projector.rs` prints nothing (:109-111 at the basis), with a profile of one parallel-beam sinogram before and after; if the conversion is below its noise, delete this item with that measurement as the recorded decision.
+- **Next step:** claim after H-130 lands (same file); profile the sinogram first.
