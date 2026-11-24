@@ -518,20 +518,29 @@ H-117).
   at the named parameters (217.4u, 1.30e-5, 2.4e-14) and the label names a test.
 - **Next step:** claim; rewrite the note against that test's parameters.
 
-<a id="H-130"></a>
-### H-130 — remove the remaining bare conversions from the march plan [tightening]
+<a id="H-132"></a>
+### H-132 — reject an invalid ray-march step before it sets the sample count [major]
 
-- Status: todo; priority: tightening; needs: none; basis: `b226d6eaa445eba5322b2db487bfeda85a4469ca`; milestone: M-imaging
-- **Outcome:** `RayMarchPlan` converts counts and literals only through typed provider conversions: no `as`, no round trip through `f64`, no literal converted on every call. The substep count states the range over which `T::from_count` is exact (n <= 2^24 for f32, 2^53 for f64), since `step_mm` has no validated lower limit.
+- Status: todo; priority: correctness; needs: none; basis: `b226d6eaa445eba5322b2db487bfeda85a4469ca`; milestone: M-imaging
+- **Outcome:** `forward_project_ray`, `parallel_beam_radon`, `deposit_ray_terma` and `deposit_ray_terma_diverging` reject a step that is not finite and strictly positive, or whose sample count is not representable as `usize`, through a typed error or a validated-step type; none marches a count the caller did not ask for. Every option changes a public signature (`forward_project_ray` returns `Option<T>`, `parallel_beam_radon` returns `Sinogram<T>`), so it needs an ADR and a migration note, and its count bound must not exceed the range over which `T::from_count` is exact (n <= 2^24 for f32, 2^53 for f64).
+- **Scope:** `crates/helios-solver/src/projector.rs:46` computes `steps` as `ceil(length * step_mm.recip())` through a saturating `as usize`. By Rust's float-to-integer cast rules (NaN to 0, above `usize::MAX` to `usize::MAX`), step 0.0 and any step whose count exceeds `usize::MAX` (a subnormal step's reciprocal overflows to infinity) give `usize::MAX` samples at `for i in 0..plan.steps()` (:162), an unbounded march, while -0.0, a negative step and NaN give one sample, a silent midpoint result. The FAIL-1 judge of helios#228 reproduced step 0.0, 1e-300, -0.0, -0.5 and NaN by compiling the :46 expression alone (rustc 1.97.0, length 20 mm). No entry point checks the step: `forward_project_ray` (:156), `parallel_beam_radon` (`radon.rs:105-127`), `deposition.rs:131` behind both deposit functions. Callers: `helios-simulation` (`acquisition.rs:128`, `portal.rs:55`, `dose_accumulation.rs:145-147`), `helios-gpu` (`projection.rs:213`, `benches/projection_throughput.rs:81`).
+- **Acceptance oracle:** one value-semantic test per entry point and per step in {0.0, -0.0, -0.5, NaN, a subnormal, a step whose count exceeds `usize::MAX`}, in f32 and f64, each asserting the error variant with `matches!` (or the validated type's constructor error) and returning without marching; the existing projector, radon and deposition tests pass unchanged. At the basis no such test can pass: `git grep -n -i -E 'invalid_?step|ValidatedStep|StepError' -- crates` prints nothing (positive control: `git grep -n 'InvalidValue' -- crates/helios-solver` prints `deposition.rs:480`).
+- **Next step:** claim; draft the ADR choosing the typed error or the validated step type, read `helios-gpu/src/projection.rs:78-108` for the same step contract, then write the tests first.
+
+<a id="H-130"></a>
+### H-130 — remove the remaining bare conversions from the march plan [patch]
+
+- Status: todo; priority: tightening; needs: H-132; basis: `b226d6eaa445eba5322b2db487bfeda85a4469ca`; milestone: M-imaging
+- **Outcome:** `RayMarchPlan` converts counts and literals only through typed provider conversions: no `as`, no round trip through `f64`, no literal converted on every call. The step validation belongs to H-132; this item keeps the conversion at :46 once that validation fixes the count.
 - **Scope:** `crates/helios-solver/src/projector.rs`: :46 `.to_f64() as usize` (a float-to-count saturating cast through `f64`), :64 `from_f64(MM_PER_CM)`, :71 `from_f64(0.5)`, and the test cast at :229 `idx[0] as f64`.
-- **Acceptance oracle:** `git grep -n -E ' as (usize|f64)([^a-z0-9_]|$)' -- crates/helios-solver/src/projector.rs` prints nothing (:46 and :229 at the basis); `awk '/#\[cfg\(test\)\]/{exit} /from_f64\(/{print FNR": "$0}' crates/helios-solver/src/projector.rs` prints nothing (:64 and :71 at the basis); `cargo nextest run -p helios-solver -E 'test(projector)'` passes in f32 and f64 unchanged.
-- **Next step:** claim; check the locked eunomia for a checked float-to-count conversion and, if it has none, add it there (conversions live with the foundation crate), then replace :46; take the two constants from a `Scalar` constant or a field converted once at plan construction.
+- **Acceptance oracle:** `git grep -n -E ' as (usize|f64)([^a-z0-9_]|$)|\.to_f64\(\)' -- crates/helios-solver/src/projector.rs` prints nothing (:46 and :229 at the basis); `awk '/#\[cfg\(test\)\]/{exit} /from_f64\(/{print FNR": "$0}' crates/helios-solver/src/projector.rs` prints nothing (:64 and :71 at the basis); `cargo nextest run -p helios-solver -E 'test(projector)'` passes in f32 and f64 unchanged.
+- **Next step:** claim after H-132 merges; check the locked eunomia for a checked float-to-count conversion and, if it has none, add it there (conversions live with the foundation crate), then replace :46; take the two constants from a `Scalar` constant or a field converted once at plan construction.
 
 <a id="H-131"></a>
-### H-131 — convert the grid index extent once, not per ray [tightening]
+### H-131 — convert the grid index extent once, not per ray [patch]
 
 - Status: todo; priority: tightening; needs: none; basis: `b226d6eaa445eba5322b2db487bfeda85a4469ca`; milestone: M-imaging
 - **Outcome:** the grid-invariant extents `nx - 1`, `ny - 1`, `nz - 1` reach `ray_grid_interval` as `T` converted once at `VoxelGrid` construction, not once per ray across a sinogram.
-- **Scope:** `crates/helios-solver/src/projector.rs:109-111`, `crates/helios-domain/src/grid.rs`. The placement predates helios#226 and its cost was not measured; it is expected to be small beside the per-sample march.
-- **Acceptance oracle:** `git grep -n -E 'from_count\((nx|ny|nz) - 1\)' -- crates/helios-solver/src/projector.rs` prints nothing (:109-111 at the basis), with a profile of one parallel-beam sinogram before and after; if the conversion is below its noise, delete this item with that measurement as the recorded decision.
-- **Next step:** claim after H-130 lands (same file); profile the sinogram first.
+- **Scope:** `crates/helios-solver/src/projector.rs:109-111`, `crates/helios-domain/src/grid.rs`. The placement predates helios#226; its cost was not measured.
+- **Acceptance oracle:** `git grep -n -E 'from_count\((nx|ny|nz) - 1\)' -- crates/helios-solver/src/projector.rs` prints nothing (:109-111 at the basis), and the PR attaches a profile of one parallel-beam sinogram before and after.
+- **Next step:** claim; profile the sinogram on the basis first, then move the conversion.
