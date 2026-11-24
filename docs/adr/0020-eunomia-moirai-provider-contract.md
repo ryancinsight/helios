@@ -6,19 +6,23 @@ Change class: [arch] [major]  \
 Delivered by: PR #199
 
 Revision 2026-11-23: the Decision no longer states a Leto requirement.
-PR #214 narrowed it to `0.51.0` and PR #219 moved it to `0.52.0`, so
+PR #214 replaced it with `0.51.0` and PR #219 moved it to `0.52.0`, so
 the range this record gave was stale. [ADR 0022] records the Leto 0.52
-decision and owns the requirement. Consequences now name the Leto types
-Helios re-exports. PR #227 carries this revision.
+decision and owns the requirement. The Decision also names the Eunomia
+0.12 line (`Cargo.toml` requires 0.12.1) and the registry lock source
+that [ADR 0022] records, in place of the `git+` rows. Context dates its
+provider-head claims. Consequences now name the Leto types Helios
+re-exports. PR #227 carries this revision.
 
 ## Context
 
 `helios-math` re-exports Eunomia's element vocabulary
 (`RealField` as `Scalar`, `FloatElement`, `NumericElement`) and resolves
 its parallel dispatch through Moirai's runtime and parallel executor.
-The stack's provider cohort has moved past both lines:
+At the decision date the stack's provider cohort had moved past both
+lines:
 
-- Eunomia 0.12.0 is the current provider head. Rust treats the
+- Eunomia 0.12.0 was the current provider head. Rust treats the
   `FloatElement` trait of Eunomia 0.11 and the same-named trait of
   Eunomia 0.12 as distinct nominal contracts, so a consumer that names
   the re-exported trait while depending on Eunomia 0.11 directly
@@ -28,11 +32,11 @@ The stack's provider cohort has moved past both lines:
   Helios implements no `StateWord` and calls no removed method, so no
   Helios source changes with the move.
 
-The requirement also gates the rest of the stack. The providers' current
-default heads require Moirai 0.12 (`apollo-fft` 0.29.5 and
-`coeus-core` 0.12.0 name `moirai-runtime ^0.12.0`), so every consumer
-that resolves those providers with a `^0.11.0` requirement cannot
-re-resolve onto the current provider heads at all.
+The requirement also gates the rest of the stack. The providers' default
+heads then required Moirai 0.12 (`apollo-fft` 0.29.5 and `coeus-core`
+0.12.0 named `moirai-runtime ^0.12.0`), so every consumer that resolved
+those providers with a `^0.11.0` requirement could not re-resolve onto
+the provider heads at all.
 
 Two alternatives were considered:
 
@@ -48,11 +52,12 @@ Two alternatives were considered:
 
 ## Decision
 
-Move the Eunomia requirement to 0.12.0 and the Moirai runtime and
-Moirai-parallel requirements to 0.12.0. [ADR 0022] owns the Leto
-requirement. Regenerate the lock outside the Atlas dependency overlay,
-so every provider row names one revision per provider repository and the
-`source = "git+..."` rows survive.
+Move the Eunomia requirement to the 0.12 line (`Cargo.toml` requires
+`0.12.1`) and the Moirai runtime and Moirai-parallel requirements to
+0.12.0. [ADR 0022] owns the Leto requirement. Regenerate the lock
+outside the Atlas dependency overlay, so it resolves every provider from
+the published registry source that [ADR 0022] records, with one version
+per provider crate.
 
 No Helios source changes with the move. The removed provider method is
 unused in this repository.
