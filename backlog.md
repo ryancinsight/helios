@@ -1,5 +1,59 @@
 # Helios Backlog (strategic board)
-<a id="helios-roi-variance-20261108"></a>- [HELIOS-ROI-VARIANCE-20261108](backlog/helios-roi-variance-20261108.md) — Preserve translated ROI noise [patch] — blocked
+
+<a id="helios-roi-variance-20261108"></a>
+## HELIOS-ROI-VARIANCE-20261108 — Preserve translated ROI noise [patch] — blocked
+
+- Scope covers intensity and dose ROI statistics. For a balanced sample of two represented values separated by a distance d, the population standard deviation is |d|/2.
+- Regression coverage includes adjacent representable values, translated volumes, clipped bounds, empty regions, and singletons.
+- The correction and tests are available in PR #229. The returned mean retains its existing range and rounding behavior.
+- Independent qualification of this revision, hosted verification, and confirmation of provider migration and deployment settings remain open before merge.
+
+<a id="helios-stable-qualification"></a>
+## HELIOS-STABLE-QUALIFICATION — helios stable-release qualification [patch] — todo
+- priority: verification; milestone: M-interop; basis: `e28a0fe335c4`.
+- Outcome: Verify archive admission through the released Consus reader. Follow the [release scope](docs/adr/0021-release-scope-1-0.md) and `M-interop`. Planning targets for `helios-domain` are 0.2.2, then 0.3.0 proposed for additive capability, then 1.0.0. Verification alone can advance the current version.
+- Acceptance and sequence: [stable-release checklist](CHECKLIST.md#stable-release-checklist).
+
+<a id="H-HDF5-IEEE"></a>
+## H-HDF5-IEEE — Verify exact HDF5 archive representation [patch]
+
+- Status: todo
+- Priority: correctness
+- Milestone: M-release
+- Scope: `helios-domain` storage reader and tests.
+- Acceptance: verified Consus registry provider, representation rejection on
+  both datasets, exact canonical archive bytes and values, and a contiguous
+  read above 64 MiB. Track the gates in [CHECKLIST.md](CHECKLIST.md#h-hdf5-ieee).
+- Evidence: the local candidate passes all 65 domain tests with the published
+  provider. Hosted Helios verification remains pending.
+
+<a id="H-AEQUITAS-050"></a>
+## H-AEQUITAS-050 — Publish the shared physics providers [major]
+
+- Status: todo
+- Priority: correctness
+- Milestone: M-release
+- Target: 0.2.0. The 11 affected crates share the Aequitas, Leto, and RITK
+  provider versions of the integrated Atlas stack.
+- acceptance: [ADR 0022](docs/adr/0022-published-physics-provider-boundary.md),
+  exact hosted checks, 11 archive receipts, and a fresh typed consumer.
+
+## M-dose-engine: delivered dose carries independent evidence — needs: none
+- exit: the H-112 reference comparison is green within derived tolerances, or the absence is a recorded bounded decision; the H-114 `DoseInfluence` producer wires planning to simulation.
+## M-imaging: the projector is exact and provider-delegated — needs: none
+- exit: ADR 0019 cases 1-8 pass in f32/f64, fan rays match the parallel projector within the roundoff bound, no declared provider stays locally substituted.
+## M-interop: clinical and scripting boundaries are typed — needs: none
+- exit: DICOM-RT I/O round-trips structure sets, the Python surface is typed with PEP 561 metadata, the native DICOM graph stays free of the retired charset and Chrono dependencies.
+## M-book: the book's claims resolve against the tree — needs: none
+- exit: zero unresolved chapter-body paths, `mdbook test` executes a non-zero test count, the figure tree matches the SUMMARY.
+## M-board: hygiene and locks are green — needs: none
+- exit: no stale statuses or duplicate IDs, the benchmark runner is partitioned within the file target, the locked workspace compiles against one coherent provider graph.
+## M-release: stable transport-and-dose release (authority-gated) — needs: M-dose-engine, M-imaging, M-interop, M-book, M-board
+- exit: `cargo semver-checks`, publish dry-run, `cargo doc`, full nextest/doctest green, zero open correctness items. Veto: release authority sets the API-freeze contents; never forces `publish = true` without it.
+## M-ecosystem: consumer-owned coupling (harmonia, asclepius) — needs: M-release
+- exit: consumer receipts on their own boards; does not gate 1.0.
+- ladder: [ADR 0021](docs/adr/0021-release-scope-1-0.md); every open item below carries exactly one `milestone:`.
+
 Single source of cross-session strategy. Each item carries a stable ID, a
 change-class tag, a status, an owner, and a claimed scope. Triage order: correctness
 gaps → architecture drift → missing tests → docs → PM cleanup.
@@ -28,7 +82,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-068 | Back validated energy and voxel-spacing newtypes with Aequitas quantities while preserving Helios-specific validation and public display units; keep Hounsfield units local as a calibrated non-SI scale. | [arch] | done | Codex `/root` | `Cargo.toml`, `Cargo.lock`, `crates/helios-quantities/**`, `docs/adr/**`, PM artifacts |
 | H-071 | Replace the tautological same-run benchmark check with Atlas's phase-replicated Criterion gate pinned to merge `9bfb722`; run native tests through the committed Nextest budget and delete the copied Python classifier. | [arch] [patch] | done | Codex `/root` | `.github/workflows/ci.yml`, `.github/scripts/check_regressions.py`, `README.md`, PM artifacts |
 | H-072 | Upgrade the thin Python boundary to PyO3 0.29.0, close RUSTSEC-2025-0020 plus RUSTSEC-2026-0177 without moving domain logic into the binding crate, and enforce value-semantic tests against the built extension. | [patch] | done | Codex `/root` | `Cargo.toml`, `Cargo.lock`, `crates/helios-python/**`, `.github/workflows/ci.yml`, PM artifacts |
-| H-073 | Replace the unmaintained `encoding` charset implementation when `dicom-encoding` publishes a maintained dependency; current 0.10.0 requires it unconditionally for DICOM Specific Character Set coverage. | [patch] | blocked | — | external `dicom-rs` provider; reopen on a release that removes RUSTSEC-2021-0153 |
+| H-073 | Use the native RITK Specific Character Set decoder and remove the RUSTSEC-2021-0153 hold. | [patch] | done | Codex | `Cargo.lock`, `deny.toml`, `.github/workflows/ci.yml` |
 | H-074 | Align the direct Aequitas and Proteus revisions with the merged temperature-response provider graph so Helios and Hephaestus resolve one Aequitas source identity. | [patch] | done | Codex | `Cargo.toml`, `Cargo.lock`, PM artifacts |
 | H-076 | Replace Helios-owned gEUD/TCP/NTCP equations and the duplicate Coeus gEUD tape with Asclepius-owned laws; store the DVH response sample as Aequitas doses, preserve zero-copy evaluation, migrate callers to typed failures, and verify the planning gradient plus delivered-dose workflow. | [arch] [major] | done | Codex `/root` | `Cargo.toml`, `crates/helios-analysis/**`, `crates/helios-planning/**`, `crates/helios-simulation/tests/**`, architecture and PM artifacts |
 | H-078 | Adopt Tyche's versioned normal-sampling stream, remove local patch masking, and pin the quantum-noise replay vector to an explicit algorithm. | [arch] [major] | done | Codex `/root` | `Cargo.toml`, `Cargo.lock`, `crates/helios-imaging/src/noise.rs`, ADR and PM artifacts |
@@ -54,9 +108,9 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-102 | Repair the Helios Pages caller so source, example, manifest, and lockfile changes rebuild the book; install the pinned `mdbook-linkcheck2` renderer in the same hosted build. | [patch] | done 2026-08-16 | current session | `.github/workflows/book-pages.yml`, `backlog.md`, `gap_audit.md` |
 | H-103 | Convert source-backed Helios book snippets into checked `mdbook test` samples, or mark non-runnable explanatory fragments as non-code while retaining runnable crate examples as the executable documentation surface. | [patch] | done 2026-10-29 | MuseCode | `docs/book/**`, `crates/*/examples/**`, `.github/workflows/book-pages.yml`, PM artifacts |
 | H-103a | Add one self-contained executable Rust analytical oracle to the book and verify the mdBook test gate; broader text-fence conversion remains H-103. | [patch] | done | Codex | `docs/book/examples/compton_physics.md`, PM artifacts |
-| H-118a | Ship PEP 561 typing metadata for the five-function `helios` PyO3 module: a typed stub, `py.typed`, package inclusion, and a missing-docs lint floor. | [patch] | in-progress | Codex | `crates/helios-python/**`, PM artifacts |
-| H-120 | Restore the Atlas oversized-file ratchet by partitioning the replicated benchmark runner into cohesive schedule, checkout, and measurement modules without changing its schedule, budgets, process invocations, or verdict semantics. | [patch] | review | Codex `/root/fit` | `xtask/src/bench_replicated.rs`, `xtask/src/bench_replicated/**`, `backlog.md` |
-| H-121 | Repair the standalone provider lock graph exposed by the merged H-098 `--locked` CI gate: align Apollo and Hermes package revisions so the locked workspace compiles against one coherent API graph, then rerun the hosted lint and test jobs. | [patch] | in-progress | Codex `/root` | `Cargo.lock`, `backlog.md`, provider-graph evidence |
+| H-118a | Ship PEP 561 typing metadata for the five-function `helios` PyO3 module: a typed stub, `py.typed`, package inclusion, and a missing-docs lint floor. | [patch] | in-progress | Codex | `crates/helios-python/**`, PM artifacts; milestone: M-interop. |
+| H-120 | Restore the Atlas oversized-file ratchet by partitioning the replicated benchmark runner into cohesive schedule, checkout, and measurement modules without changing its schedule, budgets, process invocations, or verdict semantics. | [patch] | review | Codex `/root/fit` | `xtask/src/bench_replicated.rs`, `xtask/src/bench_replicated/**`, `backlog.md`; milestone: M-board. |
+| H-121 | Repair the standalone provider lock graph exposed by the merged H-098 `--locked` CI gate: align Apollo and Hermes package revisions so the locked workspace compiles against one coherent API graph, then rerun the hosted lint and test jobs. | [patch] | in-progress | Codex `/root` | `Cargo.lock`, `backlog.md`, provider-graph evidence; milestone: M-board. |
 
 ## Sprint 1 — Foundation
 
@@ -67,9 +121,9 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-003 | `helios-math`: `Scalar` seam (= `eunomia::RealField`) + leto linear-algebra substrate re-export | [minor] | done | claude-helios | `crates/helios-math/**` |
 | H-003b | Consume gaia `Aabb`/`Ray` in `helios-math` (re-export as Helios geometry). Blocked on gaia's leto-geometry migration landing on its default branch (G-11). | [minor] | blocked | — | `crates/helios-math/**` |
 | H-004 | `helios-domain`: `VoxelGrid` (index↔world via leto `Isometry3`) + `Volume<T>` trilinear sampling over leto `Array3` | [minor] | done | claude-helios | `crates/helios-domain/**` |
-| H-004b | `helios-domain::load_ct_slice` (feature `dicom`): single-slice DICOM CT/MVCT → HU `Volume` via `ritk-dicom` (parse + rescale-calibrated decode) + geometry (Rows/Columns/PixelSpacing/ImagePositionPatient). Validated by a synthetic-DICOM round-trip through the real dicom-rs parser. **Mandatory ritk integration now consumed.** | [minor] | done | claude-helios | `crates/helios-domain/**`, `crates/helios-quantities/**` |
+| H-004b | `helios-domain::load_ct_slice` (feature `dicom`): single-slice DICOM CT/MVCT → HU `Volume` via `ritk-dicom` (parse + rescale-calibrated decode) + geometry (Rows/Columns/PixelSpacing/ImagePositionPatient). Validated by synthetic DICOM through the provider’s public parser. **Mandatory ritk integration now consumed.** | [minor] | done | claude-helios | `crates/helios-domain/**`, `crates/helios-quantities/**` |
 | H-004c | `helios-domain::load_ct_series`: multi-slice DICOM **series** stacking → 3-D HU `Volume` (parse+decode each slice, validate identical in-plane geometry, sort by `ImagePositionPatient` z, derive uniform Δz). Shared `read_slice`/`scatter_slice` with `load_ct_slice`. Verified by a shuffled 3-slice synthetic round-trip + empty/non-uniform error paths. | [minor] | done | claude-helios | `crates/helios-domain/**` |
-| H-004d | `helios-domain`: `CtVolume`/`MvctVolume` HU-semantic newtypes + `ImageOrientationPatient` → oriented grid pose (pairs with H-003d oriented `VoxelGrid`). The Helios consumer now uses RITK’s provider-owned named tag; exact cross-repo closure waits for RITK PR #149 to merge. | [minor] | done | Codex | `crates/helios-domain/**`, `backlog.md`, `gap_audit.md`, `checklist.md` |
+| H-004d | `helios-domain`: `CtVolume`/`MvctVolume` HU-semantic newtypes + `ImageOrientationPatient` → oriented grid pose (pairs with H-003d oriented `VoxelGrid`). The Helios consumer uses RITK’s provider-owned named tag; RITK PR #149 merged 2026-08-14 as ab46f9f12f25, an ancestor of the locked ritk rev 91ca0fd6dd0d. | [minor] | done | Codex | `crates/helios-domain/**`, `backlog.md`, `gap_audit.md`, `checklist.md` |
 | H-005 | Superseded by H-020b's binary-MLC `LeafOpenTimeSinogram`/`MlcModel` and H-020k's gaia-backed `FieldAperture`/delivery collimation; roadmap reconciled and the formatter gate restored. | [patch] | done | Codex | `README.md`, `backlog.md`, `gap_audit.md`, `CHANGELOG.md`, `crates/helios-{math,solver}/src/**` |
 | H-006 | ~~Shared `CARGO_TARGET_DIR`~~ — resolved: inherited from `repos/.cargo/config.toml` (shared `D:/atlas/target`) | [patch] | done | claude-helios | — |
 
@@ -78,15 +132,14 @@ Status: `todo` · `in-progress` · `review` · `done`
 | ID | Item | Class | Status | Owner | Scope |
 |----|------|-------|--------|-------|-------|
 | H-010 | `helios-gpu`: dispatch over `hephaestus_core::ComputeDevice` + hephaestus-wgpu. **Done** — `beam_transmission_into` (GPU `exp(-τ)` via NegOp+ExpOp) differentially validated vs CPU on a live adapter; `default_device`. | [minor] | done | claude-helios | `crates/helios-gpu/**` |
-| H-010b | `helios-gpu`: GPU HU→μ kernel. **Done** — `GpuAttenuationMapper` authored over the hephaestus ADR-0004 kernel seam (`KernelInterface`+`KernelSource<Wgsl>`, runtime scale/offset params, fused `max(fma(scale,hu,offset),0)`); differentially validated vs the closed form and vs `helios-solver::attenuation_map` (9/9 helios-gpu tests on live adapter). No substrate fork needed — the blocking dependency (custom op seam) shipped upstream. Remaining split to H-012 (projector) / throughput bench rides existing benches. | [minor] | done | claude-seam | `crates/helios-gpu/**` |
+| H-010b | `helios-gpu`: GPU HU→μ kernel. **Done** — `GpuAttenuationMapper` authored over the hephaestus ADR-0004 kernel seam (`KernelInterface`+`KernelSource<Wgsl>`, runtime scale/offset params, fused `max(fma(scale,hu,offset),0)`); differentially validated vs the closed form and vs `helios-solver::attenuation_map` (9/9 helios-gpu tests on live adapter). No substrate fork needed — the blocking dependency (custom op seam) shipped upstream. The projector is `GpuProjector`, delivered under H-043b; the throughput bench rides existing benches. | [minor] | done | claude-seam | `crates/helios-gpu/**` |
 | H-011 | `helios-physics`: photon attenuation relations — `LinearAttenuation`/`MassAttenuation`, Beer–Lambert, HVL, HU→density calibration | [minor] | done | claude-helios | `crates/helios-physics/**` |
 | H-011b | `helios-physics`: NIST X-ray μ/ρ data tables (energy-indexed, per material) loaded into `MassAttenuation`. **Done** — dry-air, liquid-water, and cortical-bone values at 28 common 10 keV–20 MeV knots; bounded native-precision log-linear interpolation excludes their edge rows and makes no XCOM-output claim. | [minor] | done | Codex | `crates/helios-physics/**`, `backlog.md`, `CHECKLIST.md`, `gap_audit.md`, `CHANGELOG.md` |
 | H-011d2 | `helios-physics`: Klein–Nishina Compton + Thomson cross-sections; `compton_mass_attenuation`/`electrons_per_gram` (μ/ρ derived from σ_KN, validated vs NIST water) | [minor] | done | claude-helios | `crates/helios-physics/**` |
 | H-011d3 | `helios-physics`: KN differential cross-section + energy-transfer σ_tr (quadrature, self-validated vs closed-form total); `compton_mass_energy_transfer` kerma coefficient (validated vs NIST water μ_tr/ρ at 1 MeV) | [minor] | done | claude-helios | `crates/helios-physics/**` |
 | H-055 | Decouple numeric/physics from geometry: `helios-math` `geometry` feature (default on); `helios-physics` builds without it. Keeps physics buildable during geometry-stack churn (G-14). | [arch] | done | claude-helios | `crates/helios-math/**`, `crates/helios-physics/**` |
 | H-011c | `helios-solver::forward_project_ray`: ray-march optical depth ∫μ dl of a gaia `Ray` through a μ `Volume` (clip to grid `Aabb`, midpoint trilinear sampling). MVCT forward-projection / dose ray-trace core. | [minor] | done | claude-helios | `crates/helios-solver/**` |
-| H-011d | `helios-solver`: exact Siddon voxel-DDA + oriented-grid (rotated pose) projection; full parallel/fan sinogram over a detector | [minor] | todo | — | `crates/helios-solver/**` |
-| H-012 | `helios-solver`: GPU MVCT forward projector (Siddon/Joseph); CPU reference | [minor] | todo | — | `crates/helios-solver/**` |
+| H-011d | `helios-solver::{cell_path, radiological_path}`: exact cell-constant radiological path (ADR 0019) beside the trilinear march. Split: oriented-grid march landed in `966e21b` (H-003d); parallel sinogram in `e7f6ab2` (H-030a); fan sinogram is H-021c. See [block](#H-011d). | [minor] | todo | — | `crates/helios-solver/**`; milestone: M-imaging. |
 | H-012b | `helios-solver`: HU→μ attenuation-map engine (CPU reference; differential oracle for the GPU kernel) | [minor] | done | claude-helios | `crates/helios-solver/**` |
 | H-013a | `helios-solver::primary_fluence_parallel_x`: primary-transport stage — Beer–Lambert attenuated fluence Ψ=Ψ₀·exp(−∫μ dl), +x parallel beam. Also fixed projector optical-depth units (mm→cm). | [minor] | done | claude-helios | `crates/helios-solver/**` |
 | H-013b | `helios-solver`: dose = TERMA ⊛ kernel (collapsed-cone). `dose_convolution_x` + `exponential_deposition_kernel` — exact oracles (delta identity, normalized-kernel interior conservation, physical build-up). **Verified** (G-14 resolved). | [minor] | done | claude-helios | `crates/helios-solver/**` |
@@ -115,6 +168,7 @@ Status: `todo` · `in-progress` · `review` · `done`
 | H-020k | Collimator field aperture over gaia `Aabb`: `helios-domain::FieldAperture` (jaw-shaped open field + geometric edge penumbra via box SDF; `contains` delegates to `Aabb::contains_point`) + `helios-simulation::collimate_frames` (scales per-leaf fluence by aperture transmission at the leaf collimator coordinate). Verified: transmission oracles (centre/edge/penumbra/monotone/f32/typed errors) + field-shaping consumer (narrow aperture blocks edge leaves, 50% on the edge, machine state preserved, never increases fluence). Consumes gaia geometry. | [minor] | done | claude-helios | `crates/helios-domain/**`, `crates/helios-simulation/**` |
 | H-021 | `helios-simulation::simulate_helical_sinogram`: time-dependent helical MVCT acquisition — gantry rotation + couch translation drive the forward projector per projection (helix). CPU reference; moirai orchestration = H-021b. | [minor] | done | claude-helios | `crates/helios-simulation/**` |
 | H-021b | `helios-simulation::simulate_helical_sinogram`: moirai-parallel per-projection dispatch via `map_collect_index_with::<Adaptive>` — the mandated moirai orchestration seam. Index-ordered collect → identical to sequential (verified deterministic at 256 projections). Peer `mnemosyne-arena` breakage that blocked it last cycle is resolved; full workspace green. Fan/cone detector rows + motion remain. | [minor] | done | claude-helios | `crates/helios-simulation/**` |
+| H-021c | Fan-beam detector-row sinogram: one point source per projection angle, many detector rays (the H-021b remainder; split from H-011d). See [block](#H-021c). | [minor] | todo | — | `crates/helios-imaging/**`; milestone: M-imaging. |
 | H-047 | `helios-analysis::{spherical_mask, box_mask}`: geometric ROI mask predicates (sphere/box over a `VoxelGrid`) feeding `Dvh::from_volume_masked` — per-structure DVH on analytic ROIs. Verified: radius/box selection, masked-DVH mean, f32. | [minor] | done | claude-helios | `crates/helios-analysis/**` |
 | H-048 | Performance/consolidation pass: `Volume::as_slice` zero-copy accessor (layout contract documented); `scatter::convolve_axis` rewritten to strided slice iteration — **8.3×/7.4× speedup at 32³/64³, bitwise-identical** (criterion baseline in `validation_reports/2026-07-02-…`); `save_volume_hdf5` field serialization via the slice view; `MM_PER_CM` consolidated from 5 duplicate consts to one SSOT in `helios-quantities::constants`. | [patch] | done | claude-helios | `crates/helios-{core,domain,solver,imaging}/**` |
 | H-046 | `helios-domain::{save_volume_hdf5, load_volume_hdf5}` (feature `storage`): consus HDF5 archive of a `Volume` (data + grid geometry) — **mandated consus component consumed** (consus-core/hdf5/io, pure Rust, `[patch]`ed to local checkout). Verified: bitwise f64 round-trip, standard-HDF5 signature, f32 exactness through the f64 archive, missing/garbage error paths. Adds `HeliosError::Storage`. | [minor] | done | claude-helios | `crates/helios-domain/**`, `crates/helios-quantities/**`, `Cargo.toml` |
@@ -167,15 +221,15 @@ H-117).
 
 | ID | Item | Class | Status | Owner | Scope |
 |----|------|-------|--------|-------|-------|
-| H-110 | Re-ground the book's factual claims against the tree and prevent recurrence. | [patch] | todo | — | `docs/book/**`, `xtask/src/check_figures.rs` |
-| H-111 | Make the mdBook sample gate non-vacuous. | [patch] | todo | — | `docs/book/**`, `.github/workflows/{ci,book-pages}.yml` |
-| H-112 | Establish a reference-engine or published-benchmark dose validation tier (G-16 closure path). | [major] | todo | — | `crates/helios-{solver,simulation,analysis}/**`, `validation_reports/**` |
-| H-113 | Resolve the declared-but-unconsumed Atlas provider set. Both Helios-local substitutions are resolved: the `apollo-fft` half (the FBP ramp filter now transforms in the frequency domain) and the `ritk-registration` half (IGRT translation registration now delegates to the provider). | [arch] [minor] | in-progress | — | `Cargo.toml`, `crates/helios-imaging/**` |
-| H-114 | Wire inverse planning to the dose engine: a `DoseInfluence` producer. | [minor] | todo | — | `crates/helios-{planning,simulation,solver}/**` |
-| H-115 | DICOM-RT object I/O and contour-based structure sets. | [minor] | todo | — | `crates/helios-domain/**`, `crates/helios-analysis/src/roi.rs` |
-| H-116 | Reconcile the book figure tree with the 25-chapter SUMMARY. | [patch] | todo | — | `docs/book/figures/**`, `xtask/src/{prebook,check_figures}.rs` |
-| H-117 | Board and record hygiene: stale statuses, duplicate IDs, ADR numbering hole. | [patch] | todo | — | `backlog.md`, `CHANGELOG.md`, `docs/adr/**`, root `*.md` |
-| H-118 | Per-crate READMEs and a typed Python surface. | [patch] | todo | — | `crates/*/README.md`, `crates/helios-python/**` |
+| H-110 | Re-ground the book's factual claims against the tree and prevent recurrence. | [patch] | todo | — | `docs/book/**`, `xtask/src/check_figures.rs`; milestone: M-book. |
+| H-111 | Make the mdBook sample gate non-vacuous. | [patch] | todo | — | `docs/book/**`, `.github/workflows/{ci,book-pages}.yml`; milestone: M-book. |
+| H-112 | Establish a reference-engine or published-benchmark dose validation tier (G-16 closure path). | [major] | todo | — | `crates/helios-{solver,simulation,analysis}/**`, `validation_reports/**`; milestone: M-dose-engine. |
+| H-113 | Resolve the declared-but-unconsumed Atlas provider set. Both Helios-local substitutions are resolved: the `apollo-fft` half (the FBP ramp filter now transforms in the frequency domain) and the `ritk-registration` half (IGRT translation registration now delegates to the provider). | [arch] [minor] | in-progress | — | `Cargo.toml`, `crates/helios-imaging/**`; milestone: M-imaging. |
+| H-114 | Wire inverse planning to the dose engine: a `DoseInfluence` producer. | [minor] | todo | — | `crates/helios-{planning,simulation,solver}/**`; milestone: M-dose-engine. |
+| H-115 | DICOM-RT object I/O and contour-based structure sets. | [minor] | todo | — | `crates/helios-domain/**`, `crates/helios-analysis/src/roi.rs`; milestone: M-interop. |
+| H-116 | Reconcile the book figure tree with the 25-chapter SUMMARY. | [patch] | todo | — | `docs/book/figures/**`, `xtask/src/{prebook,check_figures}.rs`; milestone: M-book. |
+| H-117 | Board and record hygiene: stale statuses, duplicate IDs, ADR numbering hole. | [patch] | todo | — | `backlog.md`, `CHANGELOG.md`, `docs/adr/**`, root `*.md`; milestone: M-board. |
+| H-118 | Per-crate READMEs and a typed Python surface. | [patch] | todo | — | `crates/*/README.md`, `crates/helios-python/**`; milestone: M-interop. |
 
 ### H-110 — book factual re-grounding [patch]
 
@@ -394,3 +448,107 @@ H-117).
   wheel contains `py.typed`.
 - **Dependencies:** none.
 - **Risk:** docs and packaging metadata only.
+
+## Projection specification slice — 2026-11-13
+
+<a id="H-011d"></a>
+### H-011d — exact cell-constant radiological path [minor]
+
+- Status: todo; priority: feature; needs: none
+- **Outcome:** voxel-exact `radiological_path` and per-cell `cell_path`
+  lengths with values constant per cell, beside the unchanged trilinear
+  `forward_project_ray` ([ADR 0019](docs/adr/0019-cell-constant-radiological-path.md)).
+- **Scope:** a new `helios-solver` module. **Non-goals:** changing the march,
+  `RayMarchPlan` or the GPU projector; Radon/SIRT/acquisition wiring.
+- **Acceptance oracle:** ADR 0019 cases 1-8 in f32 and f64, under its derived
+  bound: closed-form uniform, single-voxel and heterogeneous lengths; edge
+  cases; pose invariance; trapezoid identity; nearest-cell march convergence.
+- **Split:** oriented-grid march `966e21b` (H-003d); parallel sinogram
+  `e7f6ab2` (H-030a); fan sinogram H-021c.
+- **Next step:** claim; write oracle cases 1-3 before the traversal.
+
+<a id="H-021c"></a>
+### H-021c — fan-beam detector-row sinogram [minor]
+
+- Status: todo; priority: feature; needs: none
+- **Outcome:** a fan-beam sinogram `p(beta, gamma)` from a point source per
+  gantry angle `beta`, one ray per detector angle `gamma` (H-021b remainder).
+- **Scope:** `helios-imaging` beside `parallel_beam_radon`, with typed geometry
+  (ADR 0016). **Non-goals:** cone-beam rows, couch motion, detector response.
+- **Acceptance oracle:** each fan ray equals the `parallel_beam_radon` ray on
+  the same line within the projector's roundoff bound (fan-to-parallel mapping
+  derived in the item); a uniform box gives `mu * chord / 10`, with the chord
+  computed by slab clipping.
+- **Next step:** claim; derive the line mapping from `radon.rs`.
+
+<a id="H-124"></a>
+### H-124 — cite the libm accuracy behind `EXP_ROUNDINGS` [patch]
+
+- Status: todo; priority: verification; needs: none; basis: `31a990d4132c`; milestone: M-dose-engine
+- **Outcome:** `EXP_ROUNDINGS = 4` in `deposition.rs` is the published
+  maximum-ulp error of the target libm, or a measured table, not an assumed
+  "a few ulps".
+- **Scope:** `exp` enters every deposition bound amplified by
+  `1 / expm1(tau)`, 48u per `exp` at tau = 0.08. The same assumption sits in
+  `deposition.rs` tests at the base revision (judge F3, helios#202).
+- **Acceptance oracle:** the constant's doc cites the accuracy source for the
+  libm that `f64::exp` calls on each CI host, and the bounds hold at it.
+- **Next step:** claim; find the libm maximum-ulp table for `f64::exp`.
+
+<a id="H-125"></a>
+### H-125 — remove the default absolute floor from the H-122 assertions [patch]
+
+- Status: todo; priority: verification; needs: none; basis: `59d80a1c9d8f`; milestone: M-dose-engine
+- **Outcome:** each model-bound `assert_relative_eq!` in `deposition.rs` and
+  `projector.rs` passes `epsilon = zero` beside a derived `max_relative`, or a
+  documented derived absolute floor.
+- **Scope:** without `epsilon` an assertion also passes at `diff <= EPSILON`
+  (eunomia `relative_eq.rs`), about 26u relative near 0.077, which masks a
+  bound shrunk below it (helios#207: bound / 32 passed). 15 sites (8 + 7), either shell:
+  `rg -U --pcre2 '(?s)assert_relative_eq!\(((?!epsilon|\);).)*\);' crates/helios-solver/src/deposition.rs crates/helios-solver/src/projector.rs`.
+- **Acceptance oracle:** the command lists no site; a bound / 32 mutant fails each site whose
+  observed error exceeds bound / 32 (zero error cannot fail: eunomia returns equal first); the
+  rest are reported with their ratio, not as killed.
+- **Next step:** claim; add `epsilon = zero`, derive any bound that then fails.
+
+<a id="H-128"></a>
+### H-128 — correct the `k` note on `kernel_total_error` [patch]
+
+- Status: todo; priority: verification; needs: none; basis: `59d80a1c9d8f`; milestone: M-dose-engine
+- **Outcome:** the first-order margin note (`deposition.rs:298-299`) states the `k`
+  of `kernel_total_error` and cites a fixture the tree defines.
+- **Scope:** "k near 270 (fixture A) ... 1.6e-5 ... 3e-14" uses the whole bound of
+  64 segments, tau = 0.08, c = 7.25: 268.4u = kernel 217.4u + closed form 50.9u.
+  The note concerns the kernel alone: 217.4u, 1.30e-5 in f32, 2.4e-14 in f64.
+  "Fixture A" is defined only in the helios#207 and #208 bodies; the tree has it
+  as `ray_deposition_conserves_absorbed_energy`.
+- **Acceptance oracle:** the note's `k` and both figures reproduce from the model
+  at the named parameters (217.4u, 1.30e-5, 2.4e-14) and the label names a test.
+- **Next step:** claim; rewrite the note against that test's parameters.
+
+<a id="H-132"></a>
+### H-132 — reject an invalid ray-march step before it sets the sample count [major]
+
+- Status: todo; priority: correctness; needs: none; basis: `b226d6eaa445eba5322b2db487bfeda85a4469ca`; milestone: M-imaging
+- **Outcome:** `forward_project_ray`, `parallel_beam_radon`, `deposit_ray_terma` and `deposit_ray_terma_diverging` reject a step that is not finite and strictly positive, or whose sample count is not representable as `usize`, through a typed error or a validated-step type; none marches a count the caller did not ask for. Every option changes a public signature (`forward_project_ray` returns `Option<T>`, `parallel_beam_radon` returns `Sinogram<T>`), so it needs an ADR and a migration note, and its count bound must not exceed the range over which `T::from_count` is exact (n <= 2^24 for f32, 2^53 for f64).
+- **Scope:** `crates/helios-solver/src/projector.rs:46` computes `steps` as `ceil(length * step_mm.recip())` through a saturating `as usize`. By Rust's float-to-integer cast rules (NaN to 0, above `usize::MAX` to `usize::MAX`), step 0.0 and any step whose count exceeds `usize::MAX` give `usize::MAX` samples at `for i in 0..plan.steps()` (:162), an unbounded march, while -0.0, a negative step and NaN give one sample, a silent midpoint result. The FAIL-1 judge of helios#228 reproduced step 0.0, 1e-300, -0.0, -0.5 and NaN by compiling the :46 expression alone (rustc 1.97.0, length 20 mm). No entry point checks the step: `forward_project_ray` (:156), `parallel_beam_radon` (`radon.rs:105-127`), `deposition.rs:131` behind both deposit functions. Callers: `helios-simulation` (`acquisition.rs:128`, `portal.rs:55`, `dose_accumulation.rs:145-147`), `helios-gpu` (`projection.rs:213`, `benches/projection_throughput.rs:81`).
+- **Acceptance oracle:** one value-semantic test per entry point and per step in {0.0, -0.0, -0.5, NaN, a subnormal, a step whose count exceeds `usize::MAX`}, in f32 and f64, each asserting the error variant with `matches!` (or the validated type's constructor error) and returning without marching; the existing projector, radon and deposition tests keep their expected values, with call sites adapted to the new signature. At the basis no such test can pass: `git grep -n -i -E 'invalid_?step|ValidatedStep|StepError' -- crates` prints nothing (positive control: `git grep -n 'InvalidValue' -- crates/helios-solver` prints `deposition.rs:480`).
+- **Next step:** claim; draft the ADR choosing the typed error or the validated step type, read `helios-gpu/src/projection.rs:78-108` for the same step contract, then write the tests first.
+
+<a id="H-130"></a>
+### H-130 — remove the remaining bare conversions from the march plan [patch]
+
+- Status: todo; priority: tightening; needs: H-132; basis: `b226d6eaa445eba5322b2db487bfeda85a4469ca`; milestone: M-imaging
+- **Outcome:** `RayMarchPlan` converts counts and literals only through typed provider conversions: no `as`, no round trip through `f64`, no literal converted on every call. The step validation belongs to H-132; this item keeps the conversion at :46 once that validation fixes the count.
+- **Scope:** `crates/helios-solver/src/projector.rs`: :46 `.to_f64() as usize` (a float-to-count saturating cast through `f64`), :64 `from_f64(MM_PER_CM)`, :71 `from_f64(0.5)`, and the test cast at :229 `idx[0] as f64`.
+- **Acceptance oracle:** `git grep -n -E ' as (usize|f64)([^a-z0-9_]|$)|\.to_f64\(\)' -- crates/helios-solver/src/projector.rs` prints nothing (:46 and :229 at the basis); `awk '/#\[cfg\(test\)\]/{exit} /from_f64\(/{print FNR": "$0}' crates/helios-solver/src/projector.rs` prints nothing (:64 and :71 at the basis); `cargo nextest run -p helios-solver -E 'test(projector)'` passes in f32 and f64 unchanged.
+- **Next step:** claim after H-132 merges; check the locked eunomia for a checked float-to-count conversion and, if it has none, add it there (conversions live with the foundation crate), then replace :46; take the two constants from a `Scalar` constant or a field converted once at plan construction.
+
+<a id="H-131"></a>
+### H-131 — convert the grid index extent once, not per ray [patch]
+
+- Status: todo; priority: tightening; needs: none; basis: `b226d6eaa445eba5322b2db487bfeda85a4469ca`; milestone: M-imaging
+- **Outcome:** the grid-invariant extents `nx - 1`, `ny - 1`, `nz - 1` reach `ray_grid_interval` as `T` converted once at `VoxelGrid` construction, not once per ray across a sinogram.
+- **Scope:** `crates/helios-solver/src/projector.rs:109-111`, `crates/helios-domain/src/grid.rs`. The placement predates helios#226; its cost was not measured.
+- **Acceptance oracle:** `git grep -n -E 'from_count\((nx|ny|nz) - 1\)' -- crates/helios-solver/src/projector.rs` prints nothing (:109-111 at the basis), and the PR attaches a profile of one parallel-beam sinogram before and after.
+- **Next step:** claim; profile the sinogram on the basis first, then move the conversion.

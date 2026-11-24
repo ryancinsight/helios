@@ -5,18 +5,36 @@ All notable changes to Helios are documented here. Format follows
 [SemVer 2.0.0](https://semver.org/). Pre-1.0: minor bumps may break, documented
 under a Breaking subsection.
 
-## [0.1.1] — helios-analysis — 2026-11-08
+## [Unreleased]
 
 ### Fixed
 
-- ROI population standard deviation uses a normalized compensated center
-  and scaled residual norm instead of subtracting two large raw moments.
-  Small non-zero noise is preserved in translated intensity and dose samples
-  in both shipped precisions. The public
-  signatures, scalar precision, and empty/clipped ROI behavior are unchanged.
-  This patch version applies only to `helios-analysis`.
+- [patch] Preserve intensity and dose ROI noise when a common offset makes the raw second-moment calculation lose the variance.
 
-## [Unreleased]
+## [helios-domain 0.2.1]
+
+### Fixed
+
+- Validate the exact IEEE binary64 little-endian representation of both HDF5
+  archive datasets before payload I/O. Files with a custom exponent bias or
+  foreign byte order now return a dataset-qualified storage error. Helios
+  archives retain their byte format and millimetre grid geometry.
+
+## [0.2.0] - 2026-11-20
+
+### Breaking
+
+- [major] Use Aequitas 0.5 quantities and Leto 0.52 views, points, and grids.
+  Upgrade consumers and any typed Atlas dependencies together. DICOM and
+  translation registration use the compatible RITK 0.6 and 0.57 crates.
+  The workspace requires Rust 1.97. The independent allocator stays at 0.1.0.
+  See [ADR 0022](docs/adr/0022-published-physics-provider-boundary.md).
+
+## [0.1.0]
+
+First Rust registry release. See the July 2026 development baseline below.
+
+The Python extension links when built directly by Cargo on macOS.
 
 ### Added
 
@@ -56,12 +74,39 @@ under a Breaking subsection.
 
 ### Changed
 
+- Helios uses the Aequitas 0.4 registry cohort for material properties,
+  photon transport, time stepping, and sampling.
+- Helios CT and MVCT ingest uses RITK’s native dataset and pixel codecs.
+  Frame interpretation, geometry, and stack assembly reside in separate modules.
+
+- **build(deps)**: Widen the Leto requirement to `>=0.46.4, <0.51.0` and lock
+  Leto and Leto Ops at 0.50.0. The lock advances the providers whose
+  requirements now admit it: CoeUs, RITK, Gaia's mesh crate, Hephaestus and
+  Apollo to their default-branch tips. No source changes.
+
 - **build(deps)**: Advance the first-party providers to their current cohort.
   Aequitas to 0.3.1, Apollo FFT to 0.29.3, Asclepius to 0.3.0, CoeUs to
-  0.12.0, the Consus edges to 0.4.0, Eunomia to 0.10.0, Gaia's mesh to
-  0.6.10, Hephaestus to 0.27.0, Hermes to 0.9.2, Horae to 0.2.2, Leto to
-  0.46.4, Mnemosyne to 0.10.1/0.7.1, Moirai to 0.10.0, the RITK edges to
-  0.11.0/0.5.0/0.56.0/0.4.0, Themis to 0.11.1 and Tyche to 0.4.0.
+  0.12.0, the Consus edges to 0.4.0, Eunomia to 0.12.0, Gaia's mesh to
+  0.6.10, Hephaestus to 0.28.0, Hermes to 0.9.2, Horae to 0.2.2, Leto to
+  0.48.0, Mnemosyne to 0.10.1/0.7.1, Moirai to 0.12.0, the RITK edges to
+  0.11.0/0.5.0/0.56.0/0.4.0, Themis to 0.11.1 and Tyche to 0.4.0. The
+  lock is regenerated outside the Atlas dependency overlay and names one
+  revision per provider repository, with every provider row at its
+  repository's current default head.
+
+  **This is a breaking public-contract change:** `helios-math` re-exports
+  Eunomia's `RealField` as `Scalar` and its `FloatElement` and
+  `NumericElement` traits, and Rust treats the trait of Eunomia 0.11 and the
+  same-named trait of Eunomia 0.12 as distinct nominal contracts. Code
+  generic over the Eunomia 0.11 `RealField` trait no longer satisfies
+  Helios's public bounds; update the bound and the imports to 0.12 and select
+  the same provider cohort before using Helios's public generic types.
+  Consumers already using concrete scalar types keep the same Helios API.
+  Moirai 0.12.0 removes the required `StateWord::get_mut` method, which
+  Helios neither implements nor calls, so no Helios source changes with the
+  move. See
+  [ADR 0020](docs/adr/0020-eunomia-moirai-provider-contract.md).
+
 
   The CoeUs 0.12 tensor and autodiff surfaces are fallible, so the planning
   objective now carries that failure: `Tensor::from_slice_on`, `Var::new`,
@@ -249,12 +294,23 @@ under a Breaking subsection.
 
 ### Removed
 
+- Remove the Chrono and older DICOM charset advisory holds after the native
+  provider clears both packages from the full locked dependency graph.
+
 - `helios-math` no longer re-exports `eunomia::CastFrom` and `eunomia::CastTo`;
   no Helios crate used them, and Eunomia retires both traits. Counts convert
   through `FloatElement::from_count` and signed integers through
   `FloatElement::from_integer`.
 
-## [0.1.0] — 2026-07-22
+### Fixed
+
+- `helios-solver::forward_project_ray` and the TERMA deposition kernels now
+  integrate the half-line `[max(t_enter, 0), t_exit]` of a ray whose origin
+  lies inside the grid, instead of also marching the segment behind the
+  origin. Rays that start outside the grid are unchanged. This aligns the CPU
+  march with the Hephaestus kernels and the gaia `Ray` half-line.
+
+## 0.1.0 development baseline (2026-07-22)
 
 ### Breaking
 

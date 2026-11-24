@@ -6,6 +6,10 @@
 //! via `helios-math`): the ray is clipped to the grid's world bounding box, then
 //! marched with midpoint sampling of the trilinearly-interpolated `μ` field.
 //!
+//! A [`Ray`] is the half-line `t ≥ 0`: the march covers `[max(t_enter, 0), t_exit]`,
+//! so an origin inside the grid integrates only the segment ahead of it,
+//! matching the Hephaestus kernels.
+//!
 //! Midpoint integration is exact for `μ` fields affine along the ray (the
 //! analytical oracle in the tests); for a homogeneous slab it reproduces
 //! `τ = μ·L` exactly.
@@ -40,7 +44,7 @@ impl<T: GeometryScalar> RayMarchPlan<T> {
             return None;
         }
         let steps = ((length * step_mm.recip()).ceil().to_f64() as usize).max(1);
-        let step_mm = length * <T as GeometryScalar>::from_f64(steps as f64).recip();
+        let step_mm = length * T::from_count(steps).recip();
         Some(Self {
             t_enter,
             steps,
@@ -65,7 +69,7 @@ impl<T: GeometryScalar> RayMarchPlan<T> {
     pub(crate) fn midpoint_t(self, sample: usize) -> T {
         debug_assert!(sample < self.steps, "midpoint index out of range");
         let half = <T as GeometryScalar>::from_f64(0.5);
-        self.t_enter + (<T as GeometryScalar>::from_f64(sample as f64) + half) * self.step_mm
+        self.t_enter + (T::from_count(sample) + half) * self.step_mm
     }
 }
 
@@ -75,6 +79,12 @@ impl<T: GeometryScalar> RayMarchPlan<T> {
 /// is axis-aligned. `local_speed` converts the normalized local-ray parameter
 /// back to the original world-space millimetre parameter, so midpoint samples
 /// preserve the physical path-length convention of [`forward_project_ray`].
+///
+/// Gaia reports the signed slab entry, which is negative when the origin lies
+/// inside the box. The returned entry is clamped to the ray origin, giving the
+/// half-line interval `[max(t_enter, 0), t_exit]`; an origin on the exit face
+/// yields the zero-length interval `(0, 0)`, and a box wholly behind the origin
+/// yields `None`.
 pub(crate) fn ray_grid_interval<T: GeometryScalar>(
     grid: &VoxelGrid<T>,
     ray: &Ray<T>,
@@ -96,13 +106,16 @@ pub(crate) fn ray_grid_interval<T: GeometryScalar>(
     let local_aabb = Aabb::new(
         Point3::new(T::ZERO, T::ZERO, T::ZERO),
         Point3::new(
-            <T as GeometryScalar>::from_f64((nx - 1) as f64),
-            <T as GeometryScalar>::from_f64((ny - 1) as f64),
-            <T as GeometryScalar>::from_f64((nz - 1) as f64),
+            T::from_count(nx - 1),
+            T::from_count(ny - 1),
+            T::from_count(nz - 1),
         ),
     );
     let (enter, exit) = local_ray.intersect_aabb(&local_aabb)?;
-    Some((enter * local_speed.recip(), exit * local_speed.recip()))
+    let speed_recip = local_speed.recip();
+    let enter = enter * speed_recip;
+    let enter = if enter < T::ZERO { T::ZERO } else { enter };
+    Some((enter, exit * speed_recip))
 }
 
 /// Midpoint-sample `vol` at a ray-march step, returning the world-space sample
@@ -129,7 +142,9 @@ pub(crate) fn sample_volume_along_ray<T: GeometryScalar>(
 ///
 /// `step_mm` is the nominal sampling step (the actual step is `L / ceil(L/step)`
 /// so it divides the traversed length exactly). Returns `None` if the ray misses
-/// the grid.
+/// the grid, including a grid wholly behind the origin. The integral covers the
+/// half-line `t ≥ 0` only: an origin inside the grid contributes the segment
+/// from the origin to the exit face, and an origin on the exit face gives zero.
 #[must_use]
 pub fn forward_project_ray<T: GeometryScalar>(
     mu: &Volume<T>,
@@ -158,6 +173,7 @@ mod tests {
         reason = "ratchet HELIOS-UNWRAP-1: pre-existing debt"
     )]
     use super::*;
+    use crate::test_support::quarter_turn_rotation;
     use aequitas::systems::si::{quantities::Length, units::Millimeter};
     use eunomia::assert_relative_eq;
     use helios_math::ShippedScalar;
@@ -179,13 +195,6 @@ mod tests {
     }
 
     fn oriented_grid() -> VoxelGrid<f64> {
-        let rotation = helios_math::UnitQuaternion::try_from_rotation_columns(
-            Vector3::new(0.0, 1.0, 0.0),
-            Vector3::new(-1.0, 0.0, 0.0),
-            Vector3::new(0.0, 0.0, 1.0),
-            1.0e-12,
-        )
-        .expect("right-handed quarter-turn basis");
         VoxelGrid::oriented(
             [11, 3, 3],
             [
@@ -194,7 +203,7 @@ mod tests {
                 Length::from_unit::<Millimeter>(2.0),
             ],
             Point3::new(10.0, 20.0, 30.0),
-            rotation,
+            quarter_turn_rotation(),
         )
         .expect("grid")
     }
@@ -204,7 +213,11 @@ mod tests {
         // Uniform μ=0.06 cm⁻¹ over a 20 mm = 2 cm crossing → τ = 0.06·2 = 0.12.
         let mu = Volume::from_shape_fn(axis_grid(), |_| 0.06);
         let tau = forward_project_ray(&mu, &ray_along_x(-5.0), 0.5).expect("hit");
-        assert_relative_eq!(tau, 0.06 * 2.0, epsilon = 1e-12);
+        assert_relative_eq!(
+            tau,
+            0.06 * 2.0,
+            max_relative = f64::EPSILON * PROJECTION_ULPS
+        );
     }
 
     #[test]
@@ -215,7 +228,7 @@ mod tests {
         // an affine field.
         let mu = Volume::from_shape_fn(axis_grid(), |idx| 0.01 * idx[0] as f64 + 0.02);
         let tau = forward_project_ray(&mu, &ray_along_x(-5.0), 1.0).expect("hit");
-        assert_relative_eq!(tau, 0.14, epsilon = 1e-10);
+        assert_relative_eq!(tau, 0.14, max_relative = f64::EPSILON * PROJECTION_ULPS);
     }
 
     #[test]
@@ -232,7 +245,11 @@ mod tests {
         let mu = Volume::from_shape_fn(axis_grid(), |_| 0.06);
         let coarse = forward_project_ray(&mu, &ray_along_x(-5.0), 5.0).expect("hit");
         let fine = forward_project_ray(&mu, &ray_along_x(-5.0), 0.1).expect("hit");
-        assert_relative_eq!(coarse, fine, epsilon = 1e-12);
+        assert_relative_eq!(
+            coarse,
+            fine,
+            max_relative = f64::EPSILON * STEP_INVARIANCE_ULPS
+        );
     }
 
     #[test]
@@ -243,16 +260,50 @@ mod tests {
         let ray = Ray::try_new(Point3::new(10.0, 15.0, 30.0), Vector3::new(0.0, 1.0, 0.0))
             .expect("unit +y ray");
         let tau = forward_project_ray(&mu, &ray, 0.5).expect("hit");
-        assert_relative_eq!(tau, 0.12, epsilon = 1e-12);
+        assert_relative_eq!(tau, 0.12, max_relative = f64::EPSILON * PROJECTION_ULPS);
     }
 
-    /// The projected optical depth is a running sum of per-step contributions
-    /// along the ray. A sum of `n` terms grows relative error as `n * T::EPSILON`
-    /// in the worst case; this fixture marches a 2 cm extent at a 0.5 mm step, so
-    /// `n` is on the order of 40. Sixty-four ulps bounds that with margin while
-    /// staying well below the 1e-5 absolute bound it replaces, which was ~8e-5
-    /// relative at this magnitude.
+    /// Relative bound, in ulps of `T::EPSILON`, on a ray-marched optical depth.
+    ///
+    /// With `u = EPSILON / 2` the unit roundoff, the first-order worst case
+    /// (every rounding at its maximum, all signs aligned) for the relative
+    /// error of `tau` over `n` midpoint terms of one positive sign is, in `u`:
+    ///
+    /// - recursive accumulation of `n` positive terms: `n - 1`;
+    /// - the per-term product `mu * step_cm`: 1;
+    /// - `step_cm = step_mm * recip(10)`: 2, and `step_mm = length * recip(n)`: 2;
+    /// - `length = t_exit - t_enter`: 1 for the subtraction, plus
+    ///   `SLAB_ENDPOINT_ROUNDINGS * c` for the two slab endpoints and
+    ///   `RAY_DIRECTION_ROUNDINGS` for the direction, both defined with the
+    ///   chord model in `test_support`, where `c = (|t_enter| + |t_exit|) /
+    ///   length` is the conditioning.
+    ///
+    /// The total is `n + 5 + 3c + 16`. Every fixture here has `n <= 40` and
+    /// `c <= 1.5` (`c = 1.5` for entry 5 mm and exit 25 mm of a 20 mm chord,
+    /// the same pair shifted by the pose; `c = 1` for an origin inside the
+    /// grid, where `t_enter = 0`), giving at most 65.5u.
+    /// Two further terms are bounded by inspection of the call chain, not
+    /// measured. A constant field is interpolated exactly, but the affine field
+    /// adds the sample position (`midpoint_t` 3, `point_at` 2, `world_to_index`
+    /// 2 roundings of coordinates up to 25 mm, at a slope of 0.005 cm^-1/mm,
+    /// 12.5u of `tau`) and three lerp levels (9u). The quarter-turn pose adds
+    /// `ORIENTED_FRAME_ROUNDINGS`, 10u. The largest total, 65.5u + 21.5u,
+    /// stays below the 128u that 64 ulps of `EPSILON` allow; the 41u left is
+    /// margin, not derived.
     const PROJECTION_ULPS: f64 = 64.0;
+
+    /// Relative bound, in ulps of `EPSILON`, on the difference of two marches of
+    /// one homogeneous chord at different steps.
+    ///
+    /// Both marches follow one ray over one grid, so they share the computed
+    /// `length` and its slab and direction roundings; only the march
+    /// roundings differ, `n + 4` u each (`PROJECTION_ULPS`: accumulation
+    /// `n - 1`, product 1, `step_cm` 2, `step_mm` 2). The difference of two
+    /// values is bounded by the sum of their relative errors. The coarse 5 mm
+    /// step gives `n = 4` and the fine 0.1 mm step `n = 200`
+    /// (`ceil(20 * recip(0.1))`, which is 200 because `recip(0.1)` rounds to
+    /// exactly 10): `(4 + 4) + (200 + 4) = 212u`, or 106 ulps of `EPSILON`.
+    const STEP_INVARIANCE_ULPS: f64 = 106.0;
 
     /// Asserts ray-marched optical depth in one scalar width.
     fn forward_projection_accumulates_uniform_optical_depth<
@@ -286,6 +337,114 @@ mod tests {
             mu * cast(2.0),
             max_relative = T::EPSILON * cast(PROJECTION_ULPS)
         );
+    }
+
+    /// Rows of the half-line oracle on the 20 mm grid: ray origin abscissa,
+    /// direction sign, and the forward in-grid length `[max(t_enter, 0), t_exit]`
+    /// in millimetres.
+    const HALF_LINE_CASES: [(f64, f64, f64); 7] = [
+        // Centre origin: the forward half spans the half-extent.
+        (10.0, 1.0, 10.0),
+        // Origin 0.25 mm inside the entry face: the slab entry is -0.25 mm and
+        // must still clamp to the origin, so the path is 19.75 mm, not 20 mm.
+        (0.25, 1.0, 19.75),
+        // Off-centre origin integrates only toward the direction of travel.
+        (4.0, 1.0, 16.0),
+        (4.0, -1.0, 4.0),
+        // Origin on the entry face: the whole extent.
+        (0.0, 1.0, 20.0),
+        (20.0, -1.0, 20.0),
+        // Origin on the exit face: a zero-length forward interval.
+        (20.0, 1.0, 0.0),
+    ];
+
+    /// Asserts the half-line contract of the projector in one scalar width.
+    ///
+    /// A `Ray` is the half-line `t >= 0`, so an origin inside the grid
+    /// integrates `[0, t_exit]` and never the segment behind it. Uniform `mu`
+    /// gives `tau = mu * length_mm / 10`. The bound is `PROJECTION_ULPS`: the
+    /// sum has at most 40 midpoint terms at the 0.5 mm step and the interval
+    /// endpoints carry a few ulps of slab arithmetic.
+    fn inside_origin_integrates_only_the_forward_half_line<
+        T: ShippedScalar + helios_math::GeometryScalar,
+    >() {
+        let cast = <T as helios_math::FloatElement>::from_f64;
+        let zero = cast(0.0);
+        let spacing = cast(2.0);
+        let grid = VoxelGrid::<T>::axis_aligned(
+            [11, 3, 3],
+            [Length::from_unit::<Millimeter>(spacing); 3],
+            Point3::new(zero, zero, zero),
+        )
+        .expect("valid axis-aligned grid");
+        let mu = cast(0.06);
+        let volume = Volume::from_shape_fn(grid, |_| mu);
+        for (origin_x, direction_x, length_mm) in HALF_LINE_CASES {
+            let ray = Ray::try_new(
+                Point3::new(cast(origin_x), spacing, spacing),
+                Vector3::new(cast(direction_x), zero, zero),
+            )
+            .expect("non-degenerate ray direction");
+            let tau = forward_project_ray(&volume, &ray, cast(0.5)).expect("ray touches the grid");
+            if length_mm == 0.0 {
+                assert_eq!(tau, zero, "origin {origin_x}, direction {direction_x}");
+            } else {
+                assert_relative_eq!(
+                    tau,
+                    mu * cast(length_mm) * cast(0.1),
+                    max_relative = T::EPSILON * cast(PROJECTION_ULPS)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn inside_origin_integrates_only_the_forward_half_line_in_single_precision() {
+        inside_origin_integrates_only_the_forward_half_line::<f32>();
+    }
+
+    #[test]
+    fn inside_origin_integrates_only_the_forward_half_line_in_double_precision() {
+        inside_origin_integrates_only_the_forward_half_line::<f64>();
+    }
+
+    #[test]
+    fn oriented_inside_origin_integrates_only_the_forward_half_line() {
+        // Local +x maps to world +y over [20, 40] mm; world y = 30 is the
+        // local midpoint, so the forward half is 10 mm and tau = 0.06.
+        let mu = Volume::from_shape_fn(oriented_grid(), |_| 0.06);
+        let ray = Ray::try_new(Point3::new(9.0, 30.0, 32.0), Vector3::new(0.0, 1.0, 0.0))
+            .expect("unit +y ray");
+        let tau = forward_project_ray(&mu, &ray, 0.5).expect("hit");
+        // 20 midpoint terms at the 0.5 mm step. In u: 19 (sum), 5 (step), 3
+        // (exit endpoint; the clamped entry is exact 0), 16 (direction), 10
+        // (pose): 53. The origin error does not cancel; it enters `t_exit`
+        // alone as `|delta o| / 5` index, at most 31u (307u mm over spacing 2,
+        // by inspection of the pose transform): 84u, below 128u of 64 ulps.
+        assert_relative_eq!(tau, 0.06, max_relative = f64::EPSILON * PROJECTION_ULPS);
+    }
+
+    #[test]
+    fn grid_interval_clamps_entry_to_the_ray_origin() {
+        let grid = axis_grid();
+        let interval = |origin_x: f64, direction_x: f64| {
+            let ray = Ray::try_new(
+                Point3::new(origin_x, 2.0, 2.0),
+                Vector3::new(direction_x, 0.0, 0.0),
+            )
+            .expect("unit x ray");
+            ray_grid_interval(&grid, &ray)
+        };
+        // Outside origin: the slab entry is positive and passes through unchanged.
+        assert_eq!(interval(-5.0, 1.0), Some((5.0, 25.0)));
+        // Inside origin: entry is the origin itself.
+        assert_eq!(interval(4.0, 1.0), Some((0.0, 16.0)));
+        assert_eq!(interval(4.0, -1.0), Some((0.0, 4.0)));
+        // Origin 0.25 mm inside the entry face: the entry is -0.25 mm and is
+        // clamped, so a clamp that only fired below -1 mm would return it.
+        assert_eq!(interval(0.25, 1.0), Some((0.0, 19.75)));
+        // The grid lies wholly behind the origin.
+        assert_eq!(interval(30.0, 1.0), None);
     }
 
     #[test]

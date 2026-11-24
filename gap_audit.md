@@ -1,5 +1,46 @@
 # Helios Gap Audit
-- [Reproduced variance cancellation: HELIOS-ROI-VARIANCE-20261108 [patch]](backlog/helios-roi-variance-20261108.md)
+
+## Incremental release baseline
+
+Reviewed [helios-domain 0.2.1](crates/helios-domain/Cargo.toml) at [e28a0fe335c4](https://github.com/ryancinsight/helios/tree/e28a0fe335c43c24bdd0267b05b96ce57c8dd439). The exact version appears in the [registry](https://crates.io/crates/helios-domain/0.2.1).
+
+The next [patch] checkpoint uses [storage contract](crates/helios-domain/tests/storage_contract.rs). [Target version and acceptance criteria](CHECKLIST.md#stable-release-checklist).
+
+## Exact HDF5 archive representation
+
+The released reader interprets custom exponent-bias storage as IEEE binary64.
+A crates.io-only Helios 0.2.0 baseline accepts four custom-bias fixtures across
+the two dataset names. It passes the canonical, full-width padding, geometry
+error, and 64.25 MiB controls. The local candidate uses the verified
+`consus-hdf5` 0.6.0 archive, passes 65 domain tests with all features,
+and matches the baseline writer bytes. Hosted Helios verification is pending.
+See [H-HDF5-IEEE](backlog.md#H-HDF5-IEEE).
+
+## Aequitas 0.5 and Leto 0.52
+
+Helios 0.2.0 shares one published Aequitas 0.5, Eunomia 0.12.1, Leto
+0.52, and Coeus 0.14 provider set. RITK DICOM 0.6 and Registration 0.57
+resolve from crates.io. The all-feature workspace builds, and the 115
+focused domain, imaging, and planning tests pass. The release checklist
+tracks publication and the fresh-consumer tests.
+
+## Aequitas 0.4 and native CT release
+
+The registry manifests use RITK DICOM 0.5 and the reviewed Aequitas 0.4
+provider packages. The lock guard checks that every source-less package
+belongs to the workspace. Starting without a lockfile, the merged
+workspace resolves 403 distinct package versions and the published Rust
+library consumer resolves 330. Both graphs have zero Chrono packages. H-129 removes the Chrono and
+retired DICOM charset advisory holds after inspecting the locked
+all-feature and all-target normal, build, and development graph.
+
+All 12 crates.io archives and tags match merge commit
+`2b5325d8796ed50c5e14ed81ce4955e683aa6766`. The merged local run passes
+133 focused tests. The registry CT round trip preserves the 2 × 2 × 1
+grid pose and calibrated values −10, 10, 190, and 2036 HU. The
+Python package also builds and imports on macOS through Cargo.
+See [merged CI](https://github.com/ryancinsight/helios/actions/runs/44787999949).
+
 Physics, numerics, accuracy, architecture, and integration gaps. Closed by
 evidence, not silence. Each gap: ID, description, class, current evidence tier,
 target closure.
@@ -409,18 +450,14 @@ changes, which are outside this item.
   Nextest attempt could not start because active peer CFDrs/Leto builds held
   the shared Atlas lock; no local package-gate result is claimed.
 
-### G-29 — DICOM charset dependency (externally blocked)
+### G-29 — DICOM charset dependency [patch] — closed
 
-- `dicom-encoding` 0.10.0 declares `encoding` 0.2.33 unconditionally and uses
-  it for the DICOM Specific Character Set codecs. The current release exposes
-  no feature that can remove the dependency. A 2026-07-20 registry and resolved
-  manifest audit confirms 0.10.0 remains the latest release and still carries
-  the unconditional edge.
-- RUSTSEC-2021-0153 reports maintenance status, not a known vulnerability.
-  CI quarantines only that advisory ID while continuing to deny every other
-  warning and vulnerability. Reopen H-073 when `dicom-rs` publishes a release
-  backed by a maintained charset implementation; a consumer fork or reduced
-  character-set implementation would duplicate provider ownership.
+RITK’s native dataset switches character repertoire handling to the
+provider’s decoder. The locked Helios graph contains neither `encoding`
+nor `chrono`, covering workspace features and target platforms. H-073
+and H-129 close together. The registry adoption gate follows
+[the release evidence](#aequitas-04-and-native-ct-release). A lockfile-free resolver reaches Asclepius 0.3.0,
+which still requires Git Aequitas 0.3.
 
 ### Recently closed
 
@@ -624,8 +661,10 @@ changes, which are outside this item.
   now converts mm→cm for a dimensionless `τ`. Units contract documented (μ volumes
   in cm⁻¹, grid in mm). *Evidence tier: analytical (τ = μ·L_cm verified).*
 - **G-4 (numerics):** Reduction-order sensitivity for future GPU vs CPU differential
-  tests not yet characterized; epsilon bounds must be derived per reduction depth
-  when the projector/dose kernels land. → H-012.
+  tests not yet characterized; epsilon bounds must be derived per reduction depth.
+  The delivered projector differential (`GpuProjector`, H-043b) asserts a 1e-3
+  relative bound whose derivation is not recorded; no owning item. Re-open on any
+  change to the projector kernel or that bound.
 
 ### Architecture / integration
 

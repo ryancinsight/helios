@@ -2,7 +2,7 @@
 name = "helios-analysis"
 description = "Helios dosimetric analysis: dose-volume histograms and the gamma index (dose-difference / distance-to-agreement) for plan/measurement comparison."
 edition.workspace = true
-version = "0.1.1"
+version.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
@@ -16,14 +16,15 @@ aequitas = { workspace = true }
 asclepius = { workspace = true }
 eunomia = { workspace = true }
 helios-quantities = { workspace = true }
-helios-math = { workspace = true }
+helios-math = { workspace = true, features = ["geometry"] }
 helios-domain = { workspace = true }
 
 [dev-dependencies]
 # Examples and benches install the program allocator (ADR 0018).
 helios-allocator = { workspace = true }
 criterion = { workspace = true }
-helios-imaging = { workspace = true }
+# Keep workspace integration coverage without a published dev-dependency cycle.
+helios-imaging = { path = "../helios-imaging" }
 
 [[bench]]
 name = "dvh_queries"

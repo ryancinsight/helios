@@ -14,7 +14,7 @@ workspace = true
 [dependencies]
 helios-quantities = { workspace = true }
 # Only the Scalar seam is needed; the geometry vocabulary is not.
-helios-math = { path = "../helios-math", default-features = false }
+helios-math = { workspace = true }
 # Cache-line-aligned storage for the dense dose-influence matrix.
 mnemosyne-arena = { workspace = true }
 aequitas = { workspace = true, optional = true }

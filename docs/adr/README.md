@@ -26,3 +26,7 @@
 | [0016](0016-radon-geometry-quantities.md) | Type Radon imaging geometry quantities | Accepted |
 | [0017](0017-planning-dose-quantities.md) | Type inverse-planning dose objectives | Accepted |
 | [0018](0018-program-owned-global-allocator.md) | Programs own the global allocator; libraries depend only on what they use | Accepted |
+| [0019](0019-cell-constant-radiological-path.md) | Cell-constant radiological path beside the trilinear march | Proposed |
+| [0020](0020-eunomia-moirai-provider-contract.md) | Advance the Eunomia and Moirai provider contracts | Accepted |
+| [0021](0021-release-scope-1-0.md) | Helios release scope for 1.0 | Accepted |
+| [0022](0022-published-physics-provider-boundary.md) | Align the published Helios physics provider boundary | Accepted |
