@@ -140,7 +140,7 @@ fn symmetric_extremes_preserve_range() {
 /// midpoint. The compensated center error enters `sigma` squared. The residual,
 /// its square, the compensated sum, the division by `n`, the square root and
 /// the scale add `5u`; the reference (conversion, square root, division) adds
-/// `2.5u`. Terms of order `n u^2` and `u^2 kappa^2` are neglected.
+/// `2.5u`. Underflow and terms of order `n u^2`, `u^2 kappa^2` are neglected.
 fn derived_std_bound<T: ShippedScalar>(kappa: T) -> T {
     let (one, two, five) = (T::from_count(1), T::from_count(2), T::from_count(5));
     let u = T::EPSILON / two;
@@ -167,10 +167,12 @@ fn lattice_noise_stays_within_derived_bound<T: ShippedScalar>(
     let n = u64::try_from(lattice.len()).expect("count fits u64");
     let s1 = lattice.iter().sum::<u64>();
     let s2 = lattice.iter().map(|k| k * k).sum::<u64>();
-    let (low, high) = (lattice.iter().min().unwrap(), lattice.iter().max().unwrap());
+    let extremes = lattice
+        .iter()
+        .fold((u64::MAX, 0), |(l, h), &k| (l.min(k), h.max(k)));
     let scaled_variance = count_of(n * s2 - s1 * s1);
     // |mean - midpoint| plus the half-step anchor rounding, in units of n / 2.
-    let shift = count_of((2 * s1).abs_diff(n * (low + high)) + n);
+    let shift = count_of((2 * s1).abs_diff(n * (extremes.0 + extremes.1)) + n);
     let kappa = (T::from_count(1) + shift * shift / (T::from_count(4) * scaled_variance)).sqrt();
     let reference = step * scaled_variance.sqrt() / count_of(n);
     let actual = roi_statistics(&volume, [0; 3], dims).std;

@@ -147,12 +147,12 @@ fn roi_values<T: Scalar>(
 /// [`dose_roi_statistics`] so the physical result retains its Aequitas
 /// `AbsorbedDose` dimension.
 ///
-/// For finite samples the standard deviation does not degrade under a common
-/// offset: with `u = T::EPSILON / 2`, `gamma_2 = 2u / (1 - 2u)` and
-/// `kappa = sqrt(1 + (mean / std)^2)` measured from the range midpoint, its
-/// relative error is at most `gamma_2 * kappa + 5u`, up to terms of order
-/// `n u^2` and `u^2 kappa^2`. A NaN or infinite sample makes it NaN; the mean
-/// follows IEEE-754 addition.
+/// For finite samples with no subnormal intermediate, the standard deviation
+/// does not degrade under a common offset: with `u = T::EPSILON / 2`,
+/// `gamma_2 = 2u / (1 - 2u)` and `kappa = sqrt(1 + (mean / std)^2)` measured
+/// from the range midpoint, its relative error is at most `gamma_2 * kappa +
+/// 5u`, up to terms of order `n u^2` and `u^2 kappa^2`. A NaN or infinite
+/// sample makes it NaN; the mean follows IEEE-754 addition.
 #[must_use]
 pub fn roi_statistics<T: Scalar>(
     volume: &Volume<T>,
