@@ -84,7 +84,8 @@ fn roi_statistics_values<T: Scalar>(
     };
     let scale = translated(lower).abs().max_scalar(translated(upper).abs());
     if scale == zero {
-        return (mean, zero);
+        // The NaN-ignoring range fold misses a NaN sample; the sum does not.
+        return (mean, if mean.is_nan() { mean } else { zero });
     }
     // Normalize before averaging: dividing subnormal translated values by n
     // first can erase every contribution, even when their standard deviation
@@ -152,7 +153,8 @@ fn roi_values<T: Scalar>(
 /// `gamma_2 = 2u / (1 - 2u)` and `kappa = sqrt(1 + (mean / std)^2)` measured
 /// from the range midpoint, its relative error is at most `gamma_2 * kappa +
 /// 5u`, up to terms of order `n u^2` and `u^2 kappa^2`. A NaN or infinite
-/// sample makes it NaN; the mean follows IEEE-754 addition.
+/// sample makes it NaN: the range ignores NaN, so equal finite samples return
+/// zero only if the sum is not NaN. The mean follows IEEE-754 addition.
 #[must_use]
 pub fn roi_statistics<T: Scalar>(
     volume: &Volume<T>,

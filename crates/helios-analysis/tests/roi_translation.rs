@@ -13,11 +13,7 @@ fn unit_grid<T: ShippedScalar>(dims: [usize; 3]) -> VoxelGrid<T> {
 fn translated_pair_preserves_noise<T: ShippedScalar>(offset: T, separation: T) {
     for dims in [[2, 1, 1], [2, 4, 8]] {
         let volume = Volume::from_shape_fn(unit_grid(dims), |[i, j, k]| {
-            if (i + j + k) % 2 == 0 {
-                offset
-            } else {
-                offset + separation
-            }
+            [offset, offset + separation][(i + j + k) % 2]
         });
         // A balanced sample of a and a+d has mean a+d/2 and population
         // standard deviation |d|/2. The chosen standard deviations are
@@ -74,16 +70,7 @@ fn adjacent_decimal_values_keep_noise_across_a_volume() {
     let grid = unit_grid([16; 3]);
     let step = f32::from_bits(0x3dcc_ccce) - f32::from_bits(0x3dcc_cccd);
     for offset in [0.0, f32::from_bits(0x3dcc_cccd)] {
-        let volume = Volume::from_shape_fn(
-            grid,
-            |[_, _, k]| {
-                if k % 2 == 0 {
-                    offset
-                } else {
-                    offset + step
-                }
-            },
-        );
+        let volume = Volume::from_shape_fn(grid, |[_, _, k]| [offset, offset + step][k % 2]);
         let expected = f32::from_bits(0x3180_0000);
         let intensity = roi_statistics(&volume, [0; 3], [16; 3]);
         assert_eq!(intensity.std, expected);
@@ -94,13 +81,8 @@ fn adjacent_decimal_values_keep_noise_across_a_volume() {
 
 fn symmetric_pair_keeps_finite_mean_and_noise<T: ShippedScalar>(magnitude: T) {
     let zero = T::from_count(0);
-    let volume = Volume::from_shape_fn(unit_grid([2, 1, 1]), |[i, _, _]| {
-        if i == 0 {
-            -magnitude
-        } else {
-            magnitude
-        }
-    });
+    let volume =
+        Volume::from_shape_fn(unit_grid([2, 1, 1]), |[i, _, _]| [-magnitude, magnitude][i]);
     let stats = roi_statistics(&volume, [0; 3], [2, 1, 1]);
     assert_eq!(stats.mean, zero);
     assert_eq!(stats.std, magnitude);
@@ -111,36 +93,31 @@ fn symmetric_pair_keeps_finite_mean_and_noise<T: ShippedScalar>(magnitude: T) {
 
 #[test]
 fn symmetric_extremes_preserve_range() {
-    for magnitude in [
-        f32::from_bits(0x7f00_0000),
-        f32::MAX,
-        f32::MIN_POSITIVE,
-        f32::from_bits(1),
-    ] {
-        symmetric_pair_keeps_finite_mean_and_noise(magnitude);
+    // Bits of 2^126, MAX, MIN_POSITIVE and the smallest subnormal.
+    for bits in [0x7f00_0000_u32, 0x7f7f_ffff, 0x0080_0000, 1] {
+        symmetric_pair_keeps_finite_mean_and_noise(f32::from_bits(bits));
     }
-    for magnitude in [
-        f64::from_bits(0x7fe0_0000_0000_0000),
-        f64::MAX,
-        f64::MIN_POSITIVE,
-        f64::from_bits(1),
+    for bits in [
+        0x7fe0_0000_0000_0000_u64,
+        0x7fef_ffff_ffff_ffff,
+        0x0010_0000_0000_0000,
+        1,
     ] {
-        symmetric_pair_keeps_finite_mean_and_noise(magnitude);
+        symmetric_pair_keeps_finite_mean_and_noise(f64::from_bits(bits));
     }
 }
 
 /// Relative error bound for the population standard deviation of lattice data.
 ///
-/// With `u = EPSILON / 2` and `gamma_2 = 2u / (1 - 2u)`, the translation
-/// `fl(x - c)` and the division by the endpoint scale `s` perturb each
-/// normalized value `y` by at most `gamma_2` relative, and `sigma(x) = s *
-/// sigma(y)` exactly. A perturbation `e` moves a standard deviation by at most
-/// `rms(e)`, a relative `gamma_2 * kappa` with `kappa = rms(y) / sigma(y)`,
-/// measured from the anchor, which lies within half a lattice step of the range
-/// midpoint. The compensated center error enters `sigma` squared. The residual,
-/// its square, the compensated sum, the division by `n`, the square root and
-/// the scale add `5u`; the reference (conversion, square root, division) adds
-/// `2.5u`. Underflow and terms of order `n u^2`, `u^2 kappa^2` are neglected.
+/// With `u = EPSILON / 2` and `gamma_2 = 2u / (1 - 2u)`, `fl(x - c)` and the
+/// division by the endpoint scale `s` perturb each normalized `y` by at most
+/// `gamma_2`, while `sigma(x) = s * sigma(y)` exactly. A perturbation `e` moves
+/// a standard deviation by at most `rms(e)`: relative `gamma_2 * kappa`, with
+/// `kappa = rms(y) / sigma(y)` taken from the anchor, within half a lattice
+/// step of the range midpoint. The compensated center error enters `sigma`
+/// squared. Residual, square, sum, division by `n`, root and scale add `5u`;
+/// the reference (conversion, root, division) adds `2.5u`. Underflow and terms
+/// of order `n u^2`, `u^2 kappa^2` are neglected.
 fn derived_std_bound<T: ShippedScalar>(kappa: T) -> T {
     let (one, two, five) = (T::from_count(1), T::from_count(2), T::from_count(5));
     let u = T::EPSILON / two;
@@ -211,8 +188,7 @@ fn offset_lattice_noise_stays_within_derived_bound() {
 
 #[test]
 fn sparse_adjacent_outlier_keeps_bernoulli_noise() {
-    let mut lattice = vec![0_u64; 4096];
-    lattice[4095] = 1;
+    let lattice: Vec<u64> = (0..4096).map(|k| u64::from(k == 4095)).collect();
     for lower in [0.1_f32, 1.0, 1024.0] {
         let step = f32::from_bits(lower.to_bits() + 1) - lower;
         lattice_noise_stays_within_derived_bound(lower, step, [16; 3], &lattice);
@@ -229,11 +205,7 @@ fn sparse_subnormal_outlier_keeps_noise<T: ShippedScalar>(magnitude: T, expected
         for step in [magnitude, -magnitude] {
             for outlier in [[0; 3], [15; 3]] {
                 let volume = Volume::from_shape_fn(grid, |index| {
-                    if index == outlier {
-                        offset + step
-                    } else {
-                        offset
-                    }
+                    [offset, offset + step][usize::from(index == outlier)]
                 });
                 // One of 4096 samples differs by 128 minimum subnormal units.
                 // sigma = 128 * sqrt((1/4096)*(4095/4096)) units, strictly
@@ -257,13 +229,25 @@ fn sparse_subnormal_outlier_preserves_noise() {
 }
 
 fn non_finite_sample_makes_noise_nan<T: ShippedScalar>() {
-    for bad in [T::nan(), T::infinity(), -T::infinity()] {
-        let volume = Volume::from_shape_fn(unit_grid([3, 1, 1]), |[i, _, _]| {
-            [T::from_count(1), bad, T::from_count(2)][i]
-        });
-        let stats = roi_statistics(&volume, [0; 3], [3, 1, 1]);
-        assert!(stats.std.is_nan(), "std of a sample containing {bad:?}");
-        assert_eq!(stats.mean.is_nan(), bad.is_nan());
+    let (nan, inf, c) = (T::nan(), T::infinity(), T::from_count);
+    let cases: [&[T]; 10] = [
+        &[c(1), nan, c(2)],
+        &[c(1), inf, c(2)],
+        &[c(1), -inf, c(2)],
+        &[c(1), nan, c(1)],
+        &[nan, c(5)],
+        &[c(1_000_000), nan, c(1_000_000), c(1_000_000)],
+        &[nan],
+        &[inf],
+        &[c(3), inf, c(3)],
+        &[c(3), -inf, c(3)],
+    ];
+    for values in cases {
+        let dims = [values.len(), 1, 1];
+        let volume = Volume::from_shape_vec(unit_grid(dims), values.to_vec()).expect("shape");
+        let stats = roi_statistics(&volume, [0; 3], dims);
+        assert!(stats.std.is_nan(), "std of {values:?}");
+        assert_eq!(stats.mean.is_nan(), values.iter().any(|v| v.is_nan()));
     }
 }
 
@@ -271,4 +255,20 @@ fn non_finite_sample_makes_noise_nan<T: ShippedScalar>() {
 fn non_finite_samples_propagate_to_nan_noise() {
     non_finite_sample_makes_noise_nan::<f32>();
     non_finite_sample_makes_noise_nan::<f64>();
+}
+
+fn overflowing_span_with_nonzero_anchor_keeps_noise<T: ShippedScalar>(quantum: T) {
+    // The span 8q is 2^128 (f32) or 2^1024 (f64) and overflows; the anchor is -2q.
+    let values = vec![-T::from_count(6) * quantum, T::from_count(2) * quantum];
+    let volume = Volume::from_shape_vec(unit_grid([2, 1, 1]), values).expect("shape");
+    assert_eq!(
+        roi_statistics(&volume, [0; 3], [2, 1, 1]).std,
+        T::from_count(4) * quantum
+    );
+}
+
+#[test]
+fn overflowing_span_keeps_noise() {
+    overflowing_span_with_nonzero_anchor_keeps_noise(2.0_f32.powi(125));
+    overflowing_span_with_nonzero_anchor_keeps_noise(2.0_f64.powi(1021));
 }
