@@ -93,7 +93,7 @@ fn symmetric_pair_keeps_finite_mean_and_noise<T: ShippedScalar>(magnitude: T) {
 
 #[test]
 fn symmetric_extremes_preserve_range() {
-    // Bits of 2^126, MAX, MIN_POSITIVE and the smallest subnormal.
+    // Bits of 2^127 (2^1023 for f64), MAX, MIN_POSITIVE, the smallest subnormal.
     for bits in [0x7f00_0000_u32, 0x7f7f_ffff, 0x0080_0000, 1] {
         symmetric_pair_keeps_finite_mean_and_noise(f32::from_bits(bits));
     }
