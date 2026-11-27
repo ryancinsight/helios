@@ -1,13 +1,5 @@
 # Helios Backlog (strategic board)
 
-<a id="helios-roi-variance-20261108"></a>
-## HELIOS-ROI-VARIANCE-20261108 — Preserve translated ROI noise [patch] — blocked
-
-- Scope covers intensity and dose ROI statistics. For a balanced sample of two represented values separated by a distance d, the population standard deviation is |d|/2.
-- Regression coverage includes adjacent representable values, translated volumes, clipped bounds, empty regions, and singletons.
-- The correction and tests are available in PR #229. The returned mean retains its existing range and rounding behavior.
-- Independent qualification of this revision, hosted verification, and confirmation of provider migration and deployment settings remain open before merge.
-
 <a id="helios-stable-qualification"></a>
 ## HELIOS-STABLE-QUALIFICATION — helios stable-release qualification [patch] — todo
 - priority: verification; milestone: M-interop; basis: `e28a0fe335c4`.

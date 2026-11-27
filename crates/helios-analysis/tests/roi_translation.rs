@@ -4,17 +4,15 @@ use helios_analysis::{dose_roi_statistics, roi_statistics};
 use helios_domain::{Volume, VoxelGrid};
 use helios_math::{Point3, ShippedScalar};
 
+fn unit_grid<T: ShippedScalar>(dims: [usize; 3]) -> VoxelGrid<T> {
+    let zero = T::from_count(0);
+    let unit = Length::from_unit::<Millimeter>(T::from_count(1));
+    VoxelGrid::axis_aligned(dims, [unit; 3], Point3::new(zero, zero, zero)).expect("valid grid")
+}
+
 fn translated_pair_preserves_noise<T: ShippedScalar>(offset: T, separation: T) {
-    let zero = T::from_f64(0.0);
-    let one = T::from_f64(1.0);
     for dims in [[2, 1, 1], [2, 4, 8]] {
-        let grid = VoxelGrid::axis_aligned(
-            dims,
-            [Length::from_unit::<Millimeter>(one); 3],
-            Point3::new(zero, zero, zero),
-        )
-        .expect("valid grid");
-        let volume = Volume::from_shape_fn(grid, |[i, j, k]| {
+        let volume = Volume::from_shape_fn(unit_grid(dims), |[i, j, k]| {
             if (i + j + k) % 2 == 0 {
                 offset
             } else {
@@ -41,17 +39,13 @@ fn translated_pair_preserves_noise<T: ShippedScalar>(offset: T, separation: T) {
 }
 
 #[test]
-fn translated_pair_keeps_single_precision_noise() {
+fn translated_pair_keeps_noise() {
     translated_pair_preserves_noise::<f32>(1024.0, 0.25);
     translated_pair_preserves_noise::<f32>(1024.0, 1.0 / 8192.0);
     translated_pair_preserves_noise::<f32>(-1024.0, 0.25);
     translated_pair_preserves_noise::<f32>(0.0, 0.25);
     translated_pair_preserves_noise::<f32>(1024.25, -0.25);
     translated_pair_preserves_noise::<f32>(f32::from_bits(0x3f80_0001), f32::EPSILON);
-}
-
-#[test]
-fn translated_pair_keeps_double_precision_noise() {
     translated_pair_preserves_noise::<f64>(134_217_728.0, 2.0);
     translated_pair_preserves_noise::<f64>(134_217_728.0, 1.0 / 33_554_432.0);
     translated_pair_preserves_noise::<f64>(-134_217_728.0, 2.0);
@@ -62,13 +56,7 @@ fn translated_pair_keeps_double_precision_noise() {
 
 #[test]
 fn roi_bounds_keep_empty_singleton_and_clipped_contracts() {
-    let grid = VoxelGrid::axis_aligned(
-        [2, 2, 2],
-        [Length::from_unit::<Millimeter>(1.0); 3],
-        Point3::new(0.0, 0.0, 0.0),
-    )
-    .expect("valid grid");
-    let volume = Volume::from_shape_fn(grid, |[i, j, k]| {
+    let volume = Volume::from_shape_fn(unit_grid([2, 2, 2]), |[i, j, k]| {
         f64::from(u8::try_from(4 * i + 2 * j + k).expect("2x2x2 voxel index fits in u8"))
     });
     let empty = roi_statistics(&volume, [1, 0, 0], [1, 2, 2]);
@@ -83,12 +71,7 @@ fn roi_bounds_keep_empty_singleton_and_clipped_contracts() {
 
 #[test]
 fn adjacent_decimal_values_keep_noise_across_a_volume() {
-    let grid = VoxelGrid::axis_aligned(
-        [16; 3],
-        [Length::from_unit::<Millimeter>(1.0_f32); 3],
-        Point3::new(0.0, 0.0, 0.0),
-    )
-    .expect("valid grid");
+    let grid = unit_grid([16; 3]);
     let step = f32::from_bits(0x3dcc_ccce) - f32::from_bits(0x3dcc_cccd);
     for offset in [0.0, f32::from_bits(0x3dcc_cccd)] {
         let volume = Volume::from_shape_fn(
@@ -110,23 +93,14 @@ fn adjacent_decimal_values_keep_noise_across_a_volume() {
 }
 
 fn symmetric_pair_keeps_finite_mean_and_noise<T: ShippedScalar>(magnitude: T) {
-    let zero = T::from_f64(0.0);
-    let grid = VoxelGrid::axis_aligned(
-        [2, 1, 1],
-        [Length::from_unit::<Millimeter>(T::from_f64(1.0)); 3],
-        Point3::new(zero, zero, zero),
-    )
-    .expect("valid grid");
-    let volume = Volume::from_shape_fn(
-        grid,
-        |[i, _, _]| {
-            if i == 0 {
-                -magnitude
-            } else {
-                magnitude
-            }
-        },
-    );
+    let zero = T::from_count(0);
+    let volume = Volume::from_shape_fn(unit_grid([2, 1, 1]), |[i, _, _]| {
+        if i == 0 {
+            -magnitude
+        } else {
+            magnitude
+        }
+    });
     let stats = roi_statistics(&volume, [0; 3], [2, 1, 1]);
     assert_eq!(stats.mean, zero);
     assert_eq!(stats.std, magnitude);
@@ -136,7 +110,7 @@ fn symmetric_pair_keeps_finite_mean_and_noise<T: ShippedScalar>(magnitude: T) {
 }
 
 #[test]
-fn symmetric_extremes_preserve_single_precision_range() {
+fn symmetric_extremes_preserve_range() {
     for magnitude in [
         f32::from_bits(0x7f00_0000),
         f32::MAX,
@@ -145,10 +119,6 @@ fn symmetric_extremes_preserve_single_precision_range() {
     ] {
         symmetric_pair_keeps_finite_mean_and_noise(magnitude);
     }
-}
-
-#[test]
-fn symmetric_extremes_preserve_double_precision_range() {
     for magnitude in [
         f64::from_bits(0x7fe0_0000_0000_0000),
         f64::MAX,
@@ -159,41 +129,101 @@ fn symmetric_extremes_preserve_double_precision_range() {
     }
 }
 
+/// Relative error bound for the population standard deviation of lattice data.
+///
+/// With `u = EPSILON / 2` and `gamma_2 = 2u / (1 - 2u)`, the translation
+/// `fl(x - c)` and the division by the endpoint scale `s` perturb each
+/// normalized value `y` by at most `gamma_2` relative, and `sigma(x) = s *
+/// sigma(y)` exactly. A perturbation `e` moves a standard deviation by at most
+/// `rms(e)`, a relative `gamma_2 * kappa` with `kappa = rms(y) / sigma(y)`,
+/// measured from the anchor, which lies within half a lattice step of the range
+/// midpoint. The compensated center error enters `sigma` squared. The residual,
+/// its square, the compensated sum, the division by `n`, the square root and
+/// the scale add `5u`; the reference (conversion, square root, division) adds
+/// `2.5u`. Terms of order `n u^2` and `u^2 kappa^2` are neglected.
+fn derived_std_bound<T: ShippedScalar>(kappa: T) -> T {
+    let (one, two, five) = (T::from_count(1), T::from_count(2), T::from_count(5));
+    let u = T::EPSILON / two;
+    let gamma_2 = two * u / (one - two * u);
+    gamma_2 * kappa + five * u + five * u / two
+}
+
+/// Assert `std` of `lower + step * k` over an `n = prod(dims)` lattice against
+/// the exact integer-moment reference within [`derived_std_bound`].
+fn lattice_noise_stays_within_derived_bound<T: ShippedScalar>(
+    lower: T,
+    step: T,
+    dims: [usize; 3],
+    lattice: &[u64],
+) {
+    let count_of = |value: u64| T::from_count(usize::try_from(value).expect("moment fits usize"));
+    let value = |k: u64| lower + step * count_of(k);
+    let exact = |&k: &u64| value(k) - lower == step * count_of(k);
+    assert!(lattice.iter().all(exact), "lattice values are exact");
+    let volume = Volume::from_shape_fn(unit_grid(dims), |[i, j, k]| {
+        value(lattice[(i * dims[1] + j) * dims[2] + k])
+    });
+    // Integer moments are exact: n * S2 - S1^2 = n^2 * variance in lattice units.
+    let n = u64::try_from(lattice.len()).expect("count fits u64");
+    let s1 = lattice.iter().sum::<u64>();
+    let s2 = lattice.iter().map(|k| k * k).sum::<u64>();
+    let (low, high) = (lattice.iter().min().unwrap(), lattice.iter().max().unwrap());
+    let scaled_variance = count_of(n * s2 - s1 * s1);
+    // |mean - midpoint| plus the half-step anchor rounding, in units of n / 2.
+    let shift = count_of((2 * s1).abs_diff(n * (low + high)) + n);
+    let kappa = (T::from_count(1) + shift * shift / (T::from_count(4) * scaled_variance)).sqrt();
+    let reference = step * scaled_variance.sqrt() / count_of(n);
+    let actual = roi_statistics(&volume, [0; 3], dims).std;
+    let bound = derived_std_bound(kappa);
+    assert!(
+        (actual - reference).abs() <= bound * reference,
+        "std {actual:?} differs from {reference:?} by more than relative {:e}",
+        bound.to_f64()
+    );
+}
+
+#[test]
+fn offset_lattice_noise_stays_within_derived_bound() {
+    // 37 * 41 * 43 voxels: a count that is not a power of two.
+    let dims = [37, 41, 43];
+    let count = dims.iter().product::<usize>();
+    let mut state = 0x9e37_79b9_7f4a_7c15_u64;
+    let mut draw = move |modulus: u64| {
+        state = state
+            .wrapping_mul(6_364_136_223_846_793_005)
+            .wrapping_add(1_442_695_040_888_963_407);
+        (state >> 33) % modulus
+    };
+    // A product of three uniform draws skews the values toward the range start.
+    let skewed: Vec<u64> = (0..count)
+        .map(|_| draw(1000) * draw(1000) * draw(1000) / 1_000_000)
+        .collect();
+    let mut outlier: Vec<u64> = (1..count).map(|_| draw(16)).collect();
+    outlier.push(4000);
+    for lattice in [&skewed, &outlier] {
+        // Each offset sets the lattice step to the unit in the last place.
+        lattice_noise_stays_within_derived_bound(2.0_f32.powi(30), 128.0, dims, lattice);
+        lattice_noise_stays_within_derived_bound(2.0_f64.powi(52), 1.0, dims, lattice);
+    }
+}
+
 #[test]
 fn sparse_adjacent_outlier_keeps_bernoulli_noise() {
-    let grid = VoxelGrid::axis_aligned(
-        [16; 3],
-        [Length::from_unit::<Millimeter>(1.0_f32); 3],
-        Point3::new(0.0, 0.0, 0.0),
-    )
-    .expect("valid grid");
-    for bits in [0x3dcc_cccd, 0x3f80_0000, 0x4480_0000] {
-        let lower = f32::from_bits(bits);
-        let upper = f32::from_bits(bits + 1);
-        let volume =
-            Volume::from_shape_fn(grid, |index| if index == [15; 3] { upper } else { lower });
-        // One of N samples differs by d: variance = d^2 * (1/N) * (1-1/N).
-        // Compensation contributes at most about 2u per sum; normalization,
-        // centering and sqrt add fewer than 12 roundings for this binary input.
-        let probability = 1.0_f32 / 4096.0;
-        let expected = (upper - lower) * (probability * (1.0 - probability)).sqrt();
-        let actual = roi_statistics(&volume, [0; 3], [16; 3]).std;
-        assert!(
-            (actual - expected).abs() <= 16.0 * f32::EPSILON * expected,
-            "actual {actual}, expected {expected}"
-        );
+    let mut lattice = vec![0_u64; 4096];
+    lattice[4095] = 1;
+    for lower in [0.1_f32, 1.0, 1024.0] {
+        let step = f32::from_bits(lower.to_bits() + 1) - lower;
+        lattice_noise_stays_within_derived_bound(lower, step, [16; 3], &lattice);
+    }
+    for lower in [0.1_f64, 1.0, 1024.0] {
+        let step = f64::from_bits(lower.to_bits() + 1) - lower;
+        lattice_noise_stays_within_derived_bound(lower, step, [16; 3], &lattice);
     }
 }
 
 fn sparse_subnormal_outlier_keeps_noise<T: ShippedScalar>(magnitude: T, expected: T) {
-    let zero = T::from_f64(0.0);
-    let grid = VoxelGrid::axis_aligned(
-        [16; 3],
-        [Length::from_unit::<Millimeter>(T::from_f64(1.0)); 3],
-        Point3::new(zero, zero, zero),
-    )
-    .expect("valid grid");
-    for offset in [zero, magnitude * T::from_f64(2.0)] {
+    let grid = unit_grid([16; 3]);
+    for offset in [T::from_count(0), magnitude * T::from_count(2)] {
         for step in [magnitude, -magnitude] {
             for outlier in [[0; 3], [15; 3]] {
                 let volume = Volume::from_shape_fn(grid, |index| {
@@ -219,11 +249,24 @@ fn sparse_subnormal_outlier_keeps_noise<T: ShippedScalar>(magnitude: T, expected
 }
 
 #[test]
-fn sparse_subnormal_outlier_preserves_single_precision() {
+fn sparse_subnormal_outlier_preserves_noise() {
     sparse_subnormal_outlier_keeps_noise(f32::from_bits(0x80), f32::from_bits(0x02));
+    sparse_subnormal_outlier_keeps_noise(f64::from_bits(0x80), f64::from_bits(0x02));
+}
+
+fn non_finite_sample_makes_noise_nan<T: ShippedScalar>() {
+    for bad in [T::nan(), T::infinity(), -T::infinity()] {
+        let volume = Volume::from_shape_fn(unit_grid([3, 1, 1]), |[i, _, _]| {
+            [T::from_count(1), bad, T::from_count(2)][i]
+        });
+        let stats = roi_statistics(&volume, [0; 3], [3, 1, 1]);
+        assert!(stats.std.is_nan(), "std of a sample containing {bad:?}");
+        assert_eq!(stats.mean.is_nan(), bad.is_nan());
+    }
 }
 
 #[test]
-fn sparse_subnormal_outlier_preserves_double_precision() {
-    sparse_subnormal_outlier_keeps_noise(f64::from_bits(0x80), f64::from_bits(0x02));
+fn non_finite_samples_propagate_to_nan_noise() {
+    non_finite_sample_makes_noise_nan::<f32>();
+    non_finite_sample_makes_noise_nan::<f64>();
 }

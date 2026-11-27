@@ -9,7 +9,8 @@ under a Breaking subsection.
 
 ### Fixed
 
-- [patch] Preserve intensity and dose ROI noise when a common offset makes the raw second-moment calculation lose the variance.
+- [patch] Preserve ROI noise under a common intensity or dose offset. A NaN
+  or infinite sample now gives a NaN standard deviation, not zero.
 
 ## [helios-domain 0.2.1]
 
