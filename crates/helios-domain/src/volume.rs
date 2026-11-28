@@ -143,7 +143,7 @@ impl<T: Scalar> Volume<T> {
             if !c.is_finite() {
                 return None;
             }
-            let max_node = T::from_f64((extents[axis] - 1) as f64);
+            let max_node = T::from_count(extents[axis].saturating_sub(1));
             if c < <T as NumericElement>::ZERO || c > max_node {
                 return None;
             }

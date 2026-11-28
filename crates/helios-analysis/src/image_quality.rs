@@ -60,7 +60,7 @@ fn roi_statistics_values<T: Scalar>(
     if count == 0 {
         return (zero, zero);
     }
-    let inv_n = T::from_f64(count as f64).recip();
+    let inv_n = T::from_count(count).recip();
     let mean = sum * inv_n;
     // Var = E[x²] − E[x]²; clamp a tiny negative from rounding before sqrt.
     let var = (sum_sq * inv_n - mean * mean).max_scalar(zero);
@@ -147,7 +147,7 @@ fn error_accumulate<T: Scalar>(a: &Volume<T>, b: &Volume<T>) -> Result<(T, T, us
 
 fn volume_rmse_value<T: Scalar>(recon: &Volume<T>, truth: &Volume<T>) -> Result<T, HeliosError> {
     let (sq_diff, _sq_ref, n) = error_accumulate(recon, truth)?;
-    Ok((sq_diff * T::from_f64(n as f64).recip()).sqrt())
+    Ok((sq_diff * T::from_count(n).recip()).sqrt())
 }
 
 /// Root-mean-square error between raw MVCT intensity volumes.

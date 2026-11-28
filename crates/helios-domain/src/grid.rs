@@ -188,9 +188,9 @@ impl<T: Scalar> VoxelGrid<T> {
     #[must_use]
     pub fn voxel_center(&self, i: usize, j: usize, k: usize) -> Point3<T> {
         self.index_to_world(Point3::new(
-            T::from_f64(i as f64),
-            T::from_f64(j as f64),
-            T::from_f64(k as f64),
+            T::from_count(i),
+            T::from_count(j),
+            T::from_count(k),
         ))
     }
 

@@ -159,9 +159,7 @@ impl<T: Scalar + UnitScalar> HelicalDelivery<T> {
     pub fn gantry_angle_rad(&self, projection: usize) -> Angle<T> {
         Angle::from_base(
             self.start_gantry_angle_rad.in_unit::<Radian>()
-                + T::TAU
-                    * T::from_f64(projection as f64)
-                    * self.projections_per_rotation_recip().into_base(),
+                + T::TAU * T::from_count(projection) * self.projections_per_rotation_recip().into_base(),
         )
     }
 
@@ -178,8 +176,7 @@ impl<T: Scalar + UnitScalar> HelicalDelivery<T> {
     pub fn couch_position_mm(&self, projection: usize) -> Length<T> {
         Length::from_base(
             self.start_couch_mm.into_base()
-                + T::from_f64(projection as f64)
-                    * self.couch_advance_per_projection_mm().into_base(),
+                + T::from_count(projection) * self.couch_advance_per_projection_mm().into_base(),
         )
     }
 
@@ -187,7 +184,7 @@ impl<T: Scalar + UnitScalar> HelicalDelivery<T> {
     #[must_use]
     pub fn time_s(&self, projection: usize) -> Time<T> {
         Time::from_base(
-            T::from_f64(projection as f64)
+            T::from_count(projection)
                 * self.gantry_period_s.as_time().in_unit::<Second>()
                 * self.projections_per_rotation_recip().into_base(),
         )
@@ -214,7 +211,7 @@ impl<T: Scalar + UnitScalar> HelicalDelivery<T> {
 
     #[inline]
     fn projections_per_rotation_recip(&self) -> Dimensionless<T> {
-        Dimensionless::from_base(T::from_f64(self.projections_per_rotation as f64).recip())
+        Dimensionless::from_base(T::from_count(self.projections_per_rotation).recip())
     }
 }
 
