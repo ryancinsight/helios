@@ -7,6 +7,11 @@ under a Breaking subsection.
 
 ## [Unreleased]
 
+### Fixed
+
+- [patch] Preserve ROI noise under a common intensity or dose offset. A NaN
+  or infinite sample now gives a NaN standard deviation, not zero.
+
 ## [helios-domain 0.2.1]
 
 ### Fixed

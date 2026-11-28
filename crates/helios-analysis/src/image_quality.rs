@@ -43,28 +43,102 @@ fn roi_statistics_values<T: Scalar>(
     max: [usize; 3],
 ) -> (T, T) {
     let zero = <T as NumericElement>::ZERO;
-    let mut sum = zero;
-    let mut sum_sq = zero;
-    let mut count = 0usize;
-    for i in min[0]..max[0] {
-        for j in min[1]..max[1] {
-            for k in min[2]..max[2] {
-                if let Some(v) = volume.get(i, j, k) {
-                    sum += v;
-                    sum_sq += v * v;
-                    count += 1;
-                }
-            }
-        }
-    }
+    let values = roi_values(volume, min, max);
+    let (sum, count, lower, upper) = values.clone().fold(
+        (zero, 0usize, T::infinity(), -T::infinity()),
+        |(sum, n, lower, upper), value| {
+            (
+                sum + value,
+                n + 1,
+                lower.min_scalar(value),
+                upper.max_scalar(value),
+            )
+        },
+    );
     if count == 0 {
         return (zero, zero);
     }
-    let inv_n = T::from_f64(count as f64).recip();
-    let mean = sum * inv_n;
-    // Var = E[x²] − E[x]²; clamp a tiny negative from rounding before sqrt.
-    let var = (sum_sq * inv_n - mean * mean).max_scalar(zero);
-    (mean, var.sqrt())
+    // The count conversion rounds once in T through the numeric SSOT.
+    let count = T::from_count(count);
+    // Keep the existing public mean calculation. The variance needs a more
+    // accurate center: a drifting raw sum can place that mean many ULPs away
+    // from a narrow sample, making a corrected moment subtraction cancel too.
+    let mean = sum * count.recip();
+    let half = T::from_f64(0.5);
+    let span = upper - lower;
+    let wide = !span.is_finite();
+    // For finite bounds, the midpoint keeps every translated value bounded. If the span
+    // overflows, halve before subtraction; the scaled span then fits. Halving is exact once
+    // the half is normal (|x| >= 2 MIN_POSITIVE); else it rounds, a subnormal intermediate.
+    let anchor = if wide {
+        lower * half + upper * half
+    } else {
+        lower + span * half
+    };
+    let translated = |value: T| {
+        if wide {
+            value * half - anchor * half
+        } else {
+            value - anchor
+        }
+    };
+    let scale = translated(lower).abs().max_scalar(translated(upper).abs());
+    if scale == zero {
+        // The NaN-ignoring range fold misses a NaN sample; the sum does not.
+        return (mean, if mean.is_nan() { mean } else { zero });
+    }
+    // Normalize before averaging: dividing subnormal translated values by n
+    // first can erase every contribution, even when their standard deviation
+    // is representable. The endpoint scale bounds normalized values by one.
+    let normalized = |value: T| translated(value) / scale;
+    let offset = compensated_sum(values.clone().map(|value| normalized(value) / count));
+    // E[(x-c)^2] = variance + (c-true_mean)^2: center error enters
+    // quadratically instead of cancelling the variance. With a compensated
+    // center, the residual norm needs no subtractive correction. The exact
+    // normalized residuals are bounded by two, far from scalar overflow.
+    // sigma = scale * sqrt(sum((normalized(x) - offset)^2) / n).
+    let squares = compensated_sum(values.map(|value| {
+        let residual = normalized(value) - offset;
+        residual * residual
+    }));
+    let standard_deviation = scale * (squares / count).sqrt();
+    (
+        mean,
+        if wide {
+            standard_deviation / half
+        } else {
+            standard_deviation
+        },
+    )
+}
+
+/// Kahan accumulation in the caller's precision, with no widened accumulator.
+fn compensated_sum<T: Scalar>(values: impl Iterator<Item = T>) -> T {
+    let zero = <T as NumericElement>::ZERO;
+    let (mut sum, mut correction) = (zero, zero);
+    for value in values {
+        let adjusted = value - correction;
+        let next = sum + adjusted;
+        correction = (next - sum) - adjusted;
+        sum = next;
+    }
+    sum
+}
+
+/// Iterate the included values by copy in the established i/j/k traversal order.
+fn roi_values<T: Scalar>(
+    volume: &Volume<T>,
+    min: [usize; 3],
+    max: [usize; 3],
+) -> impl Iterator<Item = T> + Clone + '_ {
+    // Out-of-grid cells were skipped by `get`; clip the ranges so they are
+    // not traversed in any pass. Reversed/empty ranges remain empty.
+    let dims = volume.grid().dims();
+    let end = std::array::from_fn::<_, 3, _>(|axis| max[axis].min(dims[axis]));
+    (min[0]..end[0]).flat_map(move |i| {
+        (min[1]..end[1])
+            .flat_map(move |j| (min[2]..end[2]).filter_map(move |k| volume.get(i, j, k)))
+    })
 }
 
 /// Mean and population standard deviation over the half-open index box
@@ -73,6 +147,14 @@ fn roi_statistics_values<T: Scalar>(
 /// This is the intensity-semantic API. Dose-valued callers must use
 /// [`dose_roi_statistics`] so the physical result retains its Aequitas
 /// `AbsorbedDose` dimension.
+///
+/// For finite samples with no subnormal intermediate, the standard deviation
+/// does not degrade under a common offset: with `u = T::EPSILON / 2`, `gamma_2
+/// = 2u / (1 - 2u)` and `kappa = sqrt(1 + (m / std)^2)`, where `m` is the mean
+/// minus the anchor (the range midpoint up to rounding), its relative error is
+/// at most `gamma_2 * kappa + 5u`, up to `O(n u^2 + u^2 kappa^2)`. A NaN or
+/// infinite sample makes it NaN (the range ignores NaN, so equal finite samples
+/// return zero only if the sum is not NaN); the mean follows IEEE-754 addition.
 #[must_use]
 pub fn roi_statistics<T: Scalar>(
     volume: &Volume<T>,
@@ -88,6 +170,7 @@ pub fn roi_statistics<T: Scalar>(
 ///
 /// The dense volume remains scalar storage; this boundary attaches the
 /// `AbsorbedDose` semantic to the returned physical statistics.
+/// Accuracy and non-finite handling are those of [`roi_statistics`].
 #[must_use]
 pub fn dose_roi_statistics<T: Scalar>(
     volume: &Volume<T>,
