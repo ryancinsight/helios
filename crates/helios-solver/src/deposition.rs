@@ -295,9 +295,12 @@ mod tests {
     /// The model is first order and carries no margin for the neglected
     /// terms: `k` roundings of at most `u` compound to at most
     /// `(1 + u)^k - 1 <= k u / (1 - k u)`, so the bound falls short of that
-    /// worst case by a relative `k u`, second order in `u`. At `k` near 270
-    /// (fixture A) that is about `1.6e-5` of the bound in `f32` and `3e-14` in
-    /// `f64`, far below the slack the fixtures observe, but the bound is not
+    /// worst case by a relative `k u`, second order in `u`. Here `k` is the
+    /// coefficient of `u` in this function's result. At the central beam of
+    /// `ray_deposition_conserves_absorbed_energy` (64 segments, `tau = 0.08`,
+    /// conditioning 7.25, no pose) `k` is 217.4, so the shortfall is about
+    /// `1.30e-5` of the bound in `f32` and `2.4e-14` in `f64`
+    /// (`kernel_error_note_figures_reproduce` checks them). The bound is not
     /// a rigorous upper bound.
     fn kernel_total_error<T: ShippedScalar>(
         segments: u32,
@@ -338,6 +341,44 @@ mod tests {
     fn absorbed_fraction_bound<T: ShippedScalar>(segments: u32, tau: T, conditioning: T) -> T {
         kernel_total_error(segments, tau, conditioning, <T as NumericElement>::ZERO)
             + closed_form_error(tau)
+    }
+
+    /// Half unit of the last printed digit of `k = 217.4` in the
+    /// [`kernel_total_error`] note, relative to `k`.
+    const K_NOTE_HALF_UNIT: f64 = 0.05 / 217.4;
+
+    /// Asserts the note's figures on `kernel_total_error` for the central beam
+    /// of `ray_deposition_conserves_absorbed_energy`: `k = 217.4` and the
+    /// bound `k u` equal to `figure`, each within the half unit of its last
+    /// printed digit (`figure_half_unit`, relative). The bound is evaluated
+    /// in `T` with about a dozen roundings, at most `12 u` (`7e-7` in `f32`),
+    /// below the margins of the printed digits (`2.5e-5` for `k`, `8e-4` for
+    /// the `f32` figure).
+    fn kernel_error_note_figures_reproduce<T: ShippedScalar>(figure: f64, figure_half_unit: f64) {
+        let zero = <T as NumericElement>::ZERO;
+        let bound = kernel_total_error(64, T::from_f64(0.08), central_beam_conditioning(), zero);
+        assert_relative_eq!(
+            bound / unit_roundoff::<T>(),
+            T::from_f64(217.4),
+            epsilon = zero,
+            max_relative = T::from_f64(K_NOTE_HALF_UNIT)
+        );
+        assert_relative_eq!(
+            bound,
+            T::from_f64(figure),
+            epsilon = zero,
+            max_relative = T::from_f64(figure_half_unit)
+        );
+    }
+
+    #[test]
+    fn kernel_error_note_figures_reproduce_in_single_precision() {
+        kernel_error_note_figures_reproduce::<f32>(1.30e-5, 0.005 / 1.30);
+    }
+
+    #[test]
+    fn kernel_error_note_figures_reproduce_in_double_precision() {
+        kernel_error_note_figures_reproduce::<f64>(2.4e-14, 0.05 / 2.4);
     }
 
     #[test]

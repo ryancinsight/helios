@@ -503,21 +503,6 @@ H-117).
   rest are reported with their ratio, not as killed.
 - **Next step:** claim; add `epsilon = zero`, derive any bound that then fails.
 
-<a id="H-128"></a>
-### H-128 — correct the `k` note on `kernel_total_error` [patch]
-
-- Status: todo; priority: verification; needs: none; basis: `59d80a1c9d8f`; milestone: M-dose-engine
-- **Outcome:** the first-order margin note (`deposition.rs:298-299`) states the `k`
-  of `kernel_total_error` and cites a fixture the tree defines.
-- **Scope:** "k near 270 (fixture A) ... 1.6e-5 ... 3e-14" uses the whole bound of
-  64 segments, tau = 0.08, c = 7.25: 268.4u = kernel 217.4u + closed form 50.9u.
-  The note concerns the kernel alone: 217.4u, 1.30e-5 in f32, 2.4e-14 in f64.
-  "Fixture A" is defined only in the helios#207 and #208 bodies; the tree has it
-  as `ray_deposition_conserves_absorbed_energy`.
-- **Acceptance oracle:** the note's `k` and both figures reproduce from the model
-  at the named parameters (217.4u, 1.30e-5, 2.4e-14) and the label names a test.
-- **Next step:** claim; rewrite the note against that test's parameters.
-
 <a id="H-133"></a>
 ### H-133 — state the verified bounds of three ROI standard-deviation statements [patch]
 
