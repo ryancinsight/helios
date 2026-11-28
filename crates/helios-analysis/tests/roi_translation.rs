@@ -148,7 +148,7 @@ fn lattice_noise_stays_within_derived_bound<T: ShippedScalar>(
         .iter()
         .fold((u64::MAX, 0), |(l, h), &k| (l.min(k), h.max(k)));
     let scaled_variance = count_of(n * s2 - s1 * s1);
-    // |mean - midpoint| plus the half-step anchor rounding, in units of n / 2.
+    // shift = 2n * (|mean - midpoint| + 1/2), the bracket in lattice steps (1/2: anchor).
     let shift = count_of((2 * s1).abs_diff(n * (extremes.0 + extremes.1)) + n);
     let kappa = (T::from_count(1) + shift * shift / (T::from_count(4) * scaled_variance)).sqrt();
     let reference = step * scaled_variance.sqrt() / count_of(n);
