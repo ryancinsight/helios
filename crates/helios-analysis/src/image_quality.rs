@@ -67,9 +67,9 @@ fn roi_statistics_values<T: Scalar>(
     let half = T::from_f64(0.5);
     let span = upper - lower;
     let wide = !span.is_finite();
-    // For finite bounds, the midpoint keeps every translated value bounded.
-    // If the span overflows, halve before subtraction; the scaled span then
-    // fits. Halving is exact in this wide-range regime for normal values.
+    // For finite bounds, the midpoint keeps every translated value bounded. If the span
+    // overflows, halve before subtraction; the scaled span then fits. Halving is exact once
+    // the half is normal (|x| >= 2 MIN_POSITIVE); else it rounds, a subnormal intermediate.
     let anchor = if wide {
         lower * half + upper * half
     } else {
@@ -125,7 +125,7 @@ fn compensated_sum<T: Scalar>(values: impl Iterator<Item = T>) -> T {
     sum
 }
 
-/// Borrow the included values in the established i/j/k traversal order.
+/// Iterate the included values by copy in the established i/j/k traversal order.
 fn roi_values<T: Scalar>(
     volume: &Volume<T>,
     min: [usize; 3],
