@@ -347,13 +347,23 @@ mod tests {
     /// [`kernel_total_error`] note, relative to `k`.
     const K_NOTE_HALF_UNIT: f64 = 0.05 / 217.4;
 
+    /// Half unit of the last printed digit of the note's `f32` figure
+    /// `1.30e-5`, relative to it.
+    const F32_FIGURE_HALF_UNIT: f64 = 0.005 / 1.30;
+
+    /// Half unit of the last printed digit of the note's `f64` figure
+    /// `2.4e-14`, relative to it.
+    const F64_FIGURE_HALF_UNIT: f64 = 0.05 / 2.4;
+
     /// Asserts the note's figures on `kernel_total_error` for the central beam
     /// of `ray_deposition_conserves_absorbed_energy`: `k = 217.4` and the
     /// bound `k u` equal to `figure`, each within the half unit of its last
-    /// printed digit (`figure_half_unit`, relative). The bound is evaluated
-    /// in `T` with about a dozen roundings, at most `12 u` (`7e-7` in `f32`),
-    /// below the margins of the printed digits (`2.5e-5` for `k`, `8e-4` for
-    /// the `f32` figure).
+    /// printed digit (`figure_half_unit`, relative). The model gives
+    /// `k = 217.445`, so the margin to the `k` tolerance is `2.2e-5` relative
+    /// (about 370 `u` in `f32`), and `2.4e-14` against `2.414e-14` leaves a
+    /// wider one. The bound is evaluated in `T` with one rounding per
+    /// operation over about fifteen operations plus `exp_m1`, whose accuracy
+    /// `EXP_ROUNDINGS` only assumes: of order tens of `u`, below the margin.
     fn kernel_error_note_figures_reproduce<T: ShippedScalar>(figure: f64, figure_half_unit: f64) {
         let zero = <T as NumericElement>::ZERO;
         let bound = kernel_total_error(64, T::from_f64(0.08), central_beam_conditioning(), zero);
@@ -373,12 +383,12 @@ mod tests {
 
     #[test]
     fn kernel_error_note_figures_reproduce_in_single_precision() {
-        kernel_error_note_figures_reproduce::<f32>(1.30e-5, 0.005 / 1.30);
+        kernel_error_note_figures_reproduce::<f32>(1.30e-5, F32_FIGURE_HALF_UNIT);
     }
 
     #[test]
     fn kernel_error_note_figures_reproduce_in_double_precision() {
-        kernel_error_note_figures_reproduce::<f64>(2.4e-14, 0.05 / 2.4);
+        kernel_error_note_figures_reproduce::<f64>(2.4e-14, F64_FIGURE_HALF_UNIT);
     }
 
     #[test]
